@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Package, ShoppingCart, Users, Users2 } from "lucide-react";
+import { Home, List, Package, ShoppingCart, Users, Users2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {};
@@ -32,6 +32,11 @@ const Sidebar = ({}: Props) => {
       label: "الموظفين",
       path: "/employees",
       icon: Users2,
+    },
+    {
+      label: "الفئات",
+      path: "/categories",
+      icon: List,
     },
   ];
 

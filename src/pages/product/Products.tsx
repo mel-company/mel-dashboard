@@ -104,7 +104,7 @@ const Products = ({}: Props) => {
                 </CardContent>
                 <CardFooter className="flex items-center justify-between border-t pt-2">
                   <span className="text-lg font-bold text-primary">
-                    ${product.price.toFixed(2)}
+                    {product.price.toFixed(2)} د.ع
                   </span>
                   <Badge variant="default" className="px-2 py-1">
                     عرض التفاصيل
