@@ -14,6 +14,9 @@ import AddProduct from "./pages/product/AddProduct";
 import Categories from "./pages/category/Categories";
 import CategoryDetails from "./pages/category/CategoryDetails";
 import AddCategory from "./pages/category/AddCategory";
+import AddEmployee from "./pages/employee/AddEmployee";
+import AddCustomer from "./pages/customer/AddCustomer";
+import AddOrder from "./pages/order/AddOrder";
 
 function App() {
   return (
@@ -32,18 +35,21 @@ function App() {
         <Route path="/customers">
           <Route index element={<Customers />} />
           <Route path=":id" element={<CustomerDetails />} />
+          <Route path="add" element={<AddCustomer />} />
         </Route>
 
         {/* orders routes */}
         <Route path="/orders">
           <Route index element={<Orders />} />
           <Route path=":id" element={<OrderDetails />} />
+          <Route path="add" element={<AddOrder />} />
         </Route>
 
         {/* employees routes */}
         <Route path="/employees">
           <Route index element={<Employees />} />
           <Route path=":id" element={<EmployeeDetails />} />
+          <Route path="add" element={<AddEmployee />} />
         </Route>
 
         {/* category routes */}

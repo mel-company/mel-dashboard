@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Save, Image, ArrowLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Save, Image, ArrowLeft, Check, X } from "lucide-react";
+import { dmy_categories } from "@/data/dummy";
 
 type Props = {};
-
-interface Property {
-  key: string;
-  value: string;
-}
 
 const AddProduct = ({}: Props) => {
   const [title, setTitle] = useState("");
@@ -17,37 +14,18 @@ const AddProduct = ({}: Props) => {
   // @ts-ignore
   const [image, setImage] = useState("");
   const [rate, setRate] = useState("");
-  const [properties, setProperties] = useState<Property[]>([
-    { key: "", value: "" },
-  ]);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
 
-  const addProperty = () => {
-    setProperties([...properties, { key: "", value: "" }]);
-  };
-
-  const removeProperty = (index: number) => {
-    setProperties(properties.filter((_, i) => i !== index));
-  };
-
-  const updateProperty = (
-    index: number,
-    field: "key" | "value",
-    value: string
-  ) => {
-    const updated = [...properties];
-    updated[index][field] = value;
-    setProperties(updated);
+  const toggleCategory = (categoryId: number) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Convert properties array to object
-    const propertiesObj = properties.reduce((acc, prop) => {
-      if (prop.key && prop.value) {
-        acc[prop.key] = prop.value;
-      }
-      return acc;
-    }, {} as Record<string, string>);
 
     const productData = {
       title,
@@ -55,7 +33,7 @@ const AddProduct = ({}: Props) => {
       price: parseFloat(price),
       image,
       rate: parseFloat(rate),
-      properties: propertiesObj,
+      categories: selectedCategories,
     };
 
     console.log("Product data:", productData);
@@ -99,7 +77,7 @@ const AddProduct = ({}: Props) => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="أدخل عنوان المنتج"
                 required
-                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
+                className="w-full text-right rounded-md border border-input bgbackground py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
               />
             </div>
 
@@ -118,7 +96,7 @@ const AddProduct = ({}: Props) => {
                 placeholder="أدخل وصف المنتج"
                 required
                 rows={4}
-                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50 resize-none"
+                className="w-full text-right rounded-md border border-input bgbackground py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
               />
             </div>
 
@@ -142,7 +120,7 @@ const AddProduct = ({}: Props) => {
                     required
                     min="0"
                     step="0.01"
-                    className="w-full text-right rounded-md border border-input bg-background py-2.5 pl-12 pr-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
+                    className="w-full text-right rounded-md border border-input bgbackground py-2.5 pl-12 pr-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
                   />
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                     IQD
@@ -168,80 +146,100 @@ const AddProduct = ({}: Props) => {
                   min="0"
                   max="5"
                   step="0.1"
-                  className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
+                  className="w-full text-right rounded-md border border-input bgbackground py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
                 />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Properties Section */}
-        <div className="bg-secondary p-4 rounded-lg flex items-center justify-between">
-          <p className="text-lg font-bold">الخصائص</p>
-          <Button
-            type="button"
-            size="sm"
-            onClick={addProperty}
-            className="gap-2"
-          >
-            <Plus className="size-4" />
-            إضافة خاصية
-          </Button>
+        {/* Categories Section */}
+        <div className="bg-secondary p-4 rounded-lg">
+          <p className="text-lg font-bold">الفئات</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            اختر فئة واحدة أو أكثر للمنتج
+          </p>
         </div>
         <Card>
           <CardContent className="space-y-4">
-            {properties.length === 0 ? (
+            {dmy_categories.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                لا توجد خصائص. اضغط على "إضافة خاصية" لإضافة خاصية جديدة.
+                لا توجد فئات متاحة
               </p>
             ) : (
-              properties.map((property, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-4 rounded-lg border bg-card"
-                >
-                  <div className="flex-1 grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground text-right block">
-                        المفتاح
-                      </label>
-                      <input
-                        type="text"
-                        value={property.key}
-                        onChange={(e) =>
-                          updateProperty(index, "key", e.target.value)
-                        }
-                        placeholder="مثال: العلامة التجارية"
-                        className="w-full text-right rounded-md border border-input bg-background py-2 px-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground text-right block">
-                        القيمة
-                      </label>
-                      <input
-                        type="text"
-                        value={property.value}
-                        onChange={(e) =>
-                          updateProperty(index, "value", e.target.value)
-                        }
-                        placeholder="مثال: سامسونج"
-                        className="w-full text-right rounded-md border border-input bg-background py-2 px-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30"
-                      />
-                    </div>
-                  </div>
-                  {properties.length > 1 && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      onClick={() => removeProperty(index)}
-                      className="shrink-0"
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {dmy_categories.map((category) => {
+                  const isSelected = selectedCategories.includes(category.id);
+                  return (
+                    <div
+                      key={category.id}
+                      // type="button"
+                      onClick={() => toggleCategory(category.id)}
+                      className={`relative p-4 bg-white rounded-lg border-2 text-right transition-all hover:shadow-md ${
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "border-input bg-card hover:border-ring"
+                      }`}
                     >
-                      <X className="size-4" />
-                    </Button>
-                  )}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-sm mb-1">
+                            {category.name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {category.description}
+                          </p>
+                        </div>
+                        <div
+                          className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                            isSelected
+                              ? "bg-primary border-primary"
+                              : "border-input"
+                          }`}
+                        >
+                          {isSelected && (
+                            <Check className="size-3 text-primary-foreground" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {selectedCategories.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-sm font-medium mb-2 text-right">
+                  الفئات المحددة ({selectedCategories.length}):
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedCategories.map((categoryId) => {
+                    const category = dmy_categories.find(
+                      (c) => c.id === categoryId
+                    );
+                    return category ? (
+                      <Badge
+                        key={categoryId}
+                        variant="default"
+                        className="gap-1 px-4"
+                      >
+                        {category.name}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCategory(categoryId);
+                          }}
+                          className="hover:bg-primary/20 rounded-full p-0.5 -mr-1"
+                        >
+                          <X className="size-3" />
+                          <span className="sr-only">إزالة</span>
+                        </button>
+                      </Badge>
+                    ) : null;
+                  })}
                 </div>
-              ))
+              </div>
             )}
           </CardContent>
         </Card>

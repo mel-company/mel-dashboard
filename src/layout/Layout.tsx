@@ -46,7 +46,7 @@ const Layout = ({}: Props) => {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto bg-background p-6">
+        <main className="overflow-hidden flex-1 overflow-y-auto bg-background p-6">
           <Outlet />
         </main>
       </div>

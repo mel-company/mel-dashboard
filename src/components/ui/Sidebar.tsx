@@ -19,6 +19,11 @@ const Sidebar = ({}: Props) => {
       icon: Package,
     },
     {
+      label: "الفئات",
+      path: "/categories",
+      icon: List,
+    },
+    {
       label: "الطلبات",
       path: "/orders",
       icon: ShoppingCart,
@@ -32,11 +37,6 @@ const Sidebar = ({}: Props) => {
       label: "الموظفين",
       path: "/employees",
       icon: Users2,
-    },
-    {
-      label: "الفئات",
-      path: "/categories",
-      icon: List,
     },
   ];
 

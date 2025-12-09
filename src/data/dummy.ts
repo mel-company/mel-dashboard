@@ -40,6 +40,70 @@ export const dmy_products = [
   }
 ];
 
+export const dmy_categories = [
+  {
+    id: 1,
+    name: "Electronics",
+    description: "Devices, gadgets, and accessories.",
+    image: "/images/categories/electronics.jpg"
+  },
+  {
+    id: 2,
+    name: "Fashion",
+    description: "Clothing, shoes, and accessories.",
+    image: "/images/categories/fashion.jpg"
+  },
+  {
+    id: 3,
+    name: "Home & Kitchen",
+    description: "Furniture, appliances, and kitchen tools.",
+    image: "/images/categories/home-kitchen.jpg"
+  },
+  {
+    id: 4,
+    name: "Sports & Fitness",
+    description: "Sportswear, gym equipment, and accessories.",
+    image: "/images/categories/sports-fitness.jpg"
+  },
+  {
+    id: 5,
+    name: "Beauty & Personal Care",
+    description: "Cosmetics, skincare, and grooming products.",
+    image: "/images/categories/beauty.jpg"
+  },
+  {
+    id: 6,
+    name: "Toys & Games",
+    description: "Toys, board games, and learning activities.",
+    image: "/images/categories/toys.jpg"
+  },
+  {
+    id: 7,
+    name: "Automotive",
+    description: "Car accessories, tools, and parts.",
+    image: "/images/categories/automotive.jpg"
+  },
+  {
+    id: 8,
+    name: "Books",
+    description: "Fiction, non-fiction, educational, and more.",
+    image: "/images/categories/books.jpg"
+  },
+  {
+    id: 9,
+    name: "Groceries",
+    description: "Everyday food and household essentials.",
+    image: "/images/categories/groceries.jpg"
+  },
+  {
+    id: 10,
+    name: "Health & Medical",
+    description: "Supplements, first-aid, and medical equipment.",
+    image: "/images/categories/health.jpg"
+  }
+];
+
+
 export const dmy_orders = [
   {
     id: 1,
