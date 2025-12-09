@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { dmy_products } from "@/data/dummy";
 import {
   Card,
@@ -16,6 +16,7 @@ type Props = {};
 
 const Products = ({}: Props) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   // Filter products based on search query
   const filteredProducts = dmy_products.filter(
@@ -41,7 +42,7 @@ const Products = ({}: Props) => {
             className="w-full text-right rounded-md border border-input bg-background py-2 pr-10 pl-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
           />
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => navigate("/products/add")}>
           <Plus className="size-4" />
           إضافة منتج
         </Button>
