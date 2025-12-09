@@ -10,6 +10,7 @@ import CustomerDetails from "./pages/customer/CustomerDetails";
 import OrderDetails from "./pages/order/OrderDetails";
 import Employees from "./pages/employee/Employees";
 import EmployeeDetails from "./pages/employee/EmployeeDetails";
+import AddProduct from "./pages/product/AddProduct";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/products">
           <Route index element={<Products />} />
           <Route path=":id" element={<ProductDetails />} />
+          <Route path="add" element={<AddProduct />} />
         </Route>
 
         {/* customers routes */}
