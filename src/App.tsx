@@ -17,6 +17,9 @@ import AddCategory from "./pages/category/AddCategory";
 import AddEmployee from "./pages/employee/AddEmployee";
 import AddCustomer from "./pages/customer/AddCustomer";
 import AddOrder from "./pages/order/AddOrder";
+import Discounts from "./pages/discount/Discounts";
+import DiscountDetails from "./pages/discount/DiscountDetails";
+import AddDiscount from "./pages/discount/AddDiscount";
 
 function App() {
   return (
@@ -57,6 +60,13 @@ function App() {
           <Route index element={<Categories />} />
           <Route path=":id" element={<CategoryDetails />} />
           <Route path="add" element={<AddCategory />} />
+        </Route>
+
+        {/* Discounts routes */}
+        <Route path="/discounts">
+          <Route index element={<Discounts />} />
+          <Route path=":id" element={<DiscountDetails />} />
+          <Route path="add" element={<AddDiscount />} />
         </Route>
       </Route>
     </Routes>

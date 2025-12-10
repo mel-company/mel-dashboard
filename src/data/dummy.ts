@@ -43,62 +43,82 @@ export const dmy_products = [
 export const dmy_categories = [
   {
     id: 1,
-    name: "Electronics",
-    description: "Devices, gadgets, and accessories.",
+    name: "الكترونيات",
+    description: "الأجهزة الكترونية، الأجهزة الذكية، والإكسسوارات.",
+    enabled: false,
+    number_of_products: 14,
     image: "/images/categories/electronics.jpg"
   },
   {
     id: 2,
-    name: "Fashion",
-    description: "Clothing, shoes, and accessories.",
+    name: "الموضة",
+    description: "الملابس، الأحذية، والإكسسوارات.",
+    enabled: true,
+    number_of_products: 12,
     image: "/images/categories/fashion.jpg"
   },
   {
     id: 3,
-    name: "Home & Kitchen",
-    description: "Furniture, appliances, and kitchen tools.",
+    name: "المنزل والمطبخ",
+    description: "الأثاث، الأجهزة المنزلية، والأدوات المنزلية.",
+    enabled: true,
+    number_of_products: 15,
     image: "/images/categories/home-kitchen.jpg"
   },
   {
     id: 4,
-    name: "Sports & Fitness",
-    description: "Sportswear, gym equipment, and accessories.",
+    name: "الرياضة واللياقة",
+    description: "الملابس الرياضية، الأدوات الرياضية، والإكسسوارات.",
+    enabled: false,
+    number_of_products: 13,
     image: "/images/categories/sports-fitness.jpg"
   },
   {
     id: 5,
-    name: "Beauty & Personal Care",
-    description: "Cosmetics, skincare, and grooming products.",
+    name: "الجمال والرعاية الشخصية",
+    description: "المواد الجمالية، المنتجات التجميلية، والإكسسوارات.",
+    enabled: true,
+    number_of_products: 11,
     image: "/images/categories/beauty.jpg"
   },
   {
     id: 6,
-    name: "Toys & Games",
-    description: "Toys, board games, and learning activities.",
+    name: "الألعاب والألعاب الأطفال",
+    description: "الألعاب، الألعاب الشبابية، والألعاب الأطفال.",
+    enabled: true,
+    number_of_products: 12,
     image: "/images/categories/toys.jpg"
   },
   {
     id: 7,
-    name: "Automotive",
-    description: "Car accessories, tools, and parts.",
+    name: "السيارات",
+    description: "الإكسسوارات السيارات، الأدوات السيارات، والأجزاء السيارات.",
+    enabled: false,
+    number_of_products: 13,
     image: "/images/categories/automotive.jpg"
   },
   {
     id: 8,
-    name: "Books",
-    description: "Fiction, non-fiction, educational, and more.",
+    name: "الكتب",
+    description: "الكتب الخيالية، الكتب العلمية، الكتب التعليمية، والكتب الأخرى.",
+    enabled: true,
+    number_of_products: 14,
     image: "/images/categories/books.jpg"
   },
   {
     id: 9,
-    name: "Groceries",
-    description: "Everyday food and household essentials.",
+    name: "المواد الغذائية",
+    description: "المواد الغذائية اليومية، المواد الغذائية المنزلية، والمواد الغذائية الأخرى.",
+    enabled: true,
+    number_of_products: 15,
     image: "/images/categories/groceries.jpg"
   },
   {
     id: 10,
-    name: "Health & Medical",
-    description: "Supplements, first-aid, and medical equipment.",
+    name: "الصحة والطب الطبيعي",
+    description: "المكملات الغذائية، الأدوات الطبيعية، والأدوات الطبيعية الأخرى.",
+    enabled: false,
+    number_of_products: 16,
     image: "/images/categories/health.jpg"
   }
 ];
