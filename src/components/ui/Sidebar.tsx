@@ -1,10 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import {
+  Bell,
   Home,
   List,
   Package,
   Percent,
   ShoppingCart,
+  User,
   Users,
   Users2,
 } from "lucide-react";
@@ -50,6 +52,21 @@ const Sidebar = ({}: Props) => {
       label: "الموظفين",
       path: "/employees",
       icon: Users2,
+    },
+    {
+      label: "الإشعارات",
+      path: "/notifications",
+      icon: Bell,
+    },
+    {
+      label: "الإعدادات",
+      path: "/settings",
+      icon: User,
+    },
+    {
+      label: "الملف الشخصي",
+      path: "/profile",
+      icon: User,
     },
   ];
 

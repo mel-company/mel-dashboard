@@ -20,6 +20,10 @@ import AddOrder from "./pages/order/AddOrder";
 import Discounts from "./pages/discount/Discounts";
 import DiscountDetails from "./pages/discount/DiscountDetails";
 import AddDiscount from "./pages/discount/AddDiscount";
+import Notifications from "./pages/notification/Notifications";
+import NotificationDetails from "./pages/notification/NotificationDetails";
+import UserProfile from "./pages/profile/UserProfile";
+import Settings from "./pages/settings/Settings";
 
 function App() {
   return (
@@ -53,6 +57,22 @@ function App() {
           <Route index element={<Employees />} />
           <Route path=":id" element={<EmployeeDetails />} />
           <Route path="add" element={<AddEmployee />} />
+        </Route>
+
+        {/* notifications routes */}
+        <Route path="/notifications">
+          <Route index element={<Notifications />} />
+          <Route path=":id" element={<NotificationDetails />} />
+        </Route>
+
+        {/* profile routes */}
+        <Route path="/profile">
+          <Route index element={<UserProfile />} />
+        </Route>
+
+        {/* settings routes */}
+        <Route path="/settings">
+          <Route index element={<Settings />} />
         </Route>
 
         {/* category routes */}

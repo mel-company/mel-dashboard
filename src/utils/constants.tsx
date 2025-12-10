@@ -1,0 +1,5 @@
+export enum DISCOUNT_STATUS {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  EXPIRED = "EXPIRED",
+}
