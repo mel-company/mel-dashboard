@@ -27,277 +27,245 @@ const GrapesEditor = () => {
   const editorRef = useRef<any>(null);
   const grapesEditorRef = useRef<any>(null);
 
+  // Initialize GrapesJS when the container ref is set
   useEffect(() => {
-    const loadGrapesJS = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Clean up existing scripts and styles first
-        const existingScripts = document.querySelectorAll('script[src*="grapesjs"]');
-        const existingStyles = document.querySelectorAll('link[href*="grapesjs"]');
-        
-        existingScripts.forEach(script => script.remove());
-        existingStyles.forEach(style => style.remove());
-
-        // Load GrapesJS CSS
-        const grapesCSS = document.createElement('link');
-        grapesCSS.rel = 'stylesheet';
-        grapesCSS.href = 'https://unpkg.com/grapesjs/dist/css/grapes.min.css';
-        grapesCSS.onload = () => console.log('GrapesJS CSS loaded');
-        grapesCSS.onerror = () => console.error('Failed to load GrapesJS CSS');
-        document.head.appendChild(grapesCSS);
-
-        // Load GrapesJS Preset Webpage CSS
-        const presetCSS = document.createElement('link');
-        presetCSS.rel = 'stylesheet';
-        presetCSS.href = 'https://cdn.jsdelivr.net/npm/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css';
-        presetCSS.onload = () => console.log('GrapesJS Preset CSS loaded');
-        presetCSS.onerror = () => {
-          console.warn('Failed to load GrapesJS Preset CSS from jsdelivr, trying unpkg...');
-          // Try alternative CDN
-          const fallbackCSS = document.createElement('link');
-          fallbackCSS.rel = 'stylesheet';
-          fallbackCSS.href = 'https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css';
-          fallbackCSS.onload = () => console.log('GrapesJS Preset CSS loaded from fallback');
-          fallbackCSS.onerror = () => console.warn('Failed to load GrapesJS Preset CSS from fallback - will use default styles');
-          document.head.appendChild(fallbackCSS);
-        };
-        document.head.appendChild(presetCSS);
-
-        // Load GrapesJS script
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/grapesjs';
-        script.async = true;
-        script.onload = () => {
-          console.log('GrapesJS script loaded');
+    if (editorRef.current && templateId && !grapesEditorRef.current) {
+      // Container is ready, define and call loadGrapesJS
+      const loadGrapesJS = async () => {
+        try {
+          setIsLoading(true);
           
-          // Load GrapesJS Preset Webpage plugin
-          const presetScript = document.createElement('script');
-          presetScript.src = 'https://unpkg.com/grapesjs-preset-webpage';
-          presetScript.async = true;
-          presetScript.onload = () => {
-            console.log('GrapesJS Preset Webpage plugin loaded');
-            setTimeout(initializeEditor, 100);
+          // Clean up existing scripts and styles first
+          const existingScripts = document.querySelectorAll('script[src*="grapesjs"]');
+          const existingStyles = document.querySelectorAll('link[href*="grapesjs"]');
+          
+          existingScripts.forEach(script => script.remove());
+          existingStyles.forEach(style => style.remove());
+
+          // Load GrapesJS CSS
+          const grapesCSS = document.createElement('link');
+          grapesCSS.rel = 'stylesheet';
+          grapesCSS.href = 'https://unpkg.com/grapesjs/dist/css/grapes.min.css';
+          grapesCSS.onload = () => console.log('GrapesJS CSS loaded');
+          grapesCSS.onerror = () => console.error('Failed to load GrapesJS CSS');
+          document.head.appendChild(grapesCSS);
+
+          // Load GrapesJS Preset Webpage CSS
+          const presetCSS = document.createElement('link');
+          presetCSS.rel = 'stylesheet';
+          presetCSS.href = 'https://cdn.jsdelivr.net/npm/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css';
+          presetCSS.onload = () => console.log('GrapesJS Preset CSS loaded');
+          presetCSS.onerror = () => {
+            console.warn('Failed to load GrapesJS Preset CSS from jsdelivr, trying unpkg...');
+            // Try alternative CDN
+            const fallbackCSS = document.createElement('link');
+            fallbackCSS.rel = 'stylesheet';
+            fallbackCSS.href = 'https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css';
+            fallbackCSS.onload = () => console.log('GrapesJS Preset CSS loaded from fallback');
+            fallbackCSS.onerror = () => console.warn('Failed to load GrapesJS Preset CSS from fallback - will use default styles');
+            document.head.appendChild(fallbackCSS);
           };
-          presetScript.onerror = () => {
-            console.error('Failed to load GrapesJS Preset Webpage plugin');
+          document.head.appendChild(presetCSS);
+
+          // Load GrapesJS script
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/grapesjs';
+          script.async = true;
+          script.onload = () => {
+            console.log('GrapesJS script loaded');
+            
+            // Load GrapesJS Preset Webpage plugin
+            const presetScript = document.createElement('script');
+            presetScript.src = 'https://unpkg.com/grapesjs-preset-webpage';
+            presetScript.async = true;
+            presetScript.onload = () => {
+              console.log('GrapesJS Preset Webpage plugin loaded');
+              setTimeout(() => initializeEditor(), 100);
+            };
+            presetScript.onerror = () => {
+              console.error('Failed to load GrapesJS Preset Webpage plugin');
+              setIsLoading(false);
+            };
+            document.body.appendChild(presetScript);
+          };
+          script.onerror = () => {
+            console.error('Failed to load GrapesJS script');
             setIsLoading(false);
           };
-          document.body.appendChild(presetScript);
-        };
-        script.onerror = () => {
-          console.error('Failed to load GrapesJS script');
-          setIsLoading(false);
-        };
-        document.body.appendChild(script);
+          document.body.appendChild(script);
 
-      } catch (error) {
-        console.error('Error loading GrapesJS:', error);
-        setIsLoading(false);
-      }
-    };
-
-    const initializeEditor = () => {
-      try {
-        // Check for GrapesJS in multiple possible global variables
-        const grapesJS = (window as any).grapes || (window as any).GrapesJS || (window as any)['grapesjs'];
-        if (!grapesJS) {
-          console.error('GrapesJS not loaded');
-          console.log('Available globals:', Object.keys(window).filter(key => key.toLowerCase().includes('grape')));
-          setIsLoading(false);
-          return;
-        }
-
-        const foundTemplate = templates.find(t => t.id === templateId);
-        if (!foundTemplate) {
-          console.error('Template not found:', templateId);
-          setIsLoading(false);
-          return;
-        }
-
-        setTemplate(foundTemplate);
-
-        // Initialize GrapesJS editor with error handling
-        // Ensure the container element exists
-        const container = document.getElementById('gjs');
-        if (!container) {
-          console.error('Container element #gjs not found');
-          setIsLoading(false);
-          return;
-        }
-
-        const editor = grapesJS.init({
-          container: '#gjs',
-          height: '100%',
-          width: '100%',
-          plugins: ['grapesjs-preset-webpage'],
-          pluginsOpts: {
-            'grapesjs-preset-webpage': {
-              blocksBasicOpts: {
-                blocks: ['column1', 'column2', 'column3', 'column3-7', 'text', 'link', 'image', 'video'],
-                flexGrid: 0
-              },
-              blocks: [
-                {
-                  id: 'hero-section',
-                  label: 'Hero Section',
-                  content: `
-                    <section class="hero-section" style="padding: 100px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                      <h1 style="font-size: 3em; margin-bottom: 20px;">مرحباً بك</h1>
-                      <p style="font-size: 1.2em; margin-bottom: 30px;">اكتشف منتجاتنا المميزة</p>
-                      <button style="padding: 15px 30px; background: white; color: #667eea; border: none; border-radius: 5px; font-size: 1em; cursor: pointer;">تسوق الآن</button>
-                    </section>
-                  `
-                },
-                {
-                  id: 'products-section',
-                  label: 'Products Section',
-                  content: `
-                    <section class="products-section" style="padding: 60px 20px; background: #f8f9fa;">
-                      <h2 style="text-align: center; font-size: 2.5em; margin-bottom: 40px;">منتجاتنا</h2>
-                      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
-                        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                          <img src="https://via.placeholder.com/300x200" style="width: 100%; height: 200px; object-fit: cover; border-radius: 5px; margin-bottom: 15px;">
-                          <h3 style="font-size: 1.5em; margin-bottom: 10px;">منتج 1</h3>
-                          <p style="color: #666; margin-bottom: 15px;">وصف المنتج</p>
-                          <div style="font-size: 1.2em; font-weight: bold; color: #007bff;">$99</div>
-                        </div>
-                        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                          <img src="https://via.placeholder.com/300x200" style="width: 100%; height: 200px; object-fit: cover; border-radius: 5px; margin-bottom: 15px;">
-                          <h3 style="font-size: 1.5em; margin-bottom: 10px;">منتج 2</h3>
-                          <p style="color: #666; margin-bottom: 15px;">وصف المنتج</p>
-                          <div style="font-size: 1.2em; font-weight: bold; color: #007bff;">$149</div>
-                        </div>
-                      </div>
-                    </section>
-                  `
-                },
-                {
-                  id: 'contact-section',
-                  label: 'Contact Section',
-                  content: `
-                    <section class="contact-section" style="padding: 60px 20px; background: #ffffff;">
-                      <h2 style="text-align: center; font-size: 2.5em; margin-bottom: 40px;">تواصل معنا</h2>
-                      <div style="max-width: 600px; margin: 0 auto;">
-                        <form style="display: flex; flex-direction: column; gap: 20px;">
-                          <input type="text" placeholder="الاسم" style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 1em;">
-                          <input type="email" placeholder="البريد الإلكتروني" style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 1em;">
-                          <textarea placeholder="الرسالة" rows="5" style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 1em; resize: vertical;"></textarea>
-                          <button type="submit" style="padding: 15px 30px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer;">إرسال</button>
-                        </form>
-                      </div>
-                    </section>
-                  `
-                }
-              ]
-            }
-          },
-          canvas: {
-            styles: [
-              // Try multiple CDN sources for CSS
-              'https://cdn.jsdelivr.net/npm/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css',
-              'https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css',
-              'https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css'
-            ]
-          },
-          deviceManager: {
-            devices: [
-              { name: 'Desktop', width: '' },
-              { name: 'Tablet', width: '768px', widthMedia: '992px' },
-              { name: 'Mobile', width: '320px', widthMedia: '768px' }
-            ]
-          },
-          // Add default styles in case CSS fails to load
-          fromElement: true,
-          cssIcons: false,
-          noticeOnUnload: false,
-          allowScripts: 1,
-          allowImport: 1,
-          storageManager: { type: 0 },
-          showOffsets: 1,
-          autorender: 1
-        });
-
-        if (!editor) {
-          console.error('Failed to initialize GrapesJS editor');
-          setIsLoading(false);
-          return;
-        }
-
-        grapesEditorRef.current = editor;
-        console.log('GrapesJS editor initialized successfully');
-
-        // Load template content if available
-        try {
-          const templateContent = generateTemplateContent(foundTemplate);
-          if (templateContent && typeof templateContent === 'string') {
-            // Clear any existing content first
-            editor.runCommand('core:canvas-clear');
-            // Add the new content
-            editor.setComponents(templateContent);
-            console.log('Template content loaded successfully');
-          } else {
-            // Add default content if template is invalid
-            editor.setComponents('<h1>Welcome to GrapesJS Editor</h1><p>Start building your website!</p>');
-          }
         } catch (error) {
-          console.error('Error loading template content:', error);
-          // Add default content if template loading fails
-          editor.setComponents('<h1>Welcome to GrapesJS Editor</h1><p>Start building your website!</p>');
-        }
-
-        // Add event listeners
-        editor.on('storage:store', () => {
-          setHasChanges(true);
-        });
-
-        editor.on('component:update', () => {
-          setHasChanges(true);
-        });
-
-        // Handle editor errors
-        editor.on('error', (error: any) => {
-          console.error('GrapesJS editor error:', error);
-        });
-
-        setIsLoading(false);
-        console.log('GrapesJS setup completed');
-
-      } catch (error) {
-        console.error('Error initializing GrapesJS:', error);
-        setIsLoading(false);
-      }
-    };
-
-    if (templateId) {
-      // Wait for component to mount and DOM to be ready
-      let attempts = 0;
-      const maxAttempts = 20; // 20 * 50ms = 1 second max wait
-      
-      const checkAndLoad = () => {
-        const container = document.getElementById('gjs');
-        if (container) {
-          loadGrapesJS();
-        } else if (attempts < maxAttempts) {
-          attempts++;
-          setTimeout(checkAndLoad, 50);
-        } else {
-          console.error('Container #gjs not found after timeout');
+          console.error('Error loading GrapesJS:', error);
           setIsLoading(false);
         }
       };
-      
-      // Start checking after a short delay
-      setTimeout(checkAndLoad, 100);
-    }
 
+      const initializeEditor = () => {
+        try {
+          // Check for GrapesJS in multiple possible global variables
+          const grapesJS = (window as any).grapes || (window as any).GrapesJS || (window as any)['grapesjs'];
+          if (!grapesJS) {
+            console.error('GrapesJS not loaded');
+            console.log('Available globals:', Object.keys(window).filter(key => key.toLowerCase().includes('grape')));
+            setIsLoading(false);
+            return;
+          }
+
+          const foundTemplate = templates.find(t => t.id === templateId);
+          if (!foundTemplate) {
+            console.error('Template not found:', templateId);
+            setIsLoading(false);
+            return;
+          }
+
+          setTemplate(foundTemplate);
+
+          // Initialize GrapesJS editor with error handling
+          // Use the ref directly since we know it exists
+          const editor = grapesJS.init({
+            container: editorRef.current,
+            height: '100%',
+            width: '100%',
+            plugins: ['grapesjs-preset-webpage'],
+            pluginsOpts: {
+              'grapesjs-preset-webpage': {
+                blocksBasicOpts: {
+                  blocks: ['column1', 'column2', 'column3', 'column3-7', 'text', 'link', 'image', 'video'],
+                  flexGrid: 0
+                },
+                blocks: [
+                  {
+                    id: 'hero-section',
+                    label: 'Hero Section',
+                    content: `
+                      <section class="hero-section" style="padding: 100px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h1 style="font-size: 3em; margin-bottom: 20px;">مرحباً بك</h1>
+                        <p style="font-size: 1.2em; margin-bottom: 30px;">اكتشف منتجاتنا المميزة</p>
+                        <button style="padding: 15px 30px; background: white; color: #667eea; border: none; border-radius: 5px; font-size: 1em; cursor: pointer;">تسوق الآن</button>
+                      </section>
+                    `
+                  },
+                  {
+                    id: 'products-section',
+                    label: 'Products Section',
+                    content: `
+                      <section class="products-section" style="padding: 60px 20px; background: #f8f9fa;">
+                        <h2 style="text-align: center; font-size: 2.5em; margin-bottom: 40px;">منتجاتنا</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+                          <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <img src="https://via.placeholder.com/300x200" style="width: 100%; height: 200px; object-fit: cover; border-radius: 5px; margin-bottom: 15px;">
+                            <h3 style="font-size: 1.5em; margin-bottom: 10px;">منتج 1</h3>
+                            <p style="color: #666; margin-bottom: 15px;">وصف المنتج</p>
+                            <div style="font-size: 1.2em; font-weight: bold; color: #007bff;">$99</div>
+                          </div>
+                          <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <img src="https://via.placeholder.com/300x200" style="width: 100%; height: 200px; object-fit: cover; border-radius: 5px; margin-bottom: 15px;">
+                            <h3 style="font-size: 1.5em; margin-bottom: 10px;">منتج 2</h3>
+                            <p style="color: #666; margin-bottom: 15px;">وصف المنتج</p>
+                            <div style="font-size: 1.2em; font-weight: bold; color: #007bff;">$149</div>
+                          </div>
+                          <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <img src="https://via.placeholder.com/300x200" style="width: 100%; height: 200px; object-fit: cover; border-radius: 5px; margin-bottom: 15px;">
+                            <h3 style="font-size: 1.5em; margin-bottom: 10px;">منتج 3</h3>
+                            <p style="color: #666; margin-bottom: 15px;">وصف المنتج</p>
+                            <div style="font-size: 1.2em; font-weight: bold; color: #007bff;">$199</div>
+                          </div>
+                        </div>
+                      </section>
+                    `
+                  }
+                ]
+              }
+            },
+            canvas: {
+              styles: [
+                // Try multiple CDN sources for CSS
+                'https://cdn.jsdelivr.net/npm/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css',
+                'https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css',
+                'https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css'
+              ]
+            },
+            deviceManager: {
+              devices: [
+                { name: 'Desktop', width: '' },
+                { name: 'Tablet', width: '768px', widthMedia: '992px' },
+                { name: 'Mobile', width: '320px', widthMedia: '768px' }
+              ]
+            },
+            // Add default styles in case CSS fails to load
+            fromElement: true,
+            cssIcons: false,
+            noticeOnUnload: false,
+            allowScripts: 1,
+            allowImport: 1,
+            storageManager: { type: 0 },
+            showOffsets: 1,
+            autorender: 1
+          });
+
+          if (!editor) {
+            console.error('Failed to initialize GrapesJS editor');
+            setIsLoading(false);
+            return;
+          }
+
+          grapesEditorRef.current = editor;
+          console.log('GrapesJS editor initialized successfully');
+
+          // Load template content if available
+          try {
+            const templateContent = generateTemplateContent(foundTemplate);
+            if (templateContent && typeof templateContent === 'string') {
+              // Clear any existing content first
+              editor.runCommand('core:canvas-clear');
+              // Add the new content
+              editor.setComponents(templateContent);
+              console.log('Template content loaded successfully');
+            } else {
+              // Add default content if template is invalid
+              editor.setComponents('<h1>Welcome to GrapesJS Editor</h1><p>Start building your website!</p>');
+            }
+          } catch (error) {
+            console.error('Error loading template content:', error);
+            // Add default content if template loading fails
+            editor.setComponents('<h1>Welcome to GrapesJS Editor</h1><p>Start building your website!</p>');
+          }
+
+          // Add event listeners
+          editor.on('storage:store', () => {
+            setHasChanges(true);
+          });
+
+          editor.on('component:update', () => {
+            setHasChanges(true);
+          });
+
+          // Handle editor errors
+          editor.on('error', (error: any) => {
+            console.error('GrapesJS editor error:', error);
+          });
+
+          setIsLoading(false);
+          console.log('GrapesJS setup completed');
+
+        } catch (error) {
+          console.error('Error initializing GrapesJS:', error);
+          setIsLoading(false);
+        }
+      };
+
+      loadGrapesJS();
+    }
+  }, [templateId]);
+
+  useEffect(() => {
     return () => {
       // Cleanup
       if (grapesEditorRef.current) {
         grapesEditorRef.current.destroy();
       }
     };
-  }, [templateId]);
+  }, []);
 
   const generateTemplateContent = (template: any) => {
     // Convert template sections to HTML for GrapesJS
