@@ -270,16 +270,19 @@ const GrapesEditor = () => {
     };
 
     if (templateId) {
-      // Delay loading to ensure DOM is ready
-      setTimeout(() => {
+      // Wait for component to mount and DOM to be ready
+      const checkAndLoad = () => {
         const container = document.getElementById('gjs');
         if (container) {
           loadGrapesJS();
         } else {
-          // Retry after a short delay
-          setTimeout(loadGrapesJS, 100);
+          // Keep checking until container is found
+          setTimeout(checkAndLoad, 50);
         }
-      }, 100);
+      };
+      
+      // Start checking after a short delay
+      setTimeout(checkAndLoad, 100);
     }
 
     return () => {
