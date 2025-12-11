@@ -362,7 +362,7 @@ const GrapesEditor = () => {
             <section style="padding: 60px 20px; background: white;">
               <h2 style="text-align: center; font-size: 2.5em; margin-bottom: 40px;">Gallery</h2>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
-                ${Array.from({length: 8}, (_, i) => `
+                ${Array.from({length: 8}, () => `
                   <img src="https://via.placeholder.com/400x300" style="width: 100%; height: 300px; object-fit: cover; border-radius: 10px;">
                 `).join('')}
               </div>
