@@ -24,6 +24,9 @@ import Notifications from "./pages/notification/Notifications";
 import NotificationDetails from "./pages/notification/NotificationDetails";
 import UserProfile from "./pages/profile/UserProfile";
 import Settings from "./pages/settings/Settings";
+import TemplatePreview from "./pages/editor/TemplatePreview";
+import GrapesEditor from "./pages/editor/GrapesEditor";
+import TemplateGallery from "./pages/editor/TemplateGallery";
 
 function App() {
   return (
@@ -88,6 +91,11 @@ function App() {
           <Route path=":id" element={<DiscountDetails />} />
           <Route path="add" element={<AddDiscount />} />
         </Route>
+
+        {/* Editor routes */}
+        <Route path="/editor/templates" element={<TemplateGallery />} />
+        <Route path="/editor/preview/:templateId" element={<TemplatePreview />} />
+        <Route path="/editor/edit/:templateId" element={<GrapesEditor />} />
       </Route>
     </Routes>
   );

@@ -9,6 +9,8 @@ import {
   User,
   Users,
   Users2,
+  Edit,
+  Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +69,12 @@ const Sidebar = ({}: Props) => {
       label: "الملف الشخصي",
       path: "/profile",
       icon: User,
+    },
+   
+    {
+      label: "معرض القوالب",
+      path: "/editor/templates",
+      icon: Store,
     },
   ];
 
