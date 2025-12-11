@@ -271,13 +271,19 @@ const GrapesEditor = () => {
 
     if (templateId) {
       // Wait for component to mount and DOM to be ready
+      let attempts = 0;
+      const maxAttempts = 20; // 20 * 50ms = 1 second max wait
+      
       const checkAndLoad = () => {
         const container = document.getElementById('gjs');
         if (container) {
           loadGrapesJS();
-        } else {
-          // Keep checking until container is found
+        } else if (attempts < maxAttempts) {
+          attempts++;
           setTimeout(checkAndLoad, 50);
+        } else {
+          console.error('Container #gjs not found after timeout');
+          setIsLoading(false);
         }
       };
       
