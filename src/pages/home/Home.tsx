@@ -343,7 +343,7 @@ const Home = () => {
             </button>
             <button
               onClick={() => navigate('/editor/templates')}
-              className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="flex items-center gap-2 px-6 py-3 bg-white border border-transparent text-[var(--input)] rounded-lg hover:bg-slate-50 transition-all duration-200 shadow-sm hover:shadow-md"
             >
               <Edit className="w-5 h-5" />
               محرر القوالب
