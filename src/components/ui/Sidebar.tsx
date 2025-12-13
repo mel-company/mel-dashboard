@@ -10,10 +10,16 @@ import {
   Users,
   Users2,
   Store,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "./button";
 
-const Sidebar = () => {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+const Sidebar = ({ onClose }: SidebarProps) => {
   const location = useLocation();
 
   const navItems = [
@@ -77,14 +83,26 @@ const Sidebar = () => {
 
   return (
     <div className="flex h-full flex-col pt-[35px] pb-[35px] pl-[2px] pr-[2px] mt-0 mb-0 bg-sidebar">
-      <div className="mb-8 px-2 flex items-center gap-2">
-        <div className="w-8 h-8 bg-cyan rounded-full"></div>
-        <h2 className="text-lg font-semibold text-sidebar-foreground">
-          المشرق الجديد
-        </h2>
+      <div className="mb-8 px-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-cyan rounded-full"></div>
+          <h2 className="text-lg font-semibold text-sidebar-foreground">
+            المشرق الجديد
+          </h2>
+        </div>
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="lg:hidden"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        )}
       </div>
       <div className="flex flex-col gap-2"></div>
-      <nav className="flex flex-1 flex-col justify-start items-start gap-[11px] pt-0 pb-0">
+      <nav className="flex flex-1 flex-col justify-start items-start gap-[11px] pt-0 pb-0 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -95,6 +113,7 @@ const Sidebar = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={() => onClose?.()}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors w-full",
                 isActive

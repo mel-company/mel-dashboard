@@ -21,9 +21,7 @@ import {
   FileText,
 } from "lucide-react";
 
-type Props = {};
-
-const Customers = ({}: Props) => {
+const Customers = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Get order count for a customer
@@ -42,8 +40,8 @@ const Customers = ({}: Props) => {
   return (
     <div className="space-y-6">
       {/* Search and Add Customer Section */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-full sm:max-w-md">
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
@@ -53,9 +51,10 @@ const Customers = ({}: Props) => {
             className="w-full text-right rounded-md border border-input bg-background py-2 pr-10 pl-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
           />
         </div>
-        <Button className="gap-2" onClick={() => {}}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
           <Plus className="size-4" />
-          إضافة عميل
+          <span className="hidden sm:inline">إضافة عميل</span>
+          <span className="sm:hidden">إضافة</span>
         </Button>
       </div>
 
@@ -94,7 +93,9 @@ const Customers = ({}: Props) => {
                 const orderCount = getOrderCount(customer.id);
                 return (
                   <TableRow key={customer.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">#{customer.id}</TableCell>
+                    <TableCell className="font-medium">
+                      #{customer.id}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <User className="size-4 text-muted-foreground" />

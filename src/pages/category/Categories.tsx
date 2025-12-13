@@ -54,8 +54,8 @@ const Categories = ({}: Props) => {
   return (
     <div className="space-y-6">
       {/* Search and Add Category Section */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-full sm:max-w-md">
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
@@ -65,9 +65,10 @@ const Categories = ({}: Props) => {
             className="w-full text-right rounded-md border border-input bg-background py-2 pr-10 pl-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
           />
         </div>
-        <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => setIsDialogOpen(true)}>
           <Plus className="size-4" />
-          إضافة فئة
+          <span className="hidden sm:inline">إضافة فئة</span>
+          <span className="sm:hidden">إضافة</span>
         </Button>
       </div>
 

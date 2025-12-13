@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
@@ -13,13 +13,36 @@ import {
   Activity,
   DollarSign,
 } from "lucide-react";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  RadialLinearScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from "chart.js";
+import { Chart, Bar, Line, Doughnut, Radar, PolarArea } from "react-chartjs-2";
 
-// Declare ApexCharts globally
-declare global {
-  interface Window {
-    ApexCharts: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  }
-}
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  RadialLinearScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 // Dummy data
 const dmy_orders = [
@@ -94,35 +117,70 @@ const dmy_discounts = [
 const Home = () => {
   const navigate = useNavigate();
 
-  const initCharts = useCallback(() => {
-    // Detect theme
-    const isDark = document.documentElement.classList.contains("dark");
-    const textColor = isDark ? "#e5e7eb" : "#6b7280";
-    const gridColor = isDark ? "#374151" : "#e5e7eb";
+  // Detect theme
+  const isDark = useMemo(
+    () => document.documentElement.classList.contains("dark"),
+    []
+  );
+  const textColor = isDark ? "#e5e7eb" : "#6b7280";
+  const gridColor = isDark ? "#374151" : "#e5e7eb";
+  const bgColor = isDark ? "#1f2937" : "#ffffff";
 
-    // Clear any existing charts first
-    const chartIds = [
-      "#orderStatusChart",
-      "#productRatingsChart",
-      "#brandChart",
-      "#locationChart",
-      "#salesChart",
-      "#priceChart",
-      "#roleChart",
-      "#discountChart",
-      "#timelineChart",
-      "#heatmapChart",
-    ];
+  // Chart.js default options
+  const chartOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: textColor,
+            font: {
+              family: "Cairo, sans-serif",
+            },
+          },
+        },
+        tooltip: {
+          backgroundColor: bgColor,
+          titleColor: textColor,
+          bodyColor: textColor,
+          borderColor: gridColor,
+          borderWidth: 1,
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: textColor,
+            font: {
+              family: "Cairo, sans-serif",
+            },
+          },
+          grid: {
+            color: gridColor,
+            borderDash: [3, 3],
+          },
+        },
+        y: {
+          ticks: {
+            color: textColor,
+            font: {
+              family: "Cairo, sans-serif",
+            },
+          },
+          grid: {
+            color: gridColor,
+            borderDash: [3, 3],
+          },
+        },
+      },
+    }),
+    [textColor, gridColor, bgColor]
+  );
 
-    chartIds.forEach((id) => {
-      const element = document.querySelector(id);
-      if (element) {
-        element.innerHTML = "";
-      }
-    });
-
-    // Order Status Chart
-    const orderStatusData = [
+  // Order Status Chart Data
+  const orderStatusData = useMemo(() => {
+    const statusCounts = [
       {
         status: "Pending",
         count: dmy_orders.filter((o) => o.status === "pending").length,
@@ -141,204 +199,205 @@ const Home = () => {
       },
     ];
 
-    const orderChart = new (window as any).ApexCharts( // eslint-disable-line @typescript-eslint/no-explicit-any
-      document.querySelector("#orderStatusChart"),
-      {
-        series: [
-          {
-            name: "Orders",
-            data: orderStatusData.map((d) => d.count),
-          },
-        ],
-        chart: {
-          type: "bar",
-          height: 300,
-          toolbar: { show: false },
-          fontFamily: "inherit",
+    return {
+      labels: statusCounts.map((d) => d.status),
+      datasets: [
+        {
+          label: "الطلبات",
+          data: statusCounts.map((d) => d.count),
+          backgroundColor: "#3b82f6",
+          borderRadius: 8,
+          borderSkipped: false,
         },
-        colors: ["#3b82f6"],
-        plotOptions: {
-          bar: {
-            borderRadius: 8,
-            columnWidth: "60%",
-            dataLabels: { position: "top" },
-          },
-        },
-        dataLabels: {
-          enabled: true,
-          offsetY: -25,
-          style: { fontSize: "12px", colors: [textColor] },
-        },
-        xaxis: {
-          categories: orderStatusData.map((d) => d.status),
-          labels: { style: { colors: textColor, fontSize: "12px" } },
-        },
-        yaxis: {
-          labels: { style: { colors: textColor, fontSize: "12px" } },
-        },
-        grid: {
-          borderColor: gridColor,
-          strokeDashArray: 3,
-        },
-        theme: {
-          mode: isDark ? "dark" : "light",
-        },
-      }
-    );
-    orderChart.render();
+      ],
+    };
+  }, []);
 
-    // Product Ratings Chart
+  // Product Ratings Chart Data
+  const productRatingsData = useMemo(() => {
     const productData = dmy_products.slice(0, 6).map((p) => ({
       name: p.title.split(" ").slice(0, 2).join(" "),
       rating: p.rate,
       price: p.price,
     }));
 
-    const ratingChart = new (window as any).ApexCharts( // eslint-disable-line @typescript-eslint/no-explicit-any
-      document.querySelector("#productRatingsChart"),
-      {
-        series: [
-          {
-            name: "Rating",
-            type: "column",
-            data: productData.map((p) => p.rating),
-          },
-          {
-            name: "Price",
-            type: "line",
-            data: productData.map((p) => p.price),
-          },
-        ],
-        chart: {
-          height: 300,
-          type: "line",
-          toolbar: { show: false },
-          fontFamily: "inherit",
+    return {
+      labels: productData.map((p) => p.name),
+      datasets: [
+        {
+          label: "التقييم",
+          data: productData.map((p) => p.rating),
+          backgroundColor: "#10b981",
+          type: "bar" as const,
+          yAxisID: "y",
+          borderRadius: 6,
         },
-        colors: ["#10b981", "#f59e0b"],
-        stroke: { width: [0, 3], curve: "smooth" },
-        plotOptions: {
-          bar: { borderRadius: 6, columnWidth: "50%" },
+        {
+          label: "السعر ($)",
+          data: productData.map((p) => p.price),
+          borderColor: "#f59e0b",
+          backgroundColor: "transparent",
+          type: "line" as const,
+          yAxisID: "y1",
+          tension: 0.4,
         },
-        dataLabels: { enabled: false },
-        xaxis: {
-          categories: productData.map((p) => p.name),
-          labels: {
-            rotate: -45,
-            style: { colors: textColor, fontSize: "11px" },
-          },
-        },
-        yaxis: [
-          {
-            title: { text: "Rating", style: { color: "#10b981" } },
-            labels: { style: { colors: textColor } },
-          },
-          {
-            opposite: true,
-            title: { text: "Price ($)", style: { color: "#f59e0b" } },
-            labels: { style: { colors: textColor } },
-          },
-        ],
-        legend: { position: "top", horizontalAlign: "left" },
-        grid: { borderColor: gridColor, strokeDashArray: 3 },
-        theme: {
-          mode: isDark ? "dark" : "light",
-        },
-      }
-    );
-    ratingChart.render();
+      ],
+    } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  }, []);
 
-    // Brand Distribution Donut
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const brandData: any[] = dmy_products.reduce((acc: any[], product) => {
-      const brand = product.properties.brand;
-      const existing = acc.find((item) => item.brand === brand);
-      if (existing) existing.count++;
-      else acc.push({ brand, count: 1 });
-      return acc;
-    }, []);
-
-    const brandChart = new (window as any).ApexCharts( // eslint-disable-line @typescript-eslint/no-explicit-any
-      document.querySelector("#brandChart"),
-      {
-        series: brandData.map((d) => d.count),
-        chart: { type: "donut", height: 280, fontFamily: "inherit" },
-        labels: brandData.map((d) => d.brand),
-        colors: [
-          "#3b82f6",
-          "#10b981",
-          "#f59e0b",
-          "#ef4444",
-          "#8b5cf6",
-          "#ec4899",
-        ],
-        plotOptions: {
-          pie: {
-            donut: {
-              size: "65%",
-              labels: {
-                show: true,
-                total: {
-                  show: true,
-                  label: "Total Products",
-                  formatter: () => dmy_products.length,
-                },
+  const productRatingsOptions = useMemo(
+    () =>
+      ({
+        ...chartOptions,
+        scales: {
+          ...chartOptions.scales,
+          y: {
+            ...chartOptions.scales.y,
+            type: "linear" as const,
+            position: "left" as const,
+            title: {
+              display: true,
+              text: "التقييم",
+              color: "#10b981",
+            },
+          },
+          y1: {
+            type: "linear" as const,
+            position: "right" as const,
+            title: {
+              display: true,
+              text: "السعر ($)",
+              color: "#f59e0b",
+            },
+            ticks: {
+              color: textColor,
+              font: {
+                family: "Cairo, sans-serif",
               },
+            },
+            grid: {
+              drawOnChartArea: false,
             },
           },
         },
-        legend: { position: "bottom" },
-        dataLabels: {
-          formatter: (val: any) => Math.round(val) + "%", // eslint-disable-line @typescript-eslint/no-explicit-any
-        },
-        theme: {
-          mode: isDark ? "dark" : "light",
-        },
-      }
+      } as any), // eslint-disable-line @typescript-eslint/no-explicit-any
+    [chartOptions, textColor]
+  );
+
+  // Brand Distribution Chart Data
+  const brandData = useMemo(() => {
+    const brandCounts = dmy_products.reduce(
+      (acc: { brand: string; count: number }[], product) => {
+        const brand = product.properties.brand;
+        const existing = acc.find((item) => item.brand === brand);
+        if (existing) existing.count++;
+        else acc.push({ brand, count: 1 });
+        return acc;
+      },
+      []
     );
-    brandChart.render();
 
-    // User Locations Radial
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const locationData: any[] = dmy_users.reduce((acc: any[], user) => {
-      const location = user.location.split(",")[0];
-      const existing = acc.find((item) => item.location === location);
-      if (existing) existing.users++;
-      else acc.push({ location, users: 1 });
-      return acc;
-    }, []);
+    return {
+      labels: brandCounts.map((d) => d.brand),
+      datasets: [
+        {
+          label: "المنتجات",
+          data: brandCounts.map((d) => d.count),
+          backgroundColor: [
+            "#3b82f6",
+            "#10b981",
+            "#f59e0b",
+            "#ef4444",
+            "#8b5cf6",
+            "#ec4899",
+          ],
+          borderWidth: 0,
+        },
+      ],
+    };
+  }, []);
 
-    const locationChart = new (window as any).ApexCharts( // eslint-disable-line @typescript-eslint/no-explicit-any
-      document.querySelector("#locationChart"),
-      {
-        series: locationData.map((d) => (d.users / dmy_users.length) * 100),
-        chart: { type: "radialBar", height: 300, fontFamily: "inherit" },
-        plotOptions: {
-          radialBar: {
-            offsetY: 0,
-            startAngle: 0,
-            endAngle: 270,
-            hollow: { margin: 5, size: "30%", background: "transparent" },
-            dataLabels: {
-              name: { fontSize: "14px" },
-              value: {
-                fontSize: "16px",
-                formatter: (val: any) => Math.round(val) + "%", // eslint-disable-line @typescript-eslint/no-explicit-any
-              },
+  const brandChartOptions = useMemo(
+    () => ({
+      ...chartOptions,
+      cutout: "65%",
+      plugins: {
+        ...chartOptions.plugins,
+        legend: {
+          ...chartOptions.plugins.legend,
+          position: "bottom" as const,
+        },
+      },
+    }),
+    [chartOptions]
+  );
+
+  // User Locations Chart Data (using Radar)
+  const locationData = useMemo(() => {
+    const locationCounts = dmy_users.reduce(
+      (acc: { location: string; users: number }[], user) => {
+        const location = user.location.split(",")[0];
+        const existing = acc.find((item) => item.location === location);
+        if (existing) existing.users++;
+        else acc.push({ location, users: 1 });
+        return acc;
+      },
+      []
+    );
+
+    return {
+      labels: locationCounts.map((d) => d.location),
+      datasets: [
+        {
+          label: "المستخدمين",
+          data: locationCounts.map((d) => (d.users / dmy_users.length) * 100),
+          backgroundColor: "rgba(59, 130, 246, 0.2)",
+          borderColor: "#3b82f6",
+          pointBackgroundColor: "#3b82f6",
+          pointBorderColor: "#fff",
+          pointHoverBackgroundColor: "#fff",
+          pointHoverBorderColor: "#3b82f6",
+        },
+      ],
+    };
+  }, []);
+
+  const locationChartOptions = useMemo(
+    () => ({
+      ...chartOptions,
+      scales: {
+        r: {
+          ticks: {
+            color: textColor,
+            font: {
+              family: "Cairo, sans-serif",
+            },
+            backdropColor: "transparent",
+          },
+          grid: {
+            color: gridColor,
+          },
+          pointLabels: {
+            color: textColor,
+            font: {
+              family: "Cairo, sans-serif",
             },
           },
         },
-        colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"],
-        labels: locationData.map((d) => d.location),
-        legend: { show: true, position: "bottom" },
-        theme: {
-          mode: isDark ? "dark" : "light",
+      },
+      plugins: {
+        ...chartOptions.plugins,
+        legend: {
+          ...chartOptions.plugins.legend,
+          position: "bottom" as const,
         },
-      }
-    );
-    locationChart.render();
+      },
+    }),
+    [chartOptions, textColor, gridColor]
+  );
 
-    // Monthly Sales Area Chart
+  // Monthly Sales Chart Data
+  const salesData = useMemo(() => {
     const monthlySalesData = [
       { month: "Jan", sales: 4500, orders: 12 },
       { month: "Feb", sales: 5200, orders: 15 },
@@ -348,54 +407,31 @@ const Home = () => {
       { month: "Jun", sales: 7200, orders: 22 },
     ];
 
-    const salesChart = new (window as any).ApexCharts( // eslint-disable-line @typescript-eslint/no-explicit-any
-      document.querySelector("#salesChart"),
-      {
-        series: [
-          { name: "Sales ($)", data: monthlySalesData.map((d) => d.sales) },
-          { name: "Orders", data: monthlySalesData.map((d) => d.orders * 100) },
-        ],
-        chart: {
-          type: "area",
-          height: 300,
-          toolbar: { show: false },
-          fontFamily: "inherit",
+    return {
+      labels: monthlySalesData.map((d) => d.month),
+      datasets: [
+        {
+          label: "المبيعات ($)",
+          data: monthlySalesData.map((d) => d.sales),
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
+          fill: true,
+          tension: 0.4,
         },
-        colors: ["#3b82f6", "#10b981"],
-        dataLabels: { enabled: false },
-        stroke: { curve: "smooth", width: 2 },
-        fill: {
-          type: "gradient",
-          gradient: {
-            shadeIntensity: 1,
-            opacityFrom: 0.5,
-            opacityTo: 0.1,
-          },
+        {
+          label: "الطلبات",
+          data: monthlySalesData.map((d) => d.orders * 100),
+          borderColor: "#10b981",
+          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          fill: true,
+          tension: 0.4,
         },
-        xaxis: {
-          categories: monthlySalesData.map((d) => d.month),
-          labels: { style: { colors: textColor } },
-        },
-        yaxis: {
-          labels: { style: { colors: textColor } },
-        },
-        legend: { position: "top", horizontalAlign: "left" },
-        grid: { borderColor: gridColor, strokeDashArray: 3 },
-        theme: {
-          mode: isDark ? "dark" : "light",
-        },
-        tooltip: {
-          y: {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            formatter: (val: any, { seriesIndex }: any) =>
-              seriesIndex === 0 ? "$" + val : Math.round(val / 100) + " orders",
-          },
-        },
-      }
-    );
-    salesChart.render();
+      ],
+    };
+  }, []);
 
-    // Price Range Polar Chart
+  // Price Range Chart Data
+  const priceData = useMemo(() => {
     const priceRangeData = [
       {
         range: "$0-25",
@@ -409,53 +445,30 @@ const Home = () => {
         range: "$51-75",
         count: dmy_products.filter((p) => p.price > 50 && p.price <= 75).length,
       },
-      { range: "$76+", count: dmy_products.filter((p) => p.price > 75).length },
+      {
+        range: "$76+",
+        count: dmy_products.filter((p) => p.price > 75).length,
+      },
     ];
 
-    const priceChart = new (window as any).ApexCharts( // eslint-disable-line @typescript-eslint/no-explicit-any
-      document.querySelector("#priceChart"),
-      {
-        series: priceRangeData.map((d) => d.count),
-        chart: { type: "polarArea", height: 300, fontFamily: "inherit" },
-        labels: priceRangeData.map((d) => d.range),
-        colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"],
-        stroke: { colors: ["#fff"] },
-        fill: { opacity: 0.8 },
-        legend: { position: "bottom" },
-        plotOptions: {
-          polarArea: {
-            rings: { strokeWidth: 1, strokeColor: gridColor },
-            spokes: { strokeWidth: 1, strokeColor: gridColor },
-          },
+    return {
+      labels: priceRangeData.map((d) => d.range),
+      datasets: [
+        {
+          label: "المنتجات",
+          data: priceRangeData.map((d) => d.count),
+          backgroundColor: [
+            "rgba(59, 130, 246, 0.8)",
+            "rgba(16, 185, 129, 0.8)",
+            "rgba(245, 158, 11, 0.8)",
+            "rgba(239, 68, 68, 0.8)",
+          ],
+          borderColor: "#fff",
+          borderWidth: 2,
         },
-        theme: {
-          mode: isDark ? "dark" : "light",
-        },
-      }
-    );
-    priceChart.render();
+      ],
+    };
   }, []);
-
-  useEffect(() => {
-    // Load ApexCharts
-    const script = document.createElement("script");
-    script.src =
-      "https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.1/apexcharts.min.js";
-    script.async = true;
-    script.onload = () => {
-      initCharts();
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup charts
-      const chartElements = document.querySelectorAll('[id$="Chart"]');
-      chartElements.forEach((element) => {
-        const chart = (element as any)._chart; // eslint-disable-line @typescript-eslint/no-explicit-any
-        chart?.destroy?.();
-      });
-    };
-  }, [initCharts]);
 
   const statsCards = [
     {
@@ -627,7 +640,9 @@ const Home = () => {
                 </div>
               </div>
             </div>
-            <div id="orderStatusChart"></div>
+            <div className="h-[300px]">
+              <Bar data={orderStatusData} options={chartOptions} />
+            </div>
           </div>
 
           {/* Product Ratings Chart */}
@@ -647,7 +662,13 @@ const Home = () => {
                 </div>
               </div>
             </div>
-            <div id="productRatingsChart"></div>
+            <div className="h-[300px]">
+              <Chart
+                type="bar"
+                data={productRatingsData}
+                options={productRatingsOptions}
+              />
+            </div>
           </div>
 
           {/* Brand Distribution Chart */}
@@ -667,7 +688,9 @@ const Home = () => {
                 </div>
               </div>
             </div>
-            <div id="brandChart"></div>
+            <div className="h-[300px]">
+              <Doughnut data={brandData} options={brandChartOptions} />
+            </div>
           </div>
 
           {/* User Locations Chart */}
@@ -687,7 +710,9 @@ const Home = () => {
                 </div>
               </div>
             </div>
-            <div id="locationChart"></div>
+            <div className="h-[300px]">
+              <Radar data={locationData} options={locationChartOptions} />
+            </div>
           </div>
 
           {/* Price Ranges Chart */}
@@ -707,7 +732,9 @@ const Home = () => {
                 </div>
               </div>
             </div>
-            <div id="priceChart"></div>
+            <div className="h-[300px]">
+              <PolarArea data={priceData} options={chartOptions} />
+            </div>
           </div>
 
           {/* Monthly Sales Chart */}
@@ -727,7 +754,9 @@ const Home = () => {
                 </div>
               </div>
             </div>
-            <div id="salesChart"></div>
+            <div className="h-[300px]">
+              <Line data={salesData} options={chartOptions} />
+            </div>
           </div>
         </div>
       </div>
