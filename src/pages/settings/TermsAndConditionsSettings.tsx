@@ -11,15 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  FileText,
-  Shield,
-  Download,
-  Upload,
-  Save,
-  Eye,
-  ExternalLink,
-} from "lucide-react";
+import { FileText, Shield, Upload, Save } from "lucide-react";
 import { toast } from "sonner";
 
 type Props = {};
