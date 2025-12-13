@@ -49,13 +49,13 @@ const AddProduct = ({}: Props) => {
         <Card className="gap-2">
           <CardContent className="spacey-4">
             <div className="flex gap-x-2 mb-4">
-              <div className="w-32 h-32 flex items-center justify-center bg-gray-200 rounded-lg">
-                <Image className="w-12 h-12 object-cover text-gray-400" />
+              <div className="w-32 h-32 flex items-center justify-center bg-muted rounded-lg">
+                <Image className="w-12 h-12 object-cover text-muted-foreground" />
               </div>
               <div className="space-y-2 flex items-center">
                 <div>
                   <h3 className="text-xl font-bold">صورة المنتج</h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     يمكنك إضافة صورة للمنتج من خلال التحديد من الملفات المحلية
                   </p>
                 </div>
@@ -175,7 +175,7 @@ const AddProduct = ({}: Props) => {
                       key={category.id}
                       // type="button"
                       onClick={() => toggleCategory(category.id)}
-                      className={`relative p-4 bg-white rounded-lg border-2 text-right transition-all hover:shadow-md ${
+                      className={`relative p-4 bg-card rounded-lg border-2 border-border text-right transition-all hover:shadow-md ${
                         isSelected
                           ? "border-primary bg-primary/5"
                           : "border-input bg-card hover:border-ring"

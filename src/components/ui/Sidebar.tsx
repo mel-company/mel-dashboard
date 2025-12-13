@@ -13,9 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Props = {};
-
-const Sidebar = ({}: Props) => {
+const Sidebar = () => {
   const location = useLocation();
 
   const navItems = [
@@ -69,7 +67,7 @@ const Sidebar = ({}: Props) => {
       path: "/profile",
       icon: User,
     },
-   
+
     {
       label: "معرض القوالب",
       path: "/editor/templates",
@@ -78,13 +76,14 @@ const Sidebar = ({}: Props) => {
   ];
 
   return (
-    <div className="flex h-full flex-col pt-[35px] pb-[35px] pl-[2px] pr-[2px] mt-0 mb-0 bg-white">
+    <div className="flex h-full flex-col pt-[35px] pb-[35px] pl-[2px] pr-[2px] mt-0 mb-0 bg-sidebar">
       <div className="mb-8 px-2 flex items-center gap-2">
         <div className="w-8 h-8 bg-cyan rounded-full"></div>
         <h2 className="text-lg font-semibold text-sidebar-foreground">
           المشرق الجديد
         </h2>
       </div>
+      <div className="flex flex-col gap-2"></div>
       <nav className="flex flex-1 flex-col justify-start items-start gap-[11px] pt-0 pb-0">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -122,5 +121,4 @@ const Sidebar = ({}: Props) => {
     </div>
   );
 };
-
 export default Sidebar;

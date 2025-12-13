@@ -1,23 +1,24 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 @font-face {
   font-family: "Cairo";
-  src: url("src/assets/fonts/Cairo-Regular.ttf") format("ttf");
+  src: url("./assets/fonts/Cairo-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
   font-family: "Cairo";
-  src: url("/src/assets/fonts/Cairo-Medium.ttf") format("ttf");
+  src: url("./assets/fonts/Cairo-Medium.ttf") format("truetype");
   font-weight: 600;
   font-style: normal;
 }
 
 @font-face {
   font-family: "Cairo";
-  src: url("/src/assets/fonts/Cairo-Bold.ttf") format("ttf");
+  src: url("./assets/fonts/Cairo-Bold.ttf") format("truetype");
   font-weight: 800;
   font-style: normal;
 }
@@ -31,23 +32,22 @@ html {
   direction: rtl;
 }
 
-
 @custom-variant dark (&:is(.dark *));
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: cairo, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  color-scheme: light dark;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --font-family: "Cairo", sans-serif;
+  --font-family-arabic: "Cairo", sans-serif;
+  --font-family-english: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -83,60 +83,6 @@ html {
 
   --cyan: oklch(0.7203 0.1177 201.97);
   --dark-blue: oklch(0.1889 0.086 270.14);
-} 
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
 }
 
 @theme inline {
@@ -181,7 +127,8 @@ button:focus-visible {
   --color-dark-blue: var(--dark-blue);
 }
 
-/* .dark {
+.dark {
+  color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -213,7 +160,7 @@ button:focus-visible {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-} */
+}
 
 @layer base {
   * {
@@ -226,7 +173,7 @@ button:focus-visible {
 
 /* Custom prose styles for TipTap editor */
 .prose {
-  color: #0f172a;
+  color: var(--foreground);
   max-width: none;
 }
 
@@ -260,7 +207,8 @@ button:focus-visible {
   line-height: 1.75;
 }
 
-.prose ul, .prose ol {
+.prose ul,
+.prose ol {
   margin-top: 1em;
   margin-bottom: 1em;
   padding-left: 2em;
@@ -272,24 +220,24 @@ button:focus-visible {
 }
 
 .prose blockquote {
-  border-right: 4px solid #e2e8f0;
+  border-right: 4px solid var(--border);
   padding-right: 1em;
   margin: 1.5em 0;
   font-style: italic;
-  color: #64748b;
+  color: var(--muted-foreground);
 }
 
 .prose code {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--muted);
+  color: var(--foreground);
   padding: 0.125em 0.25em;
   border-radius: 0.25rem;
   font-size: 0.875em;
 }
 
 .prose pre {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--muted);
+  color: var(--foreground);
   padding: 1em;
   border-radius: 0.5rem;
   overflow-x: auto;
@@ -297,12 +245,12 @@ button:focus-visible {
 }
 
 .prose a {
-  color: #3b82f6;
+  color: var(--primary);
   text-decoration: underline;
 }
 
 .prose a:hover {
-  color: #3b82f6;
+  color: var(--primary);
   text-decoration: none;
 }
 
@@ -319,19 +267,20 @@ button:focus-visible {
   margin: 1.5em 0;
 }
 
-.prose th, .prose td {
-  border: 1px solid #e2e8f0;
+.prose th,
+.prose td {
+  border: 1px solid var(--border);
   padding: 0.5em 1em;
   text-align: right;
 }
 
 .prose th {
-  background-color: #f1f5f9;
+  background-color: var(--muted);
   font-weight: 600;
 }
 
 .prose hr {
   border: none;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border);
   margin: 2em 0;
 }

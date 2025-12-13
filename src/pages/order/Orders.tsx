@@ -22,9 +22,7 @@ import {
   FileText,
 } from "lucide-react";
 
-type Props = {};
-
-const Orders = ({}: Props) => {
+const Orders = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Get user by ID
@@ -202,7 +200,7 @@ const Orders = ({}: Props) => {
                         <span>{formatDate(order.created_at)}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right is-rtl direction-rtl">
                       <Link to={`/orders/${order.id}`}>
                         <Button variant="outline" size="sm" className="gap-2">
                           <FileText className="size-4" />

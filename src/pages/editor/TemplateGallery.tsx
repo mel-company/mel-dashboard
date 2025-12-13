@@ -1,17 +1,25 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { templates } from '../../data/templates';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Eye, Edit, Store, ShoppingBag } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { templates } from "../../data/templates";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { Eye, Edit, Store, ShoppingBag } from "lucide-react";
 
 const TemplateGallery = () => {
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'restaurant' | 'ecommerce'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<
+    "all" | "restaurant" | "ecommerce"
+  >("all");
   const navigate = useNavigate();
 
-  const filteredTemplates = templates.filter(template => 
-    selectedCategory === 'all' || template.category === selectedCategory
+  const filteredTemplates = templates.filter(
+    (template) =>
+      selectedCategory === "all" || template.category === selectedCategory
   );
 
   const handlePreview = (templateId: string) => {
@@ -23,15 +31,21 @@ const TemplateGallery = () => {
   };
 
   const getCategoryIcon = (category: string) => {
-    return category === 'restaurant' ? <Store className="w-4 h-4" /> : <ShoppingBag className="w-4 h-4" />;
+    return category === "restaurant" ? (
+      <Store className="w-4 h-4" />
+    ) : (
+      <ShoppingBag className="w-4 h-4" />
+    );
   };
 
   const getCategoryColor = (category: string) => {
-    return category === 'restaurant' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
+    return category === "restaurant"
+      ? "bg-red-100 text-red-800"
+      : "bg-blue-100 text-blue-800";
   };
 
   return (
-    <div className="min-h-screen bg-white p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -44,23 +58,23 @@ const TemplateGallery = () => {
         {/* Category Filter */}
         <div className="flex gap-4 mb-8">
           <Button
-            variant={selectedCategory === 'all' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('all')}
+            variant={selectedCategory === "all" ? "default" : "outline"}
+            onClick={() => setSelectedCategory("all")}
             className="flex items-center gap-2"
           >
             جميع القوالب
           </Button>
           <Button
-            variant={selectedCategory === 'restaurant' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('restaurant')}
+            variant={selectedCategory === "restaurant" ? "default" : "outline"}
+            onClick={() => setSelectedCategory("restaurant")}
             className="flex items-center gap-2"
           >
             <Store className="w-4 h-4" />
             مطاعم
           </Button>
           <Button
-            variant={selectedCategory === 'ecommerce' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory('ecommerce')}
+            variant={selectedCategory === "ecommerce" ? "default" : "outline"}
+            onClick={() => setSelectedCategory("ecommerce")}
             className="flex items-center gap-2"
           >
             <ShoppingBag className="w-4 h-4" />
@@ -71,11 +85,14 @@ const TemplateGallery = () => {
         {/* Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTemplates.map((template) => (
-            <Card key={template.id} className="group hover:shadow-lg transition-all duration-300 border-slate-200">
+            <Card
+              key={template.id}
+              className="group hover:shadow-lg transition-all duration-300 border-slate-200"
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: template.color }}
                     />
@@ -89,15 +106,20 @@ const TemplateGallery = () => {
                   </Badge>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Preview Image */}
                 <div className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg flex items-center justify-center group-hover:from-slate-200 group-hover:to-slate-300 transition-colors">
                   <div className="text-center p-4">
-                    <div className="text-2xl mb-2" style={{ color: template.color }}>
+                    <div
+                      className="text-2xl mb-2"
+                      style={{ color: template.color }}
+                    >
                       {getCategoryIcon(template.category)}
                     </div>
-                    <p className="text-sm text-slate-600 font-medium">{template.preview}</p>
+                    <p className="text-sm text-slate-600 font-medium">
+                      {template.preview}
+                    </p>
                   </div>
                 </div>
 
@@ -152,7 +174,9 @@ const TemplateGallery = () => {
             <div className="text-slate-400 mb-4">
               <Store className="w-16 h-16 mx-auto" />
             </div>
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">لا توجد قوالب</h3>
+            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+              لا توجد قوالب
+            </h3>
             <p className="text-slate-600">جرب اختيار فئة مختلفة</p>
           </div>
         )}

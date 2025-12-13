@@ -1,10 +1,10 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/ui/Sidebar";
 import { Bell, ChevronDown, User } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-type Props = {};
-
-const Layout = ({}: Props) => {
+const Layout = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar (Right Side) */}
@@ -18,9 +18,11 @@ const Layout = ({}: Props) => {
           {/* Right Side - User Profile */}
           <div className="flex items-center justify-between gap-3 bg-accent rounded-full px-4 py-2 w-[200px]">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan text-white">
-                <span className="text-sm font-semibold">ح</span>
-              </div>
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-cyan text-white">
+                  ح
+                </AvatarFallback>
+              </Avatar>
               <div className="flex flex-col items-end">
                 <span className="text-sm font-medium text-foreground">
                   حسن علي
@@ -30,11 +32,12 @@ const Layout = ({}: Props) => {
                 </span>
               </div>
             </div>
-            <ChevronDown size={20} className="size-5" />
+            <ChevronDown size={20} className="size-5 text-muted-foreground" />
           </div>
 
           {/* Left Side - Icons */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <div className="relative cursor-pointer">
               <User size={20} className="size-5" />
             </div>

@@ -1,6 +1,7 @@
 import "./App.css";
 import Layout from "./layout/Layout";
 import { Routes, Route } from "react-router-dom";
+import { Toaster } from "./components/ui/sonner";
 import Home from "./pages/home/Home";
 import Products from "./pages/product/Products";
 import Orders from "./pages/order/Orders";
@@ -30,8 +31,10 @@ import TemplateGallery from "./pages/editor/TemplateGallery";
 
 function App() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
+    <>
+      <Toaster />
+      <Routes>
+        <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
 
         {/* products routes */}
@@ -96,8 +99,9 @@ function App() {
         <Route path="/editor/templates" element={<TemplateGallery />} />
         <Route path="/editor/preview/:templateId" element={<TemplatePreview />} />
         <Route path="/editor/edit/:templateId" element={<GrapesEditor />} />
-      </Route>
-    </Routes>
+        </Route>
+      </Routes>
+    </>
   );
 }
 

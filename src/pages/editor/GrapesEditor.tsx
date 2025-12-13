@@ -423,19 +423,19 @@ const GrapesEditor = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading GrapesJS Editor...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading GrapesJS Editor...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
@@ -448,7 +448,7 @@ const GrapesEditor = () => {
             </Button>
             <div>
               <h1 className="text-xl font-semibold">GrapesJS Editor</h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {template?.name || 'Custom Template'}
               </p>
             </div>
