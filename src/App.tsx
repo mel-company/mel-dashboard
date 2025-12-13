@@ -132,6 +132,8 @@ function App() {
             element={<TemplatePreview />}
           />
           <Route path="/editor/edit/:templateId" element={<GrapesEditor />} />
+        </Route>
+
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
 
@@ -186,7 +188,18 @@ function App() {
 
           {/* settings routes */}
           <Route path="/settings">
-            <Route index element={<Settings />} />
+            <Route path="general" element={<GeneralSettings />} />
+            <Route path="store" element={<DetailsSettings />} />
+            <Route path="domain" element={<DomainSettings />} />
+            <Route
+              path="payment-methods"
+              element={<PaymentMethodsSettings />}
+            />
+            <Route path="delivery" element={<DeliverySettings />} />
+            <Route
+              path="terms-and-conditions"
+              element={<TermsAndConditionsSettings />}
+            />
           </Route>
 
           {/* category routes */}

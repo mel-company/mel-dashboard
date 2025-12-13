@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useLocation } from "react-router-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -120,6 +119,15 @@ const Sidebar = ({ onClose }: SidebarProps) => {
         path: "/profile",
         icon: User,
       },
+      {
+        label: "معرض القوالب",
+        path: "/editor/templates",
+        icon: Store,
+      },
+    ],
+    []
+  );
+
   const navigate = useNavigate();
   const { logout } = useAuth();
 
@@ -129,15 +137,6 @@ const Sidebar = ({ onClose }: SidebarProps) => {
     navigate("/login", { replace: true });
     onClose?.();
   };
-
-      {
-        label: "معرض القوالب",
-        path: "/editor/templates",
-        icon: Store,
-      },
-    ],
-    []
-  );
 
   // Auto-open dropdowns when a subItem is active
   useEffect(() => {
