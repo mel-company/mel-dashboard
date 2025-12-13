@@ -26,10 +26,16 @@ import AddDiscount from "./pages/discount/AddDiscount";
 import Notifications from "./pages/notification/Notifications";
 import NotificationDetails from "./pages/notification/NotificationDetails";
 import UserProfile from "./pages/profile/UserProfile";
-import Settings from "./pages/settings/Settings";
+// import Settings from "./pages/settings/Settings";
 import TemplatePreview from "./pages/editor/TemplatePreview";
 import GrapesEditor from "./pages/editor/GrapesEditor";
 import TemplateGallery from "./pages/editor/TemplateGallery";
+import GeneralSettings from "./pages/settings/GeneralSettings";
+import DetailsSettings from "./pages/settings/DetailsSettings";
+import DomainSettings from "./pages/settings/DomainSettings";
+import PaymentMethodsSettings from "./pages/settings/PaymentMethodsSettings";
+import DeliverySettings from "./pages/settings/DeliverySettings";
+import TermsAndConditionsSettings from "./pages/settings/TermsAndConditionsSettings";
 import Login from "./pages/auth/Login";
 
 function RootRedirect() {
@@ -46,6 +52,86 @@ function App() {
     <>
       <Toaster />
       <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+
+          {/* products routes */}
+          <Route path="/products">
+            <Route index element={<Products />} />
+            <Route path=":id" element={<ProductDetails />} />
+            <Route path="add" element={<AddProduct />} />
+          </Route>
+
+          {/* customers routes */}
+          <Route path="/customers">
+            <Route index element={<Customers />} />
+            <Route path=":id" element={<CustomerDetails />} />
+            <Route path="add" element={<AddCustomer />} />
+          </Route>
+
+          {/* orders routes */}
+          <Route path="/orders">
+            <Route index element={<Orders />} />
+            <Route path=":id" element={<OrderDetails />} />
+            <Route path="add" element={<AddOrder />} />
+          </Route>
+
+          {/* employees routes */}
+          <Route path="/employees">
+            <Route index element={<Employees />} />
+            <Route path=":id" element={<EmployeeDetails />} />
+            <Route path="add" element={<AddEmployee />} />
+          </Route>
+
+          {/* notifications routes */}
+          <Route path="/notifications">
+            <Route index element={<Notifications />} />
+            <Route path=":id" element={<NotificationDetails />} />
+          </Route>
+
+          {/* profile routes */}
+          <Route path="/profile">
+            <Route index element={<UserProfile />} />
+          </Route>
+
+          {/* settings routes */}
+          <Route path="/settings">
+            {/* <Route index element={<Settings />} /> */}
+            <Route path="general" element={<GeneralSettings />} />
+            <Route path="store" element={<DetailsSettings />} />
+            <Route path="domain" element={<DomainSettings />} />
+            <Route
+              path="payment-methods"
+              element={<PaymentMethodsSettings />}
+            />
+            <Route path="delivery" element={<DeliverySettings />} />
+            <Route
+              path="terms-and-conditions"
+              element={<TermsAndConditionsSettings />}
+            />
+          </Route>
+
+          {/* category routes */}
+          <Route path="/categories">
+            <Route index element={<Categories />} />
+            <Route path=":id" element={<CategoryDetails />} />
+            <Route path="add" element={<AddCategory />} />
+          </Route>
+
+          {/* Discounts routes */}
+          <Route path="/discounts">
+            <Route index element={<Discounts />} />
+            <Route path=":id" element={<DiscountDetails />} />
+            <Route path="add" element={<AddDiscount />} />
+          </Route>
+
+          {/* Editor routes */}
+          <Route path="/editor/templates" element={<TemplateGallery />} />
+          <Route
+            path="/editor/preview/:templateId"
+            element={<TemplatePreview />}
+          />
+          <Route path="/editor/edit/:templateId" element={<GrapesEditor />} />
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
 
