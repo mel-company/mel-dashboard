@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
   Home,
@@ -11,9 +11,12 @@ import {
   Users2,
   Store,
   X,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface SidebarProps {
   onClose?: () => void;
@@ -21,6 +24,15 @@ interface SidebarProps {
 
 const Sidebar = ({ onClose }: SidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    toast.success("تم تسجيل الخروج بنجاح");
+    navigate("/login", { replace: true });
+    onClose?.();
+  };
 
   const navItems = [
     {
@@ -137,6 +149,21 @@ const Sidebar = ({ onClose }: SidebarProps) => {
           );
         })}
       </nav>
+
+      {/* Logout Button */}
+      <div className="mt-auto pt-4 border-t border-sidebar-border">
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className={cn(
+            "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors w-full justify-start",
+            "text-sidebar-foreground/70 hover:bg-destructive/10 hover:text-destructive"
+          )}
+        >
+          <LogOut className="text-sidebar-foreground/70" />
+          <span>تسجيل الخروج</span>
+        </Button>
+      </div>
     </div>
   );
 };
