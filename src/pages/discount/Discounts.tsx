@@ -13,9 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Tag, Calendar, Package } from "lucide-react";
 
-type Props = {};
-
-const Discounts = ({}: Props) => {
+const Discounts = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter discounts based on search query
