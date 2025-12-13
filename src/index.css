@@ -32,6 +32,11 @@ html {
   direction: rtl;
 }
 
+.hide-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+}
+
 @custom-variant dark (&:is(.dark *));
 :root {
   font-family: cairo, system-ui, Avenir, Helvetica, Arial, sans-serif;
