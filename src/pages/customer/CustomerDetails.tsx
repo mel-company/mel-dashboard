@@ -20,7 +20,6 @@ import {
   Calendar,
   Edit,
   Trash2,
-  FileText,
 } from "lucide-react";
 
 const CustomerDetails = () => {

@@ -15,7 +15,6 @@ import {
   ArrowRight,
   Tag,
   Calendar,
-  Package,
   Folder,
   Edit,
   Trash2,
