@@ -37,6 +37,7 @@ import PaymentMethodsSettings from "./pages/settings/PaymentMethodsSettings";
 import DeliverySettings from "./pages/settings/DeliverySettings";
 import TermsAndConditionsSettings from "./pages/settings/TermsAndConditionsSettings";
 import Login from "./pages/auth/Login";
+import SettingsLayout from "./layout/SettingsLayout";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -95,8 +96,11 @@ function App() {
           </Route>
 
           {/* settings routes */}
-          <Route path="/settings">
-            {/* <Route index element={<Settings />} /> */}
+          <Route path="/settings" element={<SettingsLayout />}>
+            <Route
+              index
+              element={<Navigate to="/settings/general" replace />}
+            />
             <Route path="general" element={<GeneralSettings />} />
             <Route path="store" element={<DetailsSettings />} />
             <Route path="domain" element={<DomainSettings />} />
@@ -187,7 +191,11 @@ function App() {
           </Route>
 
           {/* settings routes */}
-          <Route path="/settings">
+          <Route path="/settings" element={<SettingsLayout />}>
+            <Route
+              index
+              element={<Navigate to="/settings/general" replace />}
+            />
             <Route path="general" element={<GeneralSettings />} />
             <Route path="store" element={<DetailsSettings />} />
             <Route path="domain" element={<DomainSettings />} />
