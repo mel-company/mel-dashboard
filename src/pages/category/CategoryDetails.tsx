@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { dmy_categories, dmy_products } from "@/data/dummy";
 import {
   Card,
@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowRight,
   Folder,
   Package,
   CheckCircle2,
@@ -24,7 +23,6 @@ import { Link } from "react-router-dom";
 
 const CategoryDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const category = dmy_categories.find((c) => c.id === Number(id));
 
   // Get products in this category (for demo, we'll show all products)
@@ -42,36 +40,14 @@ const CategoryDetails = () => {
         <p className="text-muted-foreground mb-4">
           الفئة التي تبحث عنها غير موجودة أو تم حذفها.
         </p>
-        <Button onClick={() => navigate("/categories")} variant="outline">
-          العودة إلى الفئات
-        </Button>
+    
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/categories")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى الفئات
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-          <Button variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        </div>
-      </div>
+      
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Category Info */}

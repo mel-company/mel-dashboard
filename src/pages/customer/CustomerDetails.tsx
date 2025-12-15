@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { dmy_users, dmy_orders } from "@/data/dummy";
 import {
   Card,
@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowRight,
   User,
   Phone,
   MapPin,
@@ -20,12 +19,10 @@ import {
   Calendar,
   Edit,
   Trash2,
-  FileText,
 } from "lucide-react";
 
 const CustomerDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const customer = dmy_users.find((c) => c.id === Number(id));
   const customerOrders = dmy_orders.filter((o) => o.user_id === Number(id));
 
@@ -37,9 +34,7 @@ const CustomerDetails = () => {
         <p className="text-muted-foreground mb-4">
           العميل الذي تبحث عنه غير موجود أو تم حذفه.
         </p>
-        <Button onClick={() => navigate("/customers")} variant="outline">
-          العودة إلى العملاء
-        </Button>
+   
       </div>
     );
   }
@@ -99,28 +94,7 @@ const CustomerDetails = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/customers")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى العملاء
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-          <Button variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        </div>
-      </div>
-
+    
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Customer Info */}
         <div className="lg:col-span-2 space-y-6">

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { dmy_products } from "@/data/dummy";
 import {
   Card,
@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowRight,
   Star,
   ShoppingCart,
   DollarSign,
@@ -24,7 +23,6 @@ import {
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
   const product = dmy_products.find((p) => p.id === Number(id));
-  const navigate = useNavigate(); // for navigation
   if (!product) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -33,37 +31,13 @@ const ProductDetails = () => {
         <p className="text-muted-foreground mb-4">
           المنتج الذي تبحث عنه غير موجود أو تم حذفه.
         </p>
-        <Button onClick={() => navigate("/products")} variant="outline">
-          العودة إلى المنتجات
-        </Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/products")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى المنتجات
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-          <Button variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        </div>
-      </div>
-
+     
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Product Info */}
         <div className="lg:col-span-2 space-y-6">
