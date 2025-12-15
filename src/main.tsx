@@ -16,11 +16,10 @@ createRoot(document.getElementById("root")!).render(
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
         <AuthProvider>
           <AppsProvider>
-            <App />
-          </AppsProvider>
           <QueryClientProvider client={queryClient}>
             <App />
           </QueryClientProvider>
+          </AppsProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
