@@ -4,9 +4,7 @@ import { Settings, Store, Globe, Truck, FileText, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-type Props = {};
-
-const SettingsLayout = ({}: Props) => {
+const SettingsLayout = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -122,7 +120,7 @@ const SettingsLayout = ({}: Props) => {
       {/* Right Sidebar Navigation - Desktop */}
       <aside className="hidden lg:block w-64 shrink-0 border-l border-border bg-background/50">
         <div className="sticky top-0 p-6">
-          <SidebarContent showCloseButton={false} />
+          <SidebarContent showCloseButton={false} /> 
         </div>
       </aside>
 

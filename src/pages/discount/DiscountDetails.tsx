@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { dmy_discounts } from "@/data/dummy";
 import { DISCOUNT_STATUS } from "@/utils/constants";
 import {
@@ -12,10 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowRight,
   Tag,
   Calendar,
-  Package,
   Folder,
   Edit,
   Trash2,
@@ -25,7 +23,6 @@ import {
 
 const DiscountDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const discount = dmy_discounts.find((d) => d.id === Number(id));
 
   if (!discount) {
@@ -36,9 +33,7 @@ const DiscountDetails = () => {
         <p className="text-muted-foreground mb-4">
           الخصم الذي تبحث عنه غير موجود أو تم حذفه.
         </p>
-        <Button onClick={() => navigate("/discounts")} variant="outline">
-          العودة إلى الخصومات
-        </Button>
+       
       </div>
     );
   }
@@ -85,26 +80,7 @@ const DiscountDetails = () => {
   return (
     <div className="space-y-6">
       {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/discounts")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى الخصومات
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-          <Button variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        </div>
-      </div>
+    
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Discount Info */}

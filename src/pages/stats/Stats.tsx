@@ -538,7 +538,7 @@ const Stats = () => {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
-        {/* Header Section */}
+        {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
             إحصائيات المتجر

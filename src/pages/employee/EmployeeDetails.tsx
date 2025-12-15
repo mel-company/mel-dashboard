@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { dmy_employees } from "@/data/dummy";
 import {
   Card,
@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowRight,
   User,
   Phone,
   Mail,
@@ -23,7 +22,6 @@ import {
 
 const EmployeeDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const employee = dmy_employees.find((e) => e.id === Number(id));
 
   if (!employee) {
@@ -34,36 +32,13 @@ const EmployeeDetails = () => {
         <p className="text-muted-foreground mb-4">
           الموظف الذي تبحث عنه غير موجود أو تم حذفه.
         </p>
-        <Button onClick={() => navigate("/employees")} variant="outline">
-          العودة إلى الموظفين
-        </Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/employees")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى الموظفين
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-          <Button variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        </div>
-      </div>
+      
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Employee Info */}
