@@ -1,18 +1,17 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo } from "react";
 import {
   TrendingUp,
   Package,
   Layers,
   Tag,
   Users,
-  Store,
-  ArrowUpRight,
   BarChart3,
   Activity,
   DollarSign,
-  Maximize2,
-  Minimize2,
+  FileText,
+  Download,
+  Calendar,
+  ShoppingBag,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -29,6 +28,15 @@ import {
   Filler,
 } from "chart.js";
 import { Chart, Bar, Line, Doughnut, Radar, PolarArea } from "react-chartjs-2";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Register Chart.js components
 ChartJS.register(
@@ -45,7 +53,7 @@ ChartJS.register(
   Filler
 );
 
-// Dummy data
+// Dummy data (نفس بيانات Home للإحصائيات)
 const dmy_orders = [
   { id: 1, status: "pending", products: [{ price: 50 }, { price: 30 }] },
   { id: 2, status: "processing", products: [{ price: 75 }] },
@@ -115,45 +123,8 @@ const dmy_discounts = [
   { discount_status: "ACTIVE" },
 ];
 
-type IconSize = "small" | "medium" | "large";
-
-const Home = () => {
-  const navigate = useNavigate();
-  const [iconSize, setIconSize] = useState<IconSize>(() => {
-    const saved = localStorage.getItem("homeIconSize");
-    return (saved as IconSize) || "medium";
-  });
-
-  // Toggle icon size between small, medium, and large
-  const toggleIconSize = () => {
-    const sizes: IconSize[] = ["small", "medium", "large"];
-    const currentIndex = sizes.indexOf(iconSize);
-    const nextIndex = (currentIndex + 1) % sizes.length;
-    const nextSize = sizes[nextIndex];
-    setIconSize(nextSize);
-    localStorage.setItem("homeIconSize", nextSize);
-  };
-
-  // Icon size classes
-  const iconSizeClasses = {
-    small: {
-      icon: "w-4 h-4",
-      container: "p-2",
-      grid: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5",
-    },
-    medium: {
-      icon: "w-6 h-6",
-      container: "p-3",
-      grid: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5",
-    },
-    large: {
-      icon: "w-8 h-8",
-      container: "p-4",
-      grid: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-    },
-  };
-
-  // Detect theme
+const Stats = () => {
+  // Detect theme (نفس من Home)
   const isDark = useMemo(
     () => document.documentElement.classList.contains("dark"),
     []
@@ -278,47 +249,45 @@ const Home = () => {
           tension: 0.4,
         },
       ],
-    } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    };
   }, []);
 
-  const productRatingsOptions = useMemo(
-    () =>
-      ({
-        ...chartOptions,
-        scales: {
-          ...chartOptions.scales,
-          y: {
-            ...chartOptions.scales.y,
-            type: "linear" as const,
-            position: "left" as const,
-            title: {
-              display: true,
-              text: "التقييم",
-              color: "#10b981",
-            },
-          },
-          y1: {
-            type: "linear" as const,
-            position: "right" as const,
-            title: {
-              display: true,
-              text: "السعر ($)",
-              color: "#f59e0b",
-            },
-            ticks: {
-              color: textColor,
-              font: {
-                family: "Cairo, sans-serif",
-              },
-            },
-            grid: {
-              drawOnChartArea: false,
-            },
+  const productRatingsOptions = useMemo(() => {
+    return {
+      ...chartOptions,
+      scales: {
+        ...chartOptions.scales,
+        y: {
+          ...chartOptions.scales.y,
+          type: "linear" as const,
+          position: "left" as const,
+          title: {
+            display: true,
+            text: "التقييم",
+            color: "#10b981",
           },
         },
-      } as any), // eslint-disable-line @typescript-eslint/no-explicit-any
-    [chartOptions, textColor]
-  );
+        y1: {
+          type: "linear" as const,
+          position: "right" as const,
+          title: {
+            display: true,
+            text: "السعر ($)",
+            color: "#f59e0b",
+          },
+          ticks: {
+            color: textColor,
+            font: {
+              family: "Cairo, sans-serif",
+            },
+          },
+          grid: {
+            drawOnChartArea: false,
+          },
+        },
+      },
+    };
+  }, [chartOptions, textColor]);
 
   // Brand Distribution Chart Data
   const brandData = useMemo(() => {
@@ -568,93 +537,25 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
         {/* Header Section */}
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                لوحة التحكم
-              </h1>
-              <p className="text-muted-foreground text-sm sm:text-base">
-                نظرة شاملة على مقاييس أعمالك وإحصائياتك المهمة
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Icon Size Toggle Button */}
-              <button
-                onClick={toggleIconSize}
-                className="group flex items-center gap-2 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-lg border border-primary/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95"
-                title={
-                  iconSize === "small"
-                    ? "صغير - اضغط للتغيير"
-                    : iconSize === "medium"
-                    ? "متوسط - اضغط للتغيير"
-                    : "كبير - اضغط للتغيير"
-                }
-              >
-                {iconSize === "small" ? (
-                  <Minimize2 className="w-5 h-5 text-primary" />
-                ) : iconSize === "medium" ? (
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                  </div>
-                ) : (
-                  <Maximize2 className="w-5 h-5 text-primary" />
-                )}
-                <span className="text-sm font-semibold text-primary">
-                  {iconSize === "small"
-                    ? "صغير"
-                    : iconSize === "medium"
-                    ? "متوسط"
-                    : "كبير"}
-                </span>
-              </button>
-              <div className="flex items-center gap-2 px-4 py-2 bg-card rounded-lg border border-border shadow-sm">
-                <Activity className="w-4 h-4 text-green-500" />
-                <span className="text-sm font-medium text-foreground">
-                  نظام نشط
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => navigate("/app-store")}
-              className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Store className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              <span className="font-medium">متجر التطبيقات</span>
-              <ArrowUpRight className="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-            </button>
-            <button
-              onClick={() => navigate("/accounting")}
-              className="group flex items-center gap-2 px-6 py-3 bg-card border-2 border-border text-foreground rounded-xl hover:border-border/80 hover:bg-accent transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <DollarSign className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              <span className="font-medium">المحاسبة</span>
-              <ArrowUpRight className="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-            </button>
-          </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            إحصائيات المتجر
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            نظرة تفصيلية على أداء المتجر، الطلبات، المنتجات والمستخدمين
+          </p>
         </div>
 
         {/* Stats Cards Grid */}
-        <div
-          className={`grid ${iconSizeClasses[iconSize].grid} gap-4 lg:gap-6`}
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
           {statsCards.map((stat, index) => {
             const Icon = stat.icon;
-            const currentSize = iconSizeClasses[iconSize];
             return (
               <div
                 key={index}
-                className={`group relative bg-card rounded-2xl border border-border ${
-                  iconSize === "large" ? "p-8" : "p-6"
-                } hover:border-border/80 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden`}
+                className="group relative bg-card rounded-2xl border border-border p-6 hover:border-border/80 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
               >
                 {/* Background Gradient */}
                 <div
@@ -663,40 +564,22 @@ const Home = () => {
 
                 {/* Content */}
                 <div className="relative z-10">
-                  <div
-                    className={`flex items-start justify-between ${
-                      iconSize === "large" ? "mb-6" : "mb-4"
-                    }`}
-                  >
+                  <div className="flex items-start justify-between mb-4">
                     <div
-                      className={`${currentSize.container} rounded-xl bg-gradient-to-br ${stat.bgGradient} group-hover:scale-110 transition-transform duration-300`}
+                      className={`p-3 rounded-xl bg-gradient-to-br ${stat.bgGradient} group-hover:scale-110 transition-transform duration-300`}
                     >
-                      <Icon
-                        className={`${currentSize.icon} ${stat.iconColor}`}
-                      />
+                      <Icon className={`w-6 h-6 ${stat.iconColor}`} />
                     </div>
                     <div className="flex items-center gap-1 text-xs font-semibold">
-                      <ArrowUpRight className="w-3 h-3" />
+                      <TrendingUp className="w-3 h-3" />
                       <span className={stat.changeColor}>{stat.change}</span>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <p
-                      className={`text-muted-foreground ${
-                        iconSize === "large" ? "text-base" : "text-sm"
-                      } font-medium`}
-                    >
+                    <p className="text-muted-foreground text-sm font-medium">
                       {stat.title}
                     </p>
-                    <p
-                      className={`font-bold text-foreground ${
-                        iconSize === "large"
-                          ? "text-4xl"
-                          : iconSize === "medium"
-                          ? "text-3xl"
-                          : "text-2xl"
-                      }`}
-                    >
+                    <p className="text-3xl font-bold text-foreground">
                       {stat.value}
                     </p>
                   </div>
@@ -704,152 +587,252 @@ const Home = () => {
 
                 {/* Decorative Element */}
                 <div
-                  className={`absolute -bottom-4 -right-4 ${
-                    iconSize === "large" ? "w-32 h-32" : "w-24 h-24"
-                  } bg-gradient-to-br ${
-                    stat.gradient
-                  } opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity duration-300`}
+                  className={`absolute -bottom-4 -right-4 w-24 h-24 bg-gradient-to-br ${stat.gradient} opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity duration-300`}
                 />
               </div>
             );
           })}
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Order Status Chart */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-950/50 rounded-lg">
-                  <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">
-                    حالة الطلبات
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    توزيع الطلبات حسب الحالة
-                  </p>
-                </div>
+        {/* Reports Section */}
+        <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-2xl border border-blue-200/50 dark:border-blue-800/30 shadow-lg p-6 lg:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold text-foreground">
+                  تقارير المتجر الخاصة
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  اطلب تقارير مفصلة وجاهزة عن المبيعات والطلبات بصيغة PDF أو
+                  Excel
+                </p>
               </div>
             </div>
-            <div className="h-[300px]">
-              <Bar data={orderStatusData} options={chartOptions} />
-            </div>
-          </div>
 
-          {/* Product Ratings Chart */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 dark:bg-emerald-950/50 rounded-lg">
-                  <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex-1 max-w-2xl space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    نوع التقرير
+                  </label>
+                  <Select defaultValue="daily-sales">
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="اختر نوع التقرير" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily-sales">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="w-4 h-4" />
+                          <span>تقرير المبيعات اليومي</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="monthly-sales">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>تقرير المبيعات الشهري</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="orders">
+                        <div className="flex items-center gap-2">
+                          <ShoppingBag className="w-4 h-4" />
+                          <span>تقرير الطلبات التفصيلي</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">
-                    تقييمات وأسعار المنتجات
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    مقارنة التقييمات والأسعار
-                  </p>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    الفترة الزمنية
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      className="h-10"
+                      placeholder="من تاريخ"
+                      aria-label="من تاريخ"
+                    />
+                    <span className="text-muted-foreground">–</span>
+                    <Input
+                      type="date"
+                      className="h-10"
+                      placeholder="إلى تاريخ"
+                      aria-label="إلى تاريخ"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="h-[300px]">
-              <Chart
-                type="bar"
-                data={productRatingsData}
-                options={productRatingsOptions}
-              />
-            </div>
-          </div>
 
-          {/* Brand Distribution Chart */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-950/50 rounded-lg">
-                  <Package className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-border/50">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileText className="w-4 h-4" />
+                  <span>سيتم توليد التقرير بصيغة PDF / Excel</span>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">
-                    توزيع العلامات التجارية
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    نسبة المنتجات حسب العلامة
-                  </p>
-                </div>
+                <Button
+                  type="button"
+                  className="h-10 px-6 gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
+                >
+                  <Download className="w-4 h-4" />
+                  تحميل التقرير
+                </Button>
               </div>
             </div>
-            <div className="h-[300px]">
-              <Doughnut data={brandData} options={brandChartOptions} />
-            </div>
+          </div>
+        </div>
+
+        {/* Charts Section */}
+        <div className="space-y-6">
+          {/* Section Title */}
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></div>
+            <h2 className="text-xl font-bold text-foreground px-4">
+              التحليلات والجرافات
+            </h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></div>
           </div>
 
-          {/* User Locations Chart */}
+          {/* Monthly Sales Chart - Full Width (Most Important) */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-rose-100 dark:bg-rose-950/50 rounded-lg">
-                  <Users className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-md">
+                  <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">
-                    مواقع المستخدمين
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    توزيع المستخدمين حسب الموقع
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="h-[300px]">
-              <Radar data={locationData} options={locationChartOptions} />
-            </div>
-          </div>
-
-          {/* Price Ranges Chart */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 dark:bg-amber-950/50 rounded-lg">
-                  <DollarSign className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">
-                    نطاقات الأسعار
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    توزيع المنتجات حسب السعر
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="h-[300px]">
-              <PolarArea data={priceData} options={chartOptions} />
-            </div>
-          </div>
-
-          {/* Monthly Sales Chart */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-100 dark:bg-indigo-950/50 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">
+                  <h3 className="text-xl font-bold text-foreground">
                     اتجاه المبيعات الشهرية
                   </h3>
-                  <p className="text-xs text-muted-foreground">
-                    متابعة المبيعات والطلبات
+                  <p className="text-sm text-muted-foreground">
+                    متابعة المبيعات والطلبات على مدار الأشهر
                   </p>
                 </div>
               </div>
             </div>
-            <div className="h-[300px]">
+            <div className="h-[350px]">
               <Line data={salesData} options={chartOptions} />
+            </div>
+          </div>
+
+          {/* Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Order Status Chart */}
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-blue-100 dark:bg-blue-950/50 rounded-lg">
+                    <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">
+                      حالة الطلبات
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      توزيع الطلبات حسب الحالة
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="h-[280px]">
+                <Bar data={orderStatusData} options={chartOptions} />
+              </div>
+            </div>
+
+            {/* Product Ratings Chart */}
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-emerald-100 dark:bg-emerald-950/50 rounded-lg">
+                    <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">
+                      تقييمات وأسعار المنتجات
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      مقارنة التقييمات والأسعار
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="h-[280px]">
+                <Chart
+                  type="bar"
+                  data={productRatingsData}
+                  options={productRatingsOptions}
+                />
+              </div>
+            </div>
+
+            {/* Brand Distribution Chart */}
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-purple-100 dark:bg-purple-950/50 rounded-lg">
+                    <Package className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">
+                      توزيع العلامات التجارية
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      نسبة المنتجات حسب العلامة
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="h-[280px]">
+                <Doughnut data={brandData} options={brandChartOptions} />
+              </div>
+            </div>
+
+            {/* Price Ranges Chart */}
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-amber-100 dark:bg-amber-950/50 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">
+                      نطاقات الأسعار
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      توزيع المنتجات حسب السعر
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="h-[280px]">
+                <PolarArea data={priceData} options={chartOptions} />
+              </div>
+            </div>
+          </div>
+
+          {/* User Locations Chart - Full Width */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl shadow-md">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">
+                    مواقع المستخدمين
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    توزيع المستخدمين حسب الموقع الجغرافي
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="h-[350px]">
+              <Radar data={locationData} options={locationChartOptions} />
             </div>
           </div>
         </div>
@@ -858,4 +841,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Stats;

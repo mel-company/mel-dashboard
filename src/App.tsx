@@ -5,6 +5,7 @@ import { Toaster } from "./components/ui/sonner";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useAuth } from "./contexts/AuthContext";
 import Home from "./pages/home/Home";
+import Stats from "./pages/stats/Stats";
 import Products from "./pages/product/Products";
 import Orders from "./pages/order/Orders";
 import ProductDetails from "./pages/product/ProductDetails";
@@ -27,9 +28,6 @@ import Notifications from "./pages/notification/Notifications";
 import NotificationDetails from "./pages/notification/NotificationDetails";
 import UserProfile from "./pages/profile/UserProfile";
 // import Settings from "./pages/settings/Settings";
-import TemplatePreview from "./pages/editor/TemplatePreview";
-import GrapesEditor from "./pages/editor/GrapesEditor";
-import TemplateGallery from "./pages/editor/TemplateGallery";
 import GeneralSettings from "./pages/settings/GeneralSettings";
 import DetailsSettings from "./pages/settings/DetailsSettings";
 import DomainSettings from "./pages/settings/DomainSettings";
@@ -38,6 +36,8 @@ import DeliverySettings from "./pages/settings/DeliverySettings";
 import TermsAndConditionsSettings from "./pages/settings/TermsAndConditionsSettings";
 import Login from "./pages/auth/Login";
 import SettingsLayout from "./layout/SettingsLayout";
+import AppStore from "./pages/app-store/AppStore";
+import Accounting from "./pages/accounting/Accounting";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -55,6 +55,7 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/stats" element={<Stats />} />
 
           {/* products routes */}
           <Route path="/products">
@@ -129,13 +130,11 @@ function App() {
             <Route path="add" element={<AddDiscount />} />
           </Route>
 
-          {/* Editor routes */}
-          <Route path="/editor/templates" element={<TemplateGallery />} />
-          <Route
-            path="/editor/preview/:templateId"
-            element={<TemplatePreview />}
-          />
-          <Route path="/editor/edit/:templateId" element={<GrapesEditor />} />
+          {/* App Store route */}
+          <Route path="/app-store" element={<AppStore />} />
+
+          {/* Accounting route */}
+          <Route path="/accounting" element={<Accounting />} />
         </Route>
 
         {/* Public routes */}
@@ -150,6 +149,7 @@ function App() {
           }
         >
           <Route path="/" element={<Home />} />
+          <Route path="/stats" element={<Stats />} />
 
           {/* products routes */}
           <Route path="/products">
@@ -223,33 +223,13 @@ function App() {
             <Route path=":id" element={<DiscountDetails />} />
             <Route path="add" element={<AddDiscount />} />
           </Route>
-        </Route>
 
-        {/* Editor routes - Protected and standalone (no Layout) */}
-        <Route
-          path="/editor/templates"
-          element={
-            <ProtectedRoute>
-              <TemplateGallery />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/editor/preview/:templateId"
-          element={
-            <ProtectedRoute>
-              <TemplatePreview />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/editor/edit/:templateId"
-          element={
-            <ProtectedRoute>
-              <GrapesEditor />
-            </ProtectedRoute>
-          }
-        />
+          {/* App Store route */}
+          <Route path="/app-store" element={<AppStore />} />
+
+          {/* Accounting route */}
+          <Route path="/accounting" element={<Accounting />} />
+        </Route>
 
         {/* Root redirect */}
         <Route path="*" element={<RootRedirect />} />

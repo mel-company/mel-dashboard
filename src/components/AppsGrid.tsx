@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  
   Package,
   List,
   Percent,
@@ -9,12 +8,16 @@ import {
   Users,
   Users2,
   Settings,
-  Store,
   Search,
   BarChart2,
+  Calculator,
+  AppWindow,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { useApps } from "@/contexts/AppsContext";
 
 interface AppItem {
   label: string;
@@ -23,15 +26,17 @@ interface AppItem {
   gradient: string;
   description?: string;
   badge?: string;
+  emojiIcon?: string;
 }
 
-const apps: AppItem[] = [
+// Base apps - always shown
+const baseApps: AppItem[] = [
   {
     label: "الاحصائيات",
-    path: "/",
+    path: "/stats",
     icon: BarChart2,
     gradient: "from-blue-500 to-blue-600",
-    description: "الاحصائيات العامة",
+    description: "إحصائيات وأداء المتجر",
   },
   {
     label: "المنتجات",
@@ -85,19 +90,100 @@ const apps: AppItem[] = [
     description: "إعدادات النظام",
   },
   {
-    label: "معرض القوالب",
-    path: "/editor/templates",
-    icon: Store,
-    gradient: "from-teal-500 to-teal-600",
-    description: "قوالب المواقع",
+    label: "المحاسبة",
+    path: "/accounting",
+    icon: Calculator,
+    gradient: "from-green-500 to-green-600",
+    description: "إدارة الحسابات المالية",
+  },
+  {
+    label: "متجر التطبيقات",
+    path: "/app-store",
+    icon: AppWindow,
+    gradient: "from-purple-500 to-purple-600",
+    description: "تطبيقات مع إمكانية التكامل",
+    badge: "جديد",
   },
 ];
+
+// Helper function to convert AppStoreApp to AppItem
+const convertToAppItem = (app: {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  gradient: string;
+  path: string;
+}): AppItem => {
+  // Check if icon is emoji
+  const isEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(app.icon);
+
+  return {
+    label: app.name,
+    path: app.path,
+    icon: Calculator, // Default lucide icon (won't be used if emojiIcon exists)
+    emojiIcon: isEmoji ? app.icon : undefined,
+    gradient: app.gradient,
+    description: app.description,
+  };
+};
+
+type IconSize = "small" | "medium" | "large";
 
 const AppsGrid = () => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [iconSize, setIconSize] = useState<IconSize>(() => {
+    const saved = localStorage.getItem("appsGridIconSize");
+    return (saved as IconSize) || "medium";
+  });
+  const { getAllInstalledApps } = useApps();
 
-  const filteredApps = apps.filter(
+  // Toggle icon size between small, medium, and large
+  const toggleIconSize = () => {
+    const sizes: IconSize[] = ["small", "medium", "large"];
+    const currentIndex = sizes.indexOf(iconSize);
+    const nextIndex = (currentIndex + 1) % sizes.length;
+    const nextSize = sizes[nextIndex];
+    setIconSize(nextSize);
+    localStorage.setItem("appsGridIconSize", nextSize);
+  };
+
+  // Icon size classes
+  const iconSizeClasses = {
+    small: {
+      icon: "w-6 h-6",
+      container: "w-12 h-12",
+      grid: "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8",
+    },
+    medium: {
+      icon: "w-8 h-8",
+      container: "w-16 h-16",
+      grid: "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
+    },
+    large: {
+      icon: "w-12 h-12",
+      container: "w-24 h-24",
+      grid: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+    },
+  };
+
+  // Get installed apps from context
+  const installedAppsData = getAllInstalledApps();
+
+  // Convert installed apps to AppItem format
+  const installedAppsItems = useMemo(() => {
+    return installedAppsData
+      .filter((app) => app.id !== "1") // Exclude accounting as it's already in baseApps
+      .map(convertToAppItem);
+  }, [installedAppsData]);
+
+  // Combine base apps with installed apps
+  const allApps = useMemo(() => {
+    return [...baseApps, ...installedAppsItems];
+  }, [installedAppsItems]);
+
+  const filteredApps = allApps.filter(
     (app) =>
       app.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -117,26 +203,60 @@ const AppsGrid = () => {
                 اختر التطبيق الذي تريد الوصول إليه
               </p>
             </div>
-            {/* Search Bar */}
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="ابحث عن تطبيق..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
-                dir="rtl"
-              />
+            <div className="flex items-center gap-2">
+              {/* Icon Size Toggle Button */}
+              <button
+                onClick={toggleIconSize}
+                className="group flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/50 rounded-lg border-2 border-blue-200 dark:border-blue-800 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95"
+                title={
+                  iconSize === "small"
+                    ? "صغير - اضغط للتغيير"
+                    : iconSize === "medium"
+                    ? "متوسط - اضغط للتغيير"
+                    : "كبير - اضغط للتغيير"
+                }
+              >
+                {iconSize === "small" ? (
+                  <Minimize2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                ) : iconSize === "medium" ? (
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
+                    <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
+                    <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
+                  </div>
+                ) : (
+                  <Maximize2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                )}
+                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                  {iconSize === "small"
+                    ? "صغير"
+                    : iconSize === "medium"
+                    ? "متوسط"
+                    : "كبير"}
+                </span>
+              </button>
+              {/* Search Bar */}
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="ابحث عن تطبيق..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pr-10"
+                  dir="rtl"
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Apps Grid */}
         {filteredApps.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className={`grid ${iconSizeClasses[iconSize].grid} gap-4`}>
             {filteredApps.map((app) => {
               const Icon = app.icon;
+              const currentSize = iconSizeClasses[iconSize];
               const isActive =
                 location.pathname === app.path ||
                 (app.path !== "/" && location.pathname.startsWith(app.path));
@@ -147,7 +267,12 @@ const AppsGrid = () => {
                   to={app.path}
                   className={cn(
                     "group relative flex flex-col items-center justify-center",
-                    "p-6 rounded-xl transition-all duration-200",
+                    iconSize === "large"
+                      ? "p-8"
+                      : iconSize === "medium"
+                      ? "p-6"
+                      : "p-4",
+                    "rounded-xl transition-all duration-200",
                     "bg-card border border-border",
                     "hover:shadow-lg hover:shadow-primary/10",
                     "hover:-translate-y-1",
@@ -171,7 +296,8 @@ const AppsGrid = () => {
                   {/* Icon Container */}
                   <div
                     className={cn(
-                      "w-16 h-16 rounded-xl flex items-center justify-center mb-4",
+                      currentSize.container,
+                      "rounded-xl flex items-center justify-center mb-4",
                       "bg-gradient-to-br",
                       app.gradient,
                       "shadow-md",
@@ -179,14 +305,33 @@ const AppsGrid = () => {
                       "transition-all duration-200"
                     )}
                   >
-                    <Icon className="w-8 h-8 text-white" />
+                    {app.emojiIcon ? (
+                      <span
+                        className={
+                          iconSize === "small"
+                            ? "text-2xl"
+                            : iconSize === "medium"
+                            ? "text-3xl"
+                            : "text-4xl"
+                        }
+                      >
+                        {app.emojiIcon}
+                      </span>
+                    ) : (
+                      <Icon className={`${currentSize.icon} text-white`} />
+                    )}
                   </div>
 
                   {/* App Info */}
                   <div className="text-center w-full">
                     <h3
                       className={cn(
-                        "text-sm font-semibold mb-1 transition-colors",
+                        "font-semibold mb-1 transition-colors",
+                        iconSize === "small"
+                          ? "text-xs"
+                          : iconSize === "medium"
+                          ? "text-sm"
+                          : "text-base",
                         isActive
                           ? "text-primary"
                           : "text-foreground group-hover:text-primary"
@@ -195,7 +340,15 @@ const AppsGrid = () => {
                       {app.label}
                     </h3>
                     {app.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">
+                      <p
+                        className={`text-muted-foreground line-clamp-2 ${
+                          iconSize === "small"
+                            ? "text-xs"
+                            : iconSize === "medium"
+                            ? "text-xs"
+                            : "text-sm"
+                        }`}
+                      >
                         {app.description}
                       </p>
                     )}
