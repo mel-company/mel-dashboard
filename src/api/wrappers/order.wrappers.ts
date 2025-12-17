@@ -10,6 +10,7 @@ export const orderKeys = {
   list: (params?: any) => [...orderKeys.lists(), params] as const,
   details: () => [...orderKeys.all, "detail"] as const,
   detail: (id: string) => [...orderKeys.details(), id] as const,
+  search: (params?: any) => [...orderKeys.all, "search", params] as const,
 };
 
 /**
@@ -19,6 +20,16 @@ export const useFetchOrders = (params?: any) => {
   return useQuery<any>({
     queryKey: orderKeys.list(params),
     queryFn: () => orderAPI.fetchAll(params),
+  });
+};
+
+/**
+ * Search for orders with optional filtering and pagination
+ */
+export const useSearchOrders = (params?: any) => {
+  return useQuery<any>({
+    queryKey: orderKeys.search(params),
+    queryFn: () => orderAPI.search(params),
   });
 };
 

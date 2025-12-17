@@ -10,15 +10,28 @@ export const discountKeys = {
   list: (params?: any) => [...discountKeys.lists(), params] as const,
   details: () => [...discountKeys.all, "detail"] as const,
   detail: (id: string) => [...discountKeys.details(), id] as const,
+  search: (params?: any) => [...discountKeys.all, "search", params] as const,
 };
 
 /**
  * Fetch all discounts with optional filtering and pagination
  */
-export const useFetchDiscounts = (params?: any) => {
+export const useFetchDiscounts = (params?: any, enabled: boolean = true) => {
   return useQuery<any>({
     queryKey: discountKeys.list(params),
     queryFn: () => discountAPI.fetchAll(params),
+    enabled,
+  });
+};
+
+/**
+ * Search for discounts with optional filtering and pagination
+ */
+export const useSearchDiscounts = (params?: any, enabled: boolean = true) => {
+  return useQuery<any>({
+    queryKey: discountKeys.search(params),
+    queryFn: () => discountAPI.search(params),
+    enabled: enabled && !!params?.query,
   });
 };
 

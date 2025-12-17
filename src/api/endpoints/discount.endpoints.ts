@@ -16,6 +16,21 @@ export const discountAPI = {
   },
 
   /**
+   * Search for discounts with optional filtering and pagination
+   */
+  search: async (params?: any): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/discount/search", {
+      params: {
+        ...(params?.query && { query: params.query }),
+        ...(params?.storeId && { storeId: params.storeId }),
+        ...(params?.page && { page: params.page }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
    * Get a single discount by ID
    */
   fetchOne: async (id: string): Promise<any> => {
