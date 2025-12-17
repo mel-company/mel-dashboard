@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 interface AppStoreApp {
   id: string;
@@ -23,7 +23,7 @@ interface AppsContextType {
 
 const AppsContext = createContext<AppsContextType | undefined>(undefined);
 
-export function AppsProvider({ children }: { children: ReactNode }) {
+export function AppsProvider({ children }: { children: React.ReactNode }) {
   const [installedApps, setInstalledApps] = useState<string[]>(() => {
     const stored = localStorage.getItem("installedApps");
     return stored ? JSON.parse(stored) : [];
@@ -41,7 +41,10 @@ export function AppsProvider({ children }: { children: ReactNode }) {
   }, [installedApps]);
 
   useEffect(() => {
-    localStorage.setItem("installedAppsData", JSON.stringify(installedAppsData));
+    localStorage.setItem(
+      "installedAppsData",
+      JSON.stringify(installedAppsData)
+    );
   }, [installedAppsData]);
 
   const installApp = (appId: string, appData: AppStoreApp) => {
@@ -96,4 +99,3 @@ export const useApps = () => {
   }
   return context;
 };
-

@@ -130,7 +130,7 @@ const OTP = () => {
               className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
               disabled={isVerifying || code.length !== 4}
             >
-              {isVerifying ? "جاري التحقق..." : "تأكيد الرمز"}
+              {isVerifyingPending ? "جاري التحقق..." : "تأكيد الرمز"}
             </Button>
 
             <div className="flex items-center justify-between gap-3">
