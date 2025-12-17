@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AppsGrid from "@/components/AppsGrid";
+import QuickNavigate from "@/components/QuickNavigate";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -110,6 +111,7 @@ const Layout = () => {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
       <TopBar />
+      <QuickNavigate />
 
       {/* Content Area */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden w-full custom-scrollbar hide-scrollbar mt-2 rounded-lg">

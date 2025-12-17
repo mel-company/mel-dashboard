@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { dmy_categories, dmy_products } from "@/data/dummy";
+import { dmy_products } from "@/data/dummy";
 import {
   Card,
   CardContent,
@@ -20,10 +20,33 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useFetchCategory } from "@/api/wrappers/category.wrappers";
+import ErrorPage from "../miscellaneous/ErrorPage";
+import NotFoundPage from "../miscellaneous/NotFoundPage";
+import CategoryDetailsSkeleton from "./CategoryDetailsSkeleton";
 
 const CategoryDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const category = dmy_categories.find((c) => c.id === Number(id));
+
+  const {
+    data: category,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFetchCategory(id ?? "");
+
+  if (isLoading) return <CategoryDetailsSkeleton />;
+
+  if (error) {
+    return (
+      <ErrorPage
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
+    );
+  }
 
   // Get products in this category (for demo, we'll show all products)
   // In a real app, you'd filter products by category
@@ -34,21 +57,17 @@ const CategoryDetails = () => {
 
   if (!category) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Folder className="size-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">الفئة غير موجودة</h2>
-        <p className="text-muted-foreground mb-4">
-          الفئة التي تبحث عنها غير موجودة أو تم حذفها.
-        </p>
-    
-      </div>
+      <NotFoundPage
+        title="الفئة غير موجودة"
+        description="الفئة التي تبحث عنها غير موجودة أو تم حذفها."
+        backTo="/categories"
+        backLabel="العودة إلى الفئات"
+      />
     );
   }
 
   return (
     <div className="space-y-6">
-      
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Category Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -106,7 +125,7 @@ const CategoryDetails = () => {
                   <Package className="size-6 text-primary" />
                   <div className="text-right">
                     <p className="text-2xl font-bold">
-                      {category.number_of_products}
+                      {category._count?.products ?? 0}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       عدد المنتجات
@@ -116,7 +135,9 @@ const CategoryDetails = () => {
                 <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
                   <Folder className="size-6 text-primary" />
                   <div className="text-right">
-                    <p className="text-2xl font-bold">#{category.id}</p>
+                    <p className="text-2xl font-bold">
+                      #{category.id.slice(0, 6)}
+                    </p>
                     <p className="text-sm text-muted-foreground">رقم الفئة</p>
                   </div>
                 </div>

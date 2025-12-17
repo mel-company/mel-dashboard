@@ -10,15 +10,28 @@ export const categoryKeys = {
   list: (params?: any) => [...categoryKeys.lists(), params] as const,
   details: () => [...categoryKeys.all, "detail"] as const,
   detail: (id: string) => [...categoryKeys.details(), id] as const,
+  search: (params?: any) => [...categoryKeys.all, "search", params] as const,
 };
 
 /**
  * Fetch all categories with optional filtering and pagination
  */
-export const useFetchCategories = (params?: any) => {
+export const useFetchCategories = (params?: any, enabled: boolean = true) => {
   return useQuery<any>({
     queryKey: categoryKeys.list(params),
     queryFn: () => categoryAPI.fetchAll(params),
+    enabled,
+  });
+};
+
+/**
+ * Search for categories with optional filtering and pagination
+ */
+export const useSearchCategories = (params?: any, enabled: boolean = true) => {
+  return useQuery<any>({
+    queryKey: categoryKeys.search(params),
+    queryFn: () => categoryAPI.search(params),
+    enabled: enabled && !!params?.query,
   });
 };
 

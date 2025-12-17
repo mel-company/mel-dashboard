@@ -17,10 +17,11 @@ export const productKeys = {
 /**
  * Fetch all products with optional filtering and pagination
  */
-export const useFetchProducts = (params?: any) => {
+export const useFetchProducts = (params?: any, enabled: boolean = true) => {
   return useQuery<ProductListResponse>({
     queryKey: productKeys.list(params),
     queryFn: () => productAPI.fetchAll(params),
+    enabled,
   });
 };
 
