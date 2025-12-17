@@ -40,6 +40,7 @@ import SettingsLayout from "./layout/SettingsLayout";
 import AppStore from "./pages/app-store/AppStore";
 import Accounting from "./pages/accounting/Accounting";
 import StoreLogin from "./pages/auth/StoreLogin";
+import PrivateRoute from "./pages/RBAC/PrivateRoute";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -55,92 +56,93 @@ function App() {
     <>
       <Toaster />
       <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/stats" element={<Stats />} />
+        <Route element={<PrivateRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/stats" element={<Stats />} />
 
-          {/* products routes */}
-          <Route path="/products">
-            <Route index element={<Products />} />
-            <Route path=":id" element={<ProductDetails />} />
-            <Route path="add" element={<AddProduct />} />
+            {/* products routes */}
+            <Route path="/products">
+              <Route index element={<Products />} />
+              <Route path=":id" element={<ProductDetails />} />
+              <Route path="add" element={<AddProduct />} />
+            </Route>
+
+            {/* customers routes */}
+            <Route path="/customers">
+              <Route index element={<Customers />} />
+              <Route path=":id" element={<CustomerDetails />} />
+              <Route path="add" element={<AddCustomer />} />
+            </Route>
+
+            {/* orders routes */}
+            <Route path="/orders">
+              <Route index element={<Orders />} />
+              <Route path=":id" element={<OrderDetails />} />
+              <Route path="add" element={<AddOrder />} />
+            </Route>
+
+            {/* employees routes */}
+            <Route path="/employees">
+              <Route index element={<Employees />} />
+              <Route path=":id" element={<EmployeeDetails />} />
+              <Route path="add" element={<AddEmployee />} />
+            </Route>
+
+            {/* notifications routes */}
+            <Route path="/notifications">
+              <Route index element={<Notifications />} />
+              <Route path=":id" element={<NotificationDetails />} />
+            </Route>
+
+            {/* profile routes */}
+            <Route path="/profile">
+              <Route index element={<UserProfile />} />
+            </Route>
+
+            {/* settings routes */}
+            <Route path="/settings" element={<SettingsLayout />}>
+              <Route
+                index
+                element={<Navigate to="/settings/general" replace />}
+              />
+              <Route path="general" element={<GeneralSettings />} />
+              <Route path="store" element={<DetailsSettings />} />
+              <Route path="domain" element={<DomainSettings />} />
+              <Route
+                path="payment-methods"
+                element={<PaymentMethodsSettings />}
+              />
+              <Route path="delivery" element={<DeliverySettings />} />
+              <Route
+                path="terms-and-conditions"
+                element={<TermsAndConditionsSettings />}
+              />
+            </Route>
+
+            {/* category routes */}
+            <Route path="/categories">
+              <Route index element={<Categories />} />
+              <Route path=":id" element={<CategoryDetails />} />
+              <Route path="add" element={<AddCategory />} />
+            </Route>
+
+            {/* Discounts routes */}
+            <Route path="/discounts">
+              <Route index element={<Discounts />} />
+              <Route path=":id" element={<DiscountDetails />} />
+              <Route path="add" element={<AddDiscount />} />
+            </Route>
+
+            {/* App Store route */}
+            <Route path="/app-store" element={<AppStore />} />
+
+            {/* Accounting route */}
+            <Route path="/accounting" element={<Accounting />} />
           </Route>
-
-          {/* customers routes */}
-          <Route path="/customers">
-            <Route index element={<Customers />} />
-            <Route path=":id" element={<CustomerDetails />} />
-            <Route path="add" element={<AddCustomer />} />
-          </Route>
-
-          {/* orders routes */}
-          <Route path="/orders">
-            <Route index element={<Orders />} />
-            <Route path=":id" element={<OrderDetails />} />
-            <Route path="add" element={<AddOrder />} />
-          </Route>
-
-          {/* employees routes */}
-          <Route path="/employees">
-            <Route index element={<Employees />} />
-            <Route path=":id" element={<EmployeeDetails />} />
-            <Route path="add" element={<AddEmployee />} />
-          </Route>
-
-          {/* notifications routes */}
-          <Route path="/notifications">
-            <Route index element={<Notifications />} />
-            <Route path=":id" element={<NotificationDetails />} />
-          </Route>
-
-          {/* profile routes */}
-          <Route path="/profile">
-            <Route index element={<UserProfile />} />
-          </Route>
-
-          {/* settings routes */}
-          <Route path="/settings" element={<SettingsLayout />}>
-            <Route
-              index
-              element={<Navigate to="/settings/general" replace />}
-            />
-            <Route path="general" element={<GeneralSettings />} />
-            <Route path="store" element={<DetailsSettings />} />
-            <Route path="domain" element={<DomainSettings />} />
-            <Route
-              path="payment-methods"
-              element={<PaymentMethodsSettings />}
-            />
-            <Route path="delivery" element={<DeliverySettings />} />
-            <Route
-              path="terms-and-conditions"
-              element={<TermsAndConditionsSettings />}
-            />
-          </Route>
-
-          {/* category routes */}
-          <Route path="/categories">
-            <Route index element={<Categories />} />
-            <Route path=":id" element={<CategoryDetails />} />
-            <Route path="add" element={<AddCategory />} />
-          </Route>
-
-          {/* Discounts routes */}
-          <Route path="/discounts">
-            <Route index element={<Discounts />} />
-            <Route path=":id" element={<DiscountDetails />} />
-            <Route path="add" element={<AddDiscount />} />
-          </Route>
-
-          {/* App Store route */}
-          <Route path="/app-store" element={<AppStore />} />
-
-          {/* Accounting route */}
-          <Route path="/accounting" element={<Accounting />} />
         </Route>
-
         {/* Public routes */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<StoreLogin />} />
         <Route path="/store-login" element={<StoreLogin />} />
         <Route path="/otp" element={<OTP />} />
 

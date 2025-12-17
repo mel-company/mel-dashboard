@@ -137,7 +137,7 @@ const OTP = () => {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => navigate("/store-login")}
+                onClick={() => navigate("/login")}
               >
                 <ArrowLeft className="w-4 h-4 ml-2" />
                 تعديل الرقم

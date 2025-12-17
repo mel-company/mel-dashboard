@@ -34,7 +34,7 @@ const Layout = () => {
   const handleLogout = () => {
     // logout();
     toast.success("تم تسجيل الخروج بنجاح");
-    navigate("/store-login", { replace: true });
+    navigate("/login", { replace: true });
   };
 
   // Show apps grid if on home page
