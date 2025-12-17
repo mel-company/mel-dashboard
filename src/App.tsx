@@ -35,9 +35,11 @@ import PaymentMethodsSettings from "./pages/settings/PaymentMethodsSettings";
 import DeliverySettings from "./pages/settings/DeliverySettings";
 import TermsAndConditionsSettings from "./pages/settings/TermsAndConditionsSettings";
 import Login from "./pages/auth/Login";
+import OTP from "./pages/auth/OTP";
 import SettingsLayout from "./layout/SettingsLayout";
 import AppStore from "./pages/app-store/AppStore";
 import Accounting from "./pages/accounting/Accounting";
+import StoreLogin from "./pages/auth/StoreLogin";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -139,6 +141,8 @@ function App() {
 
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/store-login" element={<StoreLogin />} />
+        <Route path="/otp" element={<OTP />} />
 
         {/* Protected routes - Dashboard with Layout */}
         <Route

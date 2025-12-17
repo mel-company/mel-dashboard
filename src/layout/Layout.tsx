@@ -17,18 +17,24 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { useLogout, useMe } from "@/api/wrappers/auth.wrappers";
 
 const Layout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, user } = useAuth();
+  // const { logout, user } = useAuth();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
+  const { mutate: logoutMutation } = useLogout();
+  const { data: me } = useMe();
+
+  console.log(me);
+
   const handleLogout = () => {
-    logout();
+    // logout();
     toast.success("تم تسجيل الخروج بنجاح");
-    navigate("/login", { replace: true });
+    navigate("/store-login", { replace: true });
   };
 
   // Show apps grid if on home page
@@ -83,10 +89,8 @@ const Layout = () => {
     const path = location.pathname;
     const segments = path.split("/").filter(Boolean);
 
-  
     const items: { href: string; label: string; current: boolean }[] = [];
 
-    
     // ثم كل جزء من المسار بشكل تراكمي
     let currentPath = "";
     segments.forEach((segment, index) => {
@@ -259,15 +263,15 @@ const Layout = () => {
           <div className="flex items-center gap-2 bg-accent rounded-full px-3 py-1.5">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-cyan text-white text-xs">
-                {user?.name?.[0] || "ح"}
+                {/* {user?.name?.[0] || "ح"} */}
               </AvatarFallback>
             </Avatar>
             <div className="hidden sm:flex flex-col items-end">
-              <span className="text-xs font-medium text-foreground">
-                {user?.name || "حسن علي"}
+              <span className="line-clamp-1 text-xs font-medium text-foreground">
+                {me?.fullName || "المستخدم"}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {user?.email || "مدير النظام"}
+              <span className="line-clamp-1 text-xs text-muted-foreground">
+                {me?.email || "البريد الإلكتروني"}
               </span>
             </div>
             <div className="relative group">
