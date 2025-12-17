@@ -40,14 +40,11 @@ import AppStore from "./pages/app-store/AppStore";
 import Accounting from "./pages/accounting/Accounting";
 import StoreLogin from "./pages/auth/StoreLogin";
 import PrivateRoute from "./pages/RBAC/PrivateRoute";
+import NotFoundPage from "./pages/miscellaneous/NotFoundPage";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? (
-    <Navigate to="/" replace />
-  ) : (
-    <Navigate to="/login" replace />
-  );
+  return isAuthenticated ? <NotFoundPage /> : <Navigate to="/login" replace />;
 }
 
 function App() {

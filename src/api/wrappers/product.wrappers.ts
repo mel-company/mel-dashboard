@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productAPI } from "../endpoints/product.endpoints";
+import type { ProductListResponse } from "../types/product";
 
 /**
  * Query key factory for products
@@ -10,15 +11,27 @@ export const productKeys = {
   list: (params?: any) => [...productKeys.lists(), params] as const,
   details: () => [...productKeys.all, "detail"] as const,
   detail: (id: string) => [...productKeys.details(), id] as const,
+  search: (params?: any) => [...productKeys.all, "search", params] as const,
 };
 
 /**
  * Fetch all products with optional filtering and pagination
  */
 export const useFetchProducts = (params?: any) => {
-  return useQuery<any>({
+  return useQuery<ProductListResponse>({
     queryKey: productKeys.list(params),
     queryFn: () => productAPI.fetchAll(params),
+  });
+};
+
+/**
+ * Search for products with optional filtering and pagination
+ */
+export const useSearchProducts = (params?: any, enabled: boolean = true) => {
+  return useQuery<ProductListResponse>({
+    queryKey: productKeys.search(params),
+    queryFn: () => productAPI.search(params),
+    enabled: enabled && !!params?.query,
   });
 };
 
