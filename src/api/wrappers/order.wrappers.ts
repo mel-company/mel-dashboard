@@ -16,20 +16,22 @@ export const orderKeys = {
 /**
  * Fetch all orders with optional filtering and pagination
  */
-export const useFetchOrders = (params?: any) => {
+export const useFetchOrders = (params?: any, enabled: boolean = true) => {
   return useQuery<any>({
     queryKey: orderKeys.list(params),
     queryFn: () => orderAPI.fetchAll(params),
+    enabled,
   });
 };
 
 /**
  * Search for orders with optional filtering and pagination
  */
-export const useSearchOrders = (params?: any) => {
+export const useSearchOrders = (params?: any, enabled: boolean = true) => {
   return useQuery<any>({
     queryKey: orderKeys.search(params),
     queryFn: () => orderAPI.search(params),
+    enabled: enabled && !!params?.query,
   });
 };
 
