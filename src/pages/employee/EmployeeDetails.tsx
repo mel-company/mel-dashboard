@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { dmy_employees } from "@/data/dummy";
 import {
   Card,
@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowRight,
   User,
   Phone,
   Mail,
@@ -19,12 +18,27 @@ import {
   Edit,
   Trash2,
   Calendar,
+  Lock,
 } from "lucide-react";
+import { useState } from "react";
 
 const EmployeeDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const employee = dmy_employees.find((e) => e.id === Number(id));
+  // @ts-ignore
+  const [isCommingSoon, setIsCommingSoon] = useState(true);
+
+  if (isCommingSoon) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Lock className="size-16 text-muted-foreground mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">قريباً</h2>
+        <p className="text-muted-foreground mb-4">
+          هذا التطبيق قيد التطوير وسيكون متاحاً قريباً. شكراً لصبرك!
+        </p>
+      </div>
+    );
+  }
 
   if (!employee) {
     return (
@@ -34,37 +48,12 @@ const EmployeeDetails = () => {
         <p className="text-muted-foreground mb-4">
           الموظف الذي تبحث عنه غير موجود أو تم حذفه.
         </p>
-        <Button onClick={() => navigate("/employees")} variant="outline">
-          العودة إلى الموظفين
-        </Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/employees")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى الموظفين
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-          <Button variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Employee Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -104,7 +93,9 @@ const EmployeeDetails = () => {
                 <div className="flex items-center gap-3 p-4 rounded-lg border bg-card sm:col-span-2">
                   <Mail className="size-5 text-primary" />
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
+                    <p className="text-sm text-muted-foreground">
+                      البريد الإلكتروني
+                    </p>
                     <p className="text-lg font-bold">{employee.email}</p>
                   </div>
                 </div>

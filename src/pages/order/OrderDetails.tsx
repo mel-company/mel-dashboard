@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { dmy_orders, dmy_users } from "@/data/dummy";
 import {
   Card,
@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowRight,
   Package,
   User,
   MapPin,
@@ -30,7 +29,6 @@ import {
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const order = dmy_orders.find((o) => o.id === Number(id));
   const user = order ? dmy_users.find((u) => u.id === order.user_id) : null;
 
@@ -42,9 +40,6 @@ const OrderDetails = () => {
         <p className="text-muted-foreground mb-4">
           الطلب الذي تبحث عنه غير موجود أو تم حذفه.
         </p>
-        <button onClick={() => navigate("/orders")} className=" text-red-500 bg-amber-300 hover:bg-amber-400 px-4 py-2 rounded-md">
-          العودة إلى الطلبات
-        </button>
       </div>
     );
   }
@@ -113,27 +108,7 @@ const OrderDetails = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/orders")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى الطلبات
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Printer className="size-4" />
-            طباعة
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-        </div>
-      </div>
+      
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Order Info */}

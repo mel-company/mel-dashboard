@@ -19,6 +19,8 @@ import {
   ChevronDown,
   ChevronUp,
   LogOut,
+  AppWindow,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
@@ -120,9 +122,14 @@ const Sidebar = ({ onClose }: SidebarProps) => {
         icon: User,
       },
       {
-        label: "معرض القوالب",
-        path: "/editor/templates",
-        icon: Store,
+        label: "متجر التطبيقات",
+        path: "/app-store",
+        icon: AppWindow,
+      },
+      {
+        label: "المحاسبة",
+        path: "/accounting",
+        icon: Calculator,
       },
     ],
     []

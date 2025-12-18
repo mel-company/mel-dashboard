@@ -1,5 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { dmy_users, dmy_orders } from "@/data/dummy";
+import { useParams, Link } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -11,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowRight,
   User,
   Phone,
   MapPin,
@@ -21,33 +19,57 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
+import { useFetchCustomer } from "@/api/wrappers/customer.wrappers";
+import ErrorPage from "../miscellaneous/ErrorPage";
+import NotFoundPage from "../miscellaneous/NotFoundPage";
+import CustomerDetailsSkeleton from "./CustomerDetailsSkeleton";
 
 const CustomerDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const customer = dmy_users.find((c) => c.id === Number(id));
-  const customerOrders = dmy_orders.filter((o) => o.user_id === Number(id));
 
-  if (!customer) {
+  const {
+    data: customer,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFetchCustomer(id ?? "");
+
+  if (isLoading) {
+    return <CustomerDetailsSkeleton />;
+  }
+
+  if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <User className="size-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">العميل غير موجود</h2>
-        <p className="text-muted-foreground mb-4">
-          العميل الذي تبحث عنه غير موجود أو تم حذفه.
-        </p>
-        <Button onClick={() => navigate("/customers")} variant="outline">
-          العودة إلى العملاء
-        </Button>
-      </div>
+      <ErrorPage
+        title="خطأ في تحميل بيانات العميل"
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
     );
   }
 
+  if (!customer) {
+    return (
+      <NotFoundPage
+        title="العميل غير موجود"
+        description="العميل الذي تبحث عنه غير موجود أو تم حذفه."
+        backTo="/customers"
+        backLabel="العودة لقائمة العملاء"
+      />
+    );
+  }
+
+  const user = customer.user;
+  const customerOrders = customer.orders ?? [];
+  const orderCount = customer._count?.orders ?? customerOrders.length;
+
   // Calculate total spent
   const calculateTotalSpent = () => {
-    return customerOrders.reduce((sum, order) => {
-      return sum + order.products.reduce((orderSum, product) => orderSum + product.price, 0);
-    }, 0);
+    // Note: Order total calculation would need order.products with prices or a total field
+    // For now, return 0 as orders don't include product details in the customer response
+    return 0;
   };
 
   // Format date
@@ -65,23 +87,23 @@ const CustomerDetails = () => {
   // Get status badge
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { className: string; text: string }> = {
-      pending: {
+      PENDING: {
         className: "bg-yellow-600 text-white",
         text: "قيد الانتظار",
       },
-      processing: {
+      PROCESSING: {
         className: "bg-blue-600 text-white",
         text: "قيد المعالجة",
       },
-      shipped: {
+      SHIPPED: {
         className: "bg-purple-600 text-white",
         text: "تم الشحن",
       },
-      delivered: {
+      DELIVERED: {
         className: "bg-green-600 text-white",
         text: "تم التسليم",
       },
-      cancelled: {
+      CANCELLED: {
         className: "bg-red-600 text-white",
         text: "ملغي",
       },
@@ -98,28 +120,6 @@ const CustomerDetails = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/customers")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى العملاء
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-          <Button variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Customer Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -127,10 +127,10 @@ const CustomerDetails = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl text-right">
-                {customer.name}
+                {user?.name ?? "—"}
               </CardTitle>
               <CardDescription className="text-right">
-                عميل رقم #{customer.id}
+                عميل رقم #{customer.id.slice(0, 8)}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -146,14 +146,14 @@ const CustomerDetails = () => {
                   <Phone className="size-5 text-primary" />
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">رقم الهاتف</p>
-                    <p className="text-lg font-bold">{customer.phone}</p>
+                    <p className="text-lg font-bold">{user?.phone ?? "—"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
                   <MapPin className="size-5 text-primary" />
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">الموقع</p>
-                    <p className="text-lg font-bold">{customer.location}</p>
+                    <p className="text-lg font-bold">{user?.location ?? "—"}</p>
                   </div>
                 </div>
               </div>
@@ -165,22 +165,21 @@ const CustomerDetails = () => {
             <CardHeader>
               <CardTitle className="text-right flex items-center gap-2">
                 <ShoppingBag className="size-5" />
-                طلبات العميل ({customerOrders.length})
+                طلبات العميل ({orderCount})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {customerOrders.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="size-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">لا توجد طلبات لهذا العميل</p>
+                  <p className="text-muted-foreground">
+                    لا توجد طلبات لهذا العميل
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {customerOrders.map((order, index) => {
-                    const orderTotal = order.products.reduce(
-                      (sum, product) => sum + product.price,
-                      0
-                    );
+                  {customerOrders.map((order: any, index: number) => {
+                    const productCount = order._count?.products ?? 0;
                     const statusBadge = getStatusBadge(order.status);
                     return (
                       <div key={order.id}>
@@ -194,7 +193,7 @@ const CustomerDetails = () => {
                                 to={`/orders/${order.id}`}
                                 className="font-semibold hover:text-primary transition-colors"
                               >
-                                طلب رقم #{order.id}
+                                طلب رقم #{order.id.slice(0, 8)}
                               </Link>
                               <Badge
                                 variant="default"
@@ -204,16 +203,25 @@ const CustomerDetails = () => {
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground mb-2">
-                              {order.products.length} منتج
+                              {productCount} منتج
                             </p>
                             <div className="flex items-center gap-4 text-sm">
                               <div className="flex items-center gap-1 text-muted-foreground">
                                 <Calendar className="size-4" />
-                                <span>{formatDate(order.created_at)}</span>
+                                <span>
+                                  {order.createdAt
+                                    ? formatDate(order.createdAt)
+                                    : "—"}
+                                </span>
                               </div>
-                              <span className="font-bold text-primary">
-                                {orderTotal.toFixed(2)} د.ع
-                              </span>
+                              {order.address && (
+                                <div className="flex items-center gap-1 text-muted-foreground">
+                                  <MapPin className="size-4" />
+                                  <span className="line-clamp-1 max-w-xs">
+                                    {order.address}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -239,7 +247,7 @@ const CustomerDetails = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="text-sm">
-                  #{customer.id}
+                  #{customer.id.slice(0, 8)}
                 </Badge>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   رقم العميل
@@ -247,9 +255,7 @@ const CustomerDetails = () => {
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-lg font-bold">
-                  {customerOrders.length}
-                </span>
+                <span className="text-lg font-bold">{orderCount}</span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   عدد الطلبات
                 </span>
@@ -257,7 +263,7 @@ const CustomerDetails = () => {
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-lg font-bold text-primary">
-                  {totalSpent.toFixed(2)} د.ع
+                  {totalSpent > 0 ? `${totalSpent.toFixed(2)} د.ع` : "—"}
                 </span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   إجمالي المشتريات

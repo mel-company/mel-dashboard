@@ -1,5 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { dmy_discounts } from "@/data/dummy";
+import { useParams, Link } from "react-router-dom";
 import { DISCOUNT_STATUS } from "@/utils/constants";
 import {
   Card,
@@ -11,34 +10,42 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  ArrowRight,
-  Tag,
-  Calendar,
-  Folder,
-  Edit,
-  Trash2,
-  Percent,
-  ShoppingCart,
-} from "lucide-react";
+import { Tag, Calendar, Folder, Edit, Trash2, Percent } from "lucide-react";
+import { useFetchDiscount } from "@/api/wrappers/discount.wrappers";
+import ErrorPage from "../miscellaneous/ErrorPage";
+import NotFoundPage from "../miscellaneous/NotFoundPage";
+import DiscountDetailsSkeleton from "./DiscountDetailsSkeleton";
 
 const DiscountDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const discount = dmy_discounts.find((d) => d.id === Number(id));
+  const {
+    data: discount,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFetchDiscount(id ?? "");
+
+  if (isLoading) return <DiscountDetailsSkeleton />;
+
+  if (error) {
+    return (
+      <ErrorPage
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
+    );
+  }
 
   if (!discount) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Tag className="size-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">الخصم غير موجود</h2>
-        <p className="text-muted-foreground mb-4">
-          الخصم الذي تبحث عنه غير موجود أو تم حذفه.
-        </p>
-        <Button onClick={() => navigate("/discounts")} variant="outline">
-          العودة إلى الخصومات
-        </Button>
-      </div>
+      <NotFoundPage
+        title="الخصم غير موجود"
+        description="الخصم الذي تبحث عنه غير موجود أو تم حذفه."
+        backTo="/discounts"
+        backLabel="العودة إلى الخصومات"
+      />
     );
   }
 
@@ -78,32 +85,12 @@ const DiscountDetails = () => {
     }
   };
 
-  const statusBadge = getStatusBadge(discount.discount_status);
-  const isActive = discount.discount_status === DISCOUNT_STATUS.ACTIVE;
+  const statusBadge = getStatusBadge(discount?.discount_status);
+  const isActive = discount?.discount_status === DISCOUNT_STATUS.ACTIVE;
 
   return (
     <div className="space-y-6">
       {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/discounts")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى الخصومات
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-          <Button variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Discount Info */}
@@ -127,7 +114,7 @@ const DiscountDetails = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="relative h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
+              <div className="relative h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
                 <div className="flex flex-col items-center gap-4">
                   <Tag className="size-24 text-primary" />
                   <div className="text-6xl font-bold text-primary">
@@ -153,7 +140,9 @@ const DiscountDetails = () => {
                 <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
                   <Calendar className="size-5 text-primary" />
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">تاريخ الانتهاء</p>
+                    <p className="text-sm text-muted-foreground">
+                      تاريخ الانتهاء
+                    </p>
                     <p className="text-lg font-bold">
                       {formatDate(discount.discount_end_date)}
                     </p>
@@ -164,7 +153,7 @@ const DiscountDetails = () => {
           </Card>
 
           {/* Products in Discount */}
-          {discount.discount_products.length > 0 && (
+          {/* {discount.discount_products.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-right flex items-center gap-2">
@@ -198,20 +187,20 @@ const DiscountDetails = () => {
                 </div>
               </CardContent>
             </Card>
-          )}
+          )} */}
 
           {/* Categories in Discount */}
-          {discount.discount_categories.length > 0 && (
+          {discount?.discount_categories?.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-right flex items-center gap-2">
                   <Folder className="size-5" />
-                  الفئات المشمولة ({discount.discount_categories.length})
+                  الفئات المشمولة ({discount?._count?.categories ?? 0})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {discount.discount_categories.map((category) => (
+                  {discount?.discount_categories?.map((category: any) => (
                     <Link
                       key={category.id}
                       to={`/categories/${category.id}`}
@@ -281,7 +270,7 @@ const DiscountDetails = () => {
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-sm">
-                  {discount.discount_products.length}
+                  {discount?._count?.products ?? 0}
                 </span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   عدد المنتجات
@@ -290,7 +279,7 @@ const DiscountDetails = () => {
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-sm">
-                  {discount.discount_categories.length}
+                  {discount?._count?.categories ?? 0}
                 </span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   عدد الفئات

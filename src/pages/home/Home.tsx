@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
@@ -6,12 +6,13 @@ import {
   Layers,
   Tag,
   Users,
-  Edit,
   Store,
   ArrowUpRight,
   BarChart3,
   Activity,
   DollarSign,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -114,8 +115,43 @@ const dmy_discounts = [
   { discount_status: "ACTIVE" },
 ];
 
+type IconSize = "small" | "medium" | "large";
+
 const Home = () => {
   const navigate = useNavigate();
+  const [iconSize, setIconSize] = useState<IconSize>(() => {
+    const saved = localStorage.getItem("homeIconSize");
+    return (saved as IconSize) || "medium";
+  });
+
+  // Toggle icon size between small, medium, and large
+  const toggleIconSize = () => {
+    const sizes: IconSize[] = ["small", "medium", "large"];
+    const currentIndex = sizes.indexOf(iconSize);
+    const nextIndex = (currentIndex + 1) % sizes.length;
+    const nextSize = sizes[nextIndex];
+    setIconSize(nextSize);
+    localStorage.setItem("homeIconSize", nextSize);
+  };
+
+  // Icon size classes
+  const iconSizeClasses = {
+    small: {
+      icon: "w-4 h-4",
+      container: "p-2",
+      grid: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5",
+    },
+    medium: {
+      icon: "w-6 h-6",
+      container: "p-3",
+      grid: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5",
+    },
+    large: {
+      icon: "w-8 h-8",
+      container: "p-4",
+      grid: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    },
+  };
 
   // Detect theme
   const isDark = useMemo(
@@ -545,6 +581,37 @@ const Home = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {/* Icon Size Toggle Button */}
+              <button
+                onClick={toggleIconSize}
+                className="group flex items-center gap-2 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 rounded-lg border border-primary/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95"
+                title={
+                  iconSize === "small"
+                    ? "صغير - اضغط للتغيير"
+                    : iconSize === "medium"
+                    ? "متوسط - اضغط للتغيير"
+                    : "كبير - اضغط للتغيير"
+                }
+              >
+                {iconSize === "small" ? (
+                  <Minimize2 className="w-5 h-5 text-primary" />
+                ) : iconSize === "medium" ? (
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                  </div>
+                ) : (
+                  <Maximize2 className="w-5 h-5 text-primary" />
+                )}
+                <span className="text-sm font-semibold text-primary">
+                  {iconSize === "small"
+                    ? "صغير"
+                    : iconSize === "medium"
+                    ? "متوسط"
+                    : "كبير"}
+                </span>
+              </button>
               <div className="flex items-center gap-2 px-4 py-2 bg-card rounded-lg border border-border shadow-sm">
                 <Activity className="w-4 h-4 text-green-500" />
                 <span className="text-sm font-medium text-foreground">
@@ -557,32 +624,37 @@ const Home = () => {
           {/* Quick Actions */}
           <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => navigate("/editor/templates")}
-              className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+              onClick={() => navigate("/app-store")}
+              className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
             >
               <Store className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              <span className="font-medium">معرض القوالب</span>
+              <span className="font-medium">متجر التطبيقات</span>
               <ArrowUpRight className="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
             </button>
             <button
-              onClick={() => navigate("/editor/templates")}
+              onClick={() => navigate("/accounting")}
               className="group flex items-center gap-2 px-6 py-3 bg-card border-2 border-border text-foreground rounded-xl hover:border-border/80 hover:bg-accent transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Edit className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              <span className="font-medium">محرر القوالب</span>
+              <DollarSign className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+              <span className="font-medium">المحاسبة</span>
               <ArrowUpRight className="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
             </button>
           </div>
         </div>
 
         {/* Stats Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
+        <div
+          className={`grid ${iconSizeClasses[iconSize].grid} gap-4 lg:gap-6`}
+        >
           {statsCards.map((stat, index) => {
             const Icon = stat.icon;
+            const currentSize = iconSizeClasses[iconSize];
             return (
               <div
                 key={index}
-                className="group relative bg-card rounded-2xl border border-border p-6 hover:border-border/80 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                className={`group relative bg-card rounded-2xl border border-border ${
+                  iconSize === "large" ? "p-8" : "p-6"
+                } hover:border-border/80 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden`}
               >
                 {/* Background Gradient */}
                 <div
@@ -591,11 +663,17 @@ const Home = () => {
 
                 {/* Content */}
                 <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-4">
+                  <div
+                    className={`flex items-start justify-between ${
+                      iconSize === "large" ? "mb-6" : "mb-4"
+                    }`}
+                  >
                     <div
-                      className={`p-3 rounded-xl bg-gradient-to-br ${stat.bgGradient} group-hover:scale-110 transition-transform duration-300`}
+                      className={`${currentSize.container} rounded-xl bg-gradient-to-br ${stat.bgGradient} group-hover:scale-110 transition-transform duration-300`}
                     >
-                      <Icon className={`w-6 h-6 ${stat.iconColor}`} />
+                      <Icon
+                        className={`${currentSize.icon} ${stat.iconColor}`}
+                      />
                     </div>
                     <div className="flex items-center gap-1 text-xs font-semibold">
                       <ArrowUpRight className="w-3 h-3" />
@@ -603,10 +681,22 @@ const Home = () => {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-muted-foreground text-sm font-medium">
+                    <p
+                      className={`text-muted-foreground ${
+                        iconSize === "large" ? "text-base" : "text-sm"
+                      } font-medium`}
+                    >
                       {stat.title}
                     </p>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p
+                      className={`font-bold text-foreground ${
+                        iconSize === "large"
+                          ? "text-4xl"
+                          : iconSize === "medium"
+                          ? "text-3xl"
+                          : "text-2xl"
+                      }`}
+                    >
                       {stat.value}
                     </p>
                   </div>
@@ -614,7 +704,11 @@ const Home = () => {
 
                 {/* Decorative Element */}
                 <div
-                  className={`absolute -bottom-4 -right-4 w-24 h-24 bg-gradient-to-br ${stat.gradient} opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity duration-300`}
+                  className={`absolute -bottom-4 -right-4 ${
+                    iconSize === "large" ? "w-32 h-32" : "w-24 h-24"
+                  } bg-gradient-to-br ${
+                    stat.gradient
+                  } opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity duration-300`}
                 />
               </div>
             );

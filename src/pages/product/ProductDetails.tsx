@@ -1,5 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { dmy_products } from "@/data/dummy";
+import { useParams } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -11,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowRight,
   Star,
   ShoppingCart,
   DollarSign,
@@ -20,50 +18,31 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
+import { useFetchProduct } from "@/api/wrappers/product.wrappers";
+import ErrorPage from "../miscellaneous/ErrorPage";
+import ProductDetailsSkeleton from "./ProductDetailsSkeleton";
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const product = dmy_products.find((p) => p.id === Number(id));
-  const navigate = useNavigate(); // for navigation
-  if (!product) {
+
+  const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
+    id ?? ""
+  );
+
+  if (isLoading) return <ProductDetailsSkeleton />;
+
+  if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <ShoppingCart className="size-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">المنتج غير موجود</h2>
-        <p className="text-muted-foreground mb-4">
-          المنتج الذي تبحث عنه غير موجود أو تم حذفه.
-        </p>
-        <Button onClick={() => navigate("/products")} variant="outline">
-          العودة إلى المنتجات
-        </Button>
-      </div>
+      <ErrorPage
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/products")}
-          className="gap-2"
-        >
-          <ArrowRight className="size-4" />
-          العودة إلى المنتجات
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-          <Button variant="destructive" className="gap-2">
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Product Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -71,10 +50,10 @@ const ProductDetails = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl text-right">
-                {product.title}
+                {data.title}
               </CardTitle>
               <CardDescription className="text-right">
-                {product.description}
+                {data.description}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -100,7 +79,7 @@ const ProductDetails = () => {
               <div className="flex items-center gap-2 text-right">
                 <div className="flex items-center gap-1">
                   <Star className="size-5 fill-yellow-400 text-yellow-400" />
-                  <span className="text-lg font-semibold">{product.rate}</span>
+                  <span className="text-lg font-semibold">{data.rate}</span>
                 </div>
                 <span className="text-muted-foreground">تقييم المنتج</span>
               </div>
@@ -112,7 +91,7 @@ const ProductDetails = () => {
                 <div className="flex items-center gap-2 text-right">
                   <DollarSign className="size-5 text-primary" />
                   <span className="text-3xl font-bold text-primary">
-                    {product.price.toFixed(2)} د.ع
+                    {data.price.toFixed(2)} د.ع
                   </span>
                 </div>
                 <Badge variant="default" className="text-lg px-4 py-2">
@@ -132,13 +111,13 @@ const ProductDetails = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {Object.entries(product.properties).map(([key, value]) => (
+                {Object.entries(data.properties).map(([key, value]) => (
                   <div
                     key={key}
                     className="flex items-center justify-between p-4 rounded-lg border bg-card"
                   >
                     <Badge variant="outline" className="text-sm">
-                      {value}
+                      {value as string}
                     </Badge>
                     <span className="text-sm font-medium text-muted-foreground text-right">
                       {key === "brand"
@@ -166,7 +145,7 @@ const ProductDetails = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="text-sm">
-                  #{product.id}
+                  #{data.id}
                 </Badge>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   رقم المنتج
