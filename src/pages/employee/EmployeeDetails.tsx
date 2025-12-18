@@ -18,11 +18,27 @@ import {
   Edit,
   Trash2,
   Calendar,
+  Lock,
 } from "lucide-react";
+import { useState } from "react";
 
 const EmployeeDetails = () => {
   const { id } = useParams<{ id: string }>();
   const employee = dmy_employees.find((e) => e.id === Number(id));
+  // @ts-ignore
+  const [isCommingSoon, setIsCommingSoon] = useState(true);
+
+  if (isCommingSoon) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Lock className="size-16 text-muted-foreground mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">قريباً</h2>
+        <p className="text-muted-foreground mb-4">
+          هذا التطبيق قيد التطوير وسيكون متاحاً قريباً. شكراً لصبرك!
+        </p>
+      </div>
+    );
+  }
 
   if (!employee) {
     return (
@@ -38,8 +54,6 @@ const EmployeeDetails = () => {
 
   return (
     <div className="space-y-6">
-      
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Employee Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -79,7 +93,9 @@ const EmployeeDetails = () => {
                 <div className="flex items-center gap-3 p-4 rounded-lg border bg-card sm:col-span-2">
                   <Mail className="size-5 text-primary" />
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
+                    <p className="text-sm text-muted-foreground">
+                      البريد الإلكتروني
+                    </p>
                     <p className="text-lg font-bold">{employee.email}</p>
                   </div>
                 </div>

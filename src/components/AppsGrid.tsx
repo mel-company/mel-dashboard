@@ -14,10 +14,19 @@ import {
   AppWindow,
   Maximize2,
   Minimize2,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { useApps } from "@/contexts/AppsContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface AppItem {
   label: string;
@@ -27,6 +36,7 @@ interface AppItem {
   description?: string;
   badge?: string;
   emojiIcon?: string;
+  locked?: boolean;
 }
 
 // Base apps - always shown
@@ -81,6 +91,7 @@ const baseApps: AppItem[] = [
     icon: Users2,
     gradient: "from-indigo-500 to-indigo-600",
     description: "إدارة الموظفين",
+    locked: true,
   },
   {
     label: "الإعدادات",
@@ -137,6 +148,7 @@ const AppsGrid = () => {
     const saved = localStorage.getItem("appsGridIconSize");
     return (saved as IconSize) || "medium";
   });
+  const [comingSoonDialogOpen, setComingSoonDialogOpen] = useState(false);
   const { getAllInstalledApps } = useApps();
 
   // Toggle icon size between small, medium, and large
@@ -260,25 +272,10 @@ const AppsGrid = () => {
               const isActive =
                 location.pathname === app.path ||
                 (app.path !== "/" && location.pathname.startsWith(app.path));
+              const isLocked = app.locked === true;
 
-              return (
-                <Link
-                  key={app.path}
-                  to={app.path}
-                  className={cn(
-                    "group relative flex flex-col items-center justify-center",
-                    iconSize === "large"
-                      ? "p-8"
-                      : iconSize === "medium"
-                      ? "p-6"
-                      : "p-4",
-                    "rounded-xl transition-all duration-200",
-                    "bg-card border border-border",
-                    "hover:shadow-lg hover:shadow-primary/10",
-                    "hover:-translate-y-1",
-                    isActive && "ring-2 ring-primary shadow-md border-primary"
-                  )}
-                >
+              const AppContent = (
+                <>
                   {/* Badge */}
                   {app.badge && (
                     <div className="absolute -top-2 -right-2 z-10">
@@ -288,8 +285,17 @@ const AppsGrid = () => {
                     </div>
                   )}
 
+                  {/* Lock Icon Overlay */}
+                  {isLocked && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted/90 backdrop-blur-sm border border-border shadow-md">
+                        <Lock className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Active Indicator */}
-                  {isActive && (
+                  {isActive && !isLocked && (
                     <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full animate-pulse" />
                   )}
 
@@ -302,7 +308,8 @@ const AppsGrid = () => {
                       app.gradient,
                       "shadow-md",
                       "group-hover:shadow-lg group-hover:scale-110",
-                      "transition-all duration-200"
+                      "transition-all duration-200",
+                      isLocked && "opacity-60"
                     )}
                   >
                     {app.emojiIcon ? (
@@ -332,8 +339,10 @@ const AppsGrid = () => {
                           : iconSize === "medium"
                           ? "text-sm"
                           : "text-base",
-                        isActive
+                        isActive && !isLocked
                           ? "text-primary"
+                          : isLocked
+                          ? "text-muted-foreground"
                           : "text-foreground group-hover:text-primary"
                       )}
                     >
@@ -341,18 +350,68 @@ const AppsGrid = () => {
                     </h3>
                     {app.description && (
                       <p
-                        className={`text-muted-foreground line-clamp-2 ${
+                        className={`line-clamp-2 ${
                           iconSize === "small"
                             ? "text-xs"
                             : iconSize === "medium"
                             ? "text-xs"
                             : "text-sm"
+                        } ${
+                          isLocked
+                            ? "text-muted-foreground"
+                            : "text-muted-foreground"
                         }`}
                       >
                         {app.description}
                       </p>
                     )}
                   </div>
+                </>
+              );
+
+              if (isLocked) {
+                return (
+                  <button
+                    key={app.path}
+                    onClick={() => setComingSoonDialogOpen(true)}
+                    className={cn(
+                      "group relative flex flex-col items-center justify-center",
+                      iconSize === "large"
+                        ? "p-8"
+                        : iconSize === "medium"
+                        ? "p-6"
+                        : "p-4",
+                      "rounded-xl transition-all duration-200",
+                      "bg-card border border-border",
+                      "hover:shadow-lg hover:shadow-primary/10",
+                      "hover:-translate-y-1",
+                      "cursor-pointer"
+                    )}
+                  >
+                    {AppContent}
+                  </button>
+                );
+              }
+
+              return (
+                <Link
+                  key={app.path}
+                  to={app.path}
+                  className={cn(
+                    "group relative flex flex-col items-center justify-center",
+                    iconSize === "large"
+                      ? "p-8"
+                      : iconSize === "medium"
+                      ? "p-6"
+                      : "p-4",
+                    "rounded-xl transition-all duration-200",
+                    "bg-card border border-border",
+                    "hover:shadow-lg hover:shadow-primary/10",
+                    "hover:-translate-y-1",
+                    isActive && "ring-2 ring-primary shadow-md border-primary"
+                  )}
+                >
+                  {AppContent}
                 </Link>
               );
             })}
@@ -370,6 +429,34 @@ const AppsGrid = () => {
             </p>
           </div>
         )}
+
+        {/* Coming Soon Dialog */}
+        <Dialog
+          open={comingSoonDialogOpen}
+          onOpenChange={setComingSoonDialogOpen}
+        >
+          <DialogContent className="sm:max-w-md" dir="rtl">
+            <DialogHeader>
+              <div className="flex items-center justify-center mb-4">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
+                  <Lock className="w-8 h-8 text-muted-foreground" />
+                </div>
+              </div>
+              <DialogTitle className="text-center text-xl">قريباً</DialogTitle>
+              <DialogDescription className="text-center text-base">
+                هذا التطبيق قيد التطوير وسيكون متاحاً قريباً. شكراً لصبرك!
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-center mt-4">
+              <Button
+                onClick={() => setComingSoonDialogOpen(false)}
+                variant="default"
+              >
+                إغلاق
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

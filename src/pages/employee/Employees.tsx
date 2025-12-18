@@ -20,12 +20,15 @@ import {
   Mail,
   Briefcase,
   FileText,
+  Lock,
 } from "lucide-react";
 
 type Props = {};
 
 const Employees = ({}: Props) => {
   const [searchQuery, setSearchQuery] = useState("");
+  // @ts-ignore
+  const [isCommingSoon, setIsCommingSoon] = useState(true);
 
   // Filter employees based on search query
   const filteredEmployees = dmy_employees.filter(
@@ -35,6 +38,18 @@ const Employees = ({}: Props) => {
       employee.phone.includes(searchQuery) ||
       employee.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (isCommingSoon) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Lock className="size-16 text-muted-foreground mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">قريباً</h2>
+        <p className="text-muted-foreground mb-4">
+          هذا التطبيق قيد التطوير وسيكون متاحاً قريباً. شكراً لصبرك!
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -91,7 +106,9 @@ const Employees = ({}: Props) => {
               filteredEmployees.map((employee) => {
                 return (
                   <TableRow key={employee.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">#{employee.id}</TableCell>
+                    <TableCell className="font-medium">
+                      #{employee.id}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <User className="size-4 text-muted-foreground" />
