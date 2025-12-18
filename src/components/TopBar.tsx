@@ -20,12 +20,16 @@ const TopBar = ({}: Props) => {
   const { data: me } = useMe();
 
   const handleLogout = () => {
-    logoutMutation({
-      onSuccess: () => {
-        toast.success("تم تسجيل الخروج بنجاح");
-        navigate("/login", { replace: true });
-      },
-    });
+    logoutMutation(
+      {},
+      {
+        onSuccess: (data: any) => {
+          console.log("Successfully logged out: ", data);
+          toast.success("تم تسجيل الخروج بنجاح");
+          navigate("/login", { replace: true });
+        },
+      }
+    );
   };
 
   // Show apps grid if on home page
