@@ -21,7 +21,6 @@ import {
   Calendar,
   FileText,
   X,
-  ArrowLeft,
   ArrowRight,
 } from "lucide-react";
 import { useFetchOrders, useSearchOrders } from "@/api/wrappers/order.wrappers";
@@ -65,8 +64,6 @@ const Orders = () => {
     refetch: refetchList,
     isFetching: isListFetching,
   } = useFetchOrders({ page: currentPage, limit: 10 }, !isSearching);
-
-  console.log(listData);
 
   const {
     data: searchData,

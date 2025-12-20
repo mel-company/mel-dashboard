@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -13,9 +13,7 @@ import { Input } from "@/components/ui/input";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
-  PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
@@ -23,11 +21,13 @@ import { Star, ShoppingCart, Search, Plus, X } from "lucide-react";
 import {
   useFetchProducts,
   useSearchProducts,
+  useSeedDummyProducts,
 } from "@/api/wrappers/product.wrappers";
 import type { ProductListItem } from "@/api/types/product";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import ProductsSkeleton from "./ProductsSkeleton";
 import EmptyPage from "../miscellaneous/EmptyPage";
+import { toast } from "sonner";
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -40,33 +40,40 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debouncedValue;
 }
 
-function getPaginationRange(current: number, total: number) {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
-  const range: Array<number | "ellipsis"> = [];
-  const left = Math.max(2, current - 1);
-  const right = Math.min(total - 1, current + 1);
-
-  range.push(1);
-  if (left > 2) range.push("ellipsis");
-  for (let i = left; i <= right; i++) range.push(i);
-  if (right < total - 1) range.push("ellipsis");
-  range.push(total);
-
-  return range;
-}
-
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pageParam = searchParams.get("page");
+  const currentPage = pageParam ? parseInt(pageParam) : 1;
+  const searchPageParam = searchParams.get("s");
+  const currentSearchPage = searchPageParam ? parseInt(searchPageParam) : 1;
   const limit = 10;
   const navigate = useNavigate();
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
 
+  const { mutate: seedDummyProducts } = useSeedDummyProducts();
+
+  // const handleSeedDummyProducts = () => {
+  //   seedDummyProducts({
+  //     onSuccess: () => {
+  //       toast.success("منتجات تجريبية إضافة بنجاح");
+  //     },
+  //     onError: () => {
+  //       toast.error("فشل إضافة منتجات تجريبية");
+  //     },
+  //   });
+  // };
+
+  // Reset to page 1 when search query changes
   useEffect(() => {
-    setPage(1);
+    if (debouncedQuery) {
+      setSearchParams({ s: "1" });
+    } else {
+      setSearchParams({ page: "1" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
 
   const {
@@ -77,7 +84,7 @@ const Products = () => {
     isFetching: isListFetching,
   } = useFetchProducts(
     {
-      page,
+      page: currentPage,
       limit,
     },
     !isSearching
@@ -91,7 +98,7 @@ const Products = () => {
     isFetching: isSearchFetching,
   } = useSearchProducts({
     query: debouncedQuery,
-    page,
+    page: currentSearchPage,
     limit,
   });
 
@@ -107,26 +114,21 @@ const Products = () => {
   const isFetching = isSearching ? isSearchFetching : isListFetching;
   const isLoading = isSearching ? isSearchLoading : isListLoading;
 
-  const meta =
-    activeData && !Array.isArray(activeData)
-      ? {
-          total: activeData.total ?? 0,
-          page: activeData.page ?? page,
-          limit: activeData.limit ?? limit,
-        }
-      : undefined;
+  const totalPages = Math.ceil(
+    (listData?.total ?? searchData?.total ?? 0) / limit
+  );
 
-  const totalPages =
-    meta && meta.total && meta.limit ? Math.max(1, Math.ceil(meta.total / meta.limit)) : 1;
+  // Get the actual current page based on search state
+  const actualCurrentPage = isSearching ? currentSearchPage : currentPage;
 
-  useEffect(() => {
-    if (totalPages > 0 && page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-
-  const goToPage = (nextPage: number) => {
-    const safe = Math.min(Math.max(1, nextPage), totalPages || 1);
-    if (safe === page) return;
-    setPage(safe);
+  const handlePageChange = (page: number) => {
+    // Ensure page is within valid bounds
+    const safePage = Math.max(1, Math.min(page, totalPages || 1));
+    if (isSearching) {
+      setSearchParams({ s: safePage.toString() });
+    } else {
+      setSearchParams({ page: safePage.toString() });
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -163,69 +165,53 @@ const Products = () => {
           <span className="hidden sm:inline">إضافة منتج</span>
           <span className="sm:hidden">إضافة</span>
         </Button>
+        {/* <Button className="gap-2 w-full sm:w-auto">
+          <span>Seed</span>
+        </Button> */}
       </div>
 
-      {meta && totalPages > 1 ? (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-sm text-muted-foreground" dir="rtl">
-            {meta.total > 0 ? (
-              <span>
-                عرض{" "}
-                {Math.min((page - 1) * limit + 1, meta.total)}-
-                {Math.min(page * limit, meta.total)} من {meta.total}
-              </span>
-            ) : null}
-          </div>
+      {totalPages > 1 && products.length > 0 ? (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageChange(actualCurrentPage - 1);
+                }}
+                aria-disabled={actualCurrentPage <= 1}
+                className={
+                  actualCurrentPage <= 1
+                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
+                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
+                }
+              />
+            </PaginationItem>
 
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    goToPage(page - 1);
-                  }}
-                  aria-disabled={page <= 1}
-                  className={page <= 1 ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
+            <PaginationItem className="mx-4 flex items-center gap-2">
+              <span>{actualCurrentPage}</span>
+              <span>من</span>
+              <span>{totalPages}</span>
+            </PaginationItem>
 
-              {getPaginationRange(page, totalPages).map((item, idx) => (
-                <PaginationItem key={`${item}-${idx}`}>
-                  {item === "ellipsis" ? (
-                    <PaginationEllipsis />
-                  ) : (
-                    <PaginationLink
-                      href="#"
-                      isActive={item === page}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        goToPage(item);
-                      }}
-                    >
-                      {item}
-                    </PaginationLink>
-                  )}
-                </PaginationItem>
-              ))}
-
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    goToPage(page + 1);
-                  }}
-                  aria-disabled={page >= totalPages}
-                  className={
-                    page >= totalPages ? "pointer-events-none opacity-50" : ""
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageChange(actualCurrentPage + 1);
+                }}
+                aria-disabled={actualCurrentPage >= totalPages}
+                className={
+                  actualCurrentPage >= totalPages
+                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
+                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       ) : null}
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -278,13 +264,6 @@ const Products = () => {
                         src={product.image}
                         alt={product.title}
                         className="h-full w-full object-cover transition-transform group-hover:scale-110"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          target.src = `https://via.placeholder.com/300x300/cccccc/666666?text=${encodeURIComponent(
-                            product.title
-                          )}`;
-                          target.onerror = null;
-                        }}
                       />
                     ) : (
                       <ShoppingCart className="size-18 text-white bg-cyan/40 rounded-full p-4" />
