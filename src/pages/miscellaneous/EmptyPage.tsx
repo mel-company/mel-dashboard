@@ -24,7 +24,7 @@ export type EmptyPageProps = {
   title: string;
   description?: string;
   icon?: ReactNode;
-  primaryAction?: PageAction;
+  primaryAction?: PageAction | null;
   secondaryAction?: PageAction;
   className?: string;
 };

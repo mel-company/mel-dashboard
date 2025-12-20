@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -21,14 +21,28 @@ import {
   Calendar,
   FileText,
   X,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import { useFetchOrders, useSearchOrders } from "@/api/wrappers/order.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import OrdersSkeleton from "./OrdersSkeleton";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const Orders = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pageParam = searchParams.get("page");
+  const currentPage = pageParam ? parseInt(pageParam) : 1;
+  const searchPageParam = searchParams.get("s");
+  const currentSearchPage = searchPageParam ? parseInt(searchPageParam) : 1;
 
   function useDebouncedValue<T>(value: T, delayMs: number) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -50,7 +64,9 @@ const Orders = () => {
     error: listError,
     refetch: refetchList,
     isFetching: isListFetching,
-  } = useFetchOrders({}, !isSearching);
+  } = useFetchOrders({ page: currentPage, limit: 10 }, !isSearching);
+
+  console.log(listData);
 
   const {
     data: searchData,
@@ -60,6 +76,8 @@ const Orders = () => {
     isFetching: isSearchFetching,
   } = useSearchOrders({
     query: debouncedQuery,
+    page: currentSearchPage,
+    limit: 10,
   });
 
   const activeData = isSearching ? searchData : listData;
@@ -77,6 +95,27 @@ const Orders = () => {
   // Calculate total price for order
   const calculateTotal = (products: Array<{ price?: number | null }> = []) => {
     return products.reduce((sum, product) => sum + (product.price ?? 0), 0);
+  };
+
+  // const totalPages = Math.ceil(
+  //   (isSearching ? searchData?.totalItems ?? 0 : listData?.totalItems ?? 0) / 10
+  // );
+
+  const totalPages = Math.ceil(
+    (listData?.total ?? searchData?.total ?? 0) / 10
+  );
+
+  // Get the actual current page based on search state
+  const actualCurrentPage = isSearching ? currentSearchPage : currentPage;
+
+  const handlePageChange = (page: number) => {
+    // Ensure page is within valid bounds
+    const safePage = Math.max(1, Math.min(page, totalPages || 1));
+    if (isSearching) {
+      setSearchParams({ s: safePage.toString() });
+    } else {
+      setSearchParams({ page: safePage.toString() });
+    }
   };
 
   // Format date
@@ -154,7 +193,9 @@ const Orders = () => {
           description={
             searchQuery.trim()
               ? "لم يتم العثور على طلبات تطابق البحث. جرّب كلمات أخرى."
-              : "ابدأ بإضافة طلب جديد لعرضه هنا."
+              : !currentPage
+              ? "ابدأ بإضافة طلب جديد لعرضه هنا."
+              : "لم يتم العثور على طلبات في لهذه الصفحة"
           }
           icon={<Package className="size-7 text-muted-foreground" />}
           primaryAction={
@@ -165,133 +206,189 @@ const Orders = () => {
                   icon: <X className="size-4" />,
                   variant: "outline",
                 }
-              : {
+              : !currentPage
+              ? {
                   label: "إضافة طلب",
                   onClick: () => {},
                   icon: <Plus className="size-4" />,
                 }
+              : {
+                  label: "تراجع",
+                  onClick: () => {
+                    setSearchParams({ page: "1" });
+                  },
+                  icon: <ArrowRight className="size-4" />,
+                }
           }
         />
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-right">رقم الطلب</TableHead>
-                <TableHead className="text-right">العميل</TableHead>
-                <TableHead className="text-right">المنتجات</TableHead>
-                <TableHead className="text-right">العنوان</TableHead>
-                <TableHead className="text-right">الحالة</TableHead>
-                <TableHead className="text-right">المبلغ الإجمالي</TableHead>
-                <TableHead className="text-right">التاريخ</TableHead>
-                <TableHead className="text-right">الإجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((order) => {
-                const customer = order.customer?.user;
-                const statusBadge = getStatusBadge(order.status);
-                const total = calculateTotal(order.products ?? []);
-                const productCount =
-                  order._count?.products ?? order.products?.length ?? 0;
+        <>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(actualCurrentPage - 1);
+                  }}
+                  aria-disabled={actualCurrentPage <= 1}
+                  className={
+                    actualCurrentPage <= 1
+                      ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
+                      : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
+                  }
+                />
+              </PaginationItem>
 
-                return (
-                  <TableRow key={order.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">
-                      #{String(order.id).slice(0, 8)}
-                    </TableCell>
-                    <TableCell>
-                      {customer ? (
+              <PaginationItem className="mx-4 flex items-center gap-2">
+                <span>{actualCurrentPage}</span>
+                <span>من</span>
+                <span>{totalPages}</span>
+              </PaginationItem>
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(actualCurrentPage + 1);
+                  }}
+                  aria-disabled={actualCurrentPage >= totalPages}
+                  className={
+                    actualCurrentPage >= totalPages
+                      ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
+                      : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">رقم الطلب</TableHead>
+                  <TableHead className="text-right">العميل</TableHead>
+                  <TableHead className="text-right">المنتجات</TableHead>
+                  <TableHead className="text-right">العنوان</TableHead>
+                  <TableHead className="text-right">الحالة</TableHead>
+                  <TableHead className="text-right">المبلغ الإجمالي</TableHead>
+                  <TableHead className="text-right">التاريخ</TableHead>
+                  <TableHead className="text-right">الإجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.map((order) => {
+                  const customer = order.customer?.user;
+                  const statusBadge = getStatusBadge(order.status);
+                  const total = calculateTotal(order.products ?? []);
+                  const productCount =
+                    order._count?.products ?? order.products?.length ?? 0;
+
+                  return (
+                    <TableRow key={order.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        #{String(order.id).slice(0, 8)}
+                      </TableCell>
+                      <TableCell>
+                        {customer ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <User className="size-4 text-muted-foreground" />
+                              <span className="font-medium">
+                                {customer.name ?? "—"}
+                              </span>
+                            </div>
+                            {customer.phone ? (
+                              <div className="text-sm text-muted-foreground">
+                                {customer.phone}
+                              </div>
+                            ) : customer.email ? (
+                              <div className="text-sm text-muted-foreground">
+                                {customer.email}
+                              </div>
+                            ) : null}
+                            {customer.location ? (
+                              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                <MapPin className="size-3" />
+                                {customer.location}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            غير معروف
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <User className="size-4 text-muted-foreground" />
+                            <Package className="size-4 text-muted-foreground" />
                             <span className="font-medium">
-                              {customer.name ?? "—"}
+                              {productCount} منتج
                             </span>
                           </div>
-                          {customer.phone ? (
-                            <div className="text-sm text-muted-foreground">
-                              {customer.phone}
-                            </div>
-                          ) : customer.email ? (
-                            <div className="text-sm text-muted-foreground">
-                              {customer.email}
-                            </div>
-                          ) : null}
-                          {customer.location ? (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <MapPin className="size-3" />
-                              {customer.location}
+                          {order.products?.length ? (
+                            <div className="text-xs text-muted-foreground max-w-xs">
+                              {order.products
+                                .map((p: any) => p.title)
+                                .slice(0, 2)
+                                .filter(Boolean)
+                                .join("، ")}
+                              {order.products.length > 2 ? "..." : ""}
                             </div>
                           ) : null}
                         </div>
-                      ) : (
-                        <span className="text-muted-foreground">غير معروف</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Package className="size-4 text-muted-foreground" />
-                          <span className="font-medium">
-                            {productCount} منتج
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 max-w-xs">
+                          <MapPin className="size-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm line-clamp-2">
+                            {order.address}
                           </span>
                         </div>
-                        {order.products?.length ? (
-                          <div className="text-xs text-muted-foreground max-w-xs">
-                            {order.products
-                              .map((p: any) => p.title)
-                              .slice(0, 2)
-                              .filter(Boolean)
-                              .join("، ")}
-                            {order.products.length > 2 ? "..." : ""}
-                          </div>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 max-w-xs">
-                        <MapPin className="size-4 text-muted-foreground shrink-0" />
-                        <span className="text-sm line-clamp-2">
-                          {order.address}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="default"
+                          className={`${statusBadge.className} text-sm`}
+                        >
+                          {statusBadge.text}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold">
+                          {total ? `${total.toFixed(2)} د.ع` : "—"}
                         </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="default"
-                        className={`${statusBadge.className} text-sm`}
-                      >
-                        {statusBadge.text}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold">
-                        {total ? `${total.toFixed(2)} د.ع` : "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="size-4 text-muted-foreground" />
-                        <span>
-                          {order.createdAt ? formatDate(order.createdAt) : "—"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right is-rtl direction-rtl">
-                      <Link to={`/orders/${order.id}`}>
-                        <Button variant="outline" size="sm" className="gap-2">
-                          <FileText className="size-4" />
-                          التفاصيل
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="size-4 text-muted-foreground" />
+                          <span>
+                            {order.createdAt
+                              ? formatDate(order.createdAt)
+                              : "—"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right is-rtl direction-rtl">
+                        <Link to={`/orders/${order.id}`}>
+                          <Button variant="outline" size="sm" className="gap-2">
+                            <FileText className="size-4" />
+                            التفاصيل
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+        </>
       )}
     </div>
   );
