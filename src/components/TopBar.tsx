@@ -9,23 +9,12 @@ import { useLogout, useMe } from "@/api/wrappers/auth.wrappers";
 import { dmy_notifications } from "@/data/dummy";
 import { toast } from "sonner";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "./ui/alert-dialog";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
 } from "./ui/dialog";
 
 type Props = {};
