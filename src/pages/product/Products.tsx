@@ -21,13 +21,11 @@ import { Star, ShoppingCart, Search, Plus, X } from "lucide-react";
 import {
   useFetchProducts,
   useSearchProducts,
-  useSeedDummyProducts,
 } from "@/api/wrappers/product.wrappers";
 import type { ProductListItem } from "@/api/types/product";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import ProductsSkeleton from "./ProductsSkeleton";
 import EmptyPage from "../miscellaneous/EmptyPage";
-import { toast } from "sonner";
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -52,8 +50,6 @@ const Products = () => {
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
-
-  const { mutate: seedDummyProducts } = useSeedDummyProducts();
 
   // const handleSeedDummyProducts = () => {
   //   seedDummyProducts({
