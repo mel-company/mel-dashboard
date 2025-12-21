@@ -2,7 +2,6 @@ import "./App.css";
 import Layout from "./layout/Layout";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
-import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useAuth } from "./contexts/AuthContext";
 import Home from "./pages/home/Home";
 import Stats from "./pages/stats/Stats";

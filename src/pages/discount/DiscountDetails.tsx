@@ -10,7 +10,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tag, Calendar, Folder, Edit, Trash2, Percent } from "lucide-react";
+import {
+  Tag,
+  Calendar,
+  Folder,
+  Edit,
+  Trash2,
+  Percent,
+  ShoppingCart,
+  Package,
+} from "lucide-react";
 import { useFetchDiscount } from "@/api/wrappers/discount.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
@@ -153,33 +162,44 @@ const DiscountDetails = () => {
           </Card>
 
           {/* Products in Discount */}
-          {/* {discount.discount_products.length > 0 && (
+          {discount?.products && discount.products.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-right flex items-center gap-2">
-                  <ShoppingCart className="size-5" />
-                  المنتجات المشمولة ({discount.discount_products.length})
+                  <Package className="size-5" />
+                  المنتجات المشمولة (
+                  {discount._count?.products ?? discount.products.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {discount.discount_products.map((product) => (
+                  {discount.products.map((product: any) => (
                     <Link
                       key={product.id}
                       to={`/products/${product.id}`}
                       className="block"
                     >
                       <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
-                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
-                          <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt={product.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                          )}
                         </div>
                         <div className="flex-1 text-right">
                           <p className="font-semibold line-clamp-1">
                             {product.title}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {product.price.toFixed(2)} د.ع
-                          </p>
+                          {product.price && (
+                            <p className="text-sm text-muted-foreground">
+                              {product.price.toFixed(2)} د.ع
+                            </p>
+                          )}
                         </div>
                       </div>
                     </Link>
@@ -187,35 +207,41 @@ const DiscountDetails = () => {
                 </div>
               </CardContent>
             </Card>
-          )} */}
+          )}
 
           {/* Categories in Discount */}
-          {discount?.discount_categories?.length > 0 && (
+          {discount?.categories && discount.categories.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-right flex items-center gap-2">
                   <Folder className="size-5" />
-                  الفئات المشمولة ({discount?._count?.categories ?? 0})
+                  الفئات المشمولة (
+                  {discount._count?.categories ?? discount.categories.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {discount?.discount_categories?.map((category: any) => (
+                  {discount.categories.map((category: any) => (
                     <Link
                       key={category.id}
                       to={`/categories/${category.id}`}
                       className="block"
                     >
                       <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
-                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
-                          <Folder className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
+                          {category.image ? (
+                            <img
+                              src={category.image}
+                              alt={category.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Folder className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                          )}
                         </div>
                         <div className="flex-1 text-right">
                           <p className="font-semibold line-clamp-1">
                             {category.name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {category.number_of_products} منتج
                           </p>
                         </div>
                       </div>

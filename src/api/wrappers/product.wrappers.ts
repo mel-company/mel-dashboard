@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productAPI } from "../endpoints/product.endpoints";
-import type { ProductListResponse } from "../types/product";
 
 /**
  * Query key factory for products

@@ -16,7 +16,6 @@ import {
   ShoppingBag,
   Package,
   Calendar,
-  Edit,
   Trash2,
 } from "lucide-react";
 import { useFetchCustomer } from "@/api/wrappers/customer.wrappers";
