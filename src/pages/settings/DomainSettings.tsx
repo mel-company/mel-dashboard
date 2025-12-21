@@ -8,24 +8,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import {
-  Globe,
-  Lock,
-  ExternalLink,
-  RefreshCw,
-  Save,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-} from "lucide-react";
-import { toast } from "sonner";
+import { Globe, Save } from "lucide-react";
+import { useFindDomainDetails } from "@/api/wrappers/domain.wrappers";
 
 type Props = {};
 
 const DomainSettings = ({}: Props) => {
+  // @ts-ignore
+  const { data: domainDetails, isLoading } = useFindDomainDetails();
+
   const [domainSettings, setDomainSettings] = useState({
     customDomain: "",
     subdomain: "",
@@ -41,55 +33,9 @@ const DomainSettings = ({}: Props) => {
     setDomainSettings((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setDomainSettings((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleToggle = (key: keyof typeof domainSettings) => {
-    setDomainSettings((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
-  const handleVerifySSL = () => {
-    // TODO: Verify SSL certificate
-    toast.info("جارٍ التحقق من شهادة SSL...");
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Submit to API
-    toast.success("تم حفظ إعدادات النطاق بنجاح");
-  };
-
-  const getSSLStatusBadge = () => {
-    switch (domainSettings.sslStatus) {
-      case "active":
-        return (
-          <Badge variant="default" className="gap-1">
-            <CheckCircle2 className="size-3" />
-            نشط
-          </Badge>
-        );
-      case "pending":
-        return (
-          <Badge variant="secondary" className="gap-1">
-            <AlertCircle className="size-3" />
-            قيد الانتظار
-          </Badge>
-        );
-      case "expired":
-        return (
-          <Badge variant="destructive" className="gap-1">
-            <XCircle className="size-3" />
-            منتهي الصلاحية
-          </Badge>
-        );
-      default:
-        return null;
-    }
+    console.log(domainSettings);
   };
 
   return (
@@ -102,34 +48,40 @@ const DomainSettings = ({}: Props) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Custom Domain */}
+        {/* Subdomain */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="size-5" />
-              النطاق المخصص
+              النطاق الفرعي
             </CardTitle>
             <CardDescription>
-              ربط نطاق مخصص بمتجرك (مثل: store.com)
+              قم بتعيين النطاق الفرعي لمتجرك (مثل: mystore.mel.iq)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="customDomain">النطاق المخصص</Label>
-              <Input
-                id="customDomain"
-                name="customDomain"
-                value={domainSettings.customDomain}
-                onChange={handleInputChange}
-                placeholder="store.com"
-                className="text-right"
-              />
+            <div className="flex flex-col gap-y-2">
+              <Label htmlFor="subdomain">النطاق الفرعي</Label>
+              <div className="flex items-center border border-input rounded-md bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                <span className="px-3 py-2 text-muted-foreground bg-muted border-r border-input text-sm shrink-0">
+                  mel.iq
+                </span>
+                <Input
+                  id="subdomain"
+                  name="subdomain"
+                  value={domainSettings.subdomain}
+                  onChange={handleInputChange}
+                  placeholder={domainDetails?.domain || "mystore"}
+                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-r-none"
+                />
+              </div>
               <p className="text-xs text-muted-foreground">
-                أدخل النطاق بدون http:// أو https://
+                النطاق الكامل سيكون: {domainSettings.subdomain || "mystore"}
+                .mel.iq
               </p>
             </div>
 
-            {domainSettings.customDomain && (
+            {/* {domainSettings.customDomain && (
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-sm font-medium mb-2">تعليمات الإعداد:</p>
                 <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
@@ -138,159 +90,7 @@ const DomainSettings = ({}: Props) => {
                   <li>انتظر حتى يتم التحقق من النطاق (قد يستغرق 24-48 ساعة)</li>
                 </ol>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Subdomain */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="size-5" />
-              النطاق الفرعي
-            </CardTitle>
-            <CardDescription>النطاق الفرعي الافتراضي للمتجر</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="subdomain">النطاق الفرعي</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="subdomain"
-                  name="subdomain"
-                  value={domainSettings.subdomain}
-                  onChange={handleInputChange}
-                  placeholder="mystore"
-                  className="text-right"
-                />
-                <span className="text-muted-foreground whitespace-nowrap">
-                  .yoursaas.com
-                </span>
-              </div>
-              {domainSettings.subdomain && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <ExternalLink className="size-4" />
-                  <a
-                    href={`https://${domainSettings.subdomain}.yoursaas.com`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline"
-                  >
-                    https://{domainSettings.subdomain}.yoursaas.com
-                  </a>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* WWW Redirect */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="size-5" />
-              إعادة توجيه WWW
-            </CardTitle>
-            <CardDescription>اختيار إعادة توجيه www أو غير www</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="wwwRedirect">خيار إعادة التوجيه</Label>
-              <select
-                id="wwwRedirect"
-                name="wwwRedirect"
-                value={domainSettings.wwwRedirect}
-                onChange={handleSelectChange}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-right"
-              >
-                <option value="www">إعادة توجيه إلى www (www.store.com)</option>
-                <option value="non-www">
-                  إعادة توجيه إلى غير www (store.com)
-                </option>
-                <option value="none">لا يوجد إعادة توجيه</option>
-              </select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* SSL Certificate */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="size-5" />
-              شهادة SSL
-            </CardTitle>
-            <CardDescription>تشفير الاتصال بين المتجر والعملاء</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>تفعيل SSL</Label>
-                <p className="text-sm text-muted-foreground">
-                  تشفير الاتصال باستخدام HTTPS
-                </p>
-              </div>
-              <Switch
-                checked={domainSettings.sslEnabled}
-                onCheckedChange={() => handleToggle("sslEnabled")}
-              />
-            </div>
-
-            {domainSettings.sslEnabled && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">حالة SSL</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      آخر تحديث: منذ ساعتين
-                    </p>
-                  </div>
-                  {getSSLStatusBadge()}
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleVerifySSL}
-                  className="gap-2"
-                >
-                  <RefreshCw className="size-4" />
-                  التحقق من SSL
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* URL Slug Rules */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="size-5" />
-              قواعد عناوين URL
-            </CardTitle>
-            <CardDescription>
-              تنسيق الروابط الداخلية للمنتجات والصفحات
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="urlSlugRules">تنسيق الروابط</Label>
-              <select
-                id="urlSlugRules"
-                name="urlSlugRules"
-                value={domainSettings.urlSlugRules}
-                onChange={handleSelectChange}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-right"
-              >
-                <option value="lowercase">أحرف صغيرة (product-name)</option>
-                <option value="uppercase">أحرف كبيرة (PRODUCT-NAME)</option>
-                <option value="preserve">الحفاظ على الحالة الأصلية</option>
-              </select>
-              <p className="text-xs text-muted-foreground">
-                سيتم تطبيق هذا التنسيق على جميع الروابط الجديدة
-              </p>
-            </div>
+            )} */}
           </CardContent>
         </Card>
 
