@@ -276,7 +276,7 @@ const CategoryDetails = () => {
                   </>
                 )}
               </Button>
-              <Button className="w-full gap-2" variant="outline">
+              <Button className="w-full gap-2" variant="secondary">
                 <Package className="size-4" />
                 عرض المنتجات
               </Button>

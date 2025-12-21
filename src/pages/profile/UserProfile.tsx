@@ -10,11 +10,39 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Edit, Lock, Shield, Settings } from "lucide-react";
+import { User, Mail, Edit, Lock, Shield, Settings, Phone } from "lucide-react";
+import { useLogout, useMe } from "@/api/wrappers/auth.wrappers";
+import { toast } from "sonner";
 
 const UserProfile = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { data: user, isLoading, isError } = useMe();
+
+  const { mutate: logoutMutation } = useLogout();
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("ar-IQ", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const handleLogout = () => {
+    logoutMutation(
+      {},
+      {
+        onSuccess: (data: any) => {
+          toast.success("تم تسجيل الخروج بنجاح");
+          navigate("/login", { replace: true });
+        },
+        onError: (error: any) => {
+          toast.error("حدث خطأ أثناء تسجيل الخروج");
+        },
+      }
+    );
+  };
 
   if (!user) {
     return (
@@ -67,7 +95,7 @@ const UserProfile = () => {
                   <User className="size-5 text-primary" />
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">الاسم</p>
-                    <p className="text-lg font-bold">{user.name}</p>
+                    <p className="text-lg font-bold">{user?.fullName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
@@ -79,46 +107,13 @@ const UserProfile = () => {
                     <p className="text-lg font-bold">{user.email}</p>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Account Settings Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right flex items-center gap-2">
-                <Settings className="size-5" />
-                إعدادات الحساب
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Button
-                  variant="outline"
-                  className="w-full justify-between gap-2"
-                  onClick={() => {}}
-                >
-                  <span className="text-right">تعديل المعلومات الشخصية</span>
-                  <Edit className="size-4" />
-                </Button>
-                <Separator />
-                <Button
-                  variant="outline"
-                  className="w-full justify-between gap-2"
-                  onClick={() => {}}
-                >
-                  <span className="text-right">تغيير كلمة المرور</span>
-                  <Lock className="size-4" />
-                </Button>
-                <Separator />
-                <Button
-                  variant="outline"
-                  className="w-full justify-between gap-2"
-                  onClick={() => navigate("/settings")}
-                >
-                  <span className="text-right">الإعدادات العامة</span>
-                  <Settings className="size-4" />
-                </Button>
+                <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
+                  <Phone className="size-5 text-primary" />
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">الهاتف</p>
+                    <p className="text-lg font-bold">{user.phone}</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -129,36 +124,26 @@ const UserProfile = () => {
           {/* Quick Info Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-right">معلومات الحساب</CardTitle>
+              <CardTitle className="text-right">معلومات إضافية</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground text-right">
+                  تاريخ الانضمام
+                </span>
                 <Badge variant="secondary" className="text-sm">
-                  {user.name}
+                  {formatDate(user.createdAt)}
                 </Badge>
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  الاسم
-                </span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 max-w-xs">
-                  <Mail className="size-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm line-clamp-1">{user.email}</span>
-                </div>
                 <span className="text-sm font-medium text-muted-foreground text-right">
-                  البريد
+                  الدور
                 </span>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
                 <Badge variant="outline" className="gap-1 text-sm">
                   <Shield className="size-3" />
                   مسؤول
                 </Badge>
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  الدور
-                </span>
               </div>
             </CardContent>
           </Card>
@@ -173,11 +158,11 @@ const UserProfile = () => {
                 <Edit className="size-4" />
                 تعديل الملف الشخصي
               </Button>
-              <Button className="w-full gap-2" variant="outline">
+              <Button className="w-full gap-2" variant="secondary">
                 <Lock className="size-4" />
                 تغيير كلمة المرور
               </Button>
-              <Button className="w-full gap-2" variant="outline">
+              <Button className="w-full gap-2" variant="secondary">
                 <Settings className="size-4" />
                 الإعدادات
               </Button>
@@ -186,8 +171,8 @@ const UserProfile = () => {
                 className="w-full gap-2"
                 variant="destructive"
                 onClick={() => {
-                  logout();
-                  navigate("/login");
+                  handleLogout();
+                  // navigate("/login");
                 }}
               >
                 تسجيل الخروج

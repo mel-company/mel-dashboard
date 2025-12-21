@@ -281,7 +281,7 @@ const CustomerDetails = () => {
                 <Edit className="size-4" />
                 تعديل العميل
               </Button> */}
-              <Button className="w-full gap-2" variant="outline">
+              <Button className="w-full gap-2" variant="secondary">
                 <ShoppingBag className="size-4" />
                 عرض جميع الطلبات
               </Button>

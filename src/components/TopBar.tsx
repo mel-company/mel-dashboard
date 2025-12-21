@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Bell, ChevronDown, Clock, Grid3x3, LogOut } from "lucide-react";
+import { Bell, ChevronDown, Clock, Grid3x3, LogOut, User } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -16,6 +16,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "./ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 type Props = {};
 
@@ -89,9 +95,9 @@ const TopBar = ({}: Props) => {
 
   return (
     <>
-      <header className="flex py-3 items-center justify-between border-b border-border bg-background px-4 sm:px-6 shadow-sm">
+      <header className="grid grid-cols-3 py-3  border-b border-border bg-background px-4 sm:px-6 shadow-sm">
         {/* Left Side - Apps Button */}
-        <div className="flex items-center gap-3">
+        <div className="flex justify-start items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
@@ -107,14 +113,14 @@ const TopBar = ({}: Props) => {
         </div>
 
         {/* Center - Company Name */}
-        <div className="flex-1 text-center">
+        <div className="flex justify-center items-center">
           <h2 className="text-lg font-semibold text-foreground">
             المشرق الجديد
           </h2>
         </div>
 
         {/* Right Side - Icons and User */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex justify-end items-center gap-2 sm:gap-3">
           <ThemeToggle />
           <div ref={notificationRef} className="relative">
             <button
@@ -209,20 +215,31 @@ const TopBar = ({}: Props) => {
                 {me?.email || "البريد الإلكتروني"}
               </span>
             </div>
-            <div className="relative group">
-              <ChevronDown size={16} className="text-muted-foreground" />
-              {/* Dropdown Menu */}
-              <div className="absolute left-0 top-full mt-2 w-48 bg-background border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsLogoutDialogOpen(true)}
-                  className="w-full justify-start gap-2 text-destructive hover:bg-destructive/10"
+            {/* Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="cursor-pointer">
+                  <ChevronDown size={16} className="text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 text-right">
+                <DropdownMenuItem
+                  onClick={() => navigate("/profile")}
+                  className="cursor-pointer gap-2 flex items-center justify-end"
                 >
-                  <LogOut className="w-4 h-4" />
+                  الملف الشخصي
+                  <User className="w-4 h-4" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setIsLogoutDialogOpen(true)}
+                  variant="destructive"
+                  className="cursor-pointer gap-2 flex items-center justify-end"
+                >
                   تسجيل الخروج
-                </Button>
-              </div>
-            </div>
+                  <LogOut className="w-4 h-4" />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>

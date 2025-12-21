@@ -509,7 +509,7 @@ const OrderDetails = () => {
                   تأكيد التسليم
                 </Button>
               )}
-              <Button className="w-full gap-2" variant="outline">
+              <Button className="w-full gap-2" variant="secondary">
                 <Printer className="size-4" />
                 طباعة الفاتورة
               </Button>

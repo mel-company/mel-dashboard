@@ -319,8 +319,8 @@ const DiscountDetails = () => {
             <CardHeader>
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Link to={`/discounts/${id}/edit`}>
+            <CardContent className="flex flex-col gap-2">
+              <Link to={`/discounts/${id}/edit`} className="">
                 <Button className="w-full gap-2" variant="default">
                   <Edit className="size-4" />
                   تعديل الخصم
@@ -333,7 +333,7 @@ const DiscountDetails = () => {
                 </Button>
               )}
               {isActive && (
-                <Button className="w-full gap-2" variant="outline">
+                <Button className="w-full gap-2" variant="secondary">
                   <Tag className="size-4" />
                   تعطيل الخصم
                 </Button>
