@@ -278,10 +278,10 @@ const CustomerDetails = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full gap-2" variant="default">
+              {/* <Button className="w-full gap-2" variant="default">
                 <Edit className="size-4" />
                 تعديل العميل
-              </Button>
+              </Button> */}
               <Button className="w-full gap-2" variant="outline">
                 <ShoppingBag className="size-4" />
                 عرض جميع الطلبات

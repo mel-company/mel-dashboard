@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -24,6 +24,7 @@ import ProductDetailsSkeleton from "./ProductDetailsSkeleton";
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? ""
@@ -167,7 +168,11 @@ const ProductDetails = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full gap-2" variant="default">
+              <Button
+                onClick={() => navigate(`/products/${id}/edit`)}
+                className="w-full gap-2"
+                variant="default"
+              >
                 <Edit className="size-4" />
                 تعديل المنتج
               </Button>

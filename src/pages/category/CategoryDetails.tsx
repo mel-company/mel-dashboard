@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { dmy_products } from "@/data/dummy";
 import {
   Card,
@@ -27,6 +27,7 @@ import CategoryDetailsSkeleton from "./CategoryDetailsSkeleton";
 
 const CategoryDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const {
     data: category,
@@ -251,7 +252,11 @@ const CategoryDetails = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full gap-2" variant="default">
+              <Button
+                onClick={() => navigate(`/categories/${id}/edit`)}
+                className="w-full gap-2"
+                variant="default"
+              >
                 <Edit className="size-4" />
                 تعديل الفئة
               </Button>

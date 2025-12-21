@@ -294,10 +294,12 @@ const DiscountDetails = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full gap-2" variant="default">
-                <Edit className="size-4" />
-                تعديل الخصم
-              </Button>
+              <Link to={`/discounts/${id}/edit`}>
+                <Button className="w-full gap-2" variant="default">
+                  <Edit className="size-4" />
+                  تعديل الخصم
+                </Button>
+              </Link>
               {!isActive && (
                 <Button className="w-full gap-2" variant="outline">
                   <Tag className="size-4" />

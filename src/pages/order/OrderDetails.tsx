@@ -1,5 +1,4 @@
-import { useParams, Link } from "react-router-dom";
-import { dmy_orders, dmy_users } from "@/data/dummy";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -17,7 +16,6 @@ import {
   Calendar,
   DollarSign,
   FileText,
-  Edit,
   Printer,
   Truck,
   CheckCircle2,
@@ -25,32 +23,39 @@ import {
   XCircle,
   ShoppingCart,
   Phone,
+  ArrowLeft,
 } from "lucide-react";
+import { useFetchOrder, useUpdateOrder } from "@/api/wrappers/order.wrappers";
+import ErrorPage from "../miscellaneous/ErrorPage";
+import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
+import { toast } from "sonner";
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const order = dmy_orders.find((o) => o.id === Number(id));
-  const user = order ? dmy_users.find((u) => u.id === order.user_id) : null;
+  const navigate = useNavigate();
 
-  if (!order) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Package className="size-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">الطلب غير موجود</h2>
-        <p className="text-muted-foreground mb-4">
-          الطلب الذي تبحث عنه غير موجود أو تم حذفه.
-        </p>
-      </div>
-    );
-  }
+  const {
+    data: order,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFetchOrder(id ?? "", !!id);
+
+  const { mutate: updateOrder, isPending: isUpdating } = useUpdateOrder();
 
   // Calculate total price
   const calculateTotal = () => {
-    return order.products.reduce((sum, product) => sum + product.price, 0);
+    if (!order?.products) return 0;
+    return order.products.reduce(
+      (sum: number, product: any) => sum + (product.price ?? 0),
+      0
+    );
   };
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "—";
     const date = new Date(dateString);
     return date.toLocaleDateString("ar-IQ", {
       year: "numeric",
@@ -61,40 +66,49 @@ const OrderDetails = () => {
     });
   };
 
-  // Get status badge
-  const getStatusBadge = (status: string) => {
+  // Get status badge - handle uppercase status from API
+  const getStatusBadge = (status: string | undefined) => {
+    if (!status) {
+      return {
+        className: "bg-gray-600 text-white",
+        text: "غير معروف",
+        icon: Clock,
+      };
+    }
+
+    const statusUpper = status.toUpperCase();
     const statusMap: Record<
       string,
       { className: string; text: string; icon: typeof Clock }
     > = {
-      pending: {
+      PENDING: {
         className: "bg-yellow-600 text-white",
         text: "قيد الانتظار",
         icon: Clock,
       },
-      processing: {
+      PROCESSING: {
         className: "bg-blue-600 text-white",
         text: "قيد المعالجة",
         icon: Package,
       },
-      shipped: {
+      SHIPPED: {
         className: "bg-purple-600 text-white",
         text: "تم الشحن",
         icon: Truck,
       },
-      delivered: {
+      DELIVERED: {
         className: "bg-green-600 text-white",
         text: "تم التسليم",
         icon: CheckCircle2,
       },
-      cancelled: {
+      CANCELLED: {
         className: "bg-red-600 text-white",
         text: "ملغي",
         icon: XCircle,
       },
     };
     return (
-      statusMap[status] || {
+      statusMap[statusUpper] || {
         className: "bg-gray-600 text-white",
         text: status,
         icon: Clock,
@@ -102,14 +116,69 @@ const OrderDetails = () => {
     );
   };
 
+  const handleStatusUpdate = (newStatus: string) => {
+    if (!id || !order) return;
+
+    updateOrder(
+      {
+        id,
+        data: { status: newStatus },
+      },
+      {
+        onSuccess: () => {
+          toast.success("تم تحديث حالة الطلب بنجاح");
+          refetch();
+        },
+        onError: (error: any) => {
+          toast.error(error?.response?.data?.message || "فشل تحديث حالة الطلب");
+        },
+      }
+    );
+  };
+
+  const handleCancelOrder = () => {
+    if (!id || !order) return;
+    handleStatusUpdate("CANCELLED");
+  };
+
+  if (isLoading) {
+    return <OrderDetailsSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <ErrorPage
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Package className="size-16 text-muted-foreground mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">الطلب غير موجود</h2>
+        <p className="text-muted-foreground mb-4">
+          الطلب الذي تبحث عنه غير موجود أو تم حذفه.
+        </p>
+        <Button variant="outline" onClick={() => navigate("/orders")}>
+          <ArrowLeft className="size-4 mr-2" />
+          العودة إلى الطلبات
+        </Button>
+      </div>
+    );
+  }
+
   const statusBadge = getStatusBadge(order.status);
   const StatusIcon = statusBadge.icon;
   const total = calculateTotal();
+  const customer = order.customer?.user;
+  const productCount = order._count?.products ?? order.products?.length ?? 0;
 
   return (
     <div className="space-y-6">
-      
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Order Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -119,10 +188,10 @@ const OrderDetails = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-2xl text-right">
-                    طلب رقم #{order.id}
+                    طلب رقم #{String(order.id).slice(0, 8)}
                   </CardTitle>
                   <CardDescription className="text-right mt-1">
-                    تم إنشاء الطلب في {formatDate(order.created_at)}
+                    تم إنشاء الطلب في {formatDate(order.createdAt)}
                   </CardDescription>
                 </div>
                 <Badge
@@ -143,7 +212,7 @@ const OrderDetails = () => {
                     <p className="text-sm text-muted-foreground">
                       عدد المنتجات
                     </p>
-                    <p className="text-lg font-bold">{order.products.length}</p>
+                    <p className="text-lg font-bold">{productCount}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
@@ -169,55 +238,63 @@ const OrderDetails = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {order.products.map((product, index) => (
-                  <div key={index}>
-                    <div className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors">
-                      <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
-                        <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
-                      </div>
-                      <div className="flex-1 text-right">
-                        <div className="flex items-center justify-between mb-2">
-                          <Link
-                            to={`/products/${product.id}`}
-                            className="font-semibold hover:text-primary transition-colors"
-                          >
-                            {product.title}
-                          </Link>
-                          <span className="font-bold text-primary">
-                            {product.price.toFixed(2)} د.ع
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                          {product.description}
-                        </p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {Object.entries(product.properties).map(
-                            ([key, value]) => (
-                              <Badge
-                                key={key}
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {value}
-                              </Badge>
-                            )
+                {order.products && order.products.length > 0 ? (
+                  order.products.map((product: any, index: number) => (
+                    <div key={product.id || index}>
+                      <div className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors">
+                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt={product.title}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                          ) : (
+                            <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
                           )}
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-muted-foreground">
-                              التقييم:
+                        </div>
+                        <div className="flex-1 text-right">
+                          <div className="flex items-center justify-between mb-2">
+                            <Link
+                              to={`/products/${product.id}`}
+                              className="font-semibold hover:text-primary transition-colors"
+                            >
+                              {product.title}
+                            </Link>
+                            <span className="font-bold text-primary">
+                              {product.price?.toFixed(2) ?? "—"} د.ع
                             </span>
-                            <span className="text-xs font-medium">
-                              {product.rate}
-                            </span>
+                          </div>
+                          {product.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                              {product.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {product.rate !== null &&
+                              product.rate !== undefined && (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-muted-foreground">
+                                    التقييم:
+                                  </span>
+                                  <span className="text-xs font-medium">
+                                    {product.rate}
+                                  </span>
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
+                      {index < order.products.length - 1 && (
+                        <Separator className="my-4" />
+                      )}
                     </div>
-                    {index < order.products.length - 1 && (
-                      <Separator className="my-4" />
-                    )}
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    لا توجد منتجات في هذا الطلب
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -234,10 +311,10 @@ const OrderDetails = () => {
               <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
                 <MapPin className="size-5 text-primary mt-1 shrink-0" />
                 <div className="text-right">
-                  <p className="font-medium">{order.address}</p>
-                  {user && (
+                  <p className="font-medium">{order.address || "—"}</p>
+                  {customer?.location && (
                     <p className="text-sm text-muted-foreground mt-1">
-                      {user.location}
+                      {customer.location}
                     </p>
                   )}
                 </div>
@@ -271,46 +348,73 @@ const OrderDetails = () => {
               <CardTitle className="text-right">معلومات العميل</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {user ? (
+              {customer ? (
                 <>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <User className="size-5 text-primary" />
-                      <span className="font-semibold">{user.name}</span>
+                      <span className="font-semibold">
+                        {customer.name || "—"}
+                      </span>
                     </div>
                     <span className="text-sm text-muted-foreground text-right">
                       الاسم
                     </span>
                   </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Phone className="size-4 text-muted-foreground" />
-                      <span className="text-sm">{user.phone}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground text-right">
-                      الهاتف
-                    </span>
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="size-4 text-muted-foreground" />
-                      <span className="text-sm line-clamp-1">
-                        {user.location}
-                      </span>
-                    </div>
-                    <span className="text-sm text-muted-foreground text-right">
-                      الموقع
-                    </span>
-                  </div>
-                  <Separator />
-                  <Link to={`/customers/${user.id}`}>
-                    <Button variant="outline" className="w-full gap-2">
-                      <User className="size-4" />
-                      عرض ملف العميل
-                    </Button>
-                  </Link>
+                  {customer.phone && (
+                    <>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Phone className="size-4 text-muted-foreground" />
+                          <span className="text-sm">{customer.phone}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground text-right">
+                          الهاتف
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {customer.email && (
+                    <>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{customer.email}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground text-right">
+                          البريد الإلكتروني
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {customer.location && (
+                    <>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="size-4 text-muted-foreground" />
+                          <span className="text-sm line-clamp-1">
+                            {customer.location}
+                          </span>
+                        </div>
+                        <span className="text-sm text-muted-foreground text-right">
+                          الموقع
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {order.customer?.id && (
+                    <>
+                      <Separator />
+                      <Link to={`/customers/${order.customer.id}`}>
+                        <Button variant="outline" className="w-full gap-2">
+                          <User className="size-4" />
+                          عرض ملف العميل
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground text-center">
@@ -328,7 +432,7 @@ const OrderDetails = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="text-sm">
-                  #{order.id}
+                  #{String(order.id).slice(0, 8)}
                 </Badge>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   رقم الطلب
@@ -349,7 +453,7 @@ const OrderDetails = () => {
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-sm">{order.products.length}</span>
+                <span className="text-sm">{productCount}</span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   عدد المنتجات
                 </span>
@@ -372,34 +476,50 @@ const OrderDetails = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {order.status === "pending" && (
-                <Button className="w-full gap-2" variant="default">
+              {order.status === "PENDING" && (
+                <Button
+                  className="w-full gap-2"
+                  variant="default"
+                  onClick={() => handleStatusUpdate("PROCESSING")}
+                  disabled={isUpdating}
+                >
                   <Package className="size-4" />
                   بدء المعالجة
                 </Button>
               )}
-              {order.status === "processing" && (
-                <Button className="w-full gap-2" variant="default">
+              {order.status === "PROCESSING" && (
+                <Button
+                  className="w-full gap-2"
+                  variant="default"
+                  onClick={() => handleStatusUpdate("SHIPPED")}
+                  disabled={isUpdating}
+                >
                   <Truck className="size-4" />
                   شحن الطلب
                 </Button>
               )}
-              {order.status === "shipped" && (
-                <Button className="w-full gap-2" variant="default">
+              {order.status === "SHIPPED" && (
+                <Button
+                  className="w-full gap-2"
+                  variant="default"
+                  onClick={() => handleStatusUpdate("DELIVERED")}
+                  disabled={isUpdating}
+                >
                   <CheckCircle2 className="size-4" />
                   تأكيد التسليم
                 </Button>
               )}
               <Button className="w-full gap-2" variant="outline">
-                <Edit className="size-4" />
-                تعديل الطلب
-              </Button>
-              <Button className="w-full gap-2" variant="outline">
                 <Printer className="size-4" />
                 طباعة الفاتورة
               </Button>
-              {order.status !== "delivered" && order.status !== "cancelled" && (
-                <Button className="w-full gap-2" variant="destructive">
+              {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
+                <Button
+                  className="w-full gap-2"
+                  variant="destructive"
+                  onClick={handleCancelOrder}
+                  disabled={isUpdating}
+                >
                   <XCircle className="size-4" />
                   إلغاء الطلب
                 </Button>
@@ -423,11 +543,11 @@ const OrderDetails = () => {
                 <div className="flex-1 text-right">
                   <p className="text-sm font-medium">تم إنشاء الطلب</p>
                   <p className="text-xs text-muted-foreground">
-                    {formatDate(order.created_at)}
+                    {formatDate(order.createdAt)}
                   </p>
                 </div>
               </div>
-              {order.status !== "pending" && (
+              {order.status !== "PENDING" && (
                 <>
                   <Separator />
                   <div className="flex items-start gap-3">
@@ -443,7 +563,7 @@ const OrderDetails = () => {
                   </div>
                 </>
               )}
-              {order.status === "shipped" || order.status === "delivered" ? (
+              {(order.status === "SHIPPED" || order.status === "DELIVERED") && (
                 <>
                   <Separator />
                   <div className="flex items-start gap-3">
@@ -458,8 +578,8 @@ const OrderDetails = () => {
                     </div>
                   </div>
                 </>
-              ) : null}
-              {order.status === "delivered" && (
+              )}
+              {order.status === "DELIVERED" && (
                 <>
                   <Separator />
                   <div className="flex items-start gap-3">
@@ -470,6 +590,22 @@ const OrderDetails = () => {
                       <p className="text-sm font-medium">تم التسليم</p>
                       <p className="text-xs text-muted-foreground">
                         تم تسليم الطلب بنجاح
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+              {order.status === "CANCELLED" && (
+                <>
+                  <Separator />
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 bg-red-100 rounded-full mt-0.5">
+                      <XCircle className="size-3 text-red-600" />
+                    </div>
+                    <div className="flex-1 text-right">
+                      <p className="text-sm font-medium">تم الإلغاء</p>
+                      <p className="text-xs text-muted-foreground">
+                        تم إلغاء الطلب
                       </p>
                     </div>
                   </div>

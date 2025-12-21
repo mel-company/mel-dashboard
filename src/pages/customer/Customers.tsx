@@ -156,11 +156,11 @@ const Customers = () => {
             </button>
           ) : null}
         </div>
-        <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
+        {/* <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
           <Plus className="size-4" />
           <span className="hidden sm:inline">إضافة عميل</span>
           <span className="sm:hidden">إضافة</span>
-        </Button>
+        </Button> */}
       </div>
 
       {totalPages > 1 && customers.length > 0 ? (
@@ -306,7 +306,6 @@ const Customers = () => {
           </Table>
         </Card>
       )}
-
     </div>
   );
 };

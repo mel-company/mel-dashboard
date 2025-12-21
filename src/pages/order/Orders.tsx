@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/pagination";
 
 const Orders = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const pageParam = searchParams.get("page");
@@ -169,11 +170,11 @@ const Orders = () => {
             </button>
           ) : null}
         </div>
-        <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
+        {/* <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
           <Plus className="size-4" />
           <span className="hidden sm:inline">إضافة طلب</span>
           <span className="sm:hidden">إضافة</span>
-        </Button>
+        </Button> */}
       </div>
 
       {isLoading && !activeData ? (
@@ -285,7 +286,11 @@ const Orders = () => {
                     order._count?.products ?? order.products?.length ?? 0;
 
                   return (
-                    <TableRow key={order.id} className="hover:bg-muted/50">
+                    <TableRow
+                      key={order.id}
+                      className="hover:bg-muted/50 cursor-pointer"
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                    >
                       <TableCell className="font-medium">
                         #{String(order.id).slice(0, 8)}
                       </TableCell>
@@ -372,7 +377,10 @@ const Orders = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right is-rtl direction-rtl">
-                        <Link to={`/orders/${order.id}`}>
+                        <Link
+                          to={`/orders/${order.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Button variant="outline" size="sm" className="gap-2">
                             <FileText className="size-4" />
                             التفاصيل

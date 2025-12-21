@@ -177,11 +177,13 @@ const Discounts = () => {
             </button>
           ) : null}
         </div>
-        <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
-          <Plus className="size-4" />
-          <span className="hidden sm:inline">إضافة خصم</span>
-          <span className="sm:hidden">إضافة</span>
-        </Button>
+        <Link to="/discounts/add">
+          <Button className="gap-2 w-full sm:w-auto">
+            <Plus className="size-4" />
+            <span className="hidden sm:inline">إضافة خصم</span>
+            <span className="sm:hidden">إضافة</span>
+          </Button>
+        </Link>
       </div>
 
       {totalPages > 1 && discounts.length > 0 ? (

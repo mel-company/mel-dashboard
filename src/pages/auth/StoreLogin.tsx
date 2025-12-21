@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useFetchStores } from "@/api/wrappers/store.wrappers";
+import { useFetchDevStores } from "@/api/wrappers/store.wrappers";
 import {
   Select,
   SelectContent,
@@ -36,7 +36,7 @@ const StoreLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
 
-  const { data: stores, isLoading: isLoadingStores } = useFetchStores();
+  const { data: stores, isLoading: isLoadingStores } = useFetchDevStores();
 
   const { mutate: login, isPending: isLoginPending } = useLogin();
 
