@@ -1,4 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -9,6 +10,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Package,
   User,
@@ -24,8 +33,14 @@ import {
   ShoppingCart,
   Phone,
   ArrowLeft,
+  Trash2,
+  Loader2,
 } from "lucide-react";
-import { useFetchOrder, useUpdateOrder } from "@/api/wrappers/order.wrappers";
+import {
+  useFetchOrder,
+  useUpdateOrder,
+  useDeleteOrder,
+} from "@/api/wrappers/order.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
 import { toast } from "sonner";
@@ -33,6 +48,7 @@ import { toast } from "sonner";
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const {
     data: order,
@@ -43,6 +59,7 @@ const OrderDetails = () => {
   } = useFetchOrder(id ?? "", !!id);
 
   const { mutate: updateOrder, isPending: isUpdating } = useUpdateOrder();
+  const { mutate: deleteOrder, isPending: isDeleting } = useDeleteOrder();
 
   // Calculate total price
   const calculateTotal = () => {
@@ -139,6 +156,22 @@ const OrderDetails = () => {
   const handleCancelOrder = () => {
     if (!id || !order) return;
     handleStatusUpdate("CANCELLED");
+  };
+
+  const handleDelete = () => {
+    if (!id) return;
+
+    deleteOrder(id, {
+      onSuccess: () => {
+        toast.success("تم حذف الطلب بنجاح");
+        navigate("/orders", { replace: true });
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message || "فشل في حذف الطلب. حاول مرة أخرى."
+        );
+      },
+    });
   };
 
   if (isLoading) {
@@ -408,7 +441,7 @@ const OrderDetails = () => {
                     <>
                       <Separator />
                       <Link to={`/customers/${order.customer.id}`}>
-                        <Button variant="outline" className="w-full gap-2">
+                        <Button variant="secondary" className="w-full gap-2">
                           <User className="size-4" />
                           عرض ملف العميل
                         </Button>
@@ -513,6 +546,24 @@ const OrderDetails = () => {
                 <Printer className="size-4" />
                 طباعة الفاتورة
               </Button>
+              <Button
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="w-full gap-2"
+                variant="destructive"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    جاري الحذف...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="size-4" />
+                    حذف الطلب
+                  </>
+                )}
+              </Button>
               {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
                 <Button
                   className="w-full gap-2"
@@ -615,6 +666,45 @@ const OrderDetails = () => {
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="text-right">
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-right">تأكيد حذف الطلب</DialogTitle>
+            <DialogDescription className="text-right">
+              هل أنت متأكد من حذف الطلب رقم #{String(order.id).slice(0, 8)}؟ لا
+              يمكنك التراجع عن هذا الإجراء بعد التأكيد.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                handleDelete();
+              }}
+              variant="destructive"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                  جاري الحذف...
+                </>
+              ) : (
+                "تأكيد الحذف"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

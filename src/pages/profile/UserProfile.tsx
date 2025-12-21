@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   Card,
   CardContent,
@@ -16,7 +15,7 @@ import { toast } from "sonner";
 
 const UserProfile = () => {
   const navigate = useNavigate();
-  const { data: user, isLoading, isError } = useMe();
+  const { data: user } = useMe();
 
   const { mutate: logoutMutation } = useLogout();
 
@@ -33,11 +32,11 @@ const UserProfile = () => {
     logoutMutation(
       {},
       {
-        onSuccess: (data: any) => {
+        onSuccess: () => {
           toast.success("تم تسجيل الخروج بنجاح");
           navigate("/login", { replace: true });
         },
-        onError: (error: any) => {
+        onError: () => {
           toast.error("حدث خطأ أثناء تسجيل الخروج");
         },
       }

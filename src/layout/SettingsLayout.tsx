@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
-import { Settings, Store, Globe, Truck, FileText, Menu, X } from "lucide-react";
+import {
+  Settings,
+  Store,
+  Globe,
+  Truck,
+  FileText,
+  Menu,
+  X,
+  CreditCard,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -20,11 +29,6 @@ const SettingsLayout = () => {
       icon: Store,
     },
     {
-      label: "النطاق",
-      path: "/settings/domain",
-      icon: Globe,
-    },
-    {
       label: "الدفع",
       path: "/settings/payment-methods",
       icon: Truck,
@@ -33,6 +37,16 @@ const SettingsLayout = () => {
       label: "التوصيل",
       path: "/settings/delivery",
       icon: Truck,
+    },
+    {
+      label: "النطاق",
+      path: "/settings/domain",
+      icon: Globe,
+    },
+    {
+      label: "الاشتراك",
+      path: "/settings/subscription",
+      icon: CreditCard,
     },
     {
       label: "الشروط والأحكام",
@@ -120,7 +134,7 @@ const SettingsLayout = () => {
       {/* Right Sidebar Navigation - Desktop */}
       <aside className="hidden lg:block w-64 shrink-0 border-l border-border bg-background/50">
         <div className="sticky top-0 p-6">
-          <SidebarContent showCloseButton={false} /> 
+          <SidebarContent showCloseButton={false} />
         </div>
       </aside>
 

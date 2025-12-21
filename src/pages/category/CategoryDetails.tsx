@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
 import { dmy_products } from "@/data/dummy";
 import {
   Card,
@@ -11,6 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Folder,
   Package,
   CheckCircle2,
@@ -18,16 +27,22 @@ import {
   Edit,
   Trash2,
   ShoppingCart,
+  Loader2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useFetchCategory } from "@/api/wrappers/category.wrappers";
+import {
+  useFetchCategory,
+  useDeleteCategory,
+} from "@/api/wrappers/category.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import CategoryDetailsSkeleton from "./CategoryDetailsSkeleton";
+import { toast } from "sonner";
 
 const CategoryDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const {
     data: category,
@@ -36,6 +51,23 @@ const CategoryDetails = () => {
     refetch,
     isFetching,
   } = useFetchCategory(id ?? "");
+  const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
+
+  const handleDelete = () => {
+    if (!id) return;
+
+    deleteCategory(id, {
+      onSuccess: () => {
+        toast.success("تم حذف الفئة بنجاح");
+        navigate("/categories", { replace: true });
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message || "فشل في حذف الفئة. حاول مرة أخرى."
+        );
+      },
+    });
+  };
 
   if (isLoading) return <CategoryDetailsSkeleton />;
 
@@ -280,14 +312,67 @@ const CategoryDetails = () => {
                 <Package className="size-4" />
                 عرض المنتجات
               </Button>
-              <Button className="w-full gap-2" variant="destructive">
-                <Trash2 className="size-4" />
-                حذف الفئة
+              <Button
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="w-full gap-2"
+                variant="destructive"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    جاري الحذف...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="size-4" />
+                    حذف الفئة
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="text-right">
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-right">تأكيد حذف الفئة</DialogTitle>
+            <DialogDescription className="text-right">
+              هل أنت متأكد من حذف الفئة "{category.name}"؟ لا يمكنك التراجع عن
+              هذا الإجراء بعد التأكيد.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                handleDelete();
+              }}
+              variant="destructive"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                  جاري الحذف...
+                </>
+              ) : (
+                "تأكيد الحذف"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

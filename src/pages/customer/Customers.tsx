@@ -293,7 +293,7 @@ const Customers = () => {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Link to={`/customers/${customerId}`}>
-                        <Button variant="outline" size="sm" className="gap-2">
+                        <Button variant="secondary" size="sm" className="gap-2">
                           <FileText className="size-4" />
                           التفاصيل
                         </Button>

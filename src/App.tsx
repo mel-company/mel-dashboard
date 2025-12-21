@@ -43,6 +43,7 @@ import NotFoundPage from "./pages/miscellaneous/NotFoundPage";
 import EditProduct from "./pages/product/EditProduct";
 import EditCategory from "./pages/category/EditCategory";
 import EditDiscount from "./pages/discount/EditDiscount";
+import SubscriptionSettings from "./pages/settings/SubscriptionSettings";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -119,6 +120,7 @@ function App() {
                 path="terms-and-conditions"
                 element={<TermsAndConditionsSettings />}
               />
+              <Route path="subscription" element={<SubscriptionSettings />} />
             </Route>
 
             {/* category routes */}

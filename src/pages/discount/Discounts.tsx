@@ -274,7 +274,7 @@ const Discounts = () => {
             const statusBadge = getStatusBadge(discount.discount_status);
             return (
               <Link key={discount.id} to={`/discounts/${discount.id}`}>
-                <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]">
+                <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
                   <CardHeader className="pb-4">
                     <div className="relative h-32 flex items-center justify-center w-full overflow-hidden rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
                       <div className="flex flex-col items-center gap-2">

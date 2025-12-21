@@ -239,7 +239,7 @@ const Products = () => {
                       label: "مسح البحث",
                       onClick: () => setSearchQuery(""),
                       icon: <X className="size-4" />,
-                      variant: "outline",
+                      variant: "secondary",
                     }
                   : {
                       label: "إضافة منتج",
@@ -252,14 +252,14 @@ const Products = () => {
         ) : (
           products.map((product) => (
             <Link key={product.id} to={`/products/${product.id}`}>
-              <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]">
+              <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
                 <CardHeader className="pb-4">
-                  <div className="relative h-40 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
+                  <div className="relative h-40 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10 ">
                     {product.image ? (
                       <img
                         src={product.image}
                         alt={product.title}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-110"
+                        className="h-full w-full object-cover transition-transform"
                       />
                     ) : (
                       <ShoppingCart className="size-18 text-white bg-cyan/40 rounded-full p-4" />

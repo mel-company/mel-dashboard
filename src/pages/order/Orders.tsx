@@ -381,7 +381,11 @@ const Orders = () => {
                           to={`/orders/${order.id}`}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Button variant="outline" size="sm" className="gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="gap-2"
+                          >
                             <FileText className="size-4" />
                             التفاصيل
                           </Button>
