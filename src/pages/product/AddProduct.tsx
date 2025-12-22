@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Save, Image, ArrowLeft, Check, X } from "lucide-react";
-import { dmy_categories } from "@/data/dummy";
+import { Save, ArrowLeft, Check, Loader2 } from "lucide-react";
+import { useFetchCategories } from "@/api/wrappers/category.wrappers";
+import { useCreateProduct } from "@/api/wrappers/product.wrappers";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 type Props = {};
 
@@ -11,12 +14,18 @@ const AddProduct = ({}: Props) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  // @ts-ignore
+  const [costToProduct, setCostToProduct] = useState("");
+
+  const { data: categories, isLoading } = useFetchCategories();
+
   const [image, setImage] = useState("");
   const [rate, setRate] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const navigate = useNavigate();
 
-  const toggleCategory = (categoryId: number) => {
+  const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
+
+  const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) =>
       prev.includes(categoryId)
         ? prev.filter((id) => id !== categoryId)
@@ -27,17 +36,51 @@ const AddProduct = ({}: Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (!title.trim()) {
+      toast.error("الرجاء إدخال عنوان المنتج");
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error("الرجاء إدخال وصف المنتج");
+      return;
+    }
+
+    if (!price || parseFloat(price) <= 0) {
+      toast.error("الرجاء إدخال سعر صحيح للمنتج");
+      return;
+    }
+
+    if (!image.trim()) {
+      toast.error("الرجاء إدخال رابط صورة المنتج");
+      return;
+    }
+
     const productData = {
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       price: parseFloat(price),
-      image,
-      rate: parseFloat(rate),
-      categories: selectedCategories,
+      cost_to_produce: costToProduct ? parseFloat(costToProduct) : undefined,
+      image: image.trim(),
+      rate: rate ? parseFloat(rate) : undefined,
+      enabled: true,
+      categoryIds:
+        selectedCategories.length > 0 ? selectedCategories : undefined,
     };
 
-    console.log("Product data:", productData);
-    // TODO: Submit to API
+    createProduct(productData, {
+      onSuccess: () => {
+        toast.success("تم إضافة المنتج بنجاح");
+        navigate("/products", { replace: true });
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message ||
+            "فشل في إضافة المنتج. حاول مرة أخرى."
+        );
+      },
+    });
   };
 
   return (
@@ -48,18 +91,23 @@ const AddProduct = ({}: Props) => {
         </div>
         <Card className="gap-2">
           <CardContent className="spacey-4">
-            <div className="flex gap-x-2 mb-4">
-              <div className="w-32 h-32 flex items-center justify-center bg-muted rounded-lg">
-                <Image className="w-12 h-12 object-cover text-muted-foreground" />
-              </div>
-              <div className="space-y-2 flex items-center">
-                <div>
-                  <h3 className="text-xl font-bold">صورة المنتج</h3>
-                  <p className="text-sm text-muted-foreground">
-                    يمكنك إضافة صورة للمنتج من خلال التحديد من الملفات المحلية
-                  </p>
-                </div>
-              </div>
+            {/* Image URL */}
+            <div className="space-y-2">
+              <label
+                htmlFor="image"
+                className="text-sm font-medium text-right block"
+              >
+                رابط صورة المنتج
+              </label>
+              <input
+                id="image"
+                type="url"
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                required
+                className="w-full text-right rounded-md border border-input bgbackground py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
+              />
             </div>
 
             {/* Title */}
@@ -108,7 +156,7 @@ const AddProduct = ({}: Props) => {
                   htmlFor="price"
                   className="text-sm font-medium text-right block"
                 >
-                  السعر (دينار عراقي)
+                  السعر
                 </label>
                 <div className="relative">
                   <input
@@ -116,6 +164,32 @@ const AddProduct = ({}: Props) => {
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
+                    placeholder="0.00"
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full text-right rounded-md border border-input bgbackground py-2.5 pl-12 pr-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    IQD
+                  </span>
+                </div>
+              </div>
+
+              {/* Cost to Product */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="costToProduct"
+                  className="text-sm font-medium text-right block"
+                >
+                  تكلفة الإنتاج
+                </label>
+                <div className="relative">
+                  <input
+                    id="costToProduct"
+                    type="number"
+                    value={costToProduct}
+                    onChange={(e) => setCostToProduct(e.target.value)}
                     placeholder="0.00"
                     required
                     min="0"
@@ -162,13 +236,31 @@ const AddProduct = ({}: Props) => {
         </div>
         <Card>
           <CardContent className="space-y-4">
-            {dmy_categories.length === 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="relative p-4 bg-card rounded-lg border-2 border-border text-right"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                      </div>
+                      <Skeleton className="shrink-0 w-5 h-5 rounded border-2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : categories && categories.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
                 لا توجد فئات متاحة
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {dmy_categories.map((category) => {
+                {categories.map((category: any) => {
                   const isSelected = selectedCategories.includes(category.id);
                   return (
                     <div
@@ -213,7 +305,7 @@ const AddProduct = ({}: Props) => {
                   الفئات المحددة ({selectedCategories.length}):
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {selectedCategories.map((categoryId) => {
+                  {/* {selectedCategories.map((categoryId) => {
                     const category = dmy_categories.find(
                       (c) => c.id === categoryId
                     );
@@ -237,7 +329,7 @@ const AddProduct = ({}: Props) => {
                         </button>
                       </Badge>
                     ) : null;
-                  })}
+                  })} */}
                 </div>
               </div>
             )}
@@ -246,10 +338,24 @@ const AddProduct = ({}: Props) => {
 
         {/* Submit Button */}
         <div className="flex items-center justify-end gap-3">
-          <Button type="submit" size="lg" className="gap-2">
-            <Save className="size-4" />
-            إضافة المنتج
-            <ArrowLeft className="size-4" />
+          <Button
+            type="submit"
+            size="lg"
+            className="gap-2"
+            disabled={isCreating}
+          >
+            {isCreating ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                جاري الإضافة...
+              </>
+            ) : (
+              <>
+                <Save className="size-4" />
+                إضافة المنتج
+                <ArrowLeft className="size-4" />
+              </>
+            )}
           </Button>
         </div>
       </form>
