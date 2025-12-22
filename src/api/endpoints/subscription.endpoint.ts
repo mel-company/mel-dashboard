@@ -24,6 +24,16 @@ export const subscriptionAPI = {
   },
 
   /**
+   * Get a single store subscription
+   */
+  fetchStoreSubscription: async (): Promise<any> => {
+    console.log("FETCHING STORE SUBSCRIPTION");
+    const { data } = await axiosInstance.get<any>(`/subscription/store`);
+    console.log("DATA", data);
+    return data;
+  },
+
+  /**
    * Create a new subscription
    */
   create: async (subscription: any): Promise<any> => {

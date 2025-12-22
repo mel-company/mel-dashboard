@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,11 @@ import {
 import { DISCOUNT_STATUS } from "@/utils/constants";
 import { useFetchProducts } from "@/api/wrappers/product.wrappers";
 import { useFetchCategories } from "@/api/wrappers/category.wrappers";
-import { useCreateDiscount } from "@/api/wrappers/discount.wrappers";
+import {
+  useFetchDiscount,
+  useUpdateDiscount,
+} from "@/api/wrappers/discount.wrappers";
+import ErrorPage from "../miscellaneous/ErrorPage";
 import { toast } from "sonner";
 import type { ProductListItem } from "@/api/types/product";
 
@@ -26,9 +30,16 @@ type Props = {};
 
 type SelectionMode = "categories" | "products" | "both";
 
-const AddDiscount = ({}: Props) => {
+const EditDiscount = ({}: Props) => {
   const navigate = useNavigate();
-  const { mutate: createDiscount, isPending: isCreating } = useCreateDiscount();
+  const { id } = useParams<{ id: string }>();
+
+  const { data, isLoading, error, refetch, isFetching } = useFetchDiscount(
+    id ?? "",
+    !!id
+  );
+
+  const { mutate: updateDiscount, isPending: isUpdating } = useUpdateDiscount();
 
   // Form state
   const [name, setName] = useState("");
@@ -43,6 +54,54 @@ const AddDiscount = ({}: Props) => {
     useState<SelectionMode>("categories");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Populate form when discount data is loaded
+  useEffect(() => {
+    if (data) {
+      setName(data.name ?? "");
+      setDescription(data.description ?? "");
+      setDiscountPercentage(data.discount_percentage?.toString() ?? "");
+      setStatus(data.discount_status ?? DISCOUNT_STATUS.ACTIVE);
+
+      // Format dates for datetime-local input
+      if (data.discount_start_date) {
+        const start = new Date(data.discount_start_date);
+        setStartDate(formatDateForInput(start));
+      }
+      if (data.discount_end_date) {
+        const end = new Date(data.discount_end_date);
+        setEndDate(formatDateForInput(end));
+      }
+
+      // Pre-select products and categories
+      const productIds = data.products?.map((p: any) => p.id) ?? [];
+      const categoryIds = data.categories?.map((c: any) => c.id) ?? [];
+
+      setSelectedProducts(productIds);
+      setSelectedCategories(categoryIds);
+
+      // Determine selection mode
+      if (productIds.length > 0 && categoryIds.length > 0) {
+        setSelectionMode("both");
+      } else if (productIds.length > 0) {
+        setSelectionMode("products");
+      } else if (categoryIds.length > 0) {
+        setSelectionMode("categories");
+      } else {
+        setSelectionMode("categories");
+      }
+    }
+  }, [data]);
+
+  // Format date for input (YYYY-MM-DDTHH:mm)
+  const formatDateForInput = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
 
   // Fetch products and categories for selection
   const { data: productsData, isLoading: isLoadingProducts } = useFetchProducts(
@@ -87,6 +146,11 @@ const AddDiscount = ({}: Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!id) {
+      toast.error("معرف الخصم غير موجود");
+      return;
+    }
+
     // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -124,52 +188,65 @@ const AddDiscount = ({}: Props) => {
       discount_status: status,
     };
 
-    // Add productIds or categoryIds based on selection mode
+    // Always send productIds and categoryIds (empty arrays if not selected)
     if (selectionMode === "products" || selectionMode === "both") {
-      if (selectedProducts.length > 0) {
-        discountData.productIds = selectedProducts;
-      }
+      discountData.productIds = selectedProducts;
+    } else {
+      discountData.productIds = [];
     }
 
     if (selectionMode === "categories" || selectionMode === "both") {
-      if (selectedCategories.length > 0) {
-        discountData.categoryIds = selectedCategories;
+      discountData.categoryIds = selectedCategories;
+    } else {
+      discountData.categoryIds = [];
+    }
+
+    updateDiscount(
+      { id, data: discountData },
+      {
+        onSuccess: () => {
+          toast.success("تم تحديث الخصم بنجاح");
+          navigate(`/discounts/${id}`);
+        },
+        onError: (error: any) => {
+          toast.error(error?.response?.data?.message || "فشل تحديث الخصم");
+        },
       }
-    }
-
-    createDiscount(discountData, {
-      onSuccess: (data) => {
-        toast.success("تم إضافة الخصم بنجاح");
-        navigate(`/discounts/${data.id}`);
-      },
-      onError: (error: any) => {
-        toast.error(error?.response?.data?.message || "فشل إضافة الخصم");
-      },
-    });
+    );
   };
 
-  // Format date for input (YYYY-MM-DDTHH:mm)
-  const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
-  // Set default dates on mount
-  useEffect(() => {
-    if (!startDate) {
-      const now = new Date();
-      setStartDate(formatDateForInput(now));
-    }
-    if (!endDate) {
-      const future = new Date();
-      future.setDate(future.getDate() + 30);
-      setEndDate(formatDateForInput(future));
-    }
-  }, []);
+  if (error) {
+    return (
+      <ErrorPage
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">الخصم غير موجود</p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => navigate("/discounts")}
+        >
+          العودة إلى الخصومات
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto space-y-6">
@@ -556,7 +633,7 @@ const AddDiscount = ({}: Props) => {
             size="lg"
             className="gap-2"
             onClick={() => navigate(-1)}
-            disabled={isCreating}
+            disabled={isUpdating}
           >
             إلغاء
           </Button>
@@ -564,17 +641,17 @@ const AddDiscount = ({}: Props) => {
             type="submit"
             size="lg"
             className="gap-2"
-            disabled={isCreating}
+            disabled={isUpdating}
           >
-            {isCreating ? (
+            {isUpdating ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                جاري الإضافة...
+                جاري التحديث...
               </>
             ) : (
               <>
                 <Save className="size-4" />
-                إضافة الخصم
+                تحديث الخصم
                 <ArrowLeft className="size-4" />
               </>
             )}
@@ -585,4 +662,4 @@ const AddDiscount = ({}: Props) => {
   );
 };
 
-export default AddDiscount;
+export default EditDiscount;

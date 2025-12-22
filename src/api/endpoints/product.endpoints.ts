@@ -67,4 +67,12 @@ export const productAPI = {
     const { data } = await axiosInstance.delete<any>(`/product/${id}`);
     return data;
   },
+
+  /**
+   * Seed dummy products
+   */
+  seedDummyProducts: async (): Promise<any> => {
+    const { data } = await axiosInstance.post<any>("/product/dummy");
+    return data;
+  },
 };

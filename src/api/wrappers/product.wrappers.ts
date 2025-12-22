@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productAPI } from "../endpoints/product.endpoints";
-import type { ProductListResponse } from "../types/product";
 
 /**
  * Query key factory for products
@@ -18,7 +17,7 @@ export const productKeys = {
  * Fetch all products with optional filtering and pagination
  */
 export const useFetchProducts = (params?: any, enabled: boolean = true) => {
-  return useQuery<ProductListResponse>({
+  return useQuery<any>({
     queryKey: productKeys.list(params),
     queryFn: () => productAPI.fetchAll(params),
     enabled,
@@ -29,7 +28,7 @@ export const useFetchProducts = (params?: any, enabled: boolean = true) => {
  * Search for products with optional filtering and pagination
  */
 export const useSearchProducts = (params?: any, enabled: boolean = true) => {
-  return useQuery<ProductListResponse>({
+  return useQuery<any>({
     queryKey: productKeys.search(params),
     queryFn: () => productAPI.search(params),
     enabled: enabled && !!params?.query,
@@ -93,5 +92,14 @@ export const useDeleteProduct = () => {
       // Remove the deleted product from cache
       queryClient.removeQueries({ queryKey: productKeys.detail(deletedId) });
     },
+  });
+};
+
+/**
+ * Seed dummy products mutation
+ */
+export const useSeedDummyProducts = () => {
+  return useMutation<any, Error, any>({
+    mutationFn: () => productAPI.seedDummyProducts(),
   });
 };

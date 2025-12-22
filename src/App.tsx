@@ -2,7 +2,6 @@ import "./App.css";
 import Layout from "./layout/Layout";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
-import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useAuth } from "./contexts/AuthContext";
 import Home from "./pages/home/Home";
 import Stats from "./pages/stats/Stats";
@@ -41,6 +40,10 @@ import Accounting from "./pages/accounting/Accounting";
 import StoreLogin from "./pages/auth/StoreLogin";
 import PrivateRoute from "./pages/RBAC/PrivateRoute";
 import NotFoundPage from "./pages/miscellaneous/NotFoundPage";
+import EditProduct from "./pages/product/EditProduct";
+import EditCategory from "./pages/category/EditCategory";
+import EditDiscount from "./pages/discount/EditDiscount";
+import SubscriptionSettings from "./pages/settings/SubscriptionSettings";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -60,7 +63,10 @@ function App() {
             {/* products routes */}
             <Route path="/products">
               <Route index element={<Products />} />
-              <Route path=":id" element={<ProductDetails />} />
+              <Route path=":id">
+                <Route index element={<ProductDetails />} />
+                <Route path="edit" element={<EditProduct />} />
+              </Route>
               <Route path="add" element={<AddProduct />} />
             </Route>
 
@@ -114,19 +120,26 @@ function App() {
                 path="terms-and-conditions"
                 element={<TermsAndConditionsSettings />}
               />
+              <Route path="subscription" element={<SubscriptionSettings />} />
             </Route>
 
             {/* category routes */}
             <Route path="/categories">
               <Route index element={<Categories />} />
-              <Route path=":id" element={<CategoryDetails />} />
+              <Route path=":id">
+                <Route index element={<CategoryDetails />} />
+                <Route path="edit" element={<EditCategory />} />
+              </Route>
               <Route path="add" element={<AddCategory />} />
             </Route>
 
             {/* Discounts routes */}
             <Route path="/discounts">
               <Route index element={<Discounts />} />
-              <Route path=":id" element={<DiscountDetails />} />
+              <Route path=":id">
+                <Route index element={<DiscountDetails />} />
+                <Route path="edit" element={<EditDiscount />} />
+              </Route>
               <Route path="add" element={<AddDiscount />} />
             </Route>
 
@@ -143,7 +156,7 @@ function App() {
         <Route path="/otp" element={<OTP />} />
 
         {/* Protected routes - Dashboard with Layout */}
-        <Route
+        {/* <Route
           element={
             <ProtectedRoute>
               <Layout />
@@ -153,46 +166,39 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/stats" element={<Stats />} />
 
-          {/* products routes */}
           <Route path="/products">
             <Route index element={<Products />} />
             <Route path=":id" element={<ProductDetails />} />
             <Route path="add" element={<AddProduct />} />
           </Route>
 
-          {/* customers routes */}
           <Route path="/customers">
             <Route index element={<Customers />} />
             <Route path=":id" element={<CustomerDetails />} />
             <Route path="add" element={<AddCustomer />} />
           </Route>
 
-          {/* orders routes */}
           <Route path="/orders">
             <Route index element={<Orders />} />
             <Route path=":id" element={<OrderDetails />} />
             <Route path="add" element={<AddOrder />} />
           </Route>
 
-          {/* employees routes */}
           <Route path="/employees">
             <Route index element={<Employees />} />
             <Route path=":id" element={<EmployeeDetails />} />
             <Route path="add" element={<AddEmployee />} />
           </Route>
 
-          {/* notifications routes */}
           <Route path="/notifications">
             <Route index element={<Notifications />} />
             <Route path=":id" element={<NotificationDetails />} />
           </Route>
 
-          {/* profile routes */}
           <Route path="/profile">
             <Route index element={<UserProfile />} />
           </Route>
 
-          {/* settings routes */}
           <Route path="/settings" element={<SettingsLayout />}>
             <Route
               index
@@ -212,26 +218,22 @@ function App() {
             />
           </Route>
 
-          {/* category routes */}
           <Route path="/categories">
             <Route index element={<Categories />} />
             <Route path=":id" element={<CategoryDetails />} />
             <Route path="add" element={<AddCategory />} />
           </Route>
 
-          {/* Discounts routes */}
           <Route path="/discounts">
             <Route index element={<Discounts />} />
             <Route path=":id" element={<DiscountDetails />} />
             <Route path="add" element={<AddDiscount />} />
           </Route>
 
-          {/* App Store route */}
           <Route path="/app-store" element={<AppStore />} />
 
-          {/* Accounting route */}
           <Route path="/accounting" element={<Accounting />} />
-        </Route>
+        </Route> */}
 
         {/* Root redirect */}
         <Route path="*" element={<RootRedirect />} />

@@ -42,6 +42,7 @@ const Layout = () => {
       "payment-methods": "طرق الدفع",
       delivery: "التوصيل",
       "terms-and-conditions": "الشروط والأحكام",
+      edit: "تعديل",
     };
 
     const detailLabels: Record<string, string> = {
@@ -68,9 +69,12 @@ const Layout = () => {
       const key = segment.toLowerCase();
       let mapped = labels[key];
 
-      // لو الجزء الحالي شكله ID (أرقام فقط مثلاً)، نستخدم اسم تفصيلي حسب الجزء السابق
-      const looksLikeId = /^[0-9]+$/.test(segment);
-      if (!mapped && looksLikeId && index > 0) {
+      // لو الجزء الحالي شكله UUID (معايير UUID v4 أو v1)، نستخدم اسم تفصيلي حسب الجزء السابق
+      const looksLikeUuid =
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(
+          segment
+        );
+      if (!mapped && looksLikeUuid && index > 0) {
         const parentKey = segments[index - 1].toLowerCase();
         mapped = detailLabels[parentKey];
       }

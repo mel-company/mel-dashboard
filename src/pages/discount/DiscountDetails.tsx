@@ -1,4 +1,5 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { DISCOUNT_STATUS } from "@/utils/constants";
 import {
   Card,
@@ -10,14 +11,39 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tag, Calendar, Folder, Edit, Trash2, Percent } from "lucide-react";
-import { useFetchDiscount } from "@/api/wrappers/discount.wrappers";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Tag,
+  Calendar,
+  Folder,
+  Edit,
+  Trash2,
+  Percent,
+  ShoppingCart,
+  Package,
+  Loader2,
+} from "lucide-react";
+import {
+  useFetchDiscount,
+  useDeleteDiscount,
+} from "@/api/wrappers/discount.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import DiscountDetailsSkeleton from "./DiscountDetailsSkeleton";
+import { toast } from "sonner";
 
 const DiscountDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   const {
     data: discount,
     isLoading,
@@ -25,6 +51,24 @@ const DiscountDetails = () => {
     refetch,
     isFetching,
   } = useFetchDiscount(id ?? "");
+  const { mutate: deleteDiscount, isPending: isDeleting } =
+    useDeleteDiscount();
+
+  const handleDelete = () => {
+    if (!id) return;
+
+    deleteDiscount(id, {
+      onSuccess: () => {
+        toast.success("تم حذف الخصم بنجاح");
+        navigate("/discounts", { replace: true });
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message || "فشل في حذف الخصم. حاول مرة أخرى."
+        );
+      },
+    });
+  };
 
   if (isLoading) return <DiscountDetailsSkeleton />;
 
@@ -153,33 +197,44 @@ const DiscountDetails = () => {
           </Card>
 
           {/* Products in Discount */}
-          {/* {discount.discount_products.length > 0 && (
+          {discount?.products && discount.products.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-right flex items-center gap-2">
-                  <ShoppingCart className="size-5" />
-                  المنتجات المشمولة ({discount.discount_products.length})
+                  <Package className="size-5" />
+                  المنتجات المشمولة (
+                  {discount._count?.products ?? discount.products.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {discount.discount_products.map((product) => (
+                  {discount.products.map((product: any) => (
                     <Link
                       key={product.id}
                       to={`/products/${product.id}`}
                       className="block"
                     >
                       <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
-                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
-                          <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt={product.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                          )}
                         </div>
                         <div className="flex-1 text-right">
                           <p className="font-semibold line-clamp-1">
                             {product.title}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {product.price.toFixed(2)} د.ع
-                          </p>
+                          {product.price && (
+                            <p className="text-sm text-muted-foreground">
+                              {product.price.toFixed(2)} د.ع
+                            </p>
+                          )}
                         </div>
                       </div>
                     </Link>
@@ -187,35 +242,41 @@ const DiscountDetails = () => {
                 </div>
               </CardContent>
             </Card>
-          )} */}
+          )}
 
           {/* Categories in Discount */}
-          {discount?.discount_categories?.length > 0 && (
+          {discount?.categories && discount.categories.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-right flex items-center gap-2">
                   <Folder className="size-5" />
-                  الفئات المشمولة ({discount?._count?.categories ?? 0})
+                  الفئات المشمولة (
+                  {discount._count?.categories ?? discount.categories.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {discount?.discount_categories?.map((category: any) => (
+                  {discount.categories.map((category: any) => (
                     <Link
                       key={category.id}
                       to={`/categories/${category.id}`}
                       className="block"
                     >
                       <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
-                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
-                          <Folder className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
+                          {category.image ? (
+                            <img
+                              src={category.image}
+                              alt={category.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Folder className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                          )}
                         </div>
                         <div className="flex-1 text-right">
                           <p className="font-semibold line-clamp-1">
                             {category.name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {category.number_of_products} منتج
                           </p>
                         </div>
                       </div>
@@ -293,11 +354,13 @@ const DiscountDetails = () => {
             <CardHeader>
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button className="w-full gap-2" variant="default">
-                <Edit className="size-4" />
-                تعديل الخصم
-              </Button>
+            <CardContent className="flex flex-col gap-2">
+              <Link to={`/discounts/${id}/edit`} className="">
+                <Button className="w-full gap-2" variant="default">
+                  <Edit className="size-4" />
+                  تعديل الخصم
+                </Button>
+              </Link>
               {!isActive && (
                 <Button className="w-full gap-2" variant="outline">
                   <Tag className="size-4" />
@@ -305,19 +368,72 @@ const DiscountDetails = () => {
                 </Button>
               )}
               {isActive && (
-                <Button className="w-full gap-2" variant="outline">
+                <Button className="w-full gap-2" variant="secondary">
                   <Tag className="size-4" />
                   تعطيل الخصم
                 </Button>
               )}
-              <Button className="w-full gap-2" variant="destructive">
-                <Trash2 className="size-4" />
-                حذف الخصم
+              <Button
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="w-full gap-2"
+                variant="destructive"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    جاري الحذف...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="size-4" />
+                    حذف الخصم
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="text-right">
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-right">تأكيد حذف الخصم</DialogTitle>
+            <DialogDescription className="text-right">
+              هل أنت متأكد من حذف الخصم "{discount.name}"؟ لا يمكنك التراجع عن
+              هذا الإجراء بعد التأكيد.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                handleDelete();
+              }}
+              variant="destructive"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                  جاري الحذف...
+                </>
+              ) : (
+                "تأكيد الحذف"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

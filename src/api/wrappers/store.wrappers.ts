@@ -21,3 +21,13 @@ export const useFetchStores = (params?: any) => {
     queryFn: () => storeAPI.fetchAll(params),
   });
 };
+
+/**
+ * Fetch all dev stores with optional filtering and pagination
+ */
+export const useFetchDevStores = (params?: any) => {
+  return useQuery<any>({
+    queryKey: storeKeys.list(params),
+    queryFn: () => storeAPI.fetchAllDevStores(params),
+  });
+};

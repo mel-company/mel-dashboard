@@ -1,4 +1,5 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -10,6 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Star,
   ShoppingCart,
   DollarSign,
@@ -17,17 +26,42 @@ import {
   Tag,
   Edit,
   Trash2,
+  Loader2,
 } from "lucide-react";
-import { useFetchProduct } from "@/api/wrappers/product.wrappers";
+import {
+  useFetchProduct,
+  useDeleteProduct,
+} from "@/api/wrappers/product.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
+import NotFoundPage from "../miscellaneous/NotFoundPage";
 import ProductDetailsSkeleton from "./ProductDetailsSkeleton";
+import { toast } from "sonner";
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? ""
   );
+  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
+
+  const handleDelete = () => {
+    if (!id) return;
+
+    deleteProduct(id, {
+      onSuccess: () => {
+        toast.success("تم حذف المنتج بنجاح");
+        navigate("/products", { replace: true });
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message || "فشل في حذف المنتج. حاول مرة أخرى."
+        );
+      },
+    });
+  };
 
   if (isLoading) return <ProductDetailsSkeleton />;
 
@@ -37,6 +71,17 @@ const ProductDetails = () => {
         error={error}
         onRetry={() => refetch()}
         isRetrying={isFetching}
+      />
+    );
+  }
+
+  if (!data) {
+    return (
+      <NotFoundPage
+        title="المنتج غير موجود"
+        description="المنتج الذي تبحث عنه غير موجود أو تم حذفه."
+        backTo="/products"
+        backLabel="العودة إلى المنتجات"
       />
     );
   }
@@ -167,22 +212,79 @@ const ProductDetails = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full gap-2" variant="default">
+              <Button
+                onClick={() => navigate(`/products/${id}/edit`)}
+                className="w-full gap-2"
+                variant="default"
+              >
                 <Edit className="size-4" />
                 تعديل المنتج
               </Button>
-              <Button className="w-full gap-2" variant="outline">
+              <Button className="w-full gap-2" variant="secondary">
                 <Package className="size-4" />
                 إدارة المخزون
               </Button>
-              <Button className="w-full gap-2" variant="destructive">
-                <Trash2 className="size-4" />
-                حذف المنتج
+              <Button
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="w-full gap-2"
+                variant="destructive"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    جاري الحذف...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="size-4" />
+                    حذف المنتج
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="text-right">
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-right">تأكيد حذف المنتج</DialogTitle>
+            <DialogDescription className="text-right">
+              هل أنت متأكد من حذف المنتج "{data.title}"؟ لا يمكنك التراجع عن هذا
+              الإجراء بعد التأكيد.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                handleDelete();
+              }}
+              variant="destructive"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                  جاري الحذف...
+                </>
+              ) : (
+                "تأكيد الحذف"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
