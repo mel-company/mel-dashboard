@@ -115,7 +115,7 @@ const TopBar = ({}: Props) => {
         {/* Center - Company Name */}
         <div className="flex justify-center items-center">
           <h2 className="text-lg font-semibold text-foreground">
-            المشرق الجديد
+            {me?.storeName || "منصة ميل"}
           </h2>
         </div>
 
