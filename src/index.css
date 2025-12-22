@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"); */
 
 @font-face {
   font-family: "Cairo";
@@ -91,7 +91,8 @@ html {
   -moz-osx-font-smoothing: grayscale;
   --font-family: "Cairo", sans-serif;
   --font-family-arabic: "Cairo", sans-serif;
-  --font-family-english: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+  /* --font-family-english: "Inter", system-ui, -apple-system, BlinkMacSystemFont, */
+  --font-family-english:  system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
