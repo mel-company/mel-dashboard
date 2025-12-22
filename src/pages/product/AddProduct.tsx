@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, ArrowLeft, Check, Loader2 } from "lucide-react";
+import { Save, ArrowLeft, Check, Loader2, Plus, Trash2 } from "lucide-react";
 import { useFetchCategories } from "@/api/wrappers/category.wrappers";
 import { useCreateProduct } from "@/api/wrappers/product.wrappers";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +21,9 @@ const AddProduct = ({}: Props) => {
   const [image, setImage] = useState("");
   const [rate, setRate] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [properties, setProperties] = useState<
+    Array<{ name: string; value: string }>
+  >([]);
   const navigate = useNavigate();
 
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
@@ -30,6 +33,24 @@ const AddProduct = ({}: Props) => {
       prev.includes(categoryId)
         ? prev.filter((id) => id !== categoryId)
         : [...prev, categoryId]
+    );
+  };
+
+  const addProperty = () => {
+    setProperties((prev) => [...prev, { name: "", value: "" }]);
+  };
+
+  const removeProperty = (index: number) => {
+    setProperties((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateProperty = (
+    index: number,
+    field: "name" | "value",
+    value: string
+  ) => {
+    setProperties((prev) =>
+      prev.map((prop, i) => (i === index ? { ...prop, [field]: value } : prop))
     );
   };
 
@@ -57,6 +78,11 @@ const AddProduct = ({}: Props) => {
       return;
     }
 
+    // Filter out empty properties
+    const validProperties = properties.filter(
+      (prop) => prop.name.trim() && prop.value.trim()
+    );
+
     const productData = {
       title: title.trim(),
       description: description.trim(),
@@ -67,6 +93,13 @@ const AddProduct = ({}: Props) => {
       enabled: true,
       categoryIds:
         selectedCategories.length > 0 ? selectedCategories : undefined,
+      properties:
+        validProperties.length > 0
+          ? validProperties.map((prop) => ({
+              name: prop.name.trim(),
+              value: prop.value.trim(),
+            }))
+          : undefined,
     };
 
     createProduct(productData, {
@@ -224,6 +257,100 @@ const AddProduct = ({}: Props) => {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <div className="bg-secondary p-4 rounded-lg">
+          <p className="text-lg font-bold">الخصائص</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            قم بإضافة خصائص للمنتج (مثل: المادة، العلامة التجارية، الجنس، إلخ)
+          </p>
+        </div>
+        <Card>
+          <CardContent className="space-y-4">
+            {properties.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground mb-4">
+                  لا توجد خصائص مضافة بعد
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={addProperty}
+                  className="gap-2"
+                >
+                  <Plus className="size-4" />
+                  إضافة خاصية
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {properties.map((property, index) => (
+                  <div
+                    key={index}
+                    className="flex gap-3 items-start p-4 border rounded-lg bg-card"
+                  >
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label
+                          htmlFor={`property-name-${index}`}
+                          className="text-sm font-medium text-right block"
+                        >
+                          اسم الخاصية
+                        </label>
+                        <input
+                          id={`property-name-${index}`}
+                          type="text"
+                          value={property.name}
+                          onChange={(e) =>
+                            updateProperty(index, "name", e.target.value)
+                          }
+                          placeholder="مثال: المادة، العلامة التجارية"
+                          className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label
+                          htmlFor={`property-value-${index}`}
+                          className="text-sm font-medium text-right block"
+                        >
+                          قيمة الخاصية
+                        </label>
+                        <input
+                          id={`property-value-${index}`}
+                          type="text"
+                          value={property.value}
+                          onChange={(e) =>
+                            updateProperty(index, "value", e.target.value)
+                          }
+                          placeholder="مثال: قطن، نايك"
+                          className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeProperty(index)}
+                      className="shrink-0 mt-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      title="حذف الخاصية"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={addProperty}
+                  className="w-full gap-2"
+                >
+                  <Plus className="size-4" />
+                  إضافة خاصية أخرى
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 

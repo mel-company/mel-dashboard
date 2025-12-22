@@ -148,31 +148,29 @@ const ProductDetails = () => {
 
           {/* Properties */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex items-center justify-between">
               <CardTitle className="text-right flex items-center gap-2">
                 <Tag className="size-5" />
                 خصائص المنتج
               </CardTitle>
+              <Button variant="secondary" className="gap-2">
+                <Edit className="size-4" />
+                تعديل
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {Object.entries(data.properties).map(([key, value]) => (
+                {data.properties.map((property: any) => (
                   <div
-                    key={key}
+                    key={property.name}
                     className="flex items-center justify-between p-4 rounded-lg border bg-card"
                   >
-                    <Badge variant="outline" className="text-sm">
-                      {value as string}
-                    </Badge>
                     <span className="text-sm font-medium text-muted-foreground text-right">
-                      {key === "brand"
-                        ? "العلامة التجارية"
-                        : key === "color"
-                        ? "اللون"
-                        : key === "warranty"
-                        ? "الضمان"
-                        : key}
+                      {property.name}
                     </span>
+                    <Badge variant="outline" className="text-sm">
+                      {property.value as string}
+                    </Badge>
                   </div>
                 ))}
               </div>

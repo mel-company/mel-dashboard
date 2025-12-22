@@ -113,7 +113,7 @@ const Layout = () => {
   }, [isNotificationOpen]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
+    <div className="flex flex-col hscreen w-screen overflow-hidden bg-background">
       <TopBar />
       <QuickNavigate />
 
@@ -145,7 +145,7 @@ const Layout = () => {
           </div>
         ) : (
           <main>
-            <div className="h-full w-full p-4 sm:p-6 lg:p-8 pb-20">
+            <div className="hfull w-full p-4 sm:p-6 lg:p-8 pb-20">
               <Outlet />
               <footer className="h-full w-full justify-center items-center bg-red-50 " />
             </div>
