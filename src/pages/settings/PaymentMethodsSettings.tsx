@@ -44,29 +44,6 @@ const PaymentMethodsSettings = ({}: Props) => {
       credentials: {},
       autoCapture: false,
     },
-    {
-      id: "credit-card",
-      name: "البطاقات الائتمانية",
-      enabled: false,
-      testMode: true,
-      credentials: {
-        apiKey: "",
-        secretKey: "",
-        merchantId: "",
-      },
-      autoCapture: true,
-    },
-    {
-      id: "local-gateway-1",
-      name: "بوابة الدفع المحلية 1",
-      enabled: false,
-      testMode: true,
-      credentials: {
-        apiKey: "",
-        secretKey: "",
-      },
-      autoCapture: true,
-    },
   ]);
 
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
@@ -277,34 +254,6 @@ const PaymentMethodsSettings = ({}: Props) => {
             )}
           </Card>
         ))}
-
-        {/* Refund Rules */}
-        <Card>
-          <CardHeader>
-            <CardTitle>قواعد الاسترداد</CardTitle>
-            <CardDescription>إعدادات استرداد المبالغ للعملاء</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>مدة السماح بالاسترداد (أيام)</Label>
-              <Input
-                type="number"
-                defaultValue={14}
-                min={1}
-                className="text-right"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>السماح بالاسترداد التلقائي</Label>
-                <p className="text-sm text-muted-foreground">
-                  معالجة طلبات الاسترداد تلقائياً
-                </p>
-              </div>
-              <Switch defaultChecked={false} />
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Submit Button */}
         <div className="flex justify-end gap-4">
