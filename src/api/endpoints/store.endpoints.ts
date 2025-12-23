@@ -14,6 +14,15 @@ export const storeAPI = {
     });
     return data;
   },
+  
+  
+  /**
+   * Get store details
+   */
+  fetchDetails: async (): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/store/store-details");
+    return data;
+  },
 
   /**
    * Get all dev stores with optional filtering and pagination

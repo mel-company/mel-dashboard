@@ -23,6 +23,7 @@ import {
   Save,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 
 type Props = {};
 
@@ -40,6 +41,10 @@ const DetailsSettings = ({}: Props) => {
     vatNumber: "",
     invoiceFooter: "",
   });
+
+  const { data: storeDetails } = useFetchStoreDetails();
+
+  console.log(storeDetails);
 
   const [storeLogo, setStoreLogo] = useState<File | null>(null);
   const [favicon, setFavicon] = useState<File | null>(null);
@@ -80,6 +85,12 @@ const DetailsSettings = ({}: Props) => {
           قم بتحديث معلومات المتجر الأساسية والهوية التجارية
         </p>
       </div>
+
+      <img
+        src={storeDetails?.logo}
+        alt={storeDetails?.name}
+        className="w-20 h-20 object-cover rounded-lg border"
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Store Identity */}
