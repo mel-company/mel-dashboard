@@ -134,7 +134,7 @@ const ProductDetails = () => {
               {/* Price */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-right">
-                  <DollarSign className="size-5 text-primary" />
+                  {/* <DollarSign className="size-5 text-primary" /> */}
                   <span className="text-3xl font-bold text-primary">
                     {data.price.toFixed(2)} د.ع
                   </span>
@@ -186,20 +186,20 @@ const ProductDetails = () => {
               <CardTitle className="text-right">معلومات سريعة</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-sm">
-                  #{data.id}
-                </Badge>
+              <div className="flex flex-col items-start  justify-between">
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   رقم المنتج
                 </span>
+                <Badge variant="secondary" className="text-sm">
+                  #{data.id}
+                </Badge>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <Package className="size-5 text-muted-foreground" />
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   متوفر في المخزون
                 </span>
+                <Package className="size-5 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
