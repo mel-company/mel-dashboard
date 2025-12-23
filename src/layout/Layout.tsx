@@ -43,6 +43,8 @@ const Layout = () => {
       delivery: "التوصيل",
       "terms-and-conditions": "الشروط والأحكام",
       edit: "تعديل",
+      plans: "الاشتراكات",
+      payment: "الدفع",
     };
 
     const detailLabels: Record<string, string> = {
