@@ -116,7 +116,7 @@ const Layout = () => {
   }, [isNotificationOpen]);
 
   return (
-    <div className="flex flex-col hscreen w-screen overflow-hidden bg-background">
+    <div className="flex flex-col hscreen wscreen overflow-hidden bg-background">
       <TopBar />
       <QuickNavigate />
 
