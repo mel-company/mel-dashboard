@@ -1,11 +1,5 @@
 import { useFetchPlans } from "@/api/wrappers/plan.wrappers";
 import {
-  useUpdateSubscription,
-  useFetchStoreSubscription,
-  subscriptionKeys,
-} from "@/api/wrappers/subscription.wrapper";
-import { useQueryClient } from "@tanstack/react-query";
-import {
   Card,
   CardContent,
   CardHeader,
@@ -26,12 +20,10 @@ import {
   Settings,
   Sparkles,
   CheckCircle,
-  Loader2,
   ArrowLeft,
 } from "lucide-react";
 import PlansSkeleton from "./PlansSkeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 type Props = {};
@@ -46,11 +38,6 @@ const Plans = ({}: Props) => {
     refetch,
     isFetching,
   } = useFetchPlans();
-
-  const queryClient = useQueryClient();
-  const { data: storeSubscription } = useFetchStoreSubscription();
-  const { mutate: updateSubscription, isPending: isUpdating } =
-    useUpdateSubscription();
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -90,36 +77,6 @@ const Plans = ({}: Props) => {
   // Handle both array and paginated response
   const plansList = Array.isArray(plans) ? plans : plans.data || [];
   const currentPlanId = plans?.currentPlan?.planId || null;
-
-  const handleChangePlan = (planId: string) => {
-    if (!storeSubscription?.id) {
-      toast.error("لا يمكن تغيير الخطة. لا يوجد اشتراك نشط.");
-      return;
-    }
-
-    updateSubscription(
-      {
-        id: storeSubscription.id,
-        data: { planId },
-      },
-      {
-        onSuccess: () => {
-          toast.success("تم تغيير الخطة بنجاح");
-          // Invalidate store subscription and plans to refresh data
-          queryClient.invalidateQueries({
-            queryKey: subscriptionKeys.detail("store"),
-          });
-          refetch(); // Refresh plans to update current plan indicator
-        },
-        onError: (error: any) => {
-          toast.error(
-            error?.response?.data?.message ||
-              "فشل في تغيير الخطة. حاول مرة أخرى."
-          );
-        },
-      }
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -281,21 +238,13 @@ const Plans = ({}: Props) => {
                 <Button
                   // onClick={() => handleChangePlan(plan.id)}
                   onClick={() => navigate(`/payment/${plan.id}`)}
-                  disabled={isUpdating}
                   className="w-full gap-2"
                   variant="default"
                 >
-                  {isUpdating ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      جاري التغيير...
-                    </>
-                  ) : (
-                    <>
-                      إختيار
-                      <ArrowLeft className="size-4" />
-                    </>
-                  )}
+                  <>
+                    إختيار
+                    <ArrowLeft className="size-4" />
+                  </>
                 </Button>
               </CardFooter>
             )}

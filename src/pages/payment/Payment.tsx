@@ -44,7 +44,6 @@ const Payment = ({}: Props) => {
   const [cardNumber, setCardNumber] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [cvc, setCvc] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
 
   // Format currency
   const formatCurrency = (amount: number) => {
