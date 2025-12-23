@@ -17,12 +17,11 @@ import {
   Calendar,
   Lock,
   Package,
-  DollarSign,
-  ArrowLeft,
   Loader2,
   CheckCircle2,
   Settings,
   Star,
+  ArrowRight,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
@@ -158,7 +157,7 @@ const Payment = ({}: Props) => {
           size="sm"
           className="gap-2"
         >
-          <ArrowLeft className="size-4" />
+          <ArrowRight className="size-4" />
           العودة
         </Button>
         <div>
@@ -295,23 +294,17 @@ const Payment = ({}: Props) => {
 
               {/* Pricing */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                  <DollarSign className="size-5 text-primary" />
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">السعر الشهري</p>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">
-                      السعر الشهري
-                    </p>
                     <p className="text-lg font-bold">
                       {formatCurrency(plan.monthly_price)}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                  <Package className="size-5 text-primary" />
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">السعر السنوي</p>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">
-                      السعر السنوي
-                    </p>
                     <p className="text-lg font-bold">
                       {formatCurrency(plan.yearly_price)}
                     </p>
