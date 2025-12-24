@@ -42,6 +42,7 @@ const DetailsSettings = ({}: Props) => {
   });
 
   const [storeLogo, setStoreLogo] = useState<File | null>(null);
+  // @ts-ignore
   const [favicon, setFavicon] = useState<File | null>(null);
 
   // Populate form when store details are loaded
