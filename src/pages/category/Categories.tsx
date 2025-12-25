@@ -133,17 +133,6 @@ const Categories = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Handle adding new category
-  // NOTE: This dialog currently creates a local-only category (no storeId available here).
-  const handleAddCategory = (_categoryData: {
-    name: string;
-    description: string;
-    image: string;
-    enabled: boolean;
-  }) => {
-    setIsDialogOpen(false);
-  };
-
   return (
     <div className="space-y-6">
       {/* Search and Add Category Section */}
@@ -327,11 +316,7 @@ const Categories = () => {
       </div>
 
       {/* Add Category Dialog */}
-      <AddCategoryDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onAddCategory={handleAddCategory}
-      />
+      <AddCategoryDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
     </div>
   );
 };
