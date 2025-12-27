@@ -94,3 +94,71 @@ export const useDeleteDiscount = () => {
     },
   });
 };
+
+/**
+ * Enable a discount mutation
+ */
+export const useEnableDiscount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => discountAPI.enable(id),
+    onSuccess: (data) => {
+      // Invalidate and refetch discounts list
+      queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      // Update the specific discount cache
+      queryClient.setQueryData(discountKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
+ * Disable a discount mutation
+ */
+export const useDisableDiscount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => discountAPI.disable(id),
+    onSuccess: (data) => {
+      // Invalidate and refetch discounts list
+      queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      // Update the specific discount cache
+      queryClient.setQueryData(discountKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
+ * Add products to a discount mutation
+ */
+export const useAddProductsToDiscount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { id: string; productIds: string[] }>({
+    mutationFn: ({ id, productIds }) => discountAPI.addProducts(id, productIds),
+    onSuccess: (data) => {
+      // Invalidate and refetch discounts list
+      queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      // Update the specific discount cache
+      queryClient.setQueryData(discountKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
+ * Add categories to a discount mutation
+ */
+export const useAddCategoriesToDiscount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { id: string; categoryIds: string[] }>({
+    mutationFn: ({ id, categoryIds }) => discountAPI.addCategories(id, categoryIds),
+    onSuccess: (data) => {
+      // Invalidate and refetch discounts list
+      queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      // Update the specific discount cache
+      queryClient.setQueryData(discountKeys.detail(data.id), data);
+    },
+  });
+};

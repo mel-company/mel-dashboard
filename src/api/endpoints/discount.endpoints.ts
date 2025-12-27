@@ -61,4 +61,40 @@ export const discountAPI = {
     const { data } = await axiosInstance.delete<any>(`/discount/${id}`);
     return data;
   },
+
+  /**
+   * Enable a discount
+   */
+  enable: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/discount/${id}/enable`);
+    return data;
+  },
+
+  /**
+   * Disable a discount
+   */
+  disable: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/discount/${id}/disable`);
+    return data;
+  },
+
+  /**
+   * Add products to a discount
+   */
+  addProducts: async (id: string, productIds: string[]): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/discount/${id}/products`, {
+      productIds,
+    });
+    return data;
+  },
+
+  /**
+   * Add categories to a discount
+   */
+  addCategories: async (id: string, categoryIds: string[]): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/discount/${id}/categories`, {
+      categoryIds,
+    });
+    return data;
+  },
 };
