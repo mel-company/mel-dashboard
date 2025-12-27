@@ -39,6 +39,8 @@ import NotFoundPage from "../miscellaneous/NotFoundPage";
 import ProductDetailsSkeleton from "./ProductDetailsSkeleton";
 import AddProductOptionDialog from "./AddProductOptionDialog";
 import EditProductOptionDialog from "./EditProductOptionDialog";
+import AddProductPropertyDialog from "./AddProductPropertyDialog";
+import EditProductPropertyDialog from "./EditProductPropertyDialog";
 import { toast } from "sonner";
 
 const ProductDetails = () => {
@@ -46,7 +48,11 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddOptionDialogOpen, setIsAddOptionDialogOpen] = useState(false);
+  const [isAddPropertyDialogOpen, setIsAddPropertyDialogOpen] = useState(false);
   const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
+  const [editingPropertyId, setEditingPropertyId] = useState<string | null>(
+    null
+  );
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? ""
@@ -237,24 +243,39 @@ const ProductDetails = () => {
                 <Tag className="size-5" />
                 خصائص المنتج
               </CardTitle>
-              <Button variant="secondary" className="gap-2">
-                <Edit className="size-4" />
-                تعديل
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-2"
+                onClick={() => setIsAddPropertyDialogOpen(true)}
+              >
+                <Plus className="size-3" />
+                إضافة خاصية
               </Button>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {data.properties.map((property: any) => (
                   <div
-                    key={property.name}
+                    key={property.id || property.name}
                     className="flex items-center justify-between p-4 rounded-lg border bg-card"
                   >
-                    <span className="text-sm font-medium text-muted-foreground text-right">
-                      {property.name}
-                    </span>
-                    <Badge variant="outline" className="text-sm">
-                      {property.value as string}
-                    </Badge>
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="text-sm font-medium text-muted-foreground text-right">
+                        {property.name}
+                      </span>
+                      <Badge variant="outline" className="text-sm">
+                        {property.value as string}
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => setEditingPropertyId(property.id)}
+                    >
+                      <Edit className="size-3" />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -383,6 +404,24 @@ const ProductDetails = () => {
           open={!!editingOptionId}
           onOpenChange={(open) => !open && setEditingOptionId(null)}
           optionId={editingOptionId}
+        />
+      )}
+
+      {/* Add Product Property Dialog */}
+      {id && (
+        <AddProductPropertyDialog
+          open={isAddPropertyDialogOpen}
+          onOpenChange={setIsAddPropertyDialogOpen}
+          productId={id}
+        />
+      )}
+
+      {/* Edit Product Property Dialog */}
+      {editingPropertyId && (
+        <EditProductPropertyDialog
+          open={!!editingPropertyId}
+          onOpenChange={(open) => !open && setEditingPropertyId(null)}
+          propertyId={editingPropertyId}
         />
       )}
     </div>
