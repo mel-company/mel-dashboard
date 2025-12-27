@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Save, ArrowLeft, Check, Loader2, Plus, Trash2 } from "lucide-react";
 import { useFetchCategories } from "@/api/wrappers/category.wrappers";
 import { useCreateProduct } from "@/api/wrappers/product.wrappers";
+import { productAPI } from "@/api/endpoints/product.endpoints";
+import { variantAPI } from "@/api/endpoints/variant.endpionts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -28,6 +30,16 @@ const AddProduct = ({}: Props) => {
     Array<{
       name: string;
       values: Array<{ value: string; label: string }>;
+    }>
+  >([]);
+  const [variants, setVariants] = useState<
+    Array<{
+      selectedOptionValues: Array<{ optionName: string; value: string }>;
+      sku: string;
+      qr_code: string;
+      price?: string;
+      stock: string;
+      image?: string;
     }>
   >([]);
   const navigate = useNavigate();
@@ -121,6 +133,72 @@ const AddProduct = ({}: Props) => {
     );
   };
 
+  // Variants management functions
+  const addVariant = () => {
+    setVariants((prev) => [
+      ...prev,
+      {
+        selectedOptionValues: [],
+        sku: "",
+        qr_code: "",
+        price: "",
+        stock: "0",
+        image: "",
+      },
+    ]);
+  };
+
+  const removeVariant = (index: number) => {
+    setVariants((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateVariant = (
+    index: number,
+    field: "sku" | "qr_code" | "price" | "stock" | "image",
+    value: string
+  ) => {
+    setVariants((prev) =>
+      prev.map((variant, i) =>
+        i === index ? { ...variant, [field]: value } : variant
+      )
+    );
+  };
+
+  const toggleVariantOptionValue = (
+    variantIndex: number,
+    optionName: string,
+    value: string
+  ) => {
+    setVariants((prev) =>
+      prev.map((variant, i) => {
+        if (i !== variantIndex) return variant;
+
+        const existingIndex = variant.selectedOptionValues.findIndex(
+          (ov) => ov.optionName === optionName && ov.value === value
+        );
+
+        if (existingIndex >= 0) {
+          // Remove if already selected
+          return {
+            ...variant,
+            selectedOptionValues: variant.selectedOptionValues.filter(
+              (_, idx) => idx !== existingIndex
+            ),
+          };
+        } else {
+          // Remove any existing value for this option and add new one
+          const filtered = variant.selectedOptionValues.filter(
+            (ov) => ov.optionName !== optionName
+          );
+          return {
+            ...variant,
+            selectedOptionValues: [...filtered, { optionName, value }],
+          };
+        }
+      })
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -185,8 +263,76 @@ const AddProduct = ({}: Props) => {
     };
 
     createProduct(productData, {
-      onSuccess: () => {
-        toast.success("تم إضافة المنتج بنجاح");
+      onSuccess: async (createdProduct: any) => {
+        // If there are variants to create, create them after product is created
+        const validVariants = variants.filter(
+          (v) =>
+            v.sku.trim() &&
+            v.qr_code.trim() &&
+            v.selectedOptionValues.length > 0
+        );
+
+        if (validVariants.length > 0 && createdProduct?.id) {
+          // Fetch the created product to get option value IDs
+          try {
+            const productWithOptions = await productAPI.fetchOne(
+              createdProduct.id
+            );
+
+            // Create variants one by one
+            let successCount = 0;
+            for (const variant of validVariants) {
+              // Match option values by option name and value
+              const optionValueIds: string[] = [];
+
+              variant.selectedOptionValues.forEach((selected) => {
+                const option = productWithOptions.options?.find(
+                  (opt: any) => opt.name === selected.optionName
+                );
+                if (option) {
+                  const optionValue = option.values?.find(
+                    (val: any) => val.value === selected.value
+                  );
+                  if (optionValue) {
+                    optionValueIds.push(optionValue.id);
+                  }
+                }
+              });
+
+              try {
+                await variantAPI.create({
+                  productId: createdProduct.id,
+                  sku: variant.sku.trim(),
+                  qr_code: variant.qr_code.trim(),
+                  price: variant.price ? parseFloat(variant.price) : undefined,
+                  stock: parseInt(variant.stock) || 0,
+                  image: variant.image?.trim() || undefined,
+                  optionValueIds:
+                    optionValueIds.length > 0 ? optionValueIds : undefined,
+                });
+                successCount++;
+              } catch (error) {
+                console.error("Error creating variant:", error);
+              }
+            }
+
+            if (successCount === validVariants.length) {
+              toast.success("تم إضافة المنتج والمتغيرات بنجاح");
+            } else {
+              toast.warning(
+                `تم إضافة المنتج ولكن فشل في إضافة ${
+                  validVariants.length - successCount
+                } من المتغيرات`
+              );
+            }
+          } catch (error: any) {
+            toast.error("تم إضافة المنتج ولكن فشل في إضافة المتغيرات");
+            console.error("Error creating variants:", error);
+          }
+        } else {
+          toast.success("تم إضافة المنتج بنجاح");
+        }
+
         navigate("/products", { replace: true });
       },
       onError: (error: any) => {
@@ -618,6 +764,284 @@ const AddProduct = ({}: Props) => {
                   <Plus className="size-4" />
                   إضافة خيار آخر
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Variants Section */}
+        <div className="bg-secondary p-4 rounded-lg">
+          <p className="text-lg font-bold">متغيرات المنتج</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            قم بإضافة متغيرات للمنتج (يتطلب إضافة خيارات أولاً)
+          </p>
+        </div>
+        <Card>
+          <CardContent className="space-y-4">
+            {options.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground mb-2">
+                  لا يمكن إضافة متغيرات بدون خيارات
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  يرجى إضافة خيارات للمنتج أولاً (مثل: اللون، الحجم)
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={addOption}
+                  className="gap-2"
+                >
+                  <Plus className="size-4" />
+                  إضافة خيار
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {variants.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      لا توجد متغيرات مضافة بعد
+                    </p>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={addVariant}
+                      className="gap-2"
+                    >
+                      <Plus className="size-4" />
+                      إضافة متغير
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {variants.map((variant, variantIndex) => {
+                      // Get valid options (with at least one value)
+                      const validOptions = options.filter(
+                        (opt) =>
+                          opt.name.trim() &&
+                          opt.values.some((v) => v.value.trim())
+                      );
+
+                      return (
+                        <div
+                          key={variantIndex}
+                          className="p-4 border rounded-lg bg-card space-y-4"
+                        >
+                          {/* Variant Header */}
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className="text-sm font-semibold">
+                              متغير #{variantIndex + 1}
+                            </h3>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeVariant(variantIndex)}
+                              className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title="حذف المتغير"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+
+                          {/* Option Values Selection */}
+                          <div className="space-y-3">
+                            <p className="text-sm font-medium text-muted-foreground">
+                              اختر قيم الخيارات:
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {validOptions.map((option) => {
+                                const selectedValue =
+                                  variant.selectedOptionValues.find(
+                                    (ov) => ov.optionName === option.name
+                                  )?.value;
+
+                                return (
+                                  <div key={option.name} className="space-y-2">
+                                    <label className="text-xs font-medium text-right block">
+                                      {option.name}
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {option.values
+                                        .filter((v) => v.value.trim())
+                                        .map((val) => {
+                                          const isSelected =
+                                            selectedValue === val.value;
+                                          return (
+                                            <button
+                                              key={val.value}
+                                              type="button"
+                                              onClick={() =>
+                                                toggleVariantOptionValue(
+                                                  variantIndex,
+                                                  option.name,
+                                                  val.value
+                                                )
+                                              }
+                                              className={`px-3 py-1.5 text-xs rounded-md border transition-all ${
+                                                isSelected
+                                                  ? "bg-primary text-primary-foreground border-primary"
+                                                  : "bg-background border-input hover:border-ring"
+                                              }`}
+                                            >
+                                              {val.label || val.value}
+                                            </button>
+                                          );
+                                        })}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Variant Details */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                            {/* SKU */}
+                            <div className="space-y-2">
+                              <label
+                                htmlFor={`variant-sku-${variantIndex}`}
+                                className="text-sm font-medium text-right block"
+                              >
+                                رمز SKU *
+                              </label>
+                              <input
+                                id={`variant-sku-${variantIndex}`}
+                                type="text"
+                                value={variant.sku}
+                                onChange={(e) =>
+                                  updateVariant(
+                                    variantIndex,
+                                    "sku",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="SKU-001"
+                                required
+                                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                              />
+                            </div>
+
+                            {/* QR Code */}
+                            <div className="space-y-2">
+                              <label
+                                htmlFor={`variant-qr-${variantIndex}`}
+                                className="text-sm font-medium text-right block"
+                              >
+                                رمز QR *
+                              </label>
+                              <input
+                                id={`variant-qr-${variantIndex}`}
+                                type="text"
+                                value={variant.qr_code}
+                                onChange={(e) =>
+                                  updateVariant(
+                                    variantIndex,
+                                    "qr_code",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="QR-001"
+                                required
+                                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                              />
+                            </div>
+
+                            {/* Price */}
+                            <div className="space-y-2">
+                              <label
+                                htmlFor={`variant-price-${variantIndex}`}
+                                className="text-sm font-medium text-right block"
+                              >
+                                السعر (اختياري)
+                              </label>
+                              <div className="relative">
+                                <input
+                                  id={`variant-price-${variantIndex}`}
+                                  type="number"
+                                  value={variant.price}
+                                  onChange={(e) =>
+                                    updateVariant(
+                                      variantIndex,
+                                      "price",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="0.00"
+                                  min="0"
+                                  step="0.01"
+                                  className="w-full text-right rounded-md border border-input bg-background py-2.5 pl-12 pr-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                                />
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                                  IQD
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Stock */}
+                            <div className="space-y-2">
+                              <label
+                                htmlFor={`variant-stock-${variantIndex}`}
+                                className="text-sm font-medium text-right block"
+                              >
+                                المخزون
+                              </label>
+                              <input
+                                id={`variant-stock-${variantIndex}`}
+                                type="number"
+                                value={variant.stock}
+                                onChange={(e) =>
+                                  updateVariant(
+                                    variantIndex,
+                                    "stock",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="0"
+                                min="0"
+                                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                              />
+                            </div>
+
+                            {/* Image */}
+                            <div className="space-y-2 md:col-span-2">
+                              <label
+                                htmlFor={`variant-image-${variantIndex}`}
+                                className="text-sm font-medium text-right block"
+                              >
+                                رابط صورة المتغير (اختياري)
+                              </label>
+                              <input
+                                id={`variant-image-${variantIndex}`}
+                                type="url"
+                                value={variant.image || ""}
+                                onChange={(e) =>
+                                  updateVariant(
+                                    variantIndex,
+                                    "image",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="https://example.com/image.jpg"
+                                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={addVariant}
+                      className="w-full gap-2"
+                    >
+                      <Plus className="size-4" />
+                      إضافة متغير آخر
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </CardContent>
