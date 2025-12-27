@@ -21,12 +21,14 @@ import {
 import {
   Star,
   ShoppingCart,
-  DollarSign,
   Package,
   Tag,
   Edit,
   Trash2,
   Loader2,
+  List,
+  DollarSign,
+  Plus,
 } from "lucide-react";
 import {
   useFetchProduct,
@@ -35,16 +37,21 @@ import {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import ProductDetailsSkeleton from "./ProductDetailsSkeleton";
+import AddProductOptionDialog from "./AddProductOptionDialog";
+import EditProductOptionDialog from "./EditProductOptionDialog";
 import { toast } from "sonner";
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAddOptionDialogOpen, setIsAddOptionDialogOpen] = useState(false);
+  const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? ""
   );
+
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const handleDelete = () => {
@@ -132,17 +139,94 @@ const ProductDetails = () => {
               <Separator />
 
               {/* Price */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-right">
+              <div className="flex flex-col itemscenter justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign />
+                  <p className="text-white ">السعر</p>
+                </div>
+                <div className="flex items-center justify-between gap-2 text-right">
+                  <p className="text-sm px4 py-2 text-muted-foreground">
+                    سعر البيع
+                  </p>
                   {/* <DollarSign className="size-5 text-primary" /> */}
-                  <span className="text-3xl font-bold text-primary">
-                    {data.price.toFixed(2)} د.ع
+                  <span className="text-2xl font-bold text-primary">
+                    {data.price.toLocaleString()} د.ع
                   </span>
                 </div>
-                <Badge variant="default" className="text-lg px-4 py-2">
-                  السعر
-                </Badge>
+                <div className="flex items-center justify-between gap-2 text-right">
+                  <p className="text-sm px4 py-2 text-muted-foreground">
+                    تكلفة المنتج
+                  </p>
+                  {/* <DollarSign className="size-5 text-primary" /> */}
+                  <span className="text-2xl font-bold text-primary">
+                    {data.cost_to_produce.toLocaleString()} د.ع
+                  </span>
+                </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Options */}
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle className="text-right flex items-center gap-2">
+                <List className="size-5" />
+                خيارات المنتج
+              </CardTitle>
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-2"
+                onClick={() => setIsAddOptionDialogOpen(true)}
+              >
+                <Plus className="size-3" />
+                إضافة خيار
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {data.options && data.options.length > 0 ? (
+                <div className="space-y-4">
+                  {data.options.map((option: any) => (
+                    <div
+                      key={option.id}
+                      className="p-4 rounded-lg border bg-card"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-base font-semibold text-right">
+                          {option.name}
+                        </span>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => setEditingOptionId(option.id)}
+                        >
+                          <Edit className="size-3" />
+                          تعديل
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {option.values.map((value: any) => (
+                          <Badge
+                            key={value.id}
+                            variant="secondary"
+                            className="text-sm"
+                          >
+                            {value.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="text-sm">لا توجد خيارات للمنتج</p>
+                  <p className="text-xs mt-1">
+                    اضغط على "إضافة خيار" لإضافة خيار جديد
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -283,6 +367,24 @@ const ProductDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Product Option Dialog */}
+      {id && (
+        <AddProductOptionDialog
+          open={isAddOptionDialogOpen}
+          onOpenChange={setIsAddOptionDialogOpen}
+          productId={id}
+        />
+      )}
+
+      {/* Edit Product Option Dialog */}
+      {editingOptionId && (
+        <EditProductOptionDialog
+          open={!!editingOptionId}
+          onOpenChange={(open) => !open && setEditingOptionId(null)}
+          optionId={editingOptionId}
+        />
+      )}
     </div>
   );
 };
