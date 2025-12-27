@@ -41,6 +41,12 @@ import AddProductOptionDialog from "./AddProductOptionDialog";
 import EditProductOptionDialog from "./EditProductOptionDialog";
 import AddProductPropertyDialog from "./AddProductPropertyDialog";
 import EditProductPropertyDialog from "./EditProductPropertyDialog";
+import AddVariantDialog from "./AddVariantDialog";
+import EditVariantDialog from "./EditVariantDialog";
+import {
+  useFetchVariants,
+  useDeleteVariant,
+} from "@/api/wrappers/variant.wrappers";
 import { toast } from "sonner";
 
 const ProductDetails = () => {
@@ -53,10 +59,23 @@ const ProductDetails = () => {
   const [editingPropertyId, setEditingPropertyId] = useState<string | null>(
     null
   );
+  const [isAddVariantDialogOpen, setIsAddVariantDialogOpen] = useState(false);
+  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
+  const [deletingVariantId, setDeletingVariantId] = useState<string | null>(
+    null
+  );
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? ""
   );
+
+  const { data: variantsData, refetch: refetchVariants } = useFetchVariants(
+    { productId: id ?? "" },
+    !!id
+  );
+
+  const { mutate: deleteVariant, isPending: isDeletingVariant } =
+    useDeleteVariant();
 
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
@@ -101,18 +120,56 @@ const ProductDetails = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grd grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Product Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Product Image and Basic Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl text-right">
-                {data.title}
-              </CardTitle>
-              <CardDescription className="text-right">
-                {data.description}
-              </CardDescription>
+              <div className="flex gap-x-2 items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl text-right">
+                    {data.title}
+                  </CardTitle>
+                  <CardDescription className="text-right">
+                    {data.description}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-x-2 items-center">
+                  <Button variant="secondary" size="sm" className="gap-2">
+                    <Package className="size-4" />
+                    المخزون
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => navigate(`/products/${id}/edit`)}
+                  >
+                    <Edit className="size-4" />
+                    تعديل
+                  </Button>
+                  <Button
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="gap-2"
+                    size="sm"
+                    variant="destructive"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        جاري الحذف...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="size-4" />
+                        حذف
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="relative h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
@@ -156,7 +213,7 @@ const ProductDetails = () => {
                   </p>
                   {/* <DollarSign className="size-5 text-primary" /> */}
                   <span className="text-2xl font-bold text-primary">
-                    {data.price.toLocaleString()} د.ع
+                    {data?.price?.toLocaleString()} د.ع
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2 text-right">
@@ -165,7 +222,7 @@ const ProductDetails = () => {
                   </p>
                   {/* <DollarSign className="size-5 text-primary" /> */}
                   <span className="text-2xl font-bold text-primary">
-                    {data.cost_to_produce.toLocaleString()} د.ع
+                    {data?.cost_to_produce?.toLocaleString()} د.ع
                   </span>
                 </div>
               </div>
@@ -254,7 +311,7 @@ const ProductDetails = () => {
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {data.properties.map((property: any) => (
                   <div
                     key={property.id || property.name}
@@ -281,11 +338,122 @@ const ProductDetails = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Variants */}
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle className="text-right flex items-center gap-2">
+                <Package className="size-5" />
+                متغيرات المنتج
+              </CardTitle>
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-2"
+                onClick={() => setIsAddVariantDialogOpen(true)}
+              >
+                <Plus className="size-3" />
+                إضافة متغير
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {variantsData && variantsData.length > 0 ? (
+                <div className="space-y-3">
+                  {variantsData.map((variant: any) => (
+                    <div
+                      key={variant.id}
+                      className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                    >
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              SKU:
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {variant.sku}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              QR:
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {variant.qr_code}
+                            </Badge>
+                          </div>
+                          {variant.price !== null &&
+                            variant.price !== undefined && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                  السعر:
+                                </span>
+                                <span className="text-sm font-medium">
+                                  {variant.price.toLocaleString()} د.ع
+                                </span>
+                              </div>
+                            )}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              المخزون:
+                            </span>
+                            <span className="text-sm font-medium">
+                              {variant.stock}
+                            </span>
+                          </div>
+                        </div>
+                        {variant.optionValues &&
+                          variant.optionValues.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {variant.optionValues.map((optValue: any) => (
+                                <Badge
+                                  key={optValue.id}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {optValue.option?.name}:{" "}
+                                  {optValue.label || optValue.value}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => setEditingVariantId(variant.id)}
+                        >
+                          <Edit className="size-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-2 text-destructive hover:text-destructive"
+                          onClick={() => setDeletingVariantId(variant.id)}
+                        >
+                          <Trash2 className="size-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="text-sm">لا توجد متغيرات للمنتج</p>
+                  <p className="text-xs mt-1">
+                    اضغط على "إضافة متغير" لإضافة متغير جديد
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Sidebar Info */}
-        <div className="space-y-6">
-          {/* Quick Info Card */}
+        {/* <div className="space-y-6">
+           Quick Info Card
           <Card>
             <CardHeader>
               <CardTitle className="text-right">معلومات سريعة</CardTitle>
@@ -309,7 +477,7 @@ const ProductDetails = () => {
             </CardContent>
           </Card>
 
-          {/* Actions Card */}
+          Actions Card 
           <Card>
             <CardHeader>
               <CardTitle className="text-right">الإجراءات</CardTitle>
@@ -347,7 +515,7 @@ const ProductDetails = () => {
               </Button>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -424,6 +592,78 @@ const ProductDetails = () => {
           propertyId={editingPropertyId}
         />
       )}
+
+      {/* Add Variant Dialog */}
+      {id && (
+        <AddVariantDialog
+          open={isAddVariantDialogOpen}
+          onOpenChange={setIsAddVariantDialogOpen}
+          productId={id}
+        />
+      )}
+
+      {/* Edit Variant Dialog */}
+      {editingVariantId && (
+        <EditVariantDialog
+          open={!!editingVariantId}
+          onOpenChange={(open) => !open && setEditingVariantId(null)}
+          variantId={editingVariantId}
+        />
+      )}
+
+      {/* Delete Variant Confirmation Dialog */}
+      <Dialog
+        open={!!deletingVariantId}
+        onOpenChange={(open) => !open && setDeletingVariantId(null)}
+      >
+        <DialogContent className="text-right">
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-right">تأكيد حذف المتغير</DialogTitle>
+            <DialogDescription className="text-right">
+              هل أنت متأكد من حذف هذا المتغير؟ لا يمكنك التراجع عن هذا الإجراء
+              بعد التأكيد.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setDeletingVariantId(null)}
+              disabled={isDeletingVariant}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => {
+                if (!deletingVariantId) return;
+                deleteVariant(deletingVariantId, {
+                  onSuccess: () => {
+                    toast.success("تم حذف المتغير بنجاح");
+                    setDeletingVariantId(null);
+                    refetchVariants();
+                  },
+                  onError: (error: any) => {
+                    toast.error(
+                      error?.response?.data?.message ||
+                        "فشل في حذف المتغير. حاول مرة أخرى."
+                    );
+                  },
+                });
+              }}
+              variant="destructive"
+              disabled={isDeletingVariant}
+            >
+              {isDeletingVariant ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                  جاري الحذف...
+                </>
+              ) : (
+                "تأكيد الحذف"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
