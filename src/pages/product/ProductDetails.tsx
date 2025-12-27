@@ -229,6 +229,52 @@ const ProductDetails = () => {
             </CardContent>
           </Card>
 
+          {/* Properties */}
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle className="text-right flex items-center gap-2">
+                <Tag className="size-5" />
+                خصائص المنتج
+              </CardTitle>
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-2"
+                onClick={() => setIsAddPropertyDialogOpen(true)}
+              >
+                <Plus className="size-3" />
+                إضافة خاصية
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {data.properties.map((property: any) => (
+                  <div
+                    key={property.id || property.name}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="text-sm font-medium text-muted-foreground text-right">
+                        {property.name}
+                      </span>
+                      <Badge variant="outline" className="text-sm">
+                        {property.value as string}
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => setEditingPropertyId(property.id)}
+                    >
+                      <Edit className="size-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Options */}
           <Card>
             <CardHeader className="flex items-center justify-between">
@@ -290,52 +336,6 @@ const ProductDetails = () => {
                   </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Properties */}
-          <Card>
-            <CardHeader className="flex items-center justify-between">
-              <CardTitle className="text-right flex items-center gap-2">
-                <Tag className="size-5" />
-                خصائص المنتج
-              </CardTitle>
-              <Button
-                variant="default"
-                size="sm"
-                className="gap-2"
-                onClick={() => setIsAddPropertyDialogOpen(true)}
-              >
-                <Plus className="size-3" />
-                إضافة خاصية
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data.properties.map((property: any) => (
-                  <div
-                    key={property.id || property.name}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card"
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <span className="text-sm font-medium text-muted-foreground text-right">
-                        {property.name}
-                      </span>
-                      <Badge variant="outline" className="text-sm">
-                        {property.value as string}
-                      </Badge>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => setEditingPropertyId(property.id)}
-                    >
-                      <Edit className="size-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
             </CardContent>
           </Card>
 

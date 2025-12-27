@@ -24,6 +24,12 @@ const AddProduct = ({}: Props) => {
   const [properties, setProperties] = useState<
     Array<{ name: string; value: string }>
   >([]);
+  const [options, setOptions] = useState<
+    Array<{
+      name: string;
+      values: Array<{ value: string; label: string }>;
+    }>
+  >([]);
   const navigate = useNavigate();
 
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
@@ -51,6 +57,67 @@ const AddProduct = ({}: Props) => {
   ) => {
     setProperties((prev) =>
       prev.map((prop, i) => (i === index ? { ...prop, [field]: value } : prop))
+    );
+  };
+
+  // Options management functions
+  const addOption = () => {
+    setOptions((prev) => [
+      ...prev,
+      { name: "", values: [{ value: "", label: "" }] },
+    ]);
+  };
+
+  const removeOption = (index: number) => {
+    setOptions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateOptionName = (index: number, name: string) => {
+    setOptions((prev) =>
+      prev.map((opt, i) => (i === index ? { ...opt, name } : opt))
+    );
+  };
+
+  const addOptionValue = (optionIndex: number) => {
+    setOptions((prev) =>
+      prev.map((opt, i) =>
+        i === optionIndex
+          ? { ...opt, values: [...opt.values, { value: "", label: "" }] }
+          : opt
+      )
+    );
+  };
+
+  const removeOptionValue = (optionIndex: number, valueIndex: number) => {
+    setOptions((prev) =>
+      prev.map((opt, i) =>
+        i === optionIndex
+          ? {
+              ...opt,
+              values: opt.values.filter((_, vi) => vi !== valueIndex),
+            }
+          : opt
+      )
+    );
+  };
+
+  const updateOptionValue = (
+    optionIndex: number,
+    valueIndex: number,
+    field: "value" | "label",
+    newValue: string
+  ) => {
+    setOptions((prev) =>
+      prev.map((opt, i) =>
+        i === optionIndex
+          ? {
+              ...opt,
+              values: opt.values.map((val, vi) =>
+                vi === valueIndex ? { ...val, [field]: newValue } : val
+              ),
+            }
+          : opt
+      )
     );
   };
 
@@ -83,6 +150,20 @@ const AddProduct = ({}: Props) => {
       (prop) => prop.name.trim() && prop.value.trim()
     );
 
+    // Filter and validate options
+    const validOptions = options
+      .filter((opt) => opt.name.trim() && opt.values.length > 0)
+      .map((opt) => ({
+        name: opt.name.trim(),
+        values: opt.values
+          .filter((val) => val.value.trim())
+          .map((val) => ({
+            value: val.value.trim(),
+            label: val.label.trim() || val.value.trim(),
+          })),
+      }))
+      .filter((opt) => opt.values.length > 0);
+
     const productData = {
       title: title.trim(),
       description: description.trim(),
@@ -100,6 +181,7 @@ const AddProduct = ({}: Props) => {
               value: prop.value.trim(),
             }))
           : undefined,
+      options: validOptions.length > 0 ? validOptions : undefined,
     };
 
     createProduct(productData, {
@@ -348,6 +430,193 @@ const AddProduct = ({}: Props) => {
                 >
                   <Plus className="size-4" />
                   إضافة خاصية أخرى
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Options Section */}
+        <div className="bg-secondary p-4 rounded-lg">
+          <p className="text-lg font-bold">خيارات المنتج</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            قم بإضافة خيارات للمنتج (مثل: اللون، الحجم، المادة، إلخ)
+          </p>
+        </div>
+        <Card>
+          <CardContent className="space-y-4">
+            {options.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground mb-4">
+                  لا توجد خيارات مضافة بعد
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={addOption}
+                  className="gap-2"
+                >
+                  <Plus className="size-4" />
+                  إضافة خيار
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {options.map((option, optionIndex) => (
+                  <div
+                    key={optionIndex}
+                    className="p-4 border rounded-lg bg-card space-y-4"
+                  >
+                    {/* Option Header */}
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 space-y-2">
+                        <label
+                          htmlFor={`option-name-${optionIndex}`}
+                          className="text-sm font-medium text-right block"
+                        >
+                          اسم الخيار
+                        </label>
+                        <input
+                          id={`option-name-${optionIndex}`}
+                          type="text"
+                          value={option.name}
+                          onChange={(e) =>
+                            updateOptionName(optionIndex, e.target.value)
+                          }
+                          placeholder="مثال: اللون، الحجم"
+                          className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeOption(optionIndex)}
+                        className="shrink-0 mt-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="حذف الخيار"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+
+                    {/* Option Values */}
+                    <div className="space-y-3 pr-4 border-r-2 border-muted">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-muted-foreground">
+                          قيم الخيار
+                        </p>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => addOptionValue(optionIndex)}
+                          className="gap-2"
+                        >
+                          <Plus className="size-3" />
+                          إضافة قيمة
+                        </Button>
+                      </div>
+
+                      {option.values.length === 0 ? (
+                        <div className="text-center py-4 bg-muted/50 rounded-md">
+                          <p className="text-xs text-muted-foreground mb-2">
+                            لا توجد قيم مضافة لهذا الخيار
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addOptionValue(optionIndex)}
+                            className="gap-2"
+                          >
+                            <Plus className="size-3" />
+                            إضافة قيمة
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {option.values.map((value, valueIndex) => (
+                            <div
+                              key={valueIndex}
+                              className="flex gap-2 items-start p-3 bg-muted/30 rounded-md"
+                            >
+                              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                  <label
+                                    htmlFor={`option-${optionIndex}-label-${valueIndex}`}
+                                    className="text-xs font-medium text-right block text-muted-foreground"
+                                  >
+                                    التسمية (اختياري)
+                                  </label>
+                                  <input
+                                    id={`option-${optionIndex}-label-${valueIndex}`}
+                                    type="text"
+                                    value={value.label}
+                                    onChange={(e) =>
+                                      updateOptionValue(
+                                        optionIndex,
+                                        valueIndex,
+                                        "label",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="سيتم استخدام القيمة إذا تركت فارغاً"
+                                    className="w-full text-right rounded-md border border-input bg-background py-2 px-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label
+                                    htmlFor={`option-${optionIndex}-value-${valueIndex}`}
+                                    className="text-xs font-medium text-right block text-muted-foreground"
+                                  >
+                                    القيمة
+                                  </label>
+                                  <input
+                                    id={`option-${optionIndex}-value-${valueIndex}`}
+                                    type="text"
+                                    value={value.value}
+                                    onChange={(e) =>
+                                      updateOptionValue(
+                                        optionIndex,
+                                        valueIndex,
+                                        "value",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="مثال: أحمر، كبير"
+                                    className="w-full text-right rounded-md border border-input bg-background py-2 px-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
+                                  />
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  removeOptionValue(optionIndex, valueIndex)
+                                }
+                                className="shrink-0 mt-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                title="حذف القيمة"
+                                disabled={option.values.length === 1}
+                              >
+                                <Trash2 className="size-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={addOption}
+                  className="w-full gap-2"
+                >
+                  <Plus className="size-4" />
+                  إضافة خيار آخر
                 </Button>
               </div>
             )}
