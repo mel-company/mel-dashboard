@@ -43,6 +43,8 @@ const Layout = () => {
       delivery: "التوصيل",
       "terms-and-conditions": "الشروط والأحكام",
       edit: "تعديل",
+      plans: "الاشتراكات",
+      payment: "الدفع",
     };
 
     const detailLabels: Record<string, string> = {
@@ -53,6 +55,7 @@ const Layout = () => {
       employees: "تفاصيل الموظف",
       discounts: "تفاصيل الخصم",
       notifications: "تفاصيل الإشعار",
+      payment: "تفاصيل الدفع",
     };
 
     const path = location.pathname;
@@ -113,31 +116,33 @@ const Layout = () => {
   }, [isNotificationOpen]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
+    <div className="flex flex-col hscreen wscreen overflow-hidden bg-background">
       <TopBar />
       <QuickNavigate />
 
       {/* Content Area */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden w-full custom-scrollbar hide-scrollbar mt-2 rounded-lg">
         {/* Global Breadcrumb - top, aligned to the right */}
-        <div className="px-4 sm:px-6 lg:px-8 pt-2">
-          <Breadcrumb className="justify-start">
-            <BreadcrumbList>
-              {breadcrumbItems.map((item, index) => (
-                <BreadcrumbItem key={item.href + item.label}>
-                  {index > 0 && <BreadcrumbSeparator />}
-                  {item.current ? (
-                    <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink href={item.href}>
-                      {item.label}
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
+        {!location.pathname.includes("payment") && (
+          <div className="px-4 sm:px-6 lg:px-8 pt-2">
+            <Breadcrumb className="justify-start">
+              <BreadcrumbList>
+                {breadcrumbItems.map((item, index) => (
+                  <BreadcrumbItem key={item.href + item.label}>
+                    {index > 0 && <BreadcrumbSeparator />}
+                    {item.current ? (
+                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink href={item.href}>
+                        {item.label}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        )}
 
         {shouldShowApps ? (
           <div className="h-full w-full p-4 sm:p-6 lg:p-8">
@@ -145,7 +150,7 @@ const Layout = () => {
           </div>
         ) : (
           <main>
-            <div className="h-full w-full p-4 sm:p-6 lg:p-8 pb-20">
+            <div className="hfull w-full p-4 sm:p-6 lg:p-8 pb-20">
               <Outlet />
               <footer className="h-full w-full justify-center items-center bg-red-50 " />
             </div>

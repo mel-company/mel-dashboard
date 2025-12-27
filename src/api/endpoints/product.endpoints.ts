@@ -53,6 +53,54 @@ export const productAPI = {
   },
 
   /**
+   * Create a new product option
+   */
+  createProductOption: async (option: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>("/product/option", option);
+    return data;
+  },
+
+  /**
+   * Get a single product option by ID
+   */
+  fetchOneProductOption: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(`/product/option/${id}`);
+    return data;
+  },
+
+  /**
+   * Update a product option
+   */
+  updateProductOption: async (id: string, option: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/product/option/${id}`, option);
+    return data;
+  },
+
+  /**
+   * Delete a product option (soft delete)
+   */
+  deleteProductOption: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(`/product/option/${id}`);
+    return data;
+  },
+
+  /**
+   * Update a product option value
+   */
+  updateProductOptionValue: async (id: string, value: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/product/option-value/${id}`, value);
+    return data;
+  },
+
+  /**
+   * Delete a product option value (soft delete)
+   */
+  deleteProductOptionValue: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(`/product/option-value/${id}`);
+    return data;
+  },
+
+  /**
    * Update an existing product
    */
   update: async (id: string, product: any): Promise<any> => {

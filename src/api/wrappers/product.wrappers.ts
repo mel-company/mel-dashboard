@@ -62,6 +62,132 @@ export const useCreateProduct = () => {
 };
 
 /**
+ * Create a new product option mutation
+ */
+export const useCreateProductOption = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, any>({
+    mutationFn: (option: any) => productAPI.createProductOption(option),
+    onSuccess: (_, variables) => {
+      // Invalidate products list
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      // Invalidate the specific product detail to refresh options
+      queryClient.invalidateQueries({
+        queryKey: productKeys.detail(variables.productId),
+      });
+    },
+  });
+};
+
+/**
+ * Query key factory for product options
+ */
+export const productOptionKeys = {
+  all: ["product-options"] as const,
+  details: () => [...productOptionKeys.all, "detail"] as const,
+  detail: (id: string) => [...productOptionKeys.details(), id] as const,
+};
+
+/**
+ * Fetch a single product option by ID
+ */
+export const useFetchProductOption = (id: string, enabled: boolean = true) => {
+  return useQuery<any>({
+    queryKey: productOptionKeys.detail(id),
+    queryFn: () => productAPI.fetchOneProductOption(id),
+    enabled: enabled && !!id,
+  });
+};
+
+/**
+ * Update a product option mutation
+ */
+export const useUpdateProductOption = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, { id: string; data: any }>({
+    mutationFn: ({ id, data }) => productAPI.updateProductOption(id, data),
+    onSuccess: (data, variables) => {
+      // Invalidate product option detail
+      queryClient.invalidateQueries({
+        queryKey: productOptionKeys.detail(variables.id),
+      });
+      // Invalidate products list
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      // Invalidate the specific product detail to refresh options
+      if (data?.product?.id) {
+        queryClient.invalidateQueries({
+          queryKey: productKeys.detail(data.product.id),
+        });
+      }
+    },
+  });
+};
+
+/**
+ * Delete a product option mutation
+ */
+export const useDeleteProductOption = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => productAPI.deleteProductOption(id),
+    onSuccess: (_, deletedId) => {
+      // Remove the deleted option from cache
+      queryClient.removeQueries({
+        queryKey: productOptionKeys.detail(deletedId),
+      });
+      // Invalidate products list
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      // Invalidate all product details to refresh options
+      queryClient.invalidateQueries({ queryKey: productKeys.details() });
+    },
+  });
+};
+
+/**
+ * Update a product option value mutation
+ */
+export const useUpdateProductOptionValue = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, { id: string; data: any }>({
+    mutationFn: ({ id, data }) => productAPI.updateProductOptionValue(id, data),
+    onSuccess: (data) => {
+      // Invalidate products list
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      // Invalidate all product details to refresh options
+      queryClient.invalidateQueries({ queryKey: productKeys.details() });
+      // Invalidate product option if we have the option ID
+      if (data?.option?.id) {
+        queryClient.invalidateQueries({
+          queryKey: productOptionKeys.detail(data.option.id),
+        });
+      }
+    },
+  });
+};
+
+/**
+ * Delete a product option value mutation
+ */
+export const useDeleteProductOptionValue = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => productAPI.deleteProductOptionValue(id),
+    onSuccess: (data) => {
+      // Invalidate products list
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      // Invalidate all product details to refresh options
+      queryClient.invalidateQueries({ queryKey: productKeys.details() });
+      // Invalidate product option if we have the option ID
+      if (data?.option?.id) {
+        queryClient.invalidateQueries({
+          queryKey: productOptionKeys.detail(data.option.id),
+        });
+      }
+    },
+  });
+};
+
+/**
  * Update an existing product mutation
  */
 export const useUpdateProduct = () => {

@@ -23,6 +23,16 @@ export const useFetchStores = (params?: any) => {
 };
 
 /**
+ * Fetch store details
+ */
+export const useFetchStoreDetails = () => {
+  return useQuery<any>({
+    queryKey: storeKeys.details(),
+    queryFn: () => storeAPI.fetchDetails(),
+  });
+};
+
+/**
  * Fetch all dev stores with optional filtering and pagination
  */
 export const useFetchDevStores = (params?: any) => {

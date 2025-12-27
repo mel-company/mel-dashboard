@@ -109,6 +109,7 @@ const EditProduct = ({}: Props) => {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">المنتج غير موجود</p>
+
         <Button
           variant="outline"
           className="mt-4"
@@ -124,14 +125,6 @@ const EditProduct = ({}: Props) => {
     <div className="mx-auto space-y-6">
       {/* Header with back button */}
       <div className="flex items-center justify-between">
-        <Button
-          variant="outline"
-          onClick={() => navigate(-1)}
-          className="gap-2"
-        >
-          <ArrowLeft className="size-4" />
-          العودة
-        </Button>
         <h1 className="text-2xl font-bold text-right">تعديل المنتج</h1>
       </div>
 

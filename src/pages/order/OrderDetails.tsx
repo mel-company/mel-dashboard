@@ -64,7 +64,7 @@ const OrderDetails = () => {
   // Calculate total price
   const calculateTotal = () => {
     if (!order?.products) return 0;
-    return order.products.reduce(
+    return order.products?.reduce(
       (sum: number, product: any) => sum + (product.price ?? 0),
       0
     );

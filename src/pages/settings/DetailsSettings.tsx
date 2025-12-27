@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -18,31 +18,72 @@ import {
   Globe,
   DollarSign,
   Languages,
-  FileText,
   Upload,
   Save,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import { CURRENCY, LANGUAGE, TIMEZONE } from "@/utils/constants";
 
 type Props = {};
 
 const DetailsSettings = ({}: Props) => {
+  const { data: storeDetails } = useFetchStoreDetails();
+
   const [formData, setFormData] = useState({
     storeName: "",
     storeDescription: "",
     businessEmail: "",
     businessPhone: "",
     physicalAddress: "",
-    timezone: "Asia/Baghdad",
-    currency: "IQD",
-    language: "ar",
-    taxId: "",
-    vatNumber: "",
-    invoiceFooter: "",
+    timezone: TIMEZONE.BAGHDAD,
+    currency: CURRENCY.IQD,
+    language: LANGUAGE.AR,
   });
 
   const [storeLogo, setStoreLogo] = useState<File | null>(null);
+  // @ts-ignore
   const [favicon, setFavicon] = useState<File | null>(null);
+
+  // Populate form when store details are loaded
+  useEffect(() => {
+    if (storeDetails) {
+      // Map timezone value to enum
+      const timezoneValue =
+        storeDetails.timezone === TIMEZONE.BAGHDAD ||
+        storeDetails.timezone === TIMEZONE.DUBAI ||
+        storeDetails.timezone === TIMEZONE.RIYADH
+          ? (storeDetails.timezone as TIMEZONE)
+          : TIMEZONE.BAGHDAD;
+
+      // Map currency value to enum
+      const currencyValue =
+        storeDetails.currency === CURRENCY.IQD ||
+        storeDetails.currency === CURRENCY.USD ||
+        storeDetails.currency === CURRENCY.EUR
+          ? (storeDetails.currency as CURRENCY)
+          : CURRENCY.IQD;
+
+      // Map language value to enum
+      const languageValue =
+        storeDetails.language === LANGUAGE.AR ||
+        storeDetails.language === LANGUAGE.EN ||
+        storeDetails.language === LANGUAGE.KU
+          ? (storeDetails.language as LANGUAGE)
+          : LANGUAGE.AR;
+
+      setFormData({
+        storeName: storeDetails.name || "",
+        storeDescription: storeDetails.description || "",
+        businessEmail: storeDetails.email || "",
+        businessPhone: storeDetails.phone || "",
+        physicalAddress: storeDetails.location || "",
+        timezone: timezoneValue,
+        currency: currencyValue,
+        language: languageValue,
+      });
+    }
+  }, [storeDetails]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -82,82 +123,53 @@ const DetailsSettings = ({}: Props) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Store Identity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Store className="size-5" />
-              هوية المتجر
-            </CardTitle>
-            <CardDescription>
-              المعلومات الأساسية التي تظهر للعملاء
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="storeName">اسم المتجر *</Label>
-              <Input
-                id="storeName"
-                name="storeName"
-                value={formData.storeName}
-                onChange={handleInputChange}
-                placeholder="أدخل اسم المتجر"
-                required
-                className="text-right"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="storeDescription">وصف المتجر</Label>
-              <Textarea
-                id="storeDescription"
-                name="storeDescription"
-                value={formData.storeDescription}
-                onChange={handleInputChange}
-                placeholder="أدخل وصفاً مختصراً عن المتجر"
-                rows={4}
-                className="text-right"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>شعار المتجر</Label>
-                <div className="flex items-center gap-4">
-                  {storeLogo ? (
-                    <img
-                      src={URL.createObjectURL(storeLogo)}
-                      alt="Store Logo"
-                      className="w-20 h-20 object-cover rounded-lg border"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
-                      <Store className="size-8 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <Label
-                      htmlFor="storeLogo"
-                      className="cursor-pointer flex items-center gap-2 text-sm"
-                    >
-                      <Upload className="size-4" />
-                      اختر صورة
-                    </Label>
-                    <Input
-                      id="storeLogo"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileChange(e, "logo")}
-                      className="hidden"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      PNG, JPG حتى 2MB
-                    </p>
-                  </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>شعار المتجر</Label>
+            <div className="flex items-center gap-4">
+              {storeLogo ? (
+                <img
+                  src={URL.createObjectURL(storeLogo)}
+                  alt="Store Logo"
+                  className="w-20 h-20 object-cover rounded-lg border"
+                />
+              ) : storeDetails?.logo ? (
+                <img
+                  src={storeDetails.logo}
+                  alt="Store Logo"
+                  className="w-20 h-20 object-cover rounded-lg border"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
+                  <Store className="size-8 text-muted-foreground" />
                 </div>
+              )}
+              <div className="flex-1">
+                <Label
+                  htmlFor="storeLogo"
+                  className="cursor-pointer flex items-center gap-2 text-sm"
+                >
+                  <Upload className="size-4" />
+                  اختر صورة
+                </Label>
+                <Input
+                  id="storeLogo"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, "logo")}
+                  className="hidden"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  PNG, JPG حتى 2MB
+                </p>
               </div>
+            </div>
+          </div>
 
-              <div className="space-y-2">
+          {/* <div className="space-y-2">
                 <Label>أيقونة الموقع (Favicon)</Label>
                 <div className="flex items-center gap-4">
                   {favicon ? (
@@ -165,6 +177,15 @@ const DetailsSettings = ({}: Props) => {
                       src={URL.createObjectURL(favicon)}
                       alt="Favicon"
                       className="w-16 h-16 object-cover rounded-lg border"
+                    />
+                  ) : storeDetails?.fav_icon ? (
+                    <img
+                      src={storeDetails.fav_icon}
+                      alt="Favicon"
+                      className="w-16 h-16 object-cover rounded-lg border"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
                     />
                   ) : (
                     <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
@@ -191,7 +212,47 @@ const DetailsSettings = ({}: Props) => {
                     </p>
                   </div>
                 </div>
-              </div>
+              </div> */}
+        </div>
+
+        {/* Store Identity */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Store className="size-5" />
+              هوية المتجر
+            </CardTitle>
+            <CardDescription>
+              المعلومات الأساسية التي تظهر للعملاء
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="storeName">اسم المتجر *</Label>
+              <Input
+                id="storeName"
+                name="storeName"
+                value={formData.storeName}
+                onChange={handleInputChange}
+                placeholder={storeDetails?.name || "أدخل اسم المتجر"}
+                required
+                className="text-right"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="storeDescription">وصف المتجر</Label>
+              <Textarea
+                id="storeDescription"
+                name="storeDescription"
+                value={formData.storeDescription}
+                onChange={handleInputChange}
+                placeholder={
+                  storeDetails?.description || "أدخل وصفاً مختصراً عن المتجر"
+                }
+                rows={4}
+                className="text-right"
+              />
             </div>
           </CardContent>
         </Card>
@@ -282,14 +343,12 @@ const DetailsSettings = ({}: Props) => {
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      timezone: e.target.value,
+                      timezone: e.target.value as TIMEZONE,
                     }))
                   }
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-right"
                 >
-                  <option value="Asia/Baghdad">بغداد (GMT+3)</option>
-                  <option value="Asia/Dubai">دبي (GMT+4)</option>
-                  <option value="Asia/Riyadh">الرياض (GMT+3)</option>
+                  <option value={TIMEZONE.BAGHDAD}>بغداد (UTC+3)</option>
                 </select>
               </div>
 
@@ -304,14 +363,13 @@ const DetailsSettings = ({}: Props) => {
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        currency: e.target.value,
+                        currency: e.target.value as CURRENCY,
                       }))
                     }
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm text-right"
                   >
-                    <option value="IQD">دينار عراقي (IQD)</option>
-                    <option value="USD">دولار أمريكي (USD)</option>
-                    <option value="EUR">يورو (EUR)</option>
+                    <option value={CURRENCY.IQD}>دينار عراقي (IQD)</option>
+                    <option value={CURRENCY.USD}>دولار أمريكي (USD)</option>
                   </select>
                 </div>
               </div>
@@ -327,14 +385,13 @@ const DetailsSettings = ({}: Props) => {
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        language: e.target.value,
+                        language: e.target.value as LANGUAGE,
                       }))
                     }
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm text-right"
                   >
-                    <option value="ar">العربية</option>
-                    <option value="en">English</option>
-                    <option value="ku">کوردی</option>
+                    <option value={LANGUAGE.AR}>العربية</option>
+                    <option value={LANGUAGE.EN}>English</option>
                   </select>
                 </div>
               </div>
@@ -342,62 +399,9 @@ const DetailsSettings = ({}: Props) => {
           </CardContent>
         </Card>
 
-        {/* Tax & Legal */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="size-5" />
-              الضرائب والمعلومات القانونية
-            </CardTitle>
-            <CardDescription>معلومات الضرائب والهوية الضريبية</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="taxId">الرقم الضريبي</Label>
-                <Input
-                  id="taxId"
-                  name="taxId"
-                  value={formData.taxId}
-                  onChange={handleInputChange}
-                  placeholder="أدخل الرقم الضريبي"
-                  className="text-right"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="vatNumber">
-                  رقم ضريبة القيمة المضافة (VAT)
-                </Label>
-                <Input
-                  id="vatNumber"
-                  name="vatNumber"
-                  value={formData.vatNumber}
-                  onChange={handleInputChange}
-                  placeholder="أدخل رقم VAT"
-                  className="text-right"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="invoiceFooter">معلومات تذييل الفاتورة</Label>
-              <Textarea
-                id="invoiceFooter"
-                name="invoiceFooter"
-                value={formData.invoiceFooter}
-                onChange={handleInputChange}
-                placeholder="معلومات إضافية تظهر في أسفل الفواتير (مثل: شكراً لشرائك منا)"
-                rows={3}
-                className="text-right"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Submit Button */}
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline">
+          <Button type="button" variant="secondary">
             إلغاء
           </Button>
           <Button type="submit" className="gap-2">

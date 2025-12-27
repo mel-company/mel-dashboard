@@ -37,7 +37,6 @@ export const useFetchSubscription = (id: string, enabled: boolean = true) => {
  * Fetch a single subscription by ID
  */
 export const useFetchStoreSubscription = () => {
-  console.log("FETCHING STORE SUBSCRIPTION");
   return useQuery<any>({
     queryKey: subscriptionKeys.detail("store"),
     queryFn: () => subscriptionAPI.fetchStoreSubscription(),

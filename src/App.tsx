@@ -44,6 +44,8 @@ import EditProduct from "./pages/product/EditProduct";
 import EditCategory from "./pages/category/EditCategory";
 import EditDiscount from "./pages/discount/EditDiscount";
 import SubscriptionSettings from "./pages/settings/SubscriptionSettings";
+import Plans from "./pages/plan/Plans";
+import Payment from "./pages/payment/Payment";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -122,6 +124,9 @@ function App() {
               />
               <Route path="subscription" element={<SubscriptionSettings />} />
             </Route>
+
+            <Route path="/plans" element={<Plans />} />
+            <Route path="/payment/:planId" element={<Payment />} />
 
             {/* category routes */}
             <Route path="/categories">

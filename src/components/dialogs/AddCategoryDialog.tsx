@@ -10,29 +10,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Save, X } from "lucide-react";
-
-interface Category {
-  id: number;
-  name: string;
-  description: string;
-  enabled: boolean;
-  number_of_products: number;
-  image: string;
-}
+import { useCreateCategory } from "@/api/wrappers/category.wrappers";
+import { toast } from "sonner";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddCategory: (
-    category: Omit<Category, "id" | "number_of_products">
-  ) => void;
 };
 
-const AddCategoryDialog = ({ open, onOpenChange, onAddCategory }: Props) => {
+const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
   const [enabled, setEnabled] = useState(true);
+
+  const { mutate: createCategory, isPending } = useCreateCategory();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,16 +36,23 @@ const AddCategoryDialog = ({ open, onOpenChange, onAddCategory }: Props) => {
       enabled,
     };
 
-    onAddCategory(categoryData);
-
-    // Reset form
-    setName("");
-    setDescription("");
-    setImage("");
-    setEnabled(true);
-
-    // Close dialog
-    onOpenChange(false);
+    createCategory(categoryData, {
+      onSuccess: () => {
+        toast.success("تم إضافة الفئة بنجاح");
+        // Reset form
+        setName("");
+        setDescription("");
+        setImage("");
+        setEnabled(true);
+        // Close dialog
+        onOpenChange(false);
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message || "فشل في إضافة الفئة. حاول مرة أخرى."
+        );
+      },
+    });
   };
 
   const handleCancel = () => {
@@ -148,13 +147,18 @@ const AddCategoryDialog = ({ open, onOpenChange, onAddCategory }: Props) => {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button type="button" onClick={handleCancel} className="gap-2">
+            <Button
+              type="button"
+              onClick={handleCancel}
+              className="gap-2"
+              disabled={isPending}
+            >
               <X className="size-4" />
               إلغاء
             </Button>
-            <Button type="submit" className="gap-2">
+            <Button type="submit" className="gap-2" disabled={isPending}>
               <Save className="size-4" />
-              حفظ الفئة
+              {isPending ? "جاري الحفظ..." : "حفظ الفئة"}
             </Button>
           </DialogFooter>
         </form>

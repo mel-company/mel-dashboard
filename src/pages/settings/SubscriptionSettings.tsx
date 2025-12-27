@@ -21,13 +21,17 @@ import {
   Trash2,
   CreditCard,
   Settings,
+  Pencil,
 } from "lucide-react";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
 
 type Props = {};
 
 const SubscriptionSettings = ({}: Props) => {
+  const navigate = useNavigate();
+
   const {
     data: subscription,
     isLoading,
@@ -371,6 +375,14 @@ const SubscriptionSettings = ({}: Props) => {
               <Button className="w-full gap-2" variant="default">
                 <RefreshCw className="size-4" />
                 تجديد الاشتراك
+              </Button>
+              <Button
+                onClick={() => navigate("/plans")}
+                className="w-full gap-2"
+                variant="secondary"
+              >
+                <Pencil className="size-4" />
+                تغيير الخطة
               </Button>
               <Button className="w-full gap-2" variant="destructive">
                 <Trash2 className="size-4" />
