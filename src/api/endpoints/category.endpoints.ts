@@ -62,4 +62,52 @@ export const categoryAPI = {
     const { data } = await axiosInstance.delete<any>(`/category/${id}`);
     return data;
   },
+
+  /**
+   * Get available categories not related to a discount or product
+   */
+  fetchAvailable: async (params?: {
+    discountId?: string;
+    productId?: string;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/category/available", {
+      params: {
+        ...(params?.discountId && { discountId: params.discountId }),
+        ...(params?.productId && { productId: params.productId }),
+      },
+    });
+    return data;
+  },
+
+  /**
+   * Add products to a category
+   */
+  addProducts: async (id: string, productIds: string[]): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(`/category/${id}/product`, { productIds });
+    return data;
+  },
+
+  /**
+   * Remove a product from a category
+   */
+  removeProduct: async (id: string, productId: string): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(`/category/${id}/product/${productId}`);
+    return data;
+  },
+
+  /**
+   * Get available products not related to a category
+   */
+  fetchAvailableProducts: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(`/category/${id}/product/available`);
+    return data;
+  },
+
+  /**
+   * Toggle category enabled status
+   */
+  toggleEnabled: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/category/${id}/toggle-enabled`);
+    return data;
+  },
 };

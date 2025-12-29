@@ -53,6 +53,22 @@ export const productAPI = {
   },
 
   /**
+   * Add categories to a product
+   */
+  addCategory: async (id: string, categoryIds: string[]): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(`/product/${id}/category`, { categoryIds });
+    return data;
+  },
+
+  /**
+   * Remove a category from a product
+   */
+  removeCategory: async (id: string, categoryId: string): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(`/product/${id}/category/${categoryId}`);
+    return data;
+  },
+
+  /**
    * Create a new product option
    */
   createProductOption: async (option: any): Promise<any> => {

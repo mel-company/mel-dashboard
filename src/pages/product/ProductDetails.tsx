@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import {
   Card,
@@ -29,6 +29,8 @@ import {
   List,
   DollarSign,
   Plus,
+  Folder,
+  X,
 } from "lucide-react";
 import {
   useFetchProduct,
@@ -43,6 +45,8 @@ import AddProductPropertyDialog from "./AddProductPropertyDialog";
 import EditProductPropertyDialog from "./EditProductPropertyDialog";
 import AddVariantDialog from "./AddVariantDialog";
 import EditVariantDialog from "./EditVariantDialog";
+import RemoveCategoryFromProductDialog from "./RemoveCategoryFromProductDialog";
+import AddCategoryToProductDialog from "./AddCategoryToProductDialog";
 import {
   useFetchVariants,
   useDeleteVariant,
@@ -64,6 +68,11 @@ const ProductDetails = () => {
   const [deletingVariantId, setDeletingVariantId] = useState<string | null>(
     null
   );
+  const [removingCategory, setRemovingCategory] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? ""
@@ -226,6 +235,77 @@ const ProductDetails = () => {
                   </span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Categories */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-right flex items-center gap-2">
+                    <Folder className="size-5" />
+                    فئات المنتج
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    يجب ان يرتبط المنتج بفئة واحدة على الاقل
+                  </p>
+                </div>
+                <div>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setIsAddCategoryDialogOpen(true)}
+                  >
+                    <Plus className="size-3" />
+                    إضافة فئة
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {data.categories && data.categories.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {data.categories.map((category: any) => (
+                    <Link
+                      key={category.id}
+                      to={`/categories/${category.id}`}
+                      className="inline-block"
+                    >
+                      <Badge
+                        variant="default"
+                        className="group text-sm gap-x-2 flex cursor-pointer hover:bg-primary/95 transition-colors"
+                      >
+                        <p className="group-hover:underline">{category.name}</p>
+
+                        {data.categories.length > 1 && (
+                          <Button
+                            tabIndex={-1}
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2 p-2 m-0 h-auto w-auto"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setRemovingCategory({
+                                id: category.id,
+                                name: category.name,
+                              });
+                            }}
+                          >
+                            <X className="size-3" />
+                          </Button>
+                        )}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="text-sm">لا توجد فئات مرتبطة بهذا المنتج</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -664,6 +744,32 @@ const ProductDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Category Dialog */}
+      {id && (
+        <AddCategoryToProductDialog
+          open={isAddCategoryDialogOpen}
+          onOpenChange={setIsAddCategoryDialogOpen}
+          productId={id}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      )}
+
+      {/* Remove Category Dialog */}
+      {id && removingCategory && (
+        <RemoveCategoryFromProductDialog
+          open={!!removingCategory}
+          onOpenChange={(open) => !open && setRemovingCategory(null)}
+          productId={id}
+          categoryId={removingCategory.id}
+          categoryName={removingCategory.name}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 };
