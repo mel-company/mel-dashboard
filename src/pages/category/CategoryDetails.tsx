@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
-import { dmy_products } from "@/data/dummy";
 import {
   Card,
   CardContent,
@@ -28,6 +27,8 @@ import {
   Trash2,
   ShoppingCart,
   Loader2,
+  X,
+  Plus,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -37,12 +38,22 @@ import {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import CategoryDetailsSkeleton from "./CategoryDetailsSkeleton";
+import AddProductToCategoryDialog from "./AddProductToCategoryDialog";
+import RemoveProductFromCategoryDialog from "./RemoveProductFromCategoryDialog";
+import ToggleEnableCategoryDialog from "./ToggleEnableCategoryDialog";
 import { toast } from "sonner";
 
 const CategoryDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false);
+  const [isToggleEnabledDialogOpen, setIsToggleEnabledDialogOpen] =
+    useState(false);
+  const [removingProduct, setRemovingProduct] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const {
     data: category,
@@ -51,6 +62,7 @@ const CategoryDetails = () => {
     refetch,
     isFetching,
   } = useFetchCategory(id ?? "");
+
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
   const handleDelete = () => {
@@ -81,12 +93,9 @@ const CategoryDetails = () => {
     );
   }
 
-  // Get products in this category (for demo, we'll show all products)
-  // In a real app, you'd filter products by category
-  const categoryProducts = dmy_products.slice(
-    0,
-    category?.number_of_products || 0
-  );
+  // Get products in this category from the API
+  const categoryProducts = category?.products || [];
+  const totalProducts = category?._count?.products || 0;
 
   if (!category) {
     return (
@@ -157,9 +166,7 @@ const CategoryDetails = () => {
                 <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
                   <Package className="size-6 text-primary" />
                   <div className="text-right">
-                    <p className="text-2xl font-bold">
-                      {category._count?.products ?? 0}
-                    </p>
+                    <p className="text-2xl font-bold">{totalProducts}</p>
                     <p className="text-sm text-muted-foreground">
                       عدد المنتجات
                     </p>
@@ -179,52 +186,107 @@ const CategoryDetails = () => {
           </Card>
 
           {/* Products in Category */}
-          {categoryProducts.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right flex items-center gap-2">
-                  <ShoppingCart className="size-5" />
-                  المنتجات في هذه الفئة
-                </CardTitle>
-                <CardDescription className="text-right">
-                  عرض {categoryProducts.length} من {category.number_of_products}{" "}
-                  منتج
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {categoryProducts.map((product) => (
-                    <Link
-                      key={product.id}
-                      to={`/products/${product.id}`}
-                      className="block"
-                    >
-                      <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
-                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
-                          <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
-                        </div>
-                        <div className="flex-1 text-right">
-                          <p className="font-semibold line-clamp-1">
-                            {product.title}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {product.price.toFixed(2)} د.ع
-                          </p>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-right flex items-center gap-2">
+                    <ShoppingCart className="size-5" />
+                    المنتجات في هذه الفئة
+                  </CardTitle>
+                  <CardDescription className="text-right">
+                    {categoryProducts.length > 0
+                      ? `عرض ${categoryProducts.length} من ${totalProducts} منتج`
+                      : `لا توجد منتجات في هذه الفئة`}
+                  </CardDescription>
                 </div>
-                {category.number_of_products > categoryProducts.length && (
-                  <div className="mt-4 text-center">
-                    <Button variant="outline" className="w-full">
-                      عرض جميع المنتجات ({category.number_of_products})
-                    </Button>
+                <div>
+                  <Button
+                    onClick={() => setIsAddProductDialogOpen(true)}
+                    variant="default"
+                    className="w-full gap-2"
+                  >
+                    <Plus className="size-4" />
+                    إضافة منتج
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {categoryProducts.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {categoryProducts.map((product: any) => (
+                      <Link
+                        key={product.id}
+                        to={`/products/${product.id}`}
+                        className="flex justify-between items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer"
+                      >
+                        <div className="flex icenter gap-x-2">
+                          <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
+                            {product.image ? (
+                              <img
+                                src={product.image}
+                                alt={product.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                            )}
+                          </div>
+                          <div className="flex-1 text-right">
+                            <p className="font-semibold line-clamp-1">
+                              {product.title}
+                            </p>
+                            {product.price && (
+                              <p className="text-sm text-muted-foreground">
+                                {product.price.toLocaleString()} د.ع
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="hover:text-destructive hover:bg-destructive/10 group"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setRemovingProduct({
+                                id: product.id,
+                                name: product.title,
+                              });
+                            }}
+                          >
+                            <X className="hover:text-destructive group-hover:text-destructive" />
+                          </Button>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                  {totalProducts > categoryProducts.length && (
+                    <div className="mt-4 text-center">
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => navigate(`/products?categoryId=${id}`)}
+                      >
+                        عرض جميع المنتجات ({totalProducts})
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <ShoppingCart className="size-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground">
+                    لا توجد منتجات في هذه الفئة
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Sidebar Info */}
@@ -236,15 +298,18 @@ const CategoryDetails = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-sm">
-                  #{category.id}
-                </Badge>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   رقم الفئة
                 </span>
+                <Badge variant="secondary" className="text-sm">
+                  #{category.id}
+                </Badge>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground text-right">
+                  الحالة
+                </span>
                 {category.enabled ? (
                   <Badge
                     variant="default"
@@ -262,18 +327,13 @@ const CategoryDetails = () => {
                     معطّل
                   </Badge>
                 )}
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  الحالة
-                </span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-lg font-bold">
-                  {category.number_of_products}
-                </span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   عدد المنتجات
                 </span>
+                <span className="text-lg font-bold">{totalProducts}</span>
               </div>
             </CardContent>
           </Card>
@@ -293,6 +353,7 @@ const CategoryDetails = () => {
                 تعديل الفئة
               </Button>
               <Button
+                onClick={() => setIsToggleEnabledDialogOpen(true)}
                 className="w-full gap-2"
                 variant={category.enabled ? "destructive" : "default"}
               >
@@ -307,10 +368,6 @@ const CategoryDetails = () => {
                     تفعيل الفئة
                   </>
                 )}
-              </Button>
-              <Button className="w-full gap-2" variant="secondary">
-                <Package className="size-4" />
-                عرض المنتجات
               </Button>
               <Button
                 onClick={() => setIsDeleteDialogOpen(true)}
@@ -373,6 +430,46 @@ const CategoryDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Product Dialog */}
+      {id && (
+        <AddProductToCategoryDialog
+          open={isAddProductDialogOpen}
+          onOpenChange={setIsAddProductDialogOpen}
+          categoryId={id}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      )}
+
+      {/* Remove Product Dialog */}
+      {id && removingProduct && (
+        <RemoveProductFromCategoryDialog
+          open={!!removingProduct}
+          onOpenChange={(open) => !open && setRemovingProduct(null)}
+          categoryId={id}
+          productId={removingProduct.id}
+          productName={removingProduct.name}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      )}
+
+      {/* Toggle Enable Dialog */}
+      {id && (
+        <ToggleEnableCategoryDialog
+          open={isToggleEnabledDialogOpen}
+          onOpenChange={setIsToggleEnabledDialogOpen}
+          categoryId={id}
+          categoryName={category.name}
+          isEnabled={category.enabled}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 };

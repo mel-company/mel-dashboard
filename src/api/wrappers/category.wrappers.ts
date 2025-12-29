@@ -12,6 +12,7 @@ export const categoryKeys = {
   detail: (id: string) => [...categoryKeys.details(), id] as const,
   search: (params?: any) => [...categoryKeys.all, "search", params] as const,
   available: (params?: any) => [...categoryKeys.all, "available", params] as const,
+  availableProducts: (id: string) => [...categoryKeys.all, "available-products", id] as const,
 };
 
 /**
@@ -107,5 +108,74 @@ export const useFetchAvailableCategories = (
     queryKey: categoryKeys.available(params),
     queryFn: () => categoryAPI.fetchAvailable(params),
     enabled: enabled && !!(params?.discountId || params?.productId),
+  });
+};
+
+/**
+ * Add products to a category mutation
+ */
+export const useAddProductsToCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { id: string; productIds: string[] }>({
+    mutationFn: ({ id, productIds }) => categoryAPI.addProducts(id, productIds),
+    onSuccess: (data) => {
+      // Invalidate and refetch categories list
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      // Update the specific category cache
+      queryClient.setQueryData(categoryKeys.detail(data.id), data);
+      // Invalidate available products for this category
+      queryClient.invalidateQueries({ queryKey: categoryKeys.availableProducts(data.id) });
+    },
+  });
+};
+
+/**
+ * Remove a product from a category mutation
+ */
+export const useRemoveProductFromCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { id: string; productId: string }>({
+    mutationFn: ({ id, productId }) => categoryAPI.removeProduct(id, productId),
+    onSuccess: (data) => {
+      // Invalidate and refetch categories list
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      // Update the specific category cache
+      queryClient.setQueryData(categoryKeys.detail(data.id), data);
+      // Invalidate available products for this category
+      queryClient.invalidateQueries({ queryKey: categoryKeys.availableProducts(data.id) });
+    },
+  });
+};
+
+/**
+ * Fetch available products not related to a category
+ */
+export const useFetchAvailableProducts = (
+  categoryId: string,
+  enabled: boolean = true
+) => {
+  return useQuery<any>({
+    queryKey: categoryKeys.availableProducts(categoryId),
+    queryFn: () => categoryAPI.fetchAvailableProducts(categoryId),
+    enabled: enabled && !!categoryId,
+  });
+};
+
+/**
+ * Toggle category enabled status mutation
+ */
+export const useToggleCategoryEnabled = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => categoryAPI.toggleEnabled(id),
+    onSuccess: (data) => {
+      // Invalidate and refetch categories list
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      // Update the specific category cache
+      queryClient.setQueryData(categoryKeys.detail(data.id), data);
+    },
   });
 };
