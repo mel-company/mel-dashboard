@@ -29,6 +29,8 @@ import {
   ShoppingCart,
   Package,
   Loader2,
+  Plus,
+  X,
 } from "lucide-react";
 import {
   useFetchDiscount,
@@ -37,12 +39,30 @@ import {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import DiscountDetailsSkeleton from "./DiscountDetailsSkeleton";
+import ToggleDiscountDialog from "./ToggleDiscountDialog";
+import AddDiscountProductDialog from "./AddDiscountProductDialog";
+import AddDiscountCategoryDialog from "./AddDiscountCategoryDialog";
+import RemoveProductFromDiscountDialog from "./RemoveProductFromDiscountDialog";
+import RemoveCategoryFromDiscountDialog from "./RemoveCategoryFromDiscountDialog";
 import { toast } from "sonner";
 
 const DiscountDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false);
+  const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false);
+  const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
+  const [removeProductDialog, setRemoveProductDialog] = useState<{
+    open: boolean;
+    productId: string;
+    productName: string;
+  }>({ open: false, productId: "", productName: "" });
+  const [removeCategoryDialog, setRemoveCategoryDialog] = useState<{
+    open: boolean;
+    categoryId: string;
+    categoryName: string;
+  }>({ open: false, categoryId: "", categoryName: "" });
 
   const {
     data: discount,
@@ -51,8 +71,7 @@ const DiscountDetails = () => {
     refetch,
     isFetching,
   } = useFetchDiscount(id ?? "");
-  const { mutate: deleteDiscount, isPending: isDeleting } =
-    useDeleteDiscount();
+  const { mutate: deleteDiscount, isPending: isDeleting } = useDeleteDiscount();
 
   const handleDelete = () => {
     if (!id) return;
@@ -197,24 +216,43 @@ const DiscountDetails = () => {
           </Card>
 
           {/* Products in Discount */}
-          {discount?.products && discount.products.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right flex items-center gap-2">
-                  <Package className="size-5" />
-                  المنتجات المشمولة (
-                  {discount._count?.products ?? discount.products.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-right flex items-center gap-2">
+                    <Package className="size-5" />
+                    المنتجات المشمولة (
+                    {discount._count?.products ??
+                      discount.products?.length ??
+                      0}
+                    )
+                  </CardTitle>
+                </div>
+                <div>
+                  <Button
+                    variant="default"
+                    className="w-full gap-2"
+                    onClick={() => setIsAddProductDialogOpen(true)}
+                  >
+                    <Plus className="size-4" />
+                    إضافة منتجات
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {discount?.products && discount.products.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {discount.products.map((product: any) => (
-                    <Link
+                    <div
                       key={product.id}
-                      to={`/products/${product.id}`}
-                      className="block"
+                      className="relative group flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
                     >
-                      <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
+                      <Link
+                        to={`/products/${product.id}`}
+                        className="flex items-center gap-4 flex-1"
+                      >
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                           {product.image ? (
                             <img
@@ -236,33 +274,77 @@ const DiscountDetails = () => {
                             </p>
                           )}
                         </div>
-                      </div>
-                    </Link>
+                      </Link>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setRemoveProductDialog({
+                            open: true,
+                            productId: product.id,
+                            productName: product.title,
+                          });
+                        }}
+                        title="إزالة المنتج من الخصم"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <div className="text-center py-8">
+                  <Package className="size-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    لا توجد منتجات مضافة إلى هذا الخصم بعد
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Categories in Discount */}
-          {discount?.categories && discount.categories.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right flex items-center gap-2">
-                  <Folder className="size-5" />
-                  الفئات المشمولة (
-                  {discount._count?.categories ?? discount.categories.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-right flex items-center gap-2">
+                    <Folder className="size-5" />
+                    الفئات المشمولة (
+                    {discount._count?.categories ??
+                      discount.categories?.length ??
+                      0}
+                    )
+                  </CardTitle>
+                </div>
+                <div>
+                  <Button
+                    variant="default"
+                    className="w-full gap-2"
+                    onClick={() => setIsAddCategoryDialogOpen(true)}
+                  >
+                    <Plus className="size-4" />
+                    إضافة فئات
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {discount?.categories && discount.categories.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {discount.categories.map((category: any) => (
-                    <Link
+                    <div
                       key={category.id}
-                      to={`/categories/${category.id}`}
-                      className="block"
+                      className="relative group flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
                     >
-                      <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
+                      <Link
+                        to={`/categories/${category.id}`}
+                        className="flex items-center gap-4 flex-1"
+                      >
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                           {category.image ? (
                             <img
@@ -279,13 +361,38 @@ const DiscountDetails = () => {
                             {category.name}
                           </p>
                         </div>
-                      </div>
-                    </Link>
+                      </Link>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setRemoveCategoryDialog({
+                            open: true,
+                            categoryId: category.id,
+                            categoryName: category.name,
+                          });
+                        }}
+                        title="إزالة الفئة من الخصم"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <div className="text-center py-8">
+                  <Folder className="size-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    لا توجد فئات مضافة إلى هذا الخصم بعد
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Sidebar Info */}
@@ -297,53 +404,53 @@ const DiscountDetails = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-sm">
-                  #{discount.id}
-                </Badge>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   رقم الخصم
                 </span>
+                <Badge variant="secondary" className="text-sm">
+                  #{discount.id}
+                </Badge>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Percent className="size-5 text-primary" />
-                  <span className="text-2xl font-bold">
-                    {discount.discount_percentage}%
-                  </span>
-                </div>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   نسبة الخصم
                 </span>
+                <div className="flex items-center gap-2">
+                  <Percent className="size-5 text-primary" />
+                  <span className="text-2xl font-bold">
+                    {discount.discount_percentage}
+                  </span>
+                </div>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground text-right">
+                  الحالة
+                </span>
                 <Badge
                   variant="default"
                   className={`${statusBadge.className} gap-1 text-sm`}
                 >
                   {statusBadge.text}
                 </Badge>
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  الحالة
-                </span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-sm">
-                  {discount?._count?.products ?? 0}
-                </span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   عدد المنتجات
                 </span>
+                <span className="text-sm">
+                  {discount?._count?.products ?? 0}
+                </span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-sm">
-                  {discount?._count?.categories ?? 0}
-                </span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   عدد الفئات
+                </span>
+                <span className="text-sm">
+                  {discount?._count?.categories ?? 0}
                 </span>
               </div>
             </CardContent>
@@ -362,13 +469,21 @@ const DiscountDetails = () => {
                 </Button>
               </Link>
               {!isActive && (
-                <Button className="w-full gap-2" variant="outline">
+                <Button
+                  className="w-full gap-2"
+                  variant="secondary"
+                  onClick={() => setIsToggleDialogOpen(true)}
+                >
                   <Tag className="size-4" />
                   تفعيل الخصم
                 </Button>
               )}
               {isActive && (
-                <Button className="w-full gap-2" variant="secondary">
+                <Button
+                  className="w-full gap-2"
+                  variant="secondary"
+                  onClick={() => setIsToggleDialogOpen(true)}
+                >
                   <Tag className="size-4" />
                   تعطيل الخصم
                 </Button>
@@ -434,6 +549,68 @@ const DiscountDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Toggle Discount Dialog */}
+      <ToggleDiscountDialog
+        open={isToggleDialogOpen}
+        onOpenChange={setIsToggleDialogOpen}
+        discountId={id || ""}
+        discountName={discount.name}
+        currentStatus={discount.discount_status}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
+
+      {/* Add Products Dialog */}
+      <AddDiscountProductDialog
+        open={isAddProductDialogOpen}
+        onOpenChange={setIsAddProductDialogOpen}
+        discountId={id || ""}
+        existingProductIds={discount.products?.map((p: any) => p.id) || []}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
+
+      {/* Add Categories Dialog */}
+      <AddDiscountCategoryDialog
+        open={isAddCategoryDialogOpen}
+        onOpenChange={setIsAddCategoryDialogOpen}
+        discountId={id || ""}
+        existingCategoryIds={discount.categories?.map((c: any) => c.id) || []}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
+
+      {/* Remove Product Dialog */}
+      <RemoveProductFromDiscountDialog
+        open={removeProductDialog.open}
+        onOpenChange={(open) =>
+          setRemoveProductDialog((prev) => ({ ...prev, open }))
+        }
+        discountId={id || ""}
+        productId={removeProductDialog.productId}
+        productName={removeProductDialog.productName}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
+
+      {/* Remove Category Dialog */}
+      <RemoveCategoryFromDiscountDialog
+        open={removeCategoryDialog.open}
+        onOpenChange={(open) =>
+          setRemoveCategoryDialog((prev) => ({ ...prev, open }))
+        }
+        discountId={id || ""}
+        categoryId={removeCategoryDialog.categoryId}
+        categoryName={removeCategoryDialog.categoryName}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
     </div>
   );
 };

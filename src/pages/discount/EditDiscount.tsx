@@ -404,7 +404,9 @@ const EditDiscount = ({}: Props) => {
             <div className="flex gap-3 flex-wrap">
               <Button
                 type="button"
-                variant={selectionMode === "categories" ? "default" : "outline"}
+                variant={
+                  selectionMode === "categories" ? "default" : "secondary"
+                }
                 onClick={() => {
                   setSelectionMode("categories");
                   setSelectedProducts([]);
@@ -416,7 +418,7 @@ const EditDiscount = ({}: Props) => {
               </Button>
               <Button
                 type="button"
-                variant={selectionMode === "products" ? "default" : "outline"}
+                variant={selectionMode === "products" ? "default" : "secondary"}
                 onClick={() => {
                   setSelectionMode("products");
                   setSelectedCategories([]);
@@ -428,7 +430,7 @@ const EditDiscount = ({}: Props) => {
               </Button>
               <Button
                 type="button"
-                variant={selectionMode === "both" ? "default" : "outline"}
+                variant={selectionMode === "both" ? "default" : "secondary"}
                 onClick={() => setSelectionMode("both")}
                 className="gap-2"
               >
@@ -629,7 +631,7 @@ const EditDiscount = ({}: Props) => {
         <div className="flex items-center justify-end gap-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="lg"
             className="gap-2"
             onClick={() => navigate(-1)}

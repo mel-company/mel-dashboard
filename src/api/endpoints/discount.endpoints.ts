@@ -30,6 +30,7 @@ export const discountAPI = {
     return data;
   },
 
+
   /**
    * Get a single discount by ID
    */
@@ -59,6 +60,62 @@ export const discountAPI = {
    */
   delete: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.delete<any>(`/discount/${id}`);
+    return data;
+  },
+
+  /**
+   * Enable a discount
+   */
+  enable: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/discount/${id}/enable`);
+    return data;
+  },
+
+  /**
+   * Disable a discount
+   */
+  disable: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/discount/${id}/disable`);
+    return data;
+  },
+
+  /**
+   * Add products to a discount
+   */
+  addProducts: async (id: string, productIds: string[]): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/discount/${id}/products`, {
+      productIds,
+    });
+    return data;
+  },
+
+  /**
+   * Add categories to a discount
+   */
+  addCategories: async (id: string, categoryIds: string[]): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/discount/${id}/categories`, {
+      categoryIds,
+    });
+    return data;
+  },
+
+  /**
+   * Remove a product from a discount
+   */
+  removeProduct: async (id: string, productId: string): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(
+      `/discount/${id}/products/${productId}`
+    );
+    return data;
+  },
+
+  /**
+   * Remove a category from a discount
+   */
+  removeCategory: async (id: string, categoryId: string): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(
+      `/discount/${id}/categories/${categoryId}`
+    );
     return data;
   },
 };
