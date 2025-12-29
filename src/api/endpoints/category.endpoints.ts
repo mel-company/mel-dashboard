@@ -62,4 +62,20 @@ export const categoryAPI = {
     const { data } = await axiosInstance.delete<any>(`/category/${id}`);
     return data;
   },
+
+  /**
+   * Get available categories not related to a discount or product
+   */
+  fetchAvailable: async (params?: {
+    discountId?: string;
+    productId?: string;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/category/available", {
+      params: {
+        ...(params?.discountId && { discountId: params.discountId }),
+        ...(params?.productId && { productId: params.productId }),
+      },
+    });
+    return data;
+  },
 };

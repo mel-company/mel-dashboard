@@ -47,6 +47,38 @@ export const useFetchProduct = (id: string, enabled: boolean = true) => {
 };
 
 /**
+ * Add categories to a product mutation
+ */
+export const useAddCategoryToProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, { id: string; categoryIds: string[] }>({
+    mutationFn: ({ id, categoryIds }) => productAPI.addCategory(id, categoryIds),
+    onSuccess: (data) => {
+      // Invalidate and refetch products list
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      // Update the specific product cache
+      queryClient.setQueryData(productKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
+ * Remove a category from a product mutation
+ */
+export const useRemoveCategoryFromProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, { id: string; categoryId: string }>({
+    mutationFn: ({ id, categoryId }) => productAPI.removeCategory(id, categoryId),
+    onSuccess: (data) => {
+      // Invalidate and refetch products list
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      // Update the specific product cache
+      queryClient.setQueryData(productKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
  * Create a new product mutation
  */
 export const useCreateProduct = () => {

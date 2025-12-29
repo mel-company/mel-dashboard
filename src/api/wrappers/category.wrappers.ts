@@ -11,6 +11,7 @@ export const categoryKeys = {
   details: () => [...categoryKeys.all, "detail"] as const,
   detail: (id: string) => [...categoryKeys.details(), id] as const,
   search: (params?: any) => [...categoryKeys.all, "search", params] as const,
+  available: (params?: any) => [...categoryKeys.all, "available", params] as const,
 };
 
 /**
@@ -92,5 +93,19 @@ export const useDeleteCategory = () => {
       // Remove the deleted category from cache
       queryClient.removeQueries({ queryKey: categoryKeys.detail(deletedId) });
     },
+  });
+};
+
+/**
+ * Fetch available categories not related to a discount or product
+ */
+export const useFetchAvailableCategories = (
+  params?: { discountId?: string; productId?: string },
+  enabled: boolean = true
+) => {
+  return useQuery<any>({
+    queryKey: categoryKeys.available(params),
+    queryFn: () => categoryAPI.fetchAvailable(params),
+    enabled: enabled && !!(params?.discountId || params?.productId),
   });
 };
