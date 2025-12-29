@@ -162,3 +162,37 @@ export const useAddCategoriesToDiscount = () => {
     },
   });
 };
+
+/**
+ * Remove a product from a discount mutation
+ */
+export const useRemoveProductFromDiscount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { id: string; productId: string }>({
+    mutationFn: ({ id, productId }) => discountAPI.removeProduct(id, productId),
+    onSuccess: (data) => {
+      // Invalidate and refetch discounts list
+      queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      // Update the specific discount cache
+      queryClient.setQueryData(discountKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
+ * Remove a category from a discount mutation
+ */
+export const useRemoveCategoryFromDiscount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { id: string; categoryId: string }>({
+    mutationFn: ({ id, categoryId }) => discountAPI.removeCategory(id, categoryId),
+    onSuccess: (data) => {
+      // Invalidate and refetch discounts list
+      queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      // Update the specific discount cache
+      queryClient.setQueryData(discountKeys.detail(data.id), data);
+    },
+  });
+};

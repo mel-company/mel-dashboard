@@ -30,6 +30,7 @@ import {
   Package,
   Loader2,
   Plus,
+  X,
 } from "lucide-react";
 import {
   useFetchDiscount,
@@ -41,6 +42,8 @@ import DiscountDetailsSkeleton from "./DiscountDetailsSkeleton";
 import ToggleDiscountDialog from "./ToggleDiscountDialog";
 import AddDiscountProductDialog from "./AddDiscountProductDialog";
 import AddDiscountCategoryDialog from "./AddDiscountCategoryDialog";
+import RemoveProductFromDiscountDialog from "./RemoveProductFromDiscountDialog";
+import RemoveCategoryFromDiscountDialog from "./RemoveCategoryFromDiscountDialog";
 import { toast } from "sonner";
 
 const DiscountDetails = () => {
@@ -50,6 +53,16 @@ const DiscountDetails = () => {
   const [isToggleDialogOpen, setIsToggleDialogOpen] = useState(false);
   const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false);
   const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
+  const [removeProductDialog, setRemoveProductDialog] = useState<{
+    open: boolean;
+    productId: string;
+    productName: string;
+  }>({ open: false, productId: "", productName: "" });
+  const [removeCategoryDialog, setRemoveCategoryDialog] = useState<{
+    open: boolean;
+    categoryId: string;
+    categoryName: string;
+  }>({ open: false, categoryId: "", categoryName: "" });
 
   const {
     data: discount,
@@ -232,12 +245,14 @@ const DiscountDetails = () => {
               {discount?.products && discount.products.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {discount.products.map((product: any) => (
-                    <Link
+                    <div
                       key={product.id}
-                      to={`/products/${product.id}`}
-                      className="block"
+                      className="relative group flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
                     >
-                      <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
+                      <Link
+                        to={`/products/${product.id}`}
+                        className="flex items-center gap-4 flex-1"
+                      >
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                           {product.image ? (
                             <img
@@ -259,8 +274,26 @@ const DiscountDetails = () => {
                             </p>
                           )}
                         </div>
-                      </div>
-                    </Link>
+                      </Link>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setRemoveProductDialog({
+                            open: true,
+                            productId: product.id,
+                            productName: product.title,
+                          });
+                        }}
+                        title="إزالة المنتج من الخصم"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -304,12 +337,14 @@ const DiscountDetails = () => {
               {discount?.categories && discount.categories.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {discount.categories.map((category: any) => (
-                    <Link
+                    <div
                       key={category.id}
-                      to={`/categories/${category.id}`}
-                      className="block"
+                      className="relative group flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
                     >
-                      <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
+                      <Link
+                        to={`/categories/${category.id}`}
+                        className="flex items-center gap-4 flex-1"
+                      >
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                           {category.image ? (
                             <img
@@ -326,8 +361,26 @@ const DiscountDetails = () => {
                             {category.name}
                           </p>
                         </div>
-                      </div>
-                    </Link>
+                      </Link>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setRemoveCategoryDialog({
+                            open: true,
+                            categoryId: category.id,
+                            categoryName: category.name,
+                          });
+                        }}
+                        title="إزالة الفئة من الخصم"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -526,6 +579,34 @@ const DiscountDetails = () => {
         onOpenChange={setIsAddCategoryDialogOpen}
         discountId={id || ""}
         existingCategoryIds={discount.categories?.map((c: any) => c.id) || []}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
+
+      {/* Remove Product Dialog */}
+      <RemoveProductFromDiscountDialog
+        open={removeProductDialog.open}
+        onOpenChange={(open) =>
+          setRemoveProductDialog((prev) => ({ ...prev, open }))
+        }
+        discountId={id || ""}
+        productId={removeProductDialog.productId}
+        productName={removeProductDialog.productName}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
+
+      {/* Remove Category Dialog */}
+      <RemoveCategoryFromDiscountDialog
+        open={removeCategoryDialog.open}
+        onOpenChange={(open) =>
+          setRemoveCategoryDialog((prev) => ({ ...prev, open }))
+        }
+        discountId={id || ""}
+        categoryId={removeCategoryDialog.categoryId}
+        categoryName={removeCategoryDialog.categoryName}
         onSuccess={() => {
           refetch();
         }}
