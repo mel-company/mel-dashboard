@@ -31,10 +31,11 @@ import {
   Clock,
   XCircle,
   ShoppingCart,
-  Phone,
   ArrowLeft,
   Trash2,
   Loader2,
+  Edit,
+  Plus,
 } from "lucide-react";
 import {
   useFetchOrder,
@@ -43,12 +44,14 @@ import {
 } from "@/api/wrappers/order.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
+import EditDeliveryAddressDialog from "./EditDeliveryAddressDialog";
 import { toast } from "sonner";
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditAddressDialogOpen, setIsEditAddressDialogOpen] = useState(false);
 
   const {
     data: order,
@@ -264,10 +267,16 @@ const OrderDetails = () => {
           {/* Products List */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-right flex items-center gap-2">
-                <ShoppingCart className="size-5" />
-                المنتجات في الطلب
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-right flex items-center gap-2">
+                  <ShoppingCart className="size-5" />
+                  المنتجات في الطلب
+                </CardTitle>
+                <Button variant="secondary" className="gap-2">
+                  <Plus className="size-4" />
+                  إضافة منتج
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -335,21 +344,55 @@ const OrderDetails = () => {
           {/* Delivery Address */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-right flex items-center gap-2">
-                <MapPin className="size-5" />
-                عنوان التوصيل
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-right flex items-center gap-2">
+                    <MapPin className="size-5" />
+                    عنوان التوصيل
+                  </CardTitle>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    className="wfull gap-2"
+                    onClick={() => setIsEditAddressDialogOpen(true)}
+                  >
+                    <Edit className="" />
+                    تعديل
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
                 <MapPin className="size-5 text-primary mt-1 shrink-0" />
                 <div className="text-right">
-                  <p className="font-medium">{order.address || "—"}</p>
-                  {customer?.location && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {customer.location}
-                    </p>
-                  )}
+                  <p className="font-medium">{order.nearest_point || "—"}</p>
+                  <div className="flex items-center gap-2">
+                    {order.country?.name && (
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {order.country?.name?.ar}
+                        </p>
+                      </div>
+                    )}
+                    {order.state?.name && (
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground mt-1">-</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {order.state?.name?.arabic}
+                        </p>
+                      </div>
+                    )}
+                    {order.region?.name && (
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground mt-1">-</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {order.region?.name?.arabic}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -384,27 +427,25 @@ const OrderDetails = () => {
               {customer ? (
                 <>
                   <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground text-right">
+                      الاسم
+                    </span>
                     <div className="flex items-center gap-2">
-                      <User className="size-5 text-primary" />
                       <span className="font-semibold">
                         {customer.name || "—"}
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground text-right">
-                      الاسم
-                    </span>
                   </div>
                   {customer.phone && (
                     <>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Phone className="size-4 text-muted-foreground" />
-                          <span className="text-sm">{customer.phone}</span>
-                        </div>
                         <span className="text-sm text-muted-foreground text-right">
                           الهاتف
                         </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{customer.phone}</span>
+                        </div>
                       </div>
                     </>
                   )}
@@ -412,12 +453,12 @@ const OrderDetails = () => {
                     <>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{customer.email}</span>
-                        </div>
                         <span className="text-sm text-muted-foreground text-right">
                           البريد الإلكتروني
                         </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{customer.email}</span>
+                        </div>
                       </div>
                     </>
                   )}
@@ -425,15 +466,14 @@ const OrderDetails = () => {
                     <>
                       <Separator />
                       <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground text-right">
+                          الموقع
+                        </span>
                         <div className="flex items-center gap-2">
-                          <MapPin className="size-4 text-muted-foreground" />
                           <span className="text-sm line-clamp-1">
                             {customer.location}
                           </span>
                         </div>
-                        <span className="text-sm text-muted-foreground text-right">
-                          الموقع
-                        </span>
                       </div>
                     </>
                   )}
@@ -464,15 +504,18 @@ const OrderDetails = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-sm">
-                  #{String(order.id).slice(0, 8)}
-                </Badge>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   رقم الطلب
                 </span>
+                <Badge variant="secondary" className="text-sm">
+                  #{String(order.id).slice(0, 8)}
+                </Badge>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground text-right">
+                  الحالة
+                </span>
                 <Badge
                   variant="default"
                   className={`${statusBadge.className} gap-1 text-sm`}
@@ -480,24 +523,21 @@ const OrderDetails = () => {
                   <StatusIcon className="size-3" />
                   {statusBadge.text}
                 </Badge>
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  الحالة
-                </span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-sm">{productCount}</span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   عدد المنتجات
                 </span>
+                <span className="text-sm">{productCount}</span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-lg font-bold text-primary">
-                  {total.toFixed(2)} د.ع
-                </span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   المبلغ الإجمالي
+                </span>
+                <span className="text-lg font-bold text-primary">
+                  {total.toFixed(2)} د.ع
                 </span>
               </div>
             </CardContent>
@@ -666,6 +706,20 @@ const OrderDetails = () => {
           </Card>
         </div>
       </div>
+
+      {/* Edit Delivery Address Dialog */}
+      {id && (
+        <EditDeliveryAddressDialog
+          orderId={id ?? ""}
+          open={isEditAddressDialogOpen}
+          onOpenChange={setIsEditAddressDialogOpen}
+          initialData={{
+            stateId: order.stateId || undefined,
+            regionId: order.regionId || undefined,
+            nearest_point: order.nearest_point || undefined,
+          }}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
