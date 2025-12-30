@@ -32,6 +32,14 @@ export const orderAPI = {
   },
 
   /**
+   * Update delivery address of an order by ID
+   */
+  updateDeliveryAddress: async (id: string, deliveryAddress: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/order/${id}/update-delivery-address`, deliveryAddress);
+    return data;
+  },
+
+  /**
    * Get a single order by ID
    */
   fetchOne: async (id: string): Promise<any> => {

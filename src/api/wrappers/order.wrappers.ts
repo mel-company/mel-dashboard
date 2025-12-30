@@ -25,6 +25,23 @@ export const useFetchOrders = (params?: any, enabled: boolean = true) => {
 };
 
 /**
+ * Update delivery address of an order by ID
+ */
+export const useUpdateDeliveryAddress = (id: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, any>({
+    mutationFn: (deliveryAddress: any) => orderAPI.updateDeliveryAddress(id, deliveryAddress),
+    onSuccess: () => {
+      // Invalidate and refetch the specific order
+      queryClient.invalidateQueries({ queryKey: orderKeys.detail(id) });
+      // Also invalidate the orders list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    },
+  });
+};
+
+/**
  * Search for orders with optional filtering and pagination
  */
 export const useSearchOrders = (params?: any, enabled: boolean = true) => {
