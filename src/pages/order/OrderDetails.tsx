@@ -272,7 +272,11 @@ const OrderDetails = () => {
                   <ShoppingCart className="size-5" />
                   المنتجات في الطلب
                 </CardTitle>
-                <Button variant="secondary" className="gap-2">
+                <Button
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={() => navigate("/pos")}
+                >
                   <Plus className="size-4" />
                   إضافة منتج
                 </Button>
