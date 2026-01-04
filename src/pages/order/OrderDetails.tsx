@@ -61,6 +61,8 @@ const OrderDetails = () => {
     isFetching,
   } = useFetchOrder(id ?? "", !!id);
 
+  console.log(order);
+
   const { mutate: updateOrder, isPending: isUpdating } = useUpdateOrder();
   const { mutate: deleteOrder, isPending: isDeleting } = useDeleteOrder();
 
@@ -305,26 +307,31 @@ const OrderDetails = () => {
                               to={`/products/${product.id}`}
                               className="font-semibold hover:text-primary transition-colors"
                             >
-                              {product.title}
+                              {product?.variant?.product?.title}
                             </Link>
-                            <span className="font-bold text-primary">
-                              {product.price?.toFixed(2) ?? "—"} د.ع
-                            </span>
+                            <div className="flex items-center flex-col gap-2">
+                              <span className="font-bold text-primary">
+                                {product.price?.toFixed(2) ?? "—"} د.ع
+                              </span>
+                              <span className="font-bold text-primary">
+                                {product.quantity} وحدة
+                              </span>
+                            </div>
                           </div>
-                          {product.description && (
+                          {product?.variant?.product?.description && (
                             <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                              {product.description}
+                              {product?.variant?.product?.description}
                             </p>
                           )}
                           <div className="flex items-center gap-2 flex-wrap">
-                            {product.rate !== null &&
-                              product.rate !== undefined && (
+                            {product?.variant?.product?.rate !== null &&
+                              product?.variant?.product?.rate !== undefined && (
                                 <div className="flex items-center gap-1">
                                   <span className="text-xs text-muted-foreground">
                                     التقييم:
                                   </span>
                                   <span className="text-xs font-medium">
-                                    {product.rate}
+                                    {product?.variant?.product?.rate}
                                   </span>
                                 </div>
                               )}
