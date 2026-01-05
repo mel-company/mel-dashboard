@@ -114,10 +114,7 @@ export const orderAPI = {
   /**
    * Add products to an existing order
    */
-  addProductsToOrder: async (
-    orderId: string,
-    products: any
-  ): Promise<any> => {
+  addProductsToOrder: async (orderId: string, products: any): Promise<any> => {
     const { data } = await axiosInstance.post<any>(
       `/order/${orderId}/products`,
       products
@@ -134,6 +131,66 @@ export const orderAPI = {
   ): Promise<any> => {
     const { data } = await axiosInstance.delete<any>(
       `/order/${orderId}/product/${productId}`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to PENDING
+   */
+  updateStatusToPending: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/pending`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to PROCESSING
+   */
+  updateStatusToProcessing: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/processing`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to SHIPPED
+   */
+  updateStatusToShipped: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/shipped`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to DELIVERED
+   */
+  updateStatusToDelivered: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/delivered`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to CANCELLED
+   */
+  updateStatusToCancelled: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/cancelled`
+    );
+    return data;
+  },
+
+  /**
+   * Get order logs by order ID
+   */
+  fetchOrderLogs: async (orderId: string): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      `/order-logs/order/${orderId}`
     );
     return data;
   },

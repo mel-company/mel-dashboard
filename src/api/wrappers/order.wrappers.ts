@@ -11,6 +11,8 @@ export const orderKeys = {
   details: () => [...orderKeys.all, "detail"] as const,
   detail: (id: string) => [...orderKeys.details(), id] as const,
   search: (params?: any) => [...orderKeys.all, "search", params] as const,
+  logs: () => [...orderKeys.all, "logs"] as const,
+  logsByOrder: (orderId: string) => [...orderKeys.logs(), orderId] as const,
 };
 
 /**
@@ -166,6 +168,10 @@ export const useAddProductsToOrder = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      // Invalidate order logs
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.logsByOrder(variables.orderId),
+      });
     },
   });
 };
@@ -186,6 +192,136 @@ export const useRemoveOrderProduct = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      // Invalidate order logs
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.logsByOrder(variables.orderId),
+      });
     },
+  });
+};
+
+/**
+ * Update order status to PENDING mutation
+ */
+export const useUpdateStatusToPending = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => orderAPI.updateStatusToPending(id),
+    onSuccess: (_, id) => {
+      // Invalidate and refetch the specific order
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.detail(id),
+      });
+      // Also invalidate the orders list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      // Invalidate order logs
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.logsByOrder(id),
+      });
+    },
+  });
+};
+
+/**
+ * Update order status to PROCESSING mutation
+ */
+export const useUpdateStatusToProcessing = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => orderAPI.updateStatusToProcessing(id),
+    onSuccess: (_, id) => {
+      // Invalidate and refetch the specific order
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.detail(id),
+      });
+      // Also invalidate the orders list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      // Invalidate order logs
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.logsByOrder(id),
+      });
+    },
+  });
+};
+
+/**
+ * Update order status to SHIPPED mutation
+ */
+export const useUpdateStatusToShipped = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => orderAPI.updateStatusToShipped(id),
+    onSuccess: (_, id) => {
+      // Invalidate and refetch the specific order
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.detail(id),
+      });
+      // Also invalidate the orders list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      // Invalidate order logs
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.logsByOrder(id),
+      });
+    },
+  });
+};
+
+/**
+ * Update order status to DELIVERED mutation
+ */
+export const useUpdateStatusToDelivered = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => orderAPI.updateStatusToDelivered(id),
+    onSuccess: (_, id) => {
+      // Invalidate and refetch the specific order
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.detail(id),
+      });
+      // Also invalidate the orders list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      // Invalidate order logs
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.logsByOrder(id),
+      });
+    },
+  });
+};
+
+/**
+ * Update order status to CANCELLED mutation
+ */
+export const useUpdateStatusToCancelled = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => orderAPI.updateStatusToCancelled(id),
+    onSuccess: (_, id) => {
+      // Invalidate and refetch the specific order
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.detail(id),
+      });
+      // Also invalidate the orders list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      // Invalidate order logs
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.logsByOrder(id),
+      });
+    },
+  });
+};
+
+/**
+ * Fetch order logs by order ID
+ */
+export const useFetchOrderLogs = (orderId: string, enabled: boolean = true) => {
+  return useQuery<any>({
+    queryKey: orderKeys.logsByOrder(orderId),
+    queryFn: () => orderAPI.fetchOrderLogs(orderId),
+    enabled: enabled && !!orderId,
   });
 };
