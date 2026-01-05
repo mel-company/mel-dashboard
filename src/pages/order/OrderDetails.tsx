@@ -229,6 +229,10 @@ const OrderDetails = () => {
   const customer = order.customer?.user;
   const productCount = order._count?.products ?? order.products?.length ?? 0;
 
+  // Check if order can be modified (hide buttons for SHIPPED and DELIVERED)
+  const canModifyOrder =
+    order.status !== "SHIPPED" && order.status !== "DELIVERED";
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -299,14 +303,16 @@ const OrderDetails = () => {
                   <ShoppingCart className="size-5" />
                   المنتجات في الطلب
                 </CardTitle>
-                <Button
-                  variant="secondary"
-                  className="gap-2"
-                  onClick={() => navigate(`/pos?orderId=${order.id}`)}
-                >
-                  <Plus className="size-4" />
-                  إضافة منتج
-                </Button>
+                {canModifyOrder && (
+                  <Button
+                    variant="secondary"
+                    className="gap-2"
+                    onClick={() => navigate(`/pos?orderId=${order.id}`)}
+                  >
+                    <Plus className="size-4" />
+                    إضافة منتج
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -396,39 +402,41 @@ const OrderDetails = () => {
                               </div>
                             </div>
 
-                            <div className="flex items-center flex-col gap-2">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="default"
-                                  className="font-bold"
-                                  onClick={() => {
-                                    setSelectedOrderProduct(product);
-                                    setIsEditVariantDialogOpen(true);
-                                  }}
-                                >
-                                  <Edit className="size-4" />
-                                  <span className="text-xs">تعديل</span>
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  className="font-bold text-primary"
-                                  onClick={() => {
-                                    setProductToRemove(product);
-                                    setIsRemoveProductDialogOpen(true);
-                                  }}
-                                  disabled={isRemovingProduct}
-                                >
-                                  {isRemovingProduct ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <>
-                                      <Trash2 className="size-4" />
-                                      <span className="text-xs">حذف</span>
-                                    </>
-                                  )}
-                                </Button>
+                            {canModifyOrder && (
+                              <div className="flex items-center flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="default"
+                                    className="font-bold"
+                                    onClick={() => {
+                                      setSelectedOrderProduct(product);
+                                      setIsEditVariantDialogOpen(true);
+                                    }}
+                                  >
+                                    <Edit className="size-4" />
+                                    <span className="text-xs">تعديل</span>
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    className="font-bold text-primary"
+                                    onClick={() => {
+                                      setProductToRemove(product);
+                                      setIsRemoveProductDialogOpen(true);
+                                    }}
+                                    disabled={isRemovingProduct}
+                                  >
+                                    {isRemovingProduct ? (
+                                      <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <Trash2 className="size-4" />
+                                        <span className="text-xs">حذف</span>
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
                         </div>
                       </div>
