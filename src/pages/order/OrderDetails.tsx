@@ -36,6 +36,7 @@ import {
   Loader2,
   Edit,
   Plus,
+  TruckIcon,
 } from "lucide-react";
 import {
   useFetchOrder,
@@ -70,7 +71,8 @@ const OrderDetails = () => {
   const calculateTotal = () => {
     if (!order?.products) return 0;
     return order.products?.reduce(
-      (sum: number, product: any) => sum + (product.price ?? 0),
+      (sum: number, product: any) =>
+        sum + (product.price ?? 0) * (product.quantity ?? 0),
       0
     );
   };
@@ -243,7 +245,7 @@ const OrderDetails = () => {
             </CardHeader>
             <CardContent>
               <Separator className="my-4" />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
                   <Package className="size-5 text-primary" />
                   <div className="text-right">
@@ -259,7 +261,18 @@ const OrderDetails = () => {
                     <p className="text-sm text-muted-foreground">
                       المبلغ الإجمالي
                     </p>
-                    <p className="text-lg font-bold">{total.toFixed(2)} د.ع</p>
+                    <p className="text-lg font-bold">
+                      {total.toLocaleString()} د.ع
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                  <TruckIcon className="size-5 text-primary" />
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">التوصيل</p>
+                    <p className="text-lg font-bold">
+                      {(5000).toLocaleString()} د.ع
+                    </p>
                   </div>
                 </div>
               </div>
@@ -291,10 +304,14 @@ const OrderDetails = () => {
                     <div key={product.id || index}>
                       <div className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors">
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
-                          {product.image ? (
+                          {product?.variant?.image ||
+                          product?.product?.image ? (
                             <img
-                              src={product.image}
-                              alt={product.title}
+                              src={
+                                product?.variant?.image ||
+                                product?.product?.image
+                              }
+                              alt={product?.product?.title}
                               className="w-full h-full object-cover rounded-lg"
                             />
                           ) : (
@@ -304,25 +321,39 @@ const OrderDetails = () => {
                         <div className="flex-1 text-right">
                           <div className="flex items-center justify-between mb-2">
                             <Link
-                              to={`/products/${product.id}`}
+                              to={`/products/${
+                                product?.product?.id || product.id
+                              }`}
                               className="font-semibold hover:text-primary transition-colors"
                             >
-                              {product?.variant?.product?.title}
+                              {product?.product?.title}
                             </Link>
                             <div className="flex items-center flex-col gap-2">
                               <span className="font-bold text-primary">
-                                {product.price?.toFixed(2) ?? "—"} د.ع
+                                {product.price?.toLocaleString() ?? "—"} د.ع
                               </span>
                               <span className="font-bold text-primary">
-                                {product.quantity} وحدة
+                                {product.quantity?.toLocaleString()} وحدة
                               </span>
                             </div>
                           </div>
-                          {product?.variant?.product?.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                              {product?.variant?.product?.description}
-                            </p>
-                          )}
+                          {/* Variant Options */}
+                          {product?.variant?.optionValues &&
+                            product.variant.optionValues.length > 0 && (
+                              <div className="flex items-center gap-2 flex-wrap mb-2">
+                                {product.variant.optionValues.map(
+                                  (optionValue: any) => (
+                                    <Badge
+                                      key={optionValue.id}
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {optionValue.label || optionValue.value}
+                                    </Badge>
+                                  )
+                                )}
+                              </div>
+                            )}
                           <div className="flex items-center gap-2 flex-wrap">
                             {product?.variant?.product?.rate !== null &&
                               product?.variant?.product?.rate !== undefined && (
@@ -548,7 +579,7 @@ const OrderDetails = () => {
                   المبلغ الإجمالي
                 </span>
                 <span className="text-lg font-bold text-primary">
-                  {total.toFixed(2)} د.ع
+                  {total.toLocaleString()} د.ع
                 </span>
               </div>
             </CardContent>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,17 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   Search,
   ShoppingCart,
@@ -18,368 +27,241 @@ import {
   Minus,
   Trash2,
   Package,
+  Loader2,
+  MapPin,
 } from "lucide-react";
+import {
+  useFetchProductsByStoreDomain,
+  useFindVariantByOptions,
+} from "@/api/wrappers/product.wrappers";
+import { useFetchCategoriesByStoreDomain } from "@/api/wrappers/category.wrappers";
+import { useCheckoutOrder } from "@/api/wrappers/order.wrappers";
+import { useFetchStates } from "@/api/wrappers/state.wrappers";
+import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
-// Dummy data types
+// Product types matching API structure
 type Product = {
   id: string;
-  name: string;
-  price: number;
+  title: string;
+  price: number | null;
   image?: string;
-  category: string;
   description?: string;
-  options: {
+  categories?: Array<{ id: string; name: any }>;
+  options?: Array<{
+    id: string;
     name: string;
-    values: string[];
-  }[];
-  variants: {
+    values: Array<{
+      id: string;
+      label: string | null;
+      value: string | null;
+    }>;
+  }>;
+  variants?: Array<{
     id: string;
     sku: string;
     qr_code: string;
-    price: number;
+    price: number | null;
     stock: number;
-    image?: string;
-    optionValues: {
-      label: string;
-      value: string;
-    }[];
-  }[];
+    image?: string | null;
+    optionValues: Array<{
+      id: string;
+      label: string | null;
+      value: string | null;
+    }>;
+  }>;
+};
+
+type ProductVariant = {
+  id: string;
+  sku: string;
+  qr_code: string;
+  price: number | null;
+  stock: number;
+  image?: string | null;
+  optionValues: Array<{
+    id: string;
+    label: string | null;
+    value: string | null;
+  }>;
 };
 
 type CartItem = {
   product: Product;
-  variant?: Product["variants"][0];
+  variant?: ProductVariant;
   selectedOptions: Record<string, string>; // option name -> selected value
   quantity: number;
 };
 
-// Dummy data
-const categories = [
-  "الكل",
-  "إلكترونيات",
-  "ملابس",
-  "أطعمة",
-  "أثاث",
-  "كتب",
-  "ألعاب",
-];
-
-const dummyProducts: Product[] = [
-  {
-    id: "1",
-    name: "هاتف ذكي",
-    price: 250000,
-    category: "إلكترونيات",
-    description: "هاتف ذكي بمواصفات عالية",
-    options: [
-      {
-        name: "اللون",
-        values: ["احمر", "ابيض", "ازرق"],
-      },
-      {
-        name: "الحجم",
-        values: ["S", "M", "L"],
-      },
-    ],
-    variants: [
-      {
-        id: "1",
-        sku: "1234567890",
-        qr_code: "1234567890",
-        price: 250000,
-        stock: 10,
-        optionValues: [
-          {
-            label: "احمر",
-            value: "احمر",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "قميص قطني",
-    price: 35000,
-    category: "ملابس",
-    description: "قميص قطني مريح",
-    options: [
-      {
-        name: "اللون",
-        values: ["احمر", "ابيض", "ازرق"],
-      },
-      {
-        name: "الحجم",
-        values: ["S", "M", "L"],
-      },
-    ],
-    variants: [
-      {
-        id: "2",
-        sku: "1234567890",
-        qr_code: "1234567890",
-        price: 35000,
-        stock: 10,
-        optionValues: [
-          {
-            label: "احمر",
-            value: "احمر",
-          },
-        ],
-      },
-      {
-        id: "3",
-        sku: "1234567890",
-        qr_code: "1234567890",
-        price: 35000,
-        stock: 10,
-        optionValues: [
-          {
-            label: "ابيض",
-            value: "ابيض",
-          },
-          {
-            label: "ازرق",
-            value: "ازرق",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "3",
-    name: "بيتزا",
-    price: 15000,
-    category: "أطعمة",
-    description: "بيتزا إيطالية لذيذة",
-    options: [
-      {
-        name: "اللون",
-        values: ["احمر", "ابيض", "ازرق"],
-      },
-      {
-        name: "الحجم",
-        values: ["S", "M", "L"],
-      },
-    ],
-    variants: [
-      {
-        id: "4",
-        sku: "1234567890",
-        qr_code: "1234567890",
-        price: 15000,
-        stock: 10,
-        optionValues: [
-          {
-            label: "احمر",
-            value: "احمر",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "4",
-    name: "طاولة خشبية",
-    price: 120000,
-    category: "أثاث",
-    description: "طاولة خشبية عالية الجودة",
-    options: [
-      {
-        name: "اللون",
-        values: ["احمر", "ابيض", "ازرق"],
-      },
-      {
-        name: "الحجم",
-        values: ["S", "M", "L"],
-      },
-    ],
-    variants: [
-      {
-        id: "5",
-        sku: "1234567890",
-        qr_code: "1234567890",
-        price: 120000,
-        stock: 10,
-        optionValues: [
-          {
-            label: "احمر",
-            value: "احمر",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "5",
-    name: "رواية",
-    price: 15000,
-    category: "كتب",
-    description: "رواية أدبية",
-    options: [
-      {
-        name: "اللون",
-        values: ["احمر", "ابيض", "ازرق"],
-      },
-      {
-        name: "الحجم",
-        values: ["S", "M", "L"],
-      },
-    ],
-    variants: [
-      {
-        id: "6",
-        sku: "1234567890",
-        qr_code: "1234567890",
-        price: 15000,
-        stock: 10,
-        optionValues: [
-          {
-            label: "احمر",
-            value: "احمر",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "6",
-    name: "لعبة أطفال",
-    price: 25000,
-    category: "ألعاب",
-    description: "لعبة تعليمية للأطفال",
-    options: [
-      {
-        name: "اللون",
-        values: ["احمر", "ابيض", "ازرق"],
-      },
-      {
-        name: "الحجم",
-        values: ["S", "M", "L"],
-      },
-    ],
-    variants: [
-      {
-        id: "7",
-        sku: "1234567890",
-        qr_code: "1234567890",
-        price: 25000,
-        stock: 10,
-        optionValues: [
-          {
-            label: "احمر",
-            value: "احمر",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "7",
-    name: "ساعة ذكية",
-    price: 180000,
-    category: "إلكترونيات",
-    description: "ساعة ذكية متطورة",
-    options: [
-      {
-        name: "اللون",
-        values: ["احمر", "ابيض", "ازرق"],
-      },
-      {
-        name: "الحجم",
-        values: ["S", "M", "L"],
-      },
-    ],
-    variants: [
-      {
-        id: "8",
-        sku: "1234567890",
-        qr_code: "1234567890",
-        price: 180000,
-        stock: 10,
-        optionValues: [
-          {
-            label: "احمر",
-            value: "احمر",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "8",
-    name: "بنطلون جينز",
-    price: 45000,
-    category: "ملابس",
-    description: "بنطلون جينز كلاسيكي",
-    options: [
-      {
-        name: "اللون",
-        values: ["احمر", "ابيض", "ازرق"],
-      },
-      {
-        name: "الحجم",
-        values: ["S", "M", "L"],
-      },
-    ],
-    variants: [
-      {
-        id: "9",
-        sku: "1234567890",
-        qr_code: "1234567890",
-        price: 45000,
-        stock: 10,
-        optionValues: [
-          {
-            label: "احمر",
-            value: "احمر",
-          },
-        ],
-      },
-    ],
-  },
-];
+type Category = {
+  id: string;
+  name: any; // JSON field, could be string or object
+};
 
 type Props = {};
 
 const POS = ({}: Props) => {
-  const [selectedCategory, setSelectedCategory] = useState("الكل");
+  const navigate = useNavigate();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isOptionDialogOpen, setIsOptionDialogOpen] = useState(false);
+  const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<
     Record<string, string>
   >({});
+  const [foundVariant, setFoundVariant] = useState<ProductVariant | null>(null);
+  const [isFindingVariant, setIsFindingVariant] = useState(false);
 
-  // Filter products
-  const filteredProducts = dummyProducts.filter((product) => {
-    const matchesCategory =
-      selectedCategory === "الكل" || product.category === selectedCategory;
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+  // Checkout form state
+  const [checkoutForm, setCheckoutForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    stateId: "",
+    regionId: "",
+    nearest_point: "",
+    note: "",
+    paymentMethodId: "",
   });
 
-  // Find matching variant based on selected options
-  const findMatchingVariant = (
-    product: Product,
-    options: Record<string, string>
-  ) => {
-    if (!product.variants || product.variants.length === 0) return null;
+  const storeDomain = "store-66";
+  const { data: categoriesData, isLoading: isLoadingCategories } =
+    useFetchCategoriesByStoreDomain(storeDomain);
+  const { data: productsData, isLoading: isLoadingProducts } =
+    useFetchProductsByStoreDomain(
+      storeDomain,
+      selectedCategoryId ? { categoryId: selectedCategoryId } : undefined
+    );
 
-    return product.variants.find((variant) => {
-      const variantOptionValues = variant.optionValues.map((ov) => ov.value);
-      const selectedValues = Object.values(options);
+  // Checkout related hooks
+  const { mutate: checkoutOrder, isPending: isCheckingOut } =
+    useCheckoutOrder();
+  const { data: states, isLoading: isLoadingStates } = useFetchStates(
+    undefined,
+    isCheckoutDialogOpen
+  );
+  const { data: regions, isLoading: isLoadingRegions } = useFetchRegionsByState(
+    checkoutForm.stateId,
+    isCheckoutDialogOpen && !!checkoutForm.stateId
+  );
 
-      // Check if all selected values match the variant's option values
+  // Variant finding hook
+  const { mutateAsync: findVariantByOptions } = useFindVariantByOptions();
+
+  // Extract categories from API response
+  const categories: Category[] = categoriesData?.data || categoriesData || [];
+
+  // Extract products from API response
+  const products: Product[] = productsData?.data || productsData || [];
+
+  // Helper function to get category name (handles JSON field)
+  const getCategoryName = (category: Category): string => {
+    if (typeof category.name === "string") return category.name;
+    if (typeof category.name === "object" && category.name !== null) {
       return (
-        selectedValues.length === variantOptionValues.length &&
-        selectedValues.every((val) => variantOptionValues.includes(val))
+        (category.name as any).ar || (category.name as any).name || "غير محدد"
       );
-    });
+    }
+    return "غير محدد";
   };
+
+  // Filter products by search query
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
+
+  // Find matching variant based on selected options using API
+  const findMatchingVariant = useCallback(
+    async (
+      product: Product,
+      options: Record<string, string>
+    ): Promise<ProductVariant | null> => {
+      // If product has no options, return null (product without variants)
+      if (!product.options || product.options.length === 0) {
+        setFoundVariant(null);
+        return null;
+      }
+
+      // If no options are selected, return null
+      if (Object.keys(options).length === 0) {
+        setFoundVariant(null);
+        return null;
+      }
+
+      setIsFindingVariant(true);
+      try {
+        const variant = await findVariantByOptions({
+          productId: product.id,
+          selectedOptions: options,
+        });
+
+        if (!variant) {
+          setFoundVariant(null);
+          return null;
+        }
+
+        // Map the API response to ProductVariant type
+        const mappedVariant: ProductVariant = {
+          id: variant.id,
+          sku: variant.sku,
+          qr_code: variant.qr_code,
+          price: variant.price,
+          stock: variant.stock,
+          image: variant.image,
+          optionValues:
+            variant.optionValues?.map((ov: any) => ({
+              id: ov.id,
+              label: ov.label,
+              value: ov.value,
+            })) || [],
+        };
+
+        setFoundVariant(mappedVariant);
+        return mappedVariant;
+      } catch (error: any) {
+        console.error("Error finding variant:", error);
+        toast.error(
+          error?.response?.data?.message ||
+            "فشل في العثور على المتغير. حاول مرة أخرى."
+        );
+        setFoundVariant(null);
+        return null;
+      } finally {
+        setIsFindingVariant(false);
+      }
+    },
+    [findVariantByOptions]
+  );
+
+  // Find variant when options change
+  useEffect(() => {
+    if (
+      selectedProduct &&
+      selectedOptions &&
+      Object.keys(selectedOptions).length > 0
+    ) {
+      // Check if all required options are selected before making API call
+      const allOptionsSelected = selectedProduct.options?.every(
+        (option) => selectedOptions[option.name]
+      );
+
+      if (allOptionsSelected) {
+        findMatchingVariant(selectedProduct, selectedOptions);
+      } else {
+        setFoundVariant(null);
+      }
+    } else {
+      setFoundVariant(null);
+    }
+  }, [selectedProduct, selectedOptions, findMatchingVariant]);
 
   // Handle product selection - show dialog if has options
   const handleProductClick = (product: Product) => {
@@ -396,7 +278,7 @@ const POS = ({}: Props) => {
   // Add product to cart with variant and options
   const addToCart = (
     product: Product,
-    variant: Product["variants"][0] | undefined,
+    variant: ProductVariant | undefined,
     options: Record<string, string>
   ) => {
     setCart((prevCart) => {
@@ -438,27 +320,51 @@ const POS = ({}: Props) => {
   };
 
   // Confirm adding product with selected options
-  const handleConfirmAddToCart = () => {
+  const handleConfirmAddToCart = async () => {
     if (!selectedProduct) return;
 
-    const variant = findMatchingVariant(selectedProduct, selectedOptions);
-    addToCart(selectedProduct, variant || undefined, selectedOptions);
+    // If product has options, ensure we have a variant
+    if (selectedProduct.options && selectedProduct.options.length > 0) {
+      if (!foundVariant) {
+        // Try to find variant one more time
+        const variant = await findMatchingVariant(
+          selectedProduct,
+          selectedOptions
+        );
+        if (!variant) {
+          toast.error(
+            "لم يتم العثور على متغير مطابق. يرجى التحقق من الخيارات المحددة."
+          );
+          return;
+        }
+        addToCart(selectedProduct, variant, selectedOptions);
+      } else {
+        addToCart(selectedProduct, foundVariant, selectedOptions);
+      }
+    } else {
+      // Product without variants
+      addToCart(selectedProduct, undefined, selectedOptions);
+    }
 
     setIsOptionDialogOpen(false);
     setSelectedProduct(null);
     setSelectedOptions({});
+    setFoundVariant(null);
   };
 
   // Check if all required options are selected
+  // Note: This is a synchronous check for UI state. The actual variant matching happens async in handleConfirmAddToCart
   const canAddToCart = () => {
     if (!selectedProduct) return false;
     if (!selectedProduct.options || selectedProduct.options.length === 0)
       return true;
 
-    return (
-      selectedProduct.options.every((option) => selectedOptions[option.name]) &&
-      findMatchingVariant(selectedProduct, selectedOptions) !== undefined
+    // Check if all options have been selected
+    const allOptionsSelected = selectedProduct.options.every(
+      (option) => selectedOptions[option.name]
     );
+
+    return allOptionsSelected;
   };
 
   // Update quantity
@@ -486,12 +392,125 @@ const POS = ({}: Props) => {
   // Calculate total
   const calculateTotal = () => {
     return cart.reduce((total, item) => {
-      const price = item.variant?.price ?? item.product.price;
+      const price = item.variant?.price ?? item.product.price ?? 0;
       return total + price * item.quantity;
     }, 0);
   };
 
   const total = calculateTotal();
+
+  // Helper function to get display name from JSON field
+  const getDisplayName = (name: any): string => {
+    if (typeof name === "string") return name;
+    if (typeof name === "object" && name !== null) {
+      return (name as any).ar || (name as any).name || "";
+    }
+    return "";
+  };
+
+  // Reset region when state changes
+  useEffect(() => {
+    if (isCheckoutDialogOpen && checkoutForm.stateId) {
+      setCheckoutForm((prev) => ({ ...prev, regionId: "" }));
+    }
+  }, [checkoutForm.stateId, isCheckoutDialogOpen]);
+
+  // Handle checkout
+  const handleCheckout = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate required fields
+    if (
+      !checkoutForm.name ||
+      !checkoutForm.email ||
+      !checkoutForm.phone ||
+      !checkoutForm.stateId ||
+      !checkoutForm.regionId ||
+      !checkoutForm.nearest_point ||
+      !checkoutForm.paymentMethodId
+    ) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    // Validate cart is not empty
+    if (cart.length === 0) {
+      toast.error("السلة فارغة. يرجى إضافة منتجات أولاً");
+      return;
+    }
+
+    // Transform cart items to checkout format
+    const checkoutProducts = cart.map((item) => {
+      // If variant exists, include both productId and variantId
+      // If no variant, include only productId
+      if (item.variant) {
+        return {
+          productId: item.product.id,
+          variantId: item.variant.id,
+          quantity: item.quantity,
+        };
+      } else {
+        return {
+          productId: item.product.id,
+          quantity: item.quantity,
+        };
+      }
+    });
+
+    const checkoutData = {
+      domain: storeDomain,
+      name: checkoutForm.name,
+      email: checkoutForm.email,
+      phone: checkoutForm.phone,
+      stateId: checkoutForm.stateId,
+      regionId: checkoutForm.regionId,
+      nearest_point: checkoutForm.nearest_point,
+      note: checkoutForm.note || undefined,
+      paymentMethodId: checkoutForm.paymentMethodId,
+      products: checkoutProducts,
+    };
+
+    checkoutOrder(checkoutData, {
+      onSuccess: (response) => {
+        toast.success("تم إنشاء الطلب بنجاح");
+        setIsCheckoutDialogOpen(false);
+        setCart([]);
+        setCheckoutForm({
+          name: "",
+          email: "",
+          phone: "",
+          stateId: "",
+          regionId: "",
+          nearest_point: "",
+          note: "",
+          paymentMethodId: "",
+        });
+        // Navigate to order details if order ID is available
+        if (response?.order?.id) {
+          navigate(`/orders/${response.order.id}`);
+        } else {
+          navigate("/orders");
+        }
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message || "فشل في إنشاء الطلب. حاول مرة أخرى."
+        );
+      },
+    });
+  };
+
+  // Loading state
+  if (isLoadingCategories || isLoadingProducts) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="text-center">
+          <Package className="size-16 text-muted-foreground mb-4 mx-auto animate-pulse" />
+          <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-4rem)] flex gap-4 p-4">
@@ -513,16 +532,23 @@ const POS = ({}: Props) => {
 
             {/* Categories */}
             <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={selectedCategoryId === null ? "default" : "secondary"}
+                className="cursor-pointer px-4 py-2 text-sm"
+                onClick={() => setSelectedCategoryId(null)}
+              >
+                الكل
+              </Badge>
               {categories.map((category) => (
                 <Badge
-                  key={category}
+                  key={category.id}
                   variant={
-                    selectedCategory === category ? "default" : "secondary"
+                    selectedCategoryId === category.id ? "default" : "secondary"
                   }
                   className="cursor-pointer px-4 py-2 text-sm"
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => setSelectedCategoryId(category.id)}
                 >
-                  {category}
+                  {getCategoryName(category)}
                 </Badge>
               ))}
             </div>
@@ -556,7 +582,7 @@ const POS = ({}: Props) => {
                         {product.image ? (
                           <img
                             src={product.image}
-                            alt={product.name}
+                            alt={product.title}
                             className="w-full h-full object-cover rounded-lg"
                           />
                         ) : (
@@ -567,7 +593,7 @@ const POS = ({}: Props) => {
                       {/* Product Info */}
                       <div className="space-y-2">
                         <h3 className="font-semibold text-right line-clamp-1">
-                          {product.name}
+                          {product.title}
                         </h3>
                         {product.description && (
                           <p className="text-sm text-muted-foreground text-right line-clamp-2">
@@ -575,11 +601,14 @@ const POS = ({}: Props) => {
                           </p>
                         )}
                         <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="text-xs">
-                            {product.category}
-                          </Badge>
+                          {product.categories &&
+                            product.categories.length > 0 && (
+                              <Badge variant="secondary" className="text-xs">
+                                {getCategoryName(product.categories[0])}
+                              </Badge>
+                            )}
                           <span className="font-bold text-primary">
-                            {product.price.toLocaleString()} د.ع
+                            {(product.price ?? 0).toLocaleString()} د.ع
                           </span>
                         </div>
                       </div>
@@ -638,7 +667,7 @@ const POS = ({}: Props) => {
                           {image ? (
                             <img
                               src={image}
-                              alt={item.product.name}
+                              alt={item.product.title}
                               className="w-full h-full object-cover rounded-lg"
                             />
                           ) : (
@@ -648,7 +677,9 @@ const POS = ({}: Props) => {
 
                         {/* Product Details */}
                         <div className="flex-1 text-right">
-                          <h4 className="font-semibold">{item.product.name}</h4>
+                          <h4 className="font-semibold">
+                            {item.product.title}
+                          </h4>
                           {Object.keys(item.selectedOptions).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {Object.entries(item.selectedOptions).map(
@@ -665,7 +696,7 @@ const POS = ({}: Props) => {
                             </div>
                           )}
                           <p className="text-sm text-muted-foreground mt-1">
-                            {price.toLocaleString()} د.ع
+                            {(price ?? 0).toLocaleString()} د.ع
                           </p>
                         </div>
                       </div>
@@ -702,7 +733,7 @@ const POS = ({}: Props) => {
                           </Button>
                         </div>
                         <span className="font-bold text-primary">
-                          {(price * item.quantity).toLocaleString()} د.ع
+                          {((price ?? 0) * item.quantity).toLocaleString()} د.ع
                         </span>
                       </div>
                     </div>
@@ -733,7 +764,11 @@ const POS = ({}: Props) => {
                   {total.toLocaleString()} د.ع
                 </span>
               </div>
-              <Button className="w-full" size="lg">
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => setIsCheckoutDialogOpen(true)}
+              >
                 إتمام الطلب
               </Button>
             </CardContent>
@@ -745,27 +780,31 @@ const POS = ({}: Props) => {
       <Dialog open={isOptionDialogOpen} onOpenChange={setIsOptionDialogOpen}>
         <DialogContent className="max-w-md text-right">
           <DialogHeader>
-            <DialogTitle>{selectedProduct?.name}</DialogTitle>
+            <DialogTitle>{selectedProduct?.title}</DialogTitle>
           </DialogHeader>
 
           {selectedProduct && (
             <div className="space-y-4 py-4">
               {selectedProduct.options?.map((option) => (
-                <div key={option.name} className="space-y-2">
+                <div key={option.id} className="space-y-2">
                   <label className="text-sm font-medium">{option.name}</label>
                   <div className="flex flex-wrap gap-2">
                     {option.values.map((value) => {
-                      const isSelected = selectedOptions[option.name] === value;
+                      const valueStr = value.value || value.label || "";
+                      const isSelected =
+                        selectedOptions[option.name] === valueStr;
                       return (
                         <Button
-                          key={value}
+                          key={value.id}
                           type="button"
                           variant={isSelected ? "default" : "secondary"}
                           size="sm"
-                          onClick={() => handleOptionSelect(option.name, value)}
+                          onClick={() =>
+                            handleOptionSelect(option.name, valueStr)
+                          }
                           className="min-w-[80px]"
                         >
-                          {value}
+                          {value.label || value.value || ""}
                         </Button>
                       );
                     })}
@@ -776,32 +815,39 @@ const POS = ({}: Props) => {
               {/* Show selected variant price */}
               {canAddToCart() && (
                 <div className="pt-4 border-t">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      السعر:
-                    </span>
-                    <span className="text-lg font-bold text-primary">
-                      {(
-                        findMatchingVariant(selectedProduct, selectedOptions)
-                          ?.price ?? selectedProduct.price
-                      ).toLocaleString()}{" "}
-                      د.ع
-                    </span>
-                  </div>
-                  {findMatchingVariant(selectedProduct, selectedOptions)
-                    ?.stock !== undefined && (
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-muted-foreground">
-                        المخزون:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {
-                          findMatchingVariant(selectedProduct, selectedOptions)
-                            ?.stock
-                        }{" "}
-                        قطعة
+                  {isFindingVariant ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground mr-2">
+                        جاري البحث عن المتغير...
                       </span>
                     </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">
+                          السعر:
+                        </span>
+                        <span className="text-lg font-bold text-primary">
+                          {(
+                            foundVariant?.price ??
+                            selectedProduct.price ??
+                            0
+                          ).toLocaleString()}{" "}
+                          د.ع
+                        </span>
+                      </div>
+                      {foundVariant?.stock !== undefined && (
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-sm text-muted-foreground">
+                            المخزون:
+                          </span>
+                          <span className="text-sm font-medium">
+                            {foundVariant.stock} قطعة
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -826,6 +872,291 @@ const POS = ({}: Props) => {
               إضافة للسلة
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Checkout Dialog */}
+      <Dialog
+        open={isCheckoutDialogOpen}
+        onOpenChange={setIsCheckoutDialogOpen}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto text-right">
+          <DialogHeader>
+            <DialogTitle>إتمام الطلب</DialogTitle>
+            <DialogDescription>
+              يرجى إدخال معلومات العميل وعنوان التوصيل لإتمام الطلب
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCheckout} className="space-y-4">
+            {/* Customer Information */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg">معلومات العميل</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">
+                    الاسم <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    value={checkoutForm.name}
+                    onChange={(e) =>
+                      setCheckoutForm((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    placeholder="اسم العميل"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">
+                    البريد الإلكتروني{" "}
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={checkoutForm.email}
+                    onChange={(e) =>
+                      setCheckoutForm((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    placeholder="example@email.com"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">
+                    الهاتف <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={checkoutForm.phone}
+                    onChange={(e) =>
+                      setCheckoutForm((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                    placeholder="9641234567890"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="paymentMethodId">
+                    طريقة الدفع <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="paymentMethodId"
+                    value={checkoutForm.paymentMethodId}
+                    onChange={(e) =>
+                      setCheckoutForm((prev) => ({
+                        ...prev,
+                        paymentMethodId: e.target.value,
+                      }))
+                    }
+                    placeholder="معرف طريقة الدفع"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Delivery Address */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <MapPin className="size-5" />
+                عنوان التوصيل
+              </h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="state">
+                    المحافظة <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={checkoutForm.stateId}
+                    onValueChange={(value) =>
+                      setCheckoutForm((prev) => ({
+                        ...prev,
+                        stateId: value,
+                        regionId: "",
+                      }))
+                    }
+                    disabled={isLoadingStates}
+                    required
+                  >
+                    <SelectTrigger id="state" className="w-full text-right">
+                      <div className="flex items-center gap-2 flex-1">
+                        <SelectValue placeholder="اختر المحافظة">
+                          {checkoutForm.stateId &&
+                            getDisplayName(
+                              states?.find(
+                                (s: any) => s.id === checkoutForm.stateId
+                              )?.name.arabic
+                            )}
+                        </SelectValue>
+                        {isLoadingStates && (
+                          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingStates ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="size-4 animate-spin" />
+                        </div>
+                      ) : states && states.length > 0 ? (
+                        states.map((state: any) => (
+                          <SelectItem key={state.id} value={state.id}>
+                            {getDisplayName(state.name.arabic)}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                          لا توجد ولايات متاحة
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="region">
+                    المنطقة <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={checkoutForm.regionId}
+                    onValueChange={(value) =>
+                      setCheckoutForm((prev) => ({
+                        ...prev,
+                        regionId: value,
+                      }))
+                    }
+                    disabled={isLoadingRegions || !checkoutForm.stateId}
+                    required
+                  >
+                    <SelectTrigger id="region" className="w-full text-right">
+                      <div className="flex items-center gap-2 flex-1">
+                        <SelectValue placeholder="اختر المنطقة">
+                          {checkoutForm.regionId &&
+                            getDisplayName(
+                              regions?.find(
+                                (r: any) => r.id === checkoutForm.regionId
+                              )?.name.arabic
+                            )}
+                        </SelectValue>
+                        {isLoadingRegions && (
+                          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingRegions ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="size-4 animate-spin" />
+                        </div>
+                      ) : !checkoutForm.stateId ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                          يرجى اختيار المحافظة أولاً
+                        </div>
+                      ) : regions && regions.length > 0 ? (
+                        regions.map((region: any) => (
+                          <SelectItem key={region.id} value={region.id}>
+                            {getDisplayName(region.name.arabic)}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                          لا توجد مناطق متاحة
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="nearest_point">
+                    أقرب نقطة <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="nearest_point"
+                    value={checkoutForm.nearest_point}
+                    onChange={(e) =>
+                      setCheckoutForm((prev) => ({
+                        ...prev,
+                        nearest_point: e.target.value,
+                      }))
+                    }
+                    placeholder="عنوان مفصل أو أقرب نقطة معروفة"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="note">ملاحظات (اختياري)</Label>
+                  <Input
+                    id="note"
+                    value={checkoutForm.note}
+                    onChange={(e) =>
+                      setCheckoutForm((prev) => ({
+                        ...prev,
+                        note: e.target.value,
+                      }))
+                    }
+                    placeholder="ملاحظات إضافية للطلب"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Order Summary */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">ملخص الطلب</h3>
+              <div className="space-y-2 p-4 bg-muted rounded-lg">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">عدد العناصر:</span>
+                  <span className="font-semibold">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">المجموع:</span>
+                  <span className="text-lg font-bold text-primary">
+                    {total.toLocaleString()} د.ع
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsCheckoutDialogOpen(false)}
+                disabled={isCheckingOut}
+              >
+                إلغاء
+              </Button>
+              <Button type="submit" disabled={isCheckingOut}>
+                {isCheckingOut ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin mr-2" />
+                    جاري المعالجة...
+                  </>
+                ) : (
+                  "تأكيد الطلب"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

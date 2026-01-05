@@ -18,6 +18,21 @@ export const productAPI = {
   },
 
   /**
+   * Get all products by store domain with optional filtering and pagination
+   */
+  fetchAllByStoreDomain: async (domain: string, params?: any): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/product/by-store-domain", {
+      params: {
+        store: domain,
+        ...(params?.categoryId && { categoryId: params.categoryId }),
+        ...(params?.page && { page: params.page }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
    * Get all products with optional filtering and pagination
    */
   search: async (params?: any): Promise<ProductListResponse> => {
@@ -56,7 +71,9 @@ export const productAPI = {
    * Add categories to a product
    */
   addCategory: async (id: string, categoryIds: string[]): Promise<any> => {
-    const { data } = await axiosInstance.post<any>(`/product/${id}/category`, { categoryIds });
+    const { data } = await axiosInstance.post<any>(`/product/${id}/category`, {
+      categoryIds,
+    });
     return data;
   },
 
@@ -64,7 +81,9 @@ export const productAPI = {
    * Remove a category from a product
    */
   removeCategory: async (id: string, categoryId: string): Promise<any> => {
-    const { data } = await axiosInstance.delete<any>(`/product/${id}/category/${categoryId}`);
+    const { data } = await axiosInstance.delete<any>(
+      `/product/${id}/category/${categoryId}`
+    );
     return data;
   },
 
@@ -88,7 +107,10 @@ export const productAPI = {
    * Update a product option
    */
   updateProductOption: async (id: string, option: any): Promise<any> => {
-    const { data } = await axiosInstance.put<any>(`/product/option/${id}`, option);
+    const { data } = await axiosInstance.put<any>(
+      `/product/option/${id}`,
+      option
+    );
     return data;
   },
 
@@ -104,7 +126,10 @@ export const productAPI = {
    * Update a product option value
    */
   updateProductOptionValue: async (id: string, value: any): Promise<any> => {
-    const { data } = await axiosInstance.put<any>(`/product/option-value/${id}`, value);
+    const { data } = await axiosInstance.put<any>(
+      `/product/option-value/${id}`,
+      value
+    );
     return data;
   },
 
@@ -112,7 +137,9 @@ export const productAPI = {
    * Delete a product option value (soft delete)
    */
   deleteProductOptionValue: async (id: string): Promise<any> => {
-    const { data } = await axiosInstance.delete<any>(`/product/option-value/${id}`);
+    const { data } = await axiosInstance.delete<any>(
+      `/product/option-value/${id}`
+    );
     return data;
   },
 
@@ -137,6 +164,20 @@ export const productAPI = {
    */
   seedDummyProducts: async (): Promise<any> => {
     const { data } = await axiosInstance.post<any>("/product/dummy");
+    return data;
+  },
+
+  /**
+   * Find variant by product ID and selected options
+   */
+  findVariantByOptions: async (
+    productId: string,
+    selectedOptions: Record<string, string>
+  ): Promise<any> => {
+    const { data } = await axiosInstance.post<any>("/variant/find-by-options", {
+      productId,
+      selectedOptions,
+    });
     return data;
   },
 };

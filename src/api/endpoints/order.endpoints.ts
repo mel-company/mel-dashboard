@@ -34,8 +34,14 @@ export const orderAPI = {
   /**
    * Update delivery address of an order by ID
    */
-  updateDeliveryAddress: async (id: string, deliveryAddress: any): Promise<any> => {
-    const { data } = await axiosInstance.put<any>(`/order/${id}/update-delivery-address`, deliveryAddress);
+  updateDeliveryAddress: async (
+    id: string,
+    deliveryAddress: any
+  ): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/update-delivery-address`,
+      deliveryAddress
+    );
     return data;
   },
 
@@ -44,6 +50,25 @@ export const orderAPI = {
    */
   fetchOne: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.get<any>(`/order/${id}`);
+    return data;
+  },
+
+  /**
+   * create order
+   */
+  createOrder: async (order: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/order/create-order",
+      order
+    );
+    return data;
+  },
+
+  /**
+   * Checkout a new order
+   */
+  checkout: async (order: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>("/order/checkout", order);
     return data;
   },
 

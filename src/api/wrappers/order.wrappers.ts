@@ -31,7 +31,8 @@ export const useUpdateDeliveryAddress = (id: string) => {
   const queryClient = useQueryClient();
 
   return useMutation<any, Error, any>({
-    mutationFn: (deliveryAddress: any) => orderAPI.updateDeliveryAddress(id, deliveryAddress),
+    mutationFn: (deliveryAddress: any) =>
+      orderAPI.updateDeliveryAddress(id, deliveryAddress),
     onSuccess: () => {
       // Invalidate and refetch the specific order
       queryClient.invalidateQueries({ queryKey: orderKeys.detail(id) });
@@ -60,6 +61,19 @@ export const useFetchOrder = (id: string, enabled: boolean = true) => {
     queryKey: orderKeys.detail(id),
     queryFn: () => orderAPI.fetchOne(id),
     enabled: enabled && !!id,
+  });
+};
+
+/**
+ * Checkout a new order mutation
+ */
+export const useCheckoutOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, any>({
+    mutationFn: (order: any) => orderAPI.createOrder(order),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    },
   });
 };
 
