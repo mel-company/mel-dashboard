@@ -110,4 +110,18 @@ export const orderAPI = {
     );
     return data;
   },
+
+  /**
+   * Add products to an existing order
+   */
+  addProductsToOrder: async (
+    orderId: string,
+    products: any
+  ): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      `/order/${orderId}/products`,
+      products
+    );
+    return data;
+  },
 };

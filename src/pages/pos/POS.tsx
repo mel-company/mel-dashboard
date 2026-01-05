@@ -35,11 +35,14 @@ import {
   useFindVariantByOptions,
 } from "@/api/wrappers/product.wrappers";
 import { useFetchCategoriesByStoreDomain } from "@/api/wrappers/category.wrappers";
-import { useCheckoutOrder } from "@/api/wrappers/order.wrappers";
+import {
+  useCheckoutOrder,
+  useAddProductsToOrder,
+} from "@/api/wrappers/order.wrappers";
 import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
 import { toast } from "sonner";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // Product types matching API structure
 type Product = {
@@ -146,6 +149,8 @@ const POS = ({}: Props) => {
   // Checkout related hooks
   const { mutate: checkoutOrder, isPending: isCheckingOut } =
     useCheckoutOrder();
+  const { mutate: addProductsToOrder, isPending: isAddingProducts } =
+    useAddProductsToOrder();
   const { data: states, isLoading: isLoadingStates } = useFetchStates(
     undefined,
     isCheckoutDialogOpen
@@ -420,23 +425,9 @@ const POS = ({}: Props) => {
     }
   }, [checkoutForm.stateId, isCheckoutDialogOpen]);
 
-  // Handle checkout
+  // Handle checkout or add products to existing order
   const handleCheckout = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate required fields
-    if (
-      !checkoutForm.name ||
-      !checkoutForm.email ||
-      !checkoutForm.phone ||
-      !checkoutForm.stateId ||
-      !checkoutForm.regionId ||
-      !checkoutForm.nearest_point ||
-      !checkoutForm.paymentMethodId
-    ) {
-      toast.error("يرجى ملء جميع الحقول المطلوبة");
-      return;
-    }
 
     // Validate cart is not empty
     if (cart.length === 0) {
@@ -444,8 +435,8 @@ const POS = ({}: Props) => {
       return;
     }
 
-    // Transform cart items to checkout format
-    const checkoutProducts = cart.map((item) => {
+    // Transform cart items to products format
+    const products = cart.map((item) => {
       // If variant exists, include both productId and variantId
       // If no variant, include only productId
       if (item.variant) {
@@ -462,6 +453,46 @@ const POS = ({}: Props) => {
       }
     });
 
+    // If orderId exists, add products to existing order
+    if (orderId) {
+      addProductsToOrder(
+        {
+          orderId: orderId,
+          products: { products },
+        },
+        {
+          onSuccess: () => {
+            toast.success("تم إضافة المنتجات إلى الطلب بنجاح");
+            setCart([]);
+            // Navigate to order details
+            navigate(`/orders/${orderId}`);
+          },
+          onError: (error: any) => {
+            toast.error(
+              error?.response?.data?.message ||
+                "فشل في إضافة المنتجات إلى الطلب. حاول مرة أخرى."
+            );
+          },
+        }
+      );
+      return;
+    }
+
+    // Otherwise, create a new order (requires customer details)
+    // Validate required fields
+    if (
+      !checkoutForm.name ||
+      !checkoutForm.email ||
+      !checkoutForm.phone ||
+      !checkoutForm.stateId ||
+      !checkoutForm.regionId ||
+      !checkoutForm.nearest_point ||
+      !checkoutForm.paymentMethodId
+    ) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة");
+      return;
+    }
+
     const checkoutData = {
       domain: storeDomain,
       name: checkoutForm.name,
@@ -472,7 +503,7 @@ const POS = ({}: Props) => {
       nearest_point: checkoutForm.nearest_point,
       note: checkoutForm.note || undefined,
       paymentMethodId: checkoutForm.paymentMethodId,
-      products: checkoutProducts,
+      products: products,
     };
 
     checkoutOrder(checkoutData, {
@@ -772,9 +803,29 @@ const POS = ({}: Props) => {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => setIsCheckoutDialogOpen(true)}
+                onClick={() => {
+                  if (orderId) {
+                    // If orderId exists, directly add products without showing dialog
+                    handleCheckout({
+                      preventDefault: () => {},
+                    } as React.FormEvent);
+                  } else {
+                    // Otherwise, show checkout dialog for new order
+                    setIsCheckoutDialogOpen(true);
+                  }
+                }}
+                disabled={isAddingProducts}
               >
-                إتمام الطلب
+                {isAddingProducts ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin mr-2" />
+                    جاري الإضافة...
+                  </>
+                ) : orderId ? (
+                  "إضافة إلى الطلب"
+                ) : (
+                  "إتمام الطلب"
+                )}
               </Button>
             </CardContent>
           </Card>

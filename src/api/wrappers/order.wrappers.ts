@@ -149,3 +149,23 @@ export const useUpdateOrderProduct = () => {
     },
   });
 };
+
+/**
+ * Add products to an existing order mutation
+ */
+export const useAddProductsToOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { orderId: string; products: any }>({
+    mutationFn: ({ orderId, products }) =>
+      orderAPI.addProductsToOrder(orderId, products),
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch the specific order
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.detail(variables.orderId),
+      });
+      // Also invalidate the orders list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    },
+  });
+};
