@@ -95,4 +95,19 @@ export const orderAPI = {
     const { data } = await axiosInstance.delete<any>(`/order/${id}`);
     return data;
   },
+
+  /**
+   * Update an order product
+   */
+  updateOrderProduct: async (
+    orderId: string,
+    productId: string,
+    orderProduct: any
+  ): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${orderId}/product/${productId}`,
+      orderProduct
+    );
+    return data;
+  },
 };

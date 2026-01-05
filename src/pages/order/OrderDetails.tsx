@@ -46,6 +46,7 @@ import {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
 import EditDeliveryAddressDialog from "./EditDeliveryAddressDialog";
+import EditProductVariantDialog from "./EditProductVariantDialog";
 import { toast } from "sonner";
 
 const OrderDetails = () => {
@@ -53,6 +54,10 @@ const OrderDetails = () => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditAddressDialogOpen, setIsEditAddressDialogOpen] = useState(false);
+  const [isEditVariantDialogOpen, setIsEditVariantDialogOpen] = useState(false);
+  const [selectedOrderProduct, setSelectedOrderProduct] = useState<any | null>(
+    null
+  );
 
   const {
     data: order,
@@ -290,7 +295,7 @@ const OrderDetails = () => {
                 <Button
                   variant="secondary"
                   className="gap-2"
-                  onClick={() => navigate("/pos")}
+                  onClick={() => navigate(`/pos?orderId=${order.id}`)}
                 >
                   <Plus className="size-4" />
                   إضافة منتج
@@ -319,53 +324,93 @@ const OrderDetails = () => {
                           )}
                         </div>
                         <div className="flex-1 text-right">
-                          <div className="flex items-center justify-between mb-2">
-                            <Link
-                              to={`/products/${
-                                product?.product?.id || product.id
-                              }`}
-                              className="font-semibold hover:text-primary transition-colors"
-                            >
-                              {product?.product?.title}
-                            </Link>
-                            <div className="flex items-center flex-col gap-2">
-                              <span className="font-bold text-primary">
-                                {product.price?.toLocaleString() ?? "—"} د.ع
-                              </span>
-                              <span className="font-bold text-primary">
-                                {product.quantity?.toLocaleString()} وحدة
-                              </span>
-                            </div>
-                          </div>
-                          {/* Variant Options */}
-                          {product?.variant?.optionValues &&
-                            product.variant.optionValues.length > 0 && (
-                              <div className="flex items-center gap-2 flex-wrap mb-2">
-                                {product.variant.optionValues.map(
-                                  (optionValue: any) => (
-                                    <Badge
-                                      key={optionValue.id}
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      {optionValue.label || optionValue.value}
-                                    </Badge>
-                                  )
+                          <div className="flex itemscenter justify-between mb-2">
+                            <div>
+                              <Link
+                                to={`/products/${
+                                  product?.product?.id || product.id
+                                }`}
+                                className="font-semibold hover:text-primary transition-colors"
+                              >
+                                {product?.product?.title}
+                              </Link>
+
+                              {/* Variant Options */}
+                              {product?.variant?.optionValues &&
+                                product.variant.optionValues.length > 0 && (
+                                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                                    {product.variant.optionValues.map(
+                                      (optionValue: any) => (
+                                        <Badge
+                                          key={optionValue.id}
+                                          variant="secondary"
+                                          className="text-xs"
+                                        >
+                                          {optionValue.label ||
+                                            optionValue.value}
+                                        </Badge>
+                                      )
+                                    )}
+                                  </div>
                                 )}
-                              </div>
-                            )}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {product?.variant?.product?.rate !== null &&
-                              product?.variant?.product?.rate !== undefined && (
+
+                              <div className="flex flex-col  gap-1 flex-wrap">
                                 <div className="flex items-center gap-1">
                                   <span className="text-xs text-muted-foreground">
-                                    التقييم:
+                                    السعر:
                                   </span>
                                   <span className="text-xs font-medium">
-                                    {product?.variant?.product?.rate}
+                                    {product.price?.toLocaleString() ?? "—"} د.ع
                                   </span>
                                 </div>
-                              )}
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-muted-foreground">
+                                    الكمية:
+                                  </span>
+                                  <span className="text-xs font-medium">
+                                    {product.quantity?.toLocaleString() ?? "—"}{" "}
+                                  </span>
+                                </div>
+
+                                {/* <div className="flex items-center gap-2 flex-wrap">
+                                  {product?.variant?.product?.rate !== null &&
+                                    product?.variant?.product?.rate !==
+                                      undefined && (
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-xs text-muted-foreground">
+                                          التقييم:
+                                        </span>
+                                        <span className="text-xs font-medium">
+                                          {product?.variant?.product?.rate}
+                                        </span>
+                                      </div>
+                                    )}
+                                </div> */}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="default"
+                                  className="font-bold"
+                                  onClick={() => {
+                                    setSelectedOrderProduct(product);
+                                    setIsEditVariantDialogOpen(true);
+                                  }}
+                                >
+                                  <Edit className="size-4" />
+                                  <span className="text-xs">تعديل</span>
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  className="font-bold text-primary"
+                                >
+                                  <Trash2 className="size-4" />
+                                  <span className="text-xs">حذف</span>
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -759,6 +804,25 @@ const OrderDetails = () => {
             stateId: order.stateId || undefined,
             regionId: order.regionId || undefined,
             nearest_point: order.nearest_point || undefined,
+          }}
+        />
+      )}
+
+      {/* Edit Product Variant Dialog */}
+      {selectedOrderProduct && id && (
+        <EditProductVariantDialog
+          open={isEditVariantDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditVariantDialogOpen(open);
+            if (!open) {
+              setSelectedOrderProduct(null);
+            }
+          }}
+          orderProduct={selectedOrderProduct}
+          orderId={id}
+          onSuccess={() => {
+            // Refetch order data to show updated variant information
+            refetch();
           }}
         />
       )}

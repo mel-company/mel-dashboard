@@ -125,3 +125,27 @@ export const useDeleteOrder = () => {
     },
   });
 };
+
+/**
+ * Update an order product mutation
+ */
+export const useUpdateOrderProduct = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    any,
+    Error,
+    { orderId: string; productId: string; data: any }
+  >({
+    mutationFn: ({ orderId, productId, data }) =>
+      orderAPI.updateOrderProduct(orderId, productId, data),
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch the specific order
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.detail(variables.orderId),
+      });
+      // Also invalidate the orders list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    },
+  });
+};

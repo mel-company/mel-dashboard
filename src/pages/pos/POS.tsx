@@ -39,7 +39,7 @@ import { useCheckoutOrder } from "@/api/wrappers/order.wrappers";
 import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 // Product types matching API structure
 type Product = {
@@ -102,10 +102,15 @@ type Category = {
 type Props = {};
 
 const POS = ({}: Props) => {
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get("orderId");
+
   const navigate = useNavigate();
+
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
+
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isOptionDialogOpen, setIsOptionDialogOpen] = useState(false);
