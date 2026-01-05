@@ -169,3 +169,23 @@ export const useAddProductsToOrder = () => {
     },
   });
 };
+
+/**
+ * Remove an order product from an order mutation
+ */
+export const useRemoveOrderProduct = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { orderId: string; productId: string }>({
+    mutationFn: ({ orderId, productId }) =>
+      orderAPI.removeOrderProduct(orderId, productId),
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch the specific order
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.detail(variables.orderId),
+      });
+      // Also invalidate the orders list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    },
+  });
+};

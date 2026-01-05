@@ -124,4 +124,17 @@ export const orderAPI = {
     );
     return data;
   },
+
+  /**
+   * Remove an order product from an order
+   */
+  removeOrderProduct: async (
+    orderId: string,
+    productId: string
+  ): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(
+      `/order/${orderId}/product/${productId}`
+    );
+    return data;
+  },
 };

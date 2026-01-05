@@ -42,11 +42,13 @@ import {
   useFetchOrder,
   useUpdateOrder,
   useDeleteOrder,
+  useRemoveOrderProduct,
 } from "@/api/wrappers/order.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
 import EditDeliveryAddressDialog from "./EditDeliveryAddressDialog";
 import EditProductVariantDialog from "./EditProductVariantDialog";
+import RemoveOrderProduct from "./RemoveOrderProduct";
 import { toast } from "sonner";
 
 const OrderDetails = () => {
@@ -55,9 +57,12 @@ const OrderDetails = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditAddressDialogOpen, setIsEditAddressDialogOpen] = useState(false);
   const [isEditVariantDialogOpen, setIsEditVariantDialogOpen] = useState(false);
+  const [isRemoveProductDialogOpen, setIsRemoveProductDialogOpen] =
+    useState(false);
   const [selectedOrderProduct, setSelectedOrderProduct] = useState<any | null>(
     null
   );
+  const [productToRemove, setProductToRemove] = useState<any | null>(null);
 
   const {
     data: order,
@@ -71,6 +76,8 @@ const OrderDetails = () => {
 
   const { mutate: updateOrder, isPending: isUpdating } = useUpdateOrder();
   const { mutate: deleteOrder, isPending: isDeleting } = useDeleteOrder();
+  const { mutate: removeOrderProduct, isPending: isRemovingProduct } =
+    useRemoveOrderProduct();
 
   // Calculate total price
   const calculateTotal = () => {
@@ -405,9 +412,20 @@ const OrderDetails = () => {
                                 <Button
                                   variant="destructive"
                                   className="font-bold text-primary"
+                                  onClick={() => {
+                                    setProductToRemove(product);
+                                    setIsRemoveProductDialogOpen(true);
+                                  }}
+                                  disabled={isRemovingProduct}
                                 >
-                                  <Trash2 className="size-4" />
-                                  <span className="text-xs">حذف</span>
+                                  {isRemovingProduct ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Trash2 className="size-4" />
+                                      <span className="text-xs">حذف</span>
+                                    </>
+                                  )}
                                 </Button>
                               </div>
                             </div>
@@ -823,6 +841,44 @@ const OrderDetails = () => {
           onSuccess={() => {
             // Refetch order data to show updated variant information
             refetch();
+          }}
+        />
+      )}
+
+      {/* Remove Order Product Dialog */}
+      {productToRemove && id && (
+        <RemoveOrderProduct
+          open={isRemoveProductDialogOpen}
+          onOpenChange={(open) => {
+            setIsRemoveProductDialogOpen(open);
+            if (!open) {
+              setProductToRemove(null);
+            }
+          }}
+          orderProduct={productToRemove}
+          orderId={id}
+          isRemoving={isRemovingProduct}
+          onConfirm={() => {
+            removeOrderProduct(
+              {
+                orderId: id || "",
+                productId: productToRemove.id,
+              },
+              {
+                onSuccess: () => {
+                  toast.success("تم حذف المنتج من الطلب بنجاح");
+                  setIsRemoveProductDialogOpen(false);
+                  setProductToRemove(null);
+                  refetch();
+                },
+                onError: (error: any) => {
+                  toast.error(
+                    error?.response?.data?.message ||
+                      "فشل في حذف المنتج. حاول مرة أخرى."
+                  );
+                },
+              }
+            );
           }}
         />
       )}
