@@ -44,6 +44,17 @@ const PaymentMethodsSettings = ({}: Props) => {
       credentials: {},
       autoCapture: false,
     },
+    {
+      id: "credit-card",
+      name: "الدفع بالبطاقة الائتمانية",
+      enabled: true,
+      testMode: false,
+      credentials: {
+        merchantId: "",
+        IBAN: "",
+      },
+      autoCapture: false,
+    },
   ]);
 
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
@@ -112,8 +123,8 @@ const PaymentMethodsSettings = ({}: Props) => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {paymentMethods.map((method) => (
-          <Card key={method.id}>
-            <CardHeader>
+          <Card key={method.id} className="gap-0">
+            <CardHeader className="">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
@@ -151,19 +162,6 @@ const PaymentMethodsSettings = ({}: Props) => {
               <CardContent className="space-y-4">
                 {method.id !== "cash-on-delivery" && (
                   <>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>وضع الاختبار</Label>
-                        <p className="text-sm text-muted-foreground">
-                          استخدام بيانات اختبارية للدفع
-                        </p>
-                      </div>
-                      <Switch
-                        checked={method.testMode}
-                        onCheckedChange={() => toggleTestMode(method.id)}
-                      />
-                    </div>
-
                     {method.testMode && (
                       <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg flex items-start gap-2">
                         <AlertCircle className="size-5 text-yellow-600 dark:text-yellow-500 mt-0.5" />
@@ -226,30 +224,17 @@ const PaymentMethodsSettings = ({}: Props) => {
                         </div>
                       ))}
                     </div>
-
-                    <div className="flex items-center justify-between border-t pt-4">
-                      <div className="space-y-0.5">
-                        <Label>الاستيلاء التلقائي</Label>
-                        <p className="text-sm text-muted-foreground">
-                          خصم المبلغ تلقائياً عند تأكيد الطلب
-                        </p>
-                      </div>
-                      <Switch
-                        checked={method.autoCapture}
-                        onCheckedChange={() => toggleAutoCapture(method.id)}
-                      />
-                    </div>
                   </>
                 )}
 
-                {method.id === "cash-on-delivery" && (
+                {/* {method.id === "cash-on-delivery" && (
                   <div className="p-4 bg-muted rounded-lg">
                     <p className="text-sm text-muted-foreground">
                       لا يتطلب هذا الأسلوب أي إعدادات إضافية. سيتم تفعيله
                       تلقائياً عند تفعيله.
                     </p>
                   </div>
-                )}
+                )} */}
               </CardContent>
             )}
           </Card>
@@ -257,7 +242,7 @@ const PaymentMethodsSettings = ({}: Props) => {
 
         {/* Submit Button */}
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline">
+          <Button type="button" variant="secondary">
             إلغاء
           </Button>
           <Button type="submit" className="gap-2">

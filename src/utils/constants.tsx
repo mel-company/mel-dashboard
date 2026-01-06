@@ -4,6 +4,11 @@ export enum DISCOUNT_STATUS {
   EXPIRED = "EXPIRED",
 }
 
+export enum PRODUCT_STATUS {
+  DRAFT = "DRAFT",
+  PUBLISHED = "PUBLISHED",
+}
+
 export enum TIMEZONE {
   BAGHDAD = "BAGHDAD",
   DUBAI = "DUBAI",

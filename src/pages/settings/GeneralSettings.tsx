@@ -80,11 +80,28 @@ const GeneralSettings = ({}: Props) => {
 
   return (
     <div className="space-y-6 min-h-screen pb-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">الإعدادات العامة</h1>
-        <p className="text-muted-foreground mt-1">
-          قم بتكوين الإعدادات العامة للمتجر والمنتجات والطلبات
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            الإعدادات العامة
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            قم بتكوين الإعدادات العامة للمتجر والمنتجات والطلبات
+          </p>
+        </div>
+
+        <div>
+          {/* Submit Button */}
+          <div className="flex justify-end gap-4">
+            <Button type="button" variant="secondary">
+              إلغاء
+            </Button>
+            <Button type="submit" className="gap-2">
+              <Save className="size-4" />
+              حفظ الإعدادات
+            </Button>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -98,6 +115,45 @@ const GeneralSettings = ({}: Props) => {
             <CardDescription>إعدادات المنتجات وإدارة المخزون</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>تتبع المخزون</Label>
+                <p className="text-sm text-muted-foreground">
+                  تتبع الكميات المتاحة للمنتجات
+                </p>
+              </div>
+              <Switch
+                checked={settings.inventoryTracking}
+                onCheckedChange={() => handleToggle("inventoryTracking")}
+              />
+            </div> */}
+
+            {/* <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>تفعيل تقييمات المنتجات</Label>
+                <p className="text-sm text-muted-foreground">
+                  السماح للعملاء بتقييم المنتجات
+                </p>
+              </div>
+              <Switch
+                checked={settings.enableProductReviews}
+                onCheckedChange={() => handleToggle("enableProductReviews")}
+              />
+            </div> */}
+
+            {/* <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>السماح بالطلبات المسبقة</Label>
+                <p className="text-sm text-muted-foreground">
+                  السماح بالطلب عند نفاد المخزون
+                </p>
+              </div>
+              <Switch
+                checked={settings.allowBackorders}
+                onCheckedChange={() => handleToggle("allowBackorders")}
+              />
+            </div> */}
+
             <div className="space-y-2">
               <Label htmlFor="defaultProductStatus">
                 حالة المنتج الافتراضية
@@ -112,19 +168,6 @@ const GeneralSettings = ({}: Props) => {
                 <option value="draft">مسودة</option>
                 <option value="published">منشور</option>
               </select>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>تتبع المخزون</Label>
-                <p className="text-sm text-muted-foreground">
-                  تتبع الكميات المتاحة للمنتجات
-                </p>
-              </div>
-              <Switch
-                checked={settings.inventoryTracking}
-                onCheckedChange={() => handleToggle("inventoryTracking")}
-              />
             </div>
 
             {settings.inventoryTracking && (
@@ -144,20 +187,7 @@ const GeneralSettings = ({}: Props) => {
               </div>
             )}
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>السماح بالطلبات المسبقة</Label>
-                <p className="text-sm text-muted-foreground">
-                  السماح بالطلب عند نفاد المخزون
-                </p>
-              </div>
-              <Switch
-                checked={settings.allowBackorders}
-                onCheckedChange={() => handleToggle("allowBackorders")}
-              />
-            </div>
-
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="variantLimit">حد المتغيرات للمنتج</Label>
               <Input
                 id="variantLimit"
@@ -168,60 +198,7 @@ const GeneralSettings = ({}: Props) => {
                 min={1}
                 className="text-right"
               />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>تفعيل تقييمات المنتجات</Label>
-                <p className="text-sm text-muted-foreground">
-                  السماح للعملاء بتقييم المنتجات
-                </p>
-              </div>
-              <Switch
-                checked={settings.enableProductReviews}
-                onCheckedChange={() => handleToggle("enableProductReviews")}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pricing & Tax */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="size-5" />
-              الأسعار والضرائب
-            </CardTitle>
-            <CardDescription>
-              إعدادات الأسعار والضرائب والخصومات
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>الأسعار شاملة الضريبة</Label>
-                <p className="text-sm text-muted-foreground">
-                  تضمين الضريبة في السعر المعروض
-                </p>
-              </div>
-              <Switch
-                checked={settings.taxInclusive}
-                onCheckedChange={() => handleToggle("taxInclusive")}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>تراكم الخصومات</Label>
-                <p className="text-sm text-muted-foreground">
-                  السماح بجمع عدة خصومات على نفس المنتج
-                </p>
-              </div>
-              <Switch
-                checked={settings.discountStacking}
-                onCheckedChange={() => handleToggle("discountStacking")}
-              />
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
@@ -235,22 +212,6 @@ const GeneralSettings = ({}: Props) => {
             <CardDescription>إعدادات معالجة الطلبات والفواتير</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="orderNumberFormat">تنسيق رقم الطلب</Label>
-              <Input
-                id="orderNumberFormat"
-                name="orderNumberFormat"
-                value={settings.orderNumberFormat}
-                onChange={handleInputChange}
-                placeholder="ORD-{YYYY}-{MM}-{####}"
-                className="text-right"
-              />
-              <p className="text-xs text-muted-foreground">
-                استخدم {"{YYYY}"} للسنة، {"{MM}"} للشهر، {"{####}"} للرقم
-                التسلسلي
-              </p>
-            </div>
-
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>تأكيد الطلبات تلقائياً</Label>
@@ -261,6 +222,19 @@ const GeneralSettings = ({}: Props) => {
               <Switch
                 checked={settings.autoConfirmOrders}
                 onCheckedChange={() => handleToggle("autoConfirmOrders")}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>السماح بتعديل الطلبات</Label>
+                <p className="text-sm text-muted-foreground">
+                  السماح بتعديل الطلبات قبل المعالجة والشحن
+                </p>
+              </div>
+              <Switch
+                checked={settings.allowOrderEditing}
+                onCheckedChange={() => handleToggle("allowOrderEditing")}
               />
             </div>
 
@@ -278,23 +252,10 @@ const GeneralSettings = ({}: Props) => {
                 className="text-right"
               />
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>السماح بتعديل الطلبات</Label>
-                <p className="text-sm text-muted-foreground">
-                  السماح بتعديل الطلبات بعد الشراء
-                </p>
-              </div>
-              <Switch
-                checked={settings.allowOrderEditing}
-                onCheckedChange={() => handleToggle("allowOrderEditing")}
-              />
-            </div>
           </CardContent>
         </Card>
 
-        {/* Customers */}
+        {/* Customers
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -359,7 +320,7 @@ const GeneralSettings = ({}: Props) => {
               />
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Maintenance Mode */}
         <Card>
@@ -385,17 +346,6 @@ const GeneralSettings = ({}: Props) => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Submit Button */}
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline">
-            إلغاء
-          </Button>
-          <Button type="submit" className="gap-2">
-            <Save className="size-4" />
-            حفظ الإعدادات
-          </Button>
-        </div>
       </form>
     </div>
   );
