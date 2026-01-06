@@ -9,7 +9,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Clock, Save, Package, Truck, InfoIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -26,34 +25,7 @@ import SelectDeliveryCompanyDialog from "./SelectDeliveryCompanyDialog";
 
 type Props = {};
 
-interface ShippingZone {
-  id: string;
-  name: string;
-  countries: string[];
-  rateType: "flat" | "weight" | "price";
-  rate: number;
-  freeShippingThreshold?: number;
-}
-
 const DeliverySettings = ({}: Props) => {
-  const [shippingZones, setShippingZones] = useState<ShippingZone[]>([
-    {
-      id: "1",
-      name: "بغداد",
-      countries: ["IQ"],
-      rateType: "flat",
-      rate: 5000,
-      freeShippingThreshold: 100000,
-    },
-    {
-      id: "2",
-      name: "المحافظات الأخرى",
-      countries: ["IQ"],
-      rateType: "weight",
-      rate: 10000,
-    },
-  ]);
-
   const { data: storeDetails } = useFetchStoreDetails();
   const { data: storeSettings } = useFetchCurrentSettings();
   const { mutate: updateSettings, isPending: isSaving } =
