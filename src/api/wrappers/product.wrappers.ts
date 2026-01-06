@@ -25,6 +25,21 @@ export const useFetchProducts = (params?: any, enabled: boolean = true) => {
 };
 
 /**
+ * Fetch all products by store domain with optional filtering and pagination
+ */
+export const useFetchProductsByStoreDomain = (
+  domain: string,
+  params?: any,
+  enabled: boolean = true
+) => {
+  return useQuery<any>({
+    queryKey: productKeys.list({ domain, ...params }),
+    queryFn: () => productAPI.fetchAllByStoreDomain(domain, params),
+    enabled,
+  });
+};
+
+/**
  * Search for products with optional filtering and pagination
  */
 export const useSearchProducts = (params?: any, enabled: boolean = true) => {
@@ -52,7 +67,8 @@ export const useFetchProduct = (id: string, enabled: boolean = true) => {
 export const useAddCategoryToProduct = () => {
   const queryClient = useQueryClient();
   return useMutation<any, Error, { id: string; categoryIds: string[] }>({
-    mutationFn: ({ id, categoryIds }) => productAPI.addCategory(id, categoryIds),
+    mutationFn: ({ id, categoryIds }) =>
+      productAPI.addCategory(id, categoryIds),
     onSuccess: (data) => {
       // Invalidate and refetch products list
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
@@ -68,7 +84,8 @@ export const useAddCategoryToProduct = () => {
 export const useRemoveCategoryFromProduct = () => {
   const queryClient = useQueryClient();
   return useMutation<any, Error, { id: string; categoryId: string }>({
-    mutationFn: ({ id, categoryId }) => productAPI.removeCategory(id, categoryId),
+    mutationFn: ({ id, categoryId }) =>
+      productAPI.removeCategory(id, categoryId),
     onSuccess: (data) => {
       // Invalidate and refetch products list
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
@@ -259,5 +276,19 @@ export const useDeleteProduct = () => {
 export const useSeedDummyProducts = () => {
   return useMutation<any, Error, any>({
     mutationFn: () => productAPI.seedDummyProducts(),
+  });
+};
+
+/**
+ * Find variant by product ID and selected options mutation
+ */
+export const useFindVariantByOptions = () => {
+  return useMutation<
+    any,
+    Error,
+    { productId: string; selectedOptions: Record<string, string> }
+  >({
+    mutationFn: ({ productId, selectedOptions }) =>
+      productAPI.findVariantByOptions(productId, selectedOptions),
   });
 };

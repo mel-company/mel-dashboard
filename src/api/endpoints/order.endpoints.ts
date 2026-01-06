@@ -34,8 +34,14 @@ export const orderAPI = {
   /**
    * Update delivery address of an order by ID
    */
-  updateDeliveryAddress: async (id: string, deliveryAddress: any): Promise<any> => {
-    const { data } = await axiosInstance.put<any>(`/order/${id}/update-delivery-address`, deliveryAddress);
+  updateDeliveryAddress: async (
+    id: string,
+    deliveryAddress: any
+  ): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/update-delivery-address`,
+      deliveryAddress
+    );
     return data;
   },
 
@@ -44,6 +50,25 @@ export const orderAPI = {
    */
   fetchOne: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.get<any>(`/order/${id}`);
+    return data;
+  },
+
+  /**
+   * create order
+   */
+  createOrder: async (order: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/order/create-order",
+      order
+    );
+    return data;
+  },
+
+  /**
+   * Checkout a new order
+   */
+  checkout: async (order: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>("/order/checkout", order);
     return data;
   },
 
@@ -68,6 +93,105 @@ export const orderAPI = {
    */
   delete: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.delete<any>(`/order/${id}`);
+    return data;
+  },
+
+  /**
+   * Update an order product
+   */
+  updateOrderProduct: async (
+    orderId: string,
+    productId: string,
+    orderProduct: any
+  ): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${orderId}/product/${productId}`,
+      orderProduct
+    );
+    return data;
+  },
+
+  /**
+   * Add products to an existing order
+   */
+  addProductsToOrder: async (orderId: string, products: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      `/order/${orderId}/products`,
+      products
+    );
+    return data;
+  },
+
+  /**
+   * Remove an order product from an order
+   */
+  removeOrderProduct: async (
+    orderId: string,
+    productId: string
+  ): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(
+      `/order/${orderId}/product/${productId}`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to PENDING
+   */
+  updateStatusToPending: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/pending`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to PROCESSING
+   */
+  updateStatusToProcessing: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/processing`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to SHIPPED
+   */
+  updateStatusToShipped: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/shipped`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to DELIVERED
+   */
+  updateStatusToDelivered: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/delivered`
+    );
+    return data;
+  },
+
+  /**
+   * Update order status to CANCELLED
+   */
+  updateStatusToCancelled: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/order/${id}/status/cancelled`
+    );
+    return data;
+  },
+
+  /**
+   * Get order logs by order ID
+   */
+  fetchOrderLogs: async (orderId: string): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      `/order-logs/order/${orderId}`
+    );
     return data;
   },
 };

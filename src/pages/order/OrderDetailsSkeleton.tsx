@@ -21,12 +21,19 @@ const OrderDetailsSkeleton = () => {
             </CardHeader>
             <CardContent>
               <Separator className="my-4" />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
                   <Skeleton className="h-5 w-5 rounded-full" />
                   <div className="text-right space-y-2 flex-1">
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-6 w-16" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <div className="text-right space-y-2 flex-1">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-6 w-24" />
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">

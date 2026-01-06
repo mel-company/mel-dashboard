@@ -36,15 +36,25 @@ import {
   Loader2,
   Edit,
   Plus,
+  TruckIcon,
 } from "lucide-react";
 import {
   useFetchOrder,
   useUpdateOrder,
   useDeleteOrder,
+  useRemoveOrderProduct,
+  useUpdateStatusToPending,
+  useUpdateStatusToProcessing,
+  useUpdateStatusToShipped,
+  useUpdateStatusToDelivered,
+  useUpdateStatusToCancelled,
+  useFetchOrderLogs,
 } from "@/api/wrappers/order.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
 import EditDeliveryAddressDialog from "./EditDeliveryAddressDialog";
+import EditProductVariantDialog from "./EditProductVariantDialog";
+import RemoveOrderProduct from "./RemoveOrderProduct";
 import { toast } from "sonner";
 
 const OrderDetails = () => {
@@ -52,6 +62,13 @@ const OrderDetails = () => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditAddressDialogOpen, setIsEditAddressDialogOpen] = useState(false);
+  const [isEditVariantDialogOpen, setIsEditVariantDialogOpen] = useState(false);
+  const [isRemoveProductDialogOpen, setIsRemoveProductDialogOpen] =
+    useState(false);
+  const [selectedOrderProduct, setSelectedOrderProduct] = useState<any | null>(
+    null
+  );
+  const [productToRemove, setProductToRemove] = useState<any | null>(null);
 
   const {
     data: order,
@@ -61,14 +78,36 @@ const OrderDetails = () => {
     isFetching,
   } = useFetchOrder(id ?? "", !!id);
 
-  const { mutate: updateOrder, isPending: isUpdating } = useUpdateOrder();
+  const { data: orderLogs, isLoading: isLoadingLogs } = useFetchOrderLogs(
+    id ?? "",
+    !!id
+  );
+
+  console.log(order);
+
+  const { mutate: updateOrder } = useUpdateOrder();
   const { mutate: deleteOrder, isPending: isDeleting } = useDeleteOrder();
+  const { mutate: removeOrderProduct, isPending: isRemovingProduct } =
+    useRemoveOrderProduct();
+  const { mutate: updateStatusToPending, isPending: isUpdatingToPending } =
+    useUpdateStatusToPending();
+  const {
+    mutate: updateStatusToProcessing,
+    isPending: isUpdatingToProcessing,
+  } = useUpdateStatusToProcessing();
+  const { mutate: updateStatusToShipped, isPending: isUpdatingToShipped } =
+    useUpdateStatusToShipped();
+  const { mutate: updateStatusToDelivered, isPending: isUpdatingToDelivered } =
+    useUpdateStatusToDelivered();
+  const { mutate: updateStatusToCancelled, isPending: isUpdatingToCancelled } =
+    useUpdateStatusToCancelled();
 
   // Calculate total price
   const calculateTotal = () => {
     if (!order?.products) return 0;
     return order.products?.reduce(
-      (sum: number, product: any) => sum + (product.price ?? 0),
+      (sum: number, product: any) =>
+        sum + (product.price ?? 0) * (product.quantity ?? 0),
       0
     );
   };
@@ -84,6 +123,68 @@ const OrderDetails = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Get log icon and color based on action
+  const getLogIcon = (action: string) => {
+    const actionUpper = action.toUpperCase();
+    const actionMap: Record<
+      string,
+      { icon: typeof Clock; color: string; bgColor: string }
+    > = {
+      CREATED: {
+        icon: Clock,
+        color: "text-blue-600",
+        bgColor: "bg-blue-100",
+      },
+      STATUS_CHANGED: {
+        icon: Package,
+        color: "text-blue-600",
+        bgColor: "bg-blue-100",
+      },
+      PRODUCT_ADDED: {
+        icon: Plus,
+        color: "text-green-600",
+        bgColor: "bg-green-100",
+      },
+      PRODUCT_REMOVED: {
+        icon: Trash2,
+        color: "text-red-600",
+        bgColor: "bg-red-100",
+      },
+      PRODUCT_UPDATED: {
+        icon: Edit,
+        color: "text-yellow-600",
+        bgColor: "bg-yellow-100",
+      },
+      ADDRESS_UPDATED: {
+        icon: MapPin,
+        color: "text-purple-600",
+        bgColor: "bg-purple-100",
+      },
+      NOTE_UPDATED: {
+        icon: FileText,
+        color: "text-gray-600",
+        bgColor: "bg-gray-100",
+      },
+      CANCELED_BY_CUSTOMER: {
+        icon: XCircle,
+        color: "text-red-600",
+        bgColor: "bg-red-100",
+      },
+      CANCELED_BY_STORE: {
+        icon: XCircle,
+        color: "text-red-600",
+        bgColor: "bg-red-100",
+      },
+    };
+    return (
+      actionMap[actionUpper] || {
+        icon: Clock,
+        color: "text-gray-600",
+        bgColor: "bg-gray-100",
+      }
+    );
   };
 
   // Get status badge - handle uppercase status from API
@@ -139,27 +240,109 @@ const OrderDetails = () => {
   const handleStatusUpdate = (newStatus: string) => {
     if (!id || !order) return;
 
-    updateOrder(
-      {
-        id,
-        data: { status: newStatus },
+    const statusHandlers: Record<string, () => void> = {
+      PENDING: () => {
+        updateStatusToPending(id, {
+          onSuccess: () => {
+            toast.success("تم تحديث حالة الطلب إلى قيد الانتظار");
+            refetch();
+          },
+          onError: (error: any) => {
+            toast.error(
+              error?.response?.data?.message || "فشل تحديث حالة الطلب"
+            );
+          },
+        });
       },
-      {
-        onSuccess: () => {
-          toast.success("تم تحديث حالة الطلب بنجاح");
-          refetch();
+      PROCESSING: () => {
+        updateStatusToProcessing(id, {
+          onSuccess: () => {
+            toast.success("تم تحديث حالة الطلب إلى قيد المعالجة");
+            refetch();
+          },
+          onError: (error: any) => {
+            toast.error(
+              error?.response?.data?.message || "فشل تحديث حالة الطلب"
+            );
+          },
+        });
+      },
+      SHIPPED: () => {
+        updateStatusToShipped(id, {
+          onSuccess: () => {
+            toast.success("تم تحديث حالة الطلب إلى تم الشحن");
+            refetch();
+          },
+          onError: (error: any) => {
+            toast.error(
+              error?.response?.data?.message || "فشل تحديث حالة الطلب"
+            );
+          },
+        });
+      },
+      DELIVERED: () => {
+        updateStatusToDelivered(id, {
+          onSuccess: () => {
+            toast.success("تم تحديث حالة الطلب إلى تم التسليم");
+            refetch();
+          },
+          onError: (error: any) => {
+            toast.error(
+              error?.response?.data?.message || "فشل تحديث حالة الطلب"
+            );
+          },
+        });
+      },
+      CANCELLED: () => {
+        updateStatusToCancelled(id, {
+          onSuccess: () => {
+            toast.success("تم إلغاء الطلب بنجاح");
+            refetch();
+          },
+          onError: (error: any) => {
+            toast.error(error?.response?.data?.message || "فشل في إلغاء الطلب");
+          },
+        });
+      },
+    };
+
+    const handler = statusHandlers[newStatus];
+    if (handler) {
+      handler();
+    } else {
+      // Fallback to generic update if status not found
+      updateOrder(
+        {
+          id,
+          data: { status: newStatus },
         },
-        onError: (error: any) => {
-          toast.error(error?.response?.data?.message || "فشل تحديث حالة الطلب");
-        },
-      }
-    );
+        {
+          onSuccess: () => {
+            toast.success("تم تحديث حالة الطلب بنجاح");
+            refetch();
+          },
+          onError: (error: any) => {
+            toast.error(
+              error?.response?.data?.message || "فشل تحديث حالة الطلب"
+            );
+          },
+        }
+      );
+    }
   };
 
   const handleCancelOrder = () => {
     if (!id || !order) return;
     handleStatusUpdate("CANCELLED");
   };
+
+  // Check if any status update is in progress
+  const isUpdatingStatus =
+    isUpdatingToPending ||
+    isUpdatingToProcessing ||
+    isUpdatingToShipped ||
+    isUpdatingToDelivered ||
+    isUpdatingToCancelled;
 
   const handleDelete = () => {
     if (!id) return;
@@ -213,6 +396,10 @@ const OrderDetails = () => {
   const customer = order.customer?.user;
   const productCount = order._count?.products ?? order.products?.length ?? 0;
 
+  // Check if order can be modified (hide buttons for SHIPPED and DELIVERED)
+  const canModifyOrder =
+    order.status !== "SHIPPED" && order.status !== "DELIVERED";
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -241,7 +428,7 @@ const OrderDetails = () => {
             </CardHeader>
             <CardContent>
               <Separator className="my-4" />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
                   <Package className="size-5 text-primary" />
                   <div className="text-right">
@@ -257,7 +444,18 @@ const OrderDetails = () => {
                     <p className="text-sm text-muted-foreground">
                       المبلغ الإجمالي
                     </p>
-                    <p className="text-lg font-bold">{total.toFixed(2)} د.ع</p>
+                    <p className="text-lg font-bold">
+                      {total.toLocaleString()} د.ع
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                  <TruckIcon className="size-5 text-primary" />
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">التوصيل</p>
+                    <p className="text-lg font-bold">
+                      {(5000).toLocaleString()} د.ع
+                    </p>
                   </div>
                 </div>
               </div>
@@ -272,10 +470,16 @@ const OrderDetails = () => {
                   <ShoppingCart className="size-5" />
                   المنتجات في الطلب
                 </CardTitle>
-                <Button variant="secondary" className="gap-2">
-                  <Plus className="size-4" />
-                  إضافة منتج
-                </Button>
+                {canModifyOrder && (
+                  <Button
+                    variant="secondary"
+                    className="gap-2"
+                    onClick={() => navigate(`/pos?orderId=${order.id}`)}
+                  >
+                    <Plus className="size-4" />
+                    إضافة منتج
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -285,10 +489,14 @@ const OrderDetails = () => {
                     <div key={product.id || index}>
                       <div className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors">
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
-                          {product.image ? (
+                          {product?.variant?.image ||
+                          product?.product?.image ? (
                             <img
-                              src={product.image}
-                              alt={product.title}
+                              src={
+                                product?.variant?.image ||
+                                product?.product?.image
+                              }
+                              alt={product?.product?.title}
                               className="w-full h-full object-cover rounded-lg"
                             />
                           ) : (
@@ -296,34 +504,106 @@ const OrderDetails = () => {
                           )}
                         </div>
                         <div className="flex-1 text-right">
-                          <div className="flex items-center justify-between mb-2">
-                            <Link
-                              to={`/products/${product.id}`}
-                              className="font-semibold hover:text-primary transition-colors"
-                            >
-                              {product.title}
-                            </Link>
-                            <span className="font-bold text-primary">
-                              {product.price?.toFixed(2) ?? "—"} د.ع
-                            </span>
-                          </div>
-                          {product.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                              {product.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {product.rate !== null &&
-                              product.rate !== undefined && (
+                          <div className="flex itemscenter justify-between mb-2">
+                            <div>
+                              <Link
+                                to={`/products/${
+                                  product?.product?.id || product.id
+                                }`}
+                                className="font-semibold hover:text-primary transition-colors"
+                              >
+                                {product?.product?.title}
+                              </Link>
+
+                              {/* Variant Options */}
+                              {product?.variant?.optionValues &&
+                                product.variant.optionValues.length > 0 && (
+                                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                                    {product.variant.optionValues.map(
+                                      (optionValue: any) => (
+                                        <Badge
+                                          key={optionValue.id}
+                                          variant="secondary"
+                                          className="text-xs"
+                                        >
+                                          {optionValue.label ||
+                                            optionValue.value}
+                                        </Badge>
+                                      )
+                                    )}
+                                  </div>
+                                )}
+
+                              <div className="flex flex-col  gap-1 flex-wrap">
                                 <div className="flex items-center gap-1">
                                   <span className="text-xs text-muted-foreground">
-                                    التقييم:
+                                    السعر:
                                   </span>
                                   <span className="text-xs font-medium">
-                                    {product.rate}
+                                    {product.price?.toLocaleString() ?? "—"} د.ع
                                   </span>
                                 </div>
-                              )}
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-muted-foreground">
+                                    الكمية:
+                                  </span>
+                                  <span className="text-xs font-medium">
+                                    {product.quantity?.toLocaleString() ?? "—"}{" "}
+                                  </span>
+                                </div>
+
+                                {/* <div className="flex items-center gap-2 flex-wrap">
+                                  {product?.variant?.product?.rate !== null &&
+                                    product?.variant?.product?.rate !==
+                                      undefined && (
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-xs text-muted-foreground">
+                                          التقييم:
+                                        </span>
+                                        <span className="text-xs font-medium">
+                                          {product?.variant?.product?.rate}
+                                        </span>
+                                      </div>
+                                    )}
+                                </div> */}
+                              </div>
+                            </div>
+
+                            {canModifyOrder && (
+                              <div className="flex items-center flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="default"
+                                    className="font-bold"
+                                    onClick={() => {
+                                      setSelectedOrderProduct(product);
+                                      setIsEditVariantDialogOpen(true);
+                                    }}
+                                  >
+                                    <Edit className="size-4" />
+                                    <span className="text-xs">تعديل</span>
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    className="font-bold text-primary"
+                                    onClick={() => {
+                                      setProductToRemove(product);
+                                      setIsRemoveProductDialogOpen(true);
+                                    }}
+                                    disabled={isRemovingProduct}
+                                  >
+                                    {isRemovingProduct ? (
+                                      <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <Trash2 className="size-4" />
+                                        <span className="text-xs">حذف</span>
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -537,7 +817,7 @@ const OrderDetails = () => {
                   المبلغ الإجمالي
                 </span>
                 <span className="text-lg font-bold text-primary">
-                  {total.toFixed(2)} د.ع
+                  {total.toLocaleString()} د.ع
                 </span>
               </div>
             </CardContent>
@@ -554,7 +834,7 @@ const OrderDetails = () => {
                   className="w-full gap-2"
                   variant="default"
                   onClick={() => handleStatusUpdate("PROCESSING")}
-                  disabled={isUpdating}
+                  disabled={isUpdatingStatus}
                 >
                   <Package className="size-4" />
                   بدء المعالجة
@@ -565,7 +845,7 @@ const OrderDetails = () => {
                   className="w-full gap-2"
                   variant="default"
                   onClick={() => handleStatusUpdate("SHIPPED")}
-                  disabled={isUpdating}
+                  disabled={isUpdatingStatus}
                 >
                   <Truck className="size-4" />
                   شحن الطلب
@@ -576,7 +856,7 @@ const OrderDetails = () => {
                   className="w-full gap-2"
                   variant="default"
                   onClick={() => handleStatusUpdate("DELIVERED")}
-                  disabled={isUpdating}
+                  disabled={isUpdatingStatus}
                 >
                   <CheckCircle2 className="size-4" />
                   تأكيد التسليم
@@ -609,7 +889,7 @@ const OrderDetails = () => {
                   className="w-full gap-2"
                   variant="destructive"
                   onClick={handleCancelOrder}
-                  disabled={isUpdating}
+                  disabled={isUpdatingStatus}
                 >
                   <XCircle className="size-4" />
                   إلغاء الطلب
@@ -627,80 +907,67 @@ const OrderDetails = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-blue-100 rounded-full mt-0.5">
-                  <Clock className="size-3 text-blue-600" />
+              {isLoadingLogs ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
                 </div>
-                <div className="flex-1 text-right">
-                  <p className="text-sm font-medium">تم إنشاء الطلب</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDate(order.createdAt)}
+              ) : orderLogs && orderLogs.length > 0 ? (
+                orderLogs.map((log: any, index: number) => {
+                  const logIcon = getLogIcon(log.action);
+                  const LogIcon = logIcon.icon;
+                  return (
+                    <div key={log.id}>
+                      {index > 0 && <Separator className="my-3" />}
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`p-1.5 ${logIcon.bgColor} rounded-full mt-0.5`}
+                        >
+                          <LogIcon className={`size-3 ${logIcon.color}`} />
+                        </div>
+                        <div className="flex-1 text-right">
+                          <p className="text-sm font-medium">
+                            {log.message || log.action}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(log.createdAt)}
+                          </p>
+                          {log.changes && log.changes.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {log.changes.map((change: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="text-xs text-muted-foreground"
+                                >
+                                  {change.oldValue && change.newValue ? (
+                                    <span>
+                                      {change.field}: {change.oldValue} →{" "}
+                                      {change.newValue}
+                                    </span>
+                                  ) : change.newValue ? (
+                                    <span>
+                                      {change.field}: {change.newValue}
+                                    </span>
+                                  ) : change.oldValue ? (
+                                    <span>
+                                      {change.field}: {change.oldValue} (تم
+                                      الحذف)
+                                    </span>
+                                  ) : null}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex items-center justify-center py-4">
+                  <p className="text-sm text-muted-foreground">
+                    لا توجد سجلات للطلب
                   </p>
                 </div>
-              </div>
-              {order.status !== "PENDING" && (
-                <>
-                  <Separator />
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 bg-blue-100 rounded-full mt-0.5">
-                      <Package className="size-3 text-blue-600" />
-                    </div>
-                    <div className="flex-1 text-right">
-                      <p className="text-sm font-medium">قيد المعالجة</p>
-                      <p className="text-xs text-muted-foreground">
-                        جاري معالجة الطلب
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-              {(order.status === "SHIPPED" || order.status === "DELIVERED") && (
-                <>
-                  <Separator />
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 bg-purple-100 rounded-full mt-0.5">
-                      <Truck className="size-3 text-purple-600" />
-                    </div>
-                    <div className="flex-1 text-right">
-                      <p className="text-sm font-medium">تم الشحن</p>
-                      <p className="text-xs text-muted-foreground">
-                        الطلب في الطريق
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-              {order.status === "DELIVERED" && (
-                <>
-                  <Separator />
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 bg-green-100 rounded-full mt-0.5">
-                      <CheckCircle2 className="size-3 text-green-600" />
-                    </div>
-                    <div className="flex-1 text-right">
-                      <p className="text-sm font-medium">تم التسليم</p>
-                      <p className="text-xs text-muted-foreground">
-                        تم تسليم الطلب بنجاح
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-              {order.status === "CANCELLED" && (
-                <>
-                  <Separator />
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 bg-red-100 rounded-full mt-0.5">
-                      <XCircle className="size-3 text-red-600" />
-                    </div>
-                    <div className="flex-1 text-right">
-                      <p className="text-sm font-medium">تم الإلغاء</p>
-                      <p className="text-xs text-muted-foreground">
-                        تم إلغاء الطلب
-                      </p>
-                    </div>
-                  </div>
-                </>
               )}
             </CardContent>
           </Card>
@@ -717,6 +984,63 @@ const OrderDetails = () => {
             stateId: order.stateId || undefined,
             regionId: order.regionId || undefined,
             nearest_point: order.nearest_point || undefined,
+          }}
+        />
+      )}
+
+      {/* Edit Product Variant Dialog */}
+      {selectedOrderProduct && id && (
+        <EditProductVariantDialog
+          open={isEditVariantDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditVariantDialogOpen(open);
+            if (!open) {
+              setSelectedOrderProduct(null);
+            }
+          }}
+          orderProduct={selectedOrderProduct}
+          orderId={id}
+          onSuccess={() => {
+            // Refetch order data to show updated variant information
+            refetch();
+          }}
+        />
+      )}
+
+      {/* Remove Order Product Dialog */}
+      {productToRemove && id && (
+        <RemoveOrderProduct
+          open={isRemoveProductDialogOpen}
+          onOpenChange={(open) => {
+            setIsRemoveProductDialogOpen(open);
+            if (!open) {
+              setProductToRemove(null);
+            }
+          }}
+          orderProduct={productToRemove}
+          orderId={id}
+          isRemoving={isRemovingProduct}
+          onConfirm={() => {
+            removeOrderProduct(
+              {
+                orderId: id || "",
+                productId: productToRemove.id,
+              },
+              {
+                onSuccess: () => {
+                  toast.success("تم حذف المنتج من الطلب بنجاح");
+                  setIsRemoveProductDialogOpen(false);
+                  setProductToRemove(null);
+                  refetch();
+                },
+                onError: (error: any) => {
+                  toast.error(
+                    error?.response?.data?.message ||
+                      "فشل في حذف المنتج. حاول مرة أخرى."
+                  );
+                },
+              }
+            );
           }}
         />
       )}

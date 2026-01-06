@@ -11,8 +11,10 @@ export const categoryKeys = {
   details: () => [...categoryKeys.all, "detail"] as const,
   detail: (id: string) => [...categoryKeys.details(), id] as const,
   search: (params?: any) => [...categoryKeys.all, "search", params] as const,
-  available: (params?: any) => [...categoryKeys.all, "available", params] as const,
-  availableProducts: (id: string) => [...categoryKeys.all, "available-products", id] as const,
+  available: (params?: any) =>
+    [...categoryKeys.all, "available", params] as const,
+  availableProducts: (id: string) =>
+    [...categoryKeys.all, "available-products", id] as const,
 };
 
 /**
@@ -22,6 +24,20 @@ export const useFetchCategories = (params?: any, enabled: boolean = true) => {
   return useQuery<any>({
     queryKey: categoryKeys.list(params),
     queryFn: () => categoryAPI.fetchAll(params),
+    enabled,
+  });
+};
+
+/**
+ * Fetch all categories by store domain with optional filtering and pagination
+ */
+export const useFetchCategoriesByStoreDomain = (
+  domain: string,
+  enabled: boolean = true
+) => {
+  return useQuery<any>({
+    queryKey: categoryKeys.list({ domain }),
+    queryFn: () => categoryAPI.fetchAllByStoreDomain(domain),
     enabled,
   });
 };
@@ -125,7 +141,9 @@ export const useAddProductsToCategory = () => {
       // Update the specific category cache
       queryClient.setQueryData(categoryKeys.detail(data.id), data);
       // Invalidate available products for this category
-      queryClient.invalidateQueries({ queryKey: categoryKeys.availableProducts(data.id) });
+      queryClient.invalidateQueries({
+        queryKey: categoryKeys.availableProducts(data.id),
+      });
     },
   });
 };
@@ -144,7 +162,9 @@ export const useRemoveProductFromCategory = () => {
       // Update the specific category cache
       queryClient.setQueryData(categoryKeys.detail(data.id), data);
       // Invalidate available products for this category
-      queryClient.invalidateQueries({ queryKey: categoryKeys.availableProducts(data.id) });
+      queryClient.invalidateQueries({
+        queryKey: categoryKeys.availableProducts(data.id),
+      });
     },
   });
 };

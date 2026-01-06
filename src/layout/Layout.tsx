@@ -45,6 +45,7 @@ const Layout = () => {
       edit: "تعديل",
       plans: "الاشتراكات",
       payment: "الدفع",
+      pos: "نقطة البيع",
     };
 
     const detailLabels: Record<string, string> = {
