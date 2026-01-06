@@ -55,6 +55,13 @@ const SelectDeliveryCompanyDialog = ({
       return;
     }
 
+    // Check if the selected delivery company is the same as the current one
+    if (selectedDeliveryCompanyId === currentDeliveryCompanyId) {
+      // No change, just close the dialog
+      onOpenChange(false);
+      return;
+    }
+
     updateDeliveryCompany(selectedDeliveryCompanyId, {
       onSuccess: () => {
         toast.success("تم تحديث شركة التوصيل بنجاح");

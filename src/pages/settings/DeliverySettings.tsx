@@ -203,7 +203,15 @@ const DeliverySettings = ({}: Props) => {
               <div
                 // type="button"
                 // variant="secondary"
-                className="w-full mt-2 flex bg-muted rounded-md p-2 justify-between text-right"
+                role="button"
+                tabIndex={0}
+                className={`w-full mt-2 flex rounded-md p-2 justify-between text-right
+                  ${
+                    !canChangeDeliveryCompany
+                      ? "cursor-not-allowed bg-muted text-muted-foreground"
+                      : "bg-muted hover:bg-muted/80 cursor-pointer"
+                  }
+                  `}
                 onClick={() => {
                   if (
                     canChangeDeliveryCompany ||
@@ -225,24 +233,20 @@ const DeliverySettings = ({}: Props) => {
                     : "لم يتم تحديد شركة التوصيل"}
                 </div>
 
-                <Button
-                  variant="secondary"
-                  className=""
-                  disabled={!canChangeDeliveryCompany}
-                >
-                  <Plus />
-                  <p className="text-sm">تحديد</p>
-                </Button>
+                {canChangeDeliveryCompany && (
+                  <Button
+                    variant="secondary"
+                    className=""
+                    disabled={!canChangeDeliveryCompany}
+                  >
+                    <Plus />
+                    <p className="text-sm">تحديد</p>
+                  </Button>
+                )}
               </div>
               {!settings.selectedDeliveryCompanyId && (
                 <p className="text-xs text-destructive">
                   يرجى اختيار شركة التوصيل
-                </p>
-              )}
-              {!canChangeDeliveryCompany && (
-                <p className="text-xs text-destructive">
-                  لا يمكن تغيير شركة التوصيل إلا بعد مرور 30 يوماً من آخر تحديث.
-                  متبقي {daysRemaining} يوم/أيام
                 </p>
               )}
             </div>
