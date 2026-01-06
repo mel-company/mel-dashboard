@@ -16,6 +16,18 @@ export const categoryAPI = {
   },
 
   /**
+   * Get all categories by store domain with optional filtering and pagination
+   */
+  fetchAllByStoreDomain: async (domain: string): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/category/by-store-domain", {
+      params: {
+        store: domain,
+      },
+    });
+    return data;
+  },
+
+  /**
    * Search for categories with optional filtering and pagination
    */
   search: async (params?: any): Promise<any> => {
@@ -83,7 +95,9 @@ export const categoryAPI = {
    * Add products to a category
    */
   addProducts: async (id: string, productIds: string[]): Promise<any> => {
-    const { data } = await axiosInstance.post<any>(`/category/${id}/product`, { productIds });
+    const { data } = await axiosInstance.post<any>(`/category/${id}/product`, {
+      productIds,
+    });
     return data;
   },
 
@@ -91,7 +105,9 @@ export const categoryAPI = {
    * Remove a product from a category
    */
   removeProduct: async (id: string, productId: string): Promise<any> => {
-    const { data } = await axiosInstance.delete<any>(`/category/${id}/product/${productId}`);
+    const { data } = await axiosInstance.delete<any>(
+      `/category/${id}/product/${productId}`
+    );
     return data;
   },
 
@@ -99,7 +115,9 @@ export const categoryAPI = {
    * Get available products not related to a category
    */
   fetchAvailableProducts: async (id: string): Promise<any> => {
-    const { data } = await axiosInstance.get<any>(`/category/${id}/product/available`);
+    const { data } = await axiosInstance.get<any>(
+      `/category/${id}/product/available`
+    );
     return data;
   },
 
@@ -107,7 +125,9 @@ export const categoryAPI = {
    * Toggle category enabled status
    */
   toggleEnabled: async (id: string): Promise<any> => {
-    const { data } = await axiosInstance.put<any>(`/category/${id}/toggle-enabled`);
+    const { data } = await axiosInstance.put<any>(
+      `/category/${id}/toggle-enabled`
+    );
     return data;
   },
 };

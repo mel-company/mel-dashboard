@@ -46,6 +46,7 @@ import EditDiscount from "./pages/discount/EditDiscount";
 import SubscriptionSettings from "./pages/settings/SubscriptionSettings";
 import Plans from "./pages/plan/Plans";
 import Payment from "./pages/payment/Payment";
+import POS from "./pages/pos/POS";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -153,6 +154,9 @@ function App() {
 
             {/* Accounting route */}
             <Route path="/accounting" element={<Accounting />} />
+
+            {/* POS route */}
+            <Route path="/pos" element={<POS />} />
           </Route>
         </Route>
         {/* Public routes */}
