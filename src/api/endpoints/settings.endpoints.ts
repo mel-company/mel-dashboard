@@ -37,7 +37,7 @@ export const settingsAPI = {
    * Update settings for a store (creates if not exists - upsert)
    */
   updateByStoreId: async (storeId: string, settings: any): Promise<any> => {
-    const { data } = await axiosInstance.patch<any>(
+    const { data } = await axiosInstance.put<any>(
       `/settings/store/${storeId}`,
       settings
     );
@@ -67,6 +67,36 @@ export const settingsAPI = {
    */
   delete: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.delete<any>(`/settings/${id}`);
+    return data;
+  },
+
+  /**
+   * Update store delivery company
+   */
+  updateDeliveryCompany: async (deliveryCompanyId: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      "/settings/delivery-company",
+      { deliveryCompanyId }
+    );
+    return data;
+  },
+
+  /**
+   * Get settings for the current store user
+   */
+  fetchCurrent: async (): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/settings/current");
+    return data;
+  },
+
+  /**
+   * Update settings for the current store user (creates if not exists - upsert)
+   */
+  updateCurrent: async (settings: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      "/settings/current",
+      settings
+    );
     return data;
   },
 };

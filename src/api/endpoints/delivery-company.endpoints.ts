@@ -32,7 +32,7 @@ export const deliveryCompanyAPI = {
    * Update an existing delivery company
    */
   update: async (id: string, deliveryCompany: any): Promise<any> => {
-    const { data } = await axiosInstance.patch<any>(
+    const { data } = await axiosInstance.put<any>(
       `/delivery-company/${id}`,
       deliveryCompany
     );

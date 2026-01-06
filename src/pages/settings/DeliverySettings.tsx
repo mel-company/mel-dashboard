@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -11,16 +11,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Truck,
-  MapPin,
-  Clock,
-  Plus,
-  Trash2,
-  Save,
-  Package,
-} from "lucide-react";
+import { Clock, Save, Package, Truck, InfoIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import {
+  useFetchDeliveryCompanies,
+  useFetchDeliveryCompany,
+} from "@/api/wrappers/delivery-company.wrappers";
+import {
+  useFetchCurrentSettings,
+  useUpdateCurrentSettings,
+} from "@/api/wrappers/settings.wrappers";
+import SelectDeliveryCompanyDialog from "./SelectDeliveryCompanyDialog";
 
 type Props = {};
 
@@ -52,19 +54,90 @@ const DeliverySettings = ({}: Props) => {
     },
   ]);
 
-  const [settings, setSettings] = useState({
-    localPickup: true,
-    estimatedDeliveryDays: 3,
-    deliveryNotes: "",
-    enableShippingProviders: false,
-  });
+  const { data: storeDetails } = useFetchStoreDetails();
+  const { data: storeSettings } = useFetchCurrentSettings();
+  const { mutate: updateSettings, isPending: isSaving } =
+    useUpdateCurrentSettings();
+  const [isDeliveryCompanyDialogOpen, setIsDeliveryCompanyDialogOpen] =
+    useState(false);
 
-  const handleToggle = (key: keyof typeof settings) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+  // Fetch delivery company details if a delivery company is selected
+  const { data: deliveryCompanyDetails } = useFetchDeliveryCompany(
+    storeDetails?.deliveryCompanyId || "",
+    !!storeDetails?.deliveryCompanyId
+  );
+
+  // Initialize settings from store details and store settings
+  const initialSettings = useMemo(() => {
+    return {
+      localDeliveryCompany: !!storeDetails?.deliveryCompanyId,
+      estimatedDeliveryDays: storeSettings?.estimated_delivery_days ?? 3,
+      deliveryNotes: storeSettings?.delivery_notes ?? "",
+      enableShippingProviders:
+        storeSettings?.enable_shipping_providers ?? false,
+      selectedDeliveryCompanyId: storeDetails?.deliveryCompanyId || "",
+    };
+  }, [storeDetails, storeSettings]);
+
+  const [settings, setSettings] = useState(initialSettings);
+
+  // Fetch delivery companies when localDeliveryCompany is enabled
+  const { data: deliveryCompanies } = useFetchDeliveryCompanies(
+    settings.localDeliveryCompany
+  );
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "لم يتم التحديث";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("ar-IQ", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
+
+  // Check if user can change delivery company (30 days restriction)
+  const canChangeDeliveryCompany = useMemo(() => {
+    const lastUpdate = storeDetails?.settings?.delivery_company_last_update;
+    if (!lastUpdate) return true; // Can change if never updated
+
+    const lastUpdateDate = new Date(lastUpdate);
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now.getTime() - lastUpdateDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    return daysSinceLastUpdate >= 30;
+  }, [storeDetails?.settings?.delivery_company_last_update]);
+
+  // Calculate remaining days if restriction applies
+  const daysRemaining = useMemo(() => {
+    const lastUpdate = storeDetails?.settings?.delivery_company_last_update;
+    if (!lastUpdate) return 0;
+
+    const lastUpdateDate = new Date(lastUpdate);
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now.getTime() - lastUpdateDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (daysSinceLastUpdate < 30) {
+      return Math.ceil(30 - daysSinceLastUpdate);
+    }
+    return 0;
+  }, [storeDetails?.settings?.delivery_company_last_update]);
+
+  // Update settings when store details or store settings change
+  useEffect(() => {
+    if (storeDetails && storeSettings !== undefined) {
+      setSettings({
+        localDeliveryCompany: !!storeDetails.deliveryCompanyId,
+        estimatedDeliveryDays: storeSettings.estimated_delivery_days ?? 3,
+        deliveryNotes: storeSettings.delivery_notes ?? "",
+        enableShippingProviders:
+          storeSettings.enable_shipping_providers ?? false,
+        selectedDeliveryCompanyId: storeDetails.deliveryCompanyId || "",
+      });
+    }
+  }, [storeDetails, storeSettings]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -76,296 +149,384 @@ const DeliverySettings = ({}: Props) => {
     }));
   };
 
-  const addShippingZone = () => {
-    const newZone: ShippingZone = {
-      id: Date.now().toString(),
-      name: "",
-      countries: [],
-      rateType: "flat",
-      rate: 0,
-    };
-    setShippingZones((prev) => [...prev, newZone]);
-  };
-
-  const removeShippingZone = (id: string) => {
-    setShippingZones((prev) => prev.filter((zone) => zone.id !== id));
-    toast.success("تم حذف منطقة الشحن");
-  };
-
-  const updateShippingZone = (
-    id: string,
-    field: keyof ShippingZone,
-    value: any
-  ) => {
-    setShippingZones((prev) =>
-      prev.map((zone) => (zone.id === id ? { ...zone, [field]: value } : zone))
+  // Check if delivery company section has changed
+  const hasDeliveryCompanyChanges = useMemo(() => {
+    return (
+      settings.localDeliveryCompany !== initialSettings.localDeliveryCompany ||
+      settings.selectedDeliveryCompanyId !==
+        initialSettings.selectedDeliveryCompanyId
     );
+  }, [settings, initialSettings]);
+
+  // Check if delivery time section has changed
+  const hasDeliveryTimeChanges = useMemo(() => {
+    return (
+      settings.estimatedDeliveryDays !==
+        initialSettings.estimatedDeliveryDays ||
+      settings.deliveryNotes !== initialSettings.deliveryNotes
+    );
+  }, [settings, initialSettings]);
+
+  const handleResetDeliveryCompany = () => {
+    setSettings((prev) => ({
+      ...prev,
+      localDeliveryCompany: initialSettings.localDeliveryCompany,
+      selectedDeliveryCompanyId: initialSettings.selectedDeliveryCompanyId,
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleResetDeliveryTime = () => {
+    setSettings((prev) => ({
+      ...prev,
+      estimatedDeliveryDays: initialSettings.estimatedDeliveryDays,
+      deliveryNotes: initialSettings.deliveryNotes,
+    }));
+  };
+
+  const handleSubmitDeliveryTime = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Submit to API
-    toast.success("تم حفظ إعدادات التوصيل بنجاح");
+
+    updateSettings(
+      {
+        estimated_delivery_days: settings.estimatedDeliveryDays,
+        delivery_notes: settings.deliveryNotes,
+      },
+      {
+        onSuccess: () => {
+          toast.success("تم حفظ إعدادات التوصيل بنجاح");
+          // Settings will be refetched automatically due to cache invalidation
+        },
+        onError: (error: any) => {
+          toast.error(
+            error?.response?.data?.message ||
+              "فشل في حفظ الإعدادات. حاول مرة أخرى."
+          );
+        },
+      }
+    );
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">إعدادات التوصيل</h1>
-        <p className="text-muted-foreground mt-1">
-          قم بتكوين مناطق الشحن وأسعار التوصيل
-        </p>
+        <p className="text-muted-foreground mt-1">إدارة التوصيل وأسعار الشحن</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Shipping Zones */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="size-5" />
-                  مناطق الشحن
-                </CardTitle>
-                <CardDescription>تحديد المناطق وأسعار الشحن</CardDescription>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addShippingZone}
-                className="gap-2"
-              >
-                <Plus className="size-4" />
-                إضافة منطقة
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {shippingZones.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <MapPin className="size-12 mx-auto mb-2 opacity-50" />
-                <p>لا توجد مناطق شحن</p>
-                <p className="text-sm">أضف منطقة شحن جديدة للبدء</p>
-              </div>
-            ) : (
-              shippingZones.map((zone) => (
-                <Card key={zone.id} className="border-2">
-                  <CardContent className="pt-6 space-y-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium">منطقة الشحن #{zone.id}</h4>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeShippingZone(zone.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>اسم المنطقة</Label>
-                        <Input
-                          value={zone.name}
-                          onChange={(e) =>
-                            updateShippingZone(zone.id, "name", e.target.value)
-                          }
-                          placeholder="مثل: بغداد"
-                          className="text-right"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>نوع السعر</Label>
-                        <select
-                          value={zone.rateType}
-                          onChange={(e) =>
-                            updateShippingZone(
-                              zone.id,
-                              "rateType",
-                              e.target.value
-                            )
-                          }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-right"
-                        >
-                          <option value="flat">سعر ثابت</option>
-                          <option value="weight">حسب الوزن</option>
-                          <option value="price">حسب السعر</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>
-                        {zone.rateType === "flat"
-                          ? "السعر (دينار)"
-                          : zone.rateType === "weight"
-                          ? "السعر لكل كيلوغرام (دينار)"
-                          : "النسبة المئوية (%)"}
-                      </Label>
-                      <Input
-                        type="number"
-                        value={zone.rate}
-                        onChange={(e) =>
-                          updateShippingZone(
-                            zone.id,
-                            "rate",
-                            parseFloat(e.target.value) || 0
-                          )
-                        }
-                        min={0}
-                        className="text-right"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>حد الشحن المجاني (دينار)</Label>
-                      <Input
-                        type="number"
-                        value={zone.freeShippingThreshold || ""}
-                        onChange={(e) =>
-                          updateShippingZone(
-                            zone.id,
-                            "freeShippingThreshold",
-                            parseFloat(e.target.value) || undefined
-                          )
-                        }
-                        placeholder="اتركه فارغاً لإلغاء الشحن المجاني"
-                        min={0}
-                        className="text-right"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        إذا كان إجمالي الطلب أكبر من هذا المبلغ، سيتم الشحن
-                        مجاناً
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Local Pickup */}
+      <div className="space-y-6">
+        {/* Delivery Company Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="size-5" />
-              الاستلام من المتجر
+              شركة التوصيل
             </CardTitle>
             <CardDescription>
-              السماح للعملاء بالاستلام من المتجر مباشرة
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>تفعيل الاستلام من المتجر</Label>
-                <p className="text-sm text-muted-foreground">
-                  السماح للعملاء باختيار الاستلام من المتجر
-                </p>
-              </div>
-              <Switch
-                checked={settings.localPickup}
-                onCheckedChange={() => handleToggle("localPickup")}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Delivery Time */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="size-5" />
-              وقت التوصيل المتوقع
-            </CardTitle>
-            <CardDescription>
-              معلومات وقت التوصيل المعروضة للعملاء
+              اختيار شركة التوصيل المناسبة للمتجر
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="estimatedDeliveryDays">
-                عدد أيام التوصيل المتوقعة
-              </Label>
-              <Input
-                id="estimatedDeliveryDays"
-                name="estimatedDeliveryDays"
-                type="number"
-                value={settings.estimatedDeliveryDays}
-                onChange={handleInputChange}
-                min={1}
-                className="text-right"
-              />
-              <p className="text-xs text-muted-foreground">
-                سيتم عرض "التوصيل خلال {settings.estimatedDeliveryDays} أيام"
-                للعملاء
-              </p>
-            </div>
+              <Label className="">شركة التوصيل</Label>
+              <div
+                // type="button"
+                // variant="secondary"
+                className="w-full mt-2 flex bg-muted rounded-md p-2 justify-between text-right"
+                onClick={() => {
+                  if (
+                    canChangeDeliveryCompany ||
+                    !settings.selectedDeliveryCompanyId
+                  ) {
+                    setIsDeliveryCompanyDialogOpen(true);
+                  }
+                }}
+                // disabled={!canChangeDeliveryCompany}
+              >
+                <div className="flex items-center gap-x-2">
+                  <Truck className="size-4 ml-2" />
+                  {settings.selectedDeliveryCompanyId
+                    ? storeDetails?.deliveryCompany?.name ||
+                      deliveryCompanies?.find(
+                        (c: any) => c.id === settings.selectedDeliveryCompanyId
+                      )?.name ||
+                      "شركة التوصيل المحددة"
+                    : "لم يتم تحديد شركة التوصيل"}
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="deliveryNotes">ملاحظات التوصيل</Label>
-              <Textarea
-                id="deliveryNotes"
-                name="deliveryNotes"
-                value={settings.deliveryNotes}
-                onChange={handleInputChange}
-                placeholder="معلومات إضافية حول التوصيل تظهر للعملاء (مثل: التوصيل من الساعة 9 صباحاً حتى 5 مساءً)"
-                rows={3}
-                className="text-right"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Shipping Providers */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="size-5" />
-              مزودو الشحن
-            </CardTitle>
-            <CardDescription>التكامل مع شركات الشحن الخارجية</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>تفعيل مزودي الشحن</Label>
-                <p className="text-sm text-muted-foreground">
-                  التكامل مع شركات الشحن لتتبع الشحنات
-                </p>
+                <Button
+                  variant="secondary"
+                  className=""
+                  disabled={!canChangeDeliveryCompany}
+                >
+                  <Plus />
+                  <p className="text-sm">تحديد</p>
+                </Button>
               </div>
-              <Switch
-                checked={settings.enableShippingProviders}
-                onCheckedChange={() => handleToggle("enableShippingProviders")}
-              />
+              {!settings.selectedDeliveryCompanyId && (
+                <p className="text-xs text-destructive">
+                  يرجى اختيار شركة التوصيل
+                </p>
+              )}
+              {!canChangeDeliveryCompany && (
+                <p className="text-xs text-destructive">
+                  لا يمكن تغيير شركة التوصيل إلا بعد مرور 30 يوماً من آخر تحديث.
+                  متبقي {daysRemaining} يوم/أيام
+                </p>
+              )}
             </div>
 
-            {settings.enableShippingProviders && (
-              <div className="mt-4 p-4 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  قريباً: التكامل مع شركات الشحن المحلية والدولية
-                </p>
+            <div className="flex gap-x-2 items-center">
+              <InfoIcon className="size-4 text-blue-600 dark:text-blue-400" />
+              <Label className="text-sm">
+                يمكنك تغيير شركة التوصيل كل 30 يوم
+              </Label>
+            </div>
+
+            <div className="flex gap-x-2 items-center">
+              <InfoIcon className="size-4 text-blue-600 dark:text-blue-400" />
+              <Label className="text-sm">
+                تاريخ اخر تحديث:{" "}
+                {formatDate(
+                  storeDetails?.settings?.delivery_company_last_update
+                )}
+              </Label>
+            </div>
+
+            {!canChangeDeliveryCompany && (
+              <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                <div className="flex gap-x-2 items-start">
+                  <InfoIcon className="size-4 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                      لا يمكن تغيير شركة التوصيل حالياً
+                    </p>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                      يجب أن يمر 30 يوماً على الأقل منذ آخر تحديث لشركة التوصيل.
+                      متبقي {daysRemaining} يوم/أيام قبل إمكانية التغيير.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Delivery Company Details */}
+            {deliveryCompanyDetails && (
+              <div className="pt-4 border-t space-y-4">
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">
+                    تفاصيل شركة التوصيل
+                  </Label>
+                  <div className="space-y-3">
+                    {deliveryCompanyDetails.logo && (
+                      <div className="flex items-center gap-3">
+                        <Label className="text-sm text-muted-foreground min-w-[120px]">
+                          الشعار:
+                        </Label>
+                        <img
+                          src={deliveryCompanyDetails.logo}
+                          alt={deliveryCompanyDetails.name || "شعار الشركة"}
+                          className="h-16 w-16 object-cover rounded-full border"
+                        />
+                      </div>
+                    )}
+                    {deliveryCompanyDetails.name && (
+                      <div className="flex items-center gap-3">
+                        <Label className="text-sm text-muted-foreground min-w-[120px]">
+                          الاسم:
+                        </Label>
+                        <p className="text-sm font-medium">
+                          {deliveryCompanyDetails.name}
+                        </p>
+                      </div>
+                    )}
+                    {deliveryCompanyDetails.description && (
+                      <div className="flex items-start gap-3">
+                        <Label className="text-sm text-muted-foreground min-w-[120px]">
+                          الوصف:
+                        </Label>
+                        <p className="text-sm flex-1">
+                          {deliveryCompanyDetails.description}
+                        </p>
+                      </div>
+                    )}
+                    {deliveryCompanyDetails.phone && (
+                      <div className="flex items-center gap-3">
+                        <Label className="text-sm text-muted-foreground min-w-[120px]">
+                          الهاتف:
+                        </Label>
+                        <p className="text-sm">
+                          {deliveryCompanyDetails.phone}
+                        </p>
+                      </div>
+                    )}
+                    {deliveryCompanyDetails.email && (
+                      <div className="flex items-center gap-3">
+                        <Label className="text-sm text-muted-foreground min-w-[120px]">
+                          البريد الإلكتروني:
+                        </Label>
+                        <p className="text-sm">
+                          {deliveryCompanyDetails.email}
+                        </p>
+                      </div>
+                    )}
+                    {deliveryCompanyDetails.website && (
+                      <div className="flex items-center gap-3">
+                        <Label className="text-sm text-muted-foreground min-w-[120px]">
+                          الموقع الإلكتروني:
+                        </Label>
+                        <a
+                          href={deliveryCompanyDetails.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          {deliveryCompanyDetails.website}
+                        </a>
+                      </div>
+                    )}
+                    {deliveryCompanyDetails.address && (
+                      <div className="flex items-start gap-3">
+                        <Label className="text-sm text-muted-foreground min-w-[120px]">
+                          العنوان:
+                        </Label>
+                        <p className="text-sm flex-1">
+                          {deliveryCompanyDetails.address}
+                        </p>
+                      </div>
+                    )}
+                    {(deliveryCompanyDetails.country ||
+                      deliveryCompanyDetails.state ||
+                      deliveryCompanyDetails.region) && (
+                      <div className="flex items-start gap-3">
+                        <Label className="text-sm text-muted-foreground min-w-[120px]">
+                          الموقع:
+                        </Label>
+                        <div className="text-sm flex-1 space-y-1 flex gap-x-2 items-center">
+                          {deliveryCompanyDetails.country && (
+                            <p>{deliveryCompanyDetails?.country?.name?.ar}</p>
+                          )}
+                          {deliveryCompanyDetails.state && (
+                            <p>
+                              / {deliveryCompanyDetails?.state?.name?.arabic}
+                            </p>
+                          )}
+                          {deliveryCompanyDetails.region && (
+                            <p>
+                              / {deliveryCompanyDetails?.region?.name?.arabic}
+                            </p>
+                          )}
+                          {deliveryCompanyDetails.zip && (
+                            <p>/ {deliveryCompanyDetails.zip}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reset Button - Only show when delivery company section has changes */}
+            {hasDeliveryCompanyChanges && (
+              <div className="flex justify-end gap-4 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleResetDeliveryCompany}
+                >
+                  إلغاء
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Submit Button */}
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline">
-            إلغاء
-          </Button>
-          <Button type="submit" className="gap-2">
-            <Save className="size-4" />
-            حفظ الإعدادات
-          </Button>
-        </div>
-      </form>
+        {/* Delivery Time Section */}
+        <form onSubmit={handleSubmitDeliveryTime}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="size-5" />
+                وقت التوصيل وملاحظات
+              </CardTitle>
+              <CardDescription>
+                معلومات وقت التوصيل المعروضة للعملاء
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="estimatedDeliveryDays">
+                  عدد أيام التوصيل المتوقعة
+                </Label>
+                <Input
+                  id="estimatedDeliveryDays"
+                  name="estimatedDeliveryDays"
+                  type="number"
+                  value={settings.estimatedDeliveryDays}
+                  onChange={handleInputChange}
+                  min={1}
+                  className="text-right"
+                />
+                <p className="text-xs text-muted-foreground">
+                  سيتم عرض "التوصيل خلال {settings.estimatedDeliveryDays} أيام"
+                  للعملاء
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="deliveryNotes">ملاحظات التوصيل</Label>
+                <Textarea
+                  id="deliveryNotes"
+                  name="deliveryNotes"
+                  value={settings.deliveryNotes}
+                  onChange={handleInputChange}
+                  placeholder="معلومات إضافية حول التوصيل تظهر للعملاء (مثل: التوصيل من الساعة 9 صباحاً حتى 5 مساءً)"
+                  rows={3}
+                  className="text-right"
+                />
+              </div>
+
+              {/* Submit Button - Only show when delivery time section has changes */}
+              {hasDeliveryTimeChanges && (
+                <div className="flex justify-end gap-4 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleResetDeliveryTime}
+                  >
+                    إلغاء
+                  </Button>
+                  <Button type="submit" className="gap-2" disabled={isSaving}>
+                    <Save className="size-4" />
+                    {isSaving ? "جاري الحفظ..." : "حفظ الإعدادات"}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </form>
+      </div>
+
+      {/* Delivery Company Dialog */}
+      <SelectDeliveryCompanyDialog
+        open={isDeliveryCompanyDialogOpen && canChangeDeliveryCompany}
+        onOpenChange={(open) => {
+          // Only allow opening if user can change delivery company
+          if (open && !canChangeDeliveryCompany) {
+            toast.error(
+              `لا يمكن تغيير شركة التوصيل إلا بعد مرور 30 يوماً من آخر تحديث. متبقي ${daysRemaining} يوم/أيام`
+            );
+            return;
+          }
+          setIsDeliveryCompanyDialogOpen(open);
+        }}
+        currentDeliveryCompanyId={settings.selectedDeliveryCompanyId}
+        onSuccess={() => {
+          // The store details will be refetched automatically due to cache invalidation
+          // Update settings when store details refetch completes
+          // This will be handled by the useEffect that watches storeDetails
+        }}
+      />
     </div>
   );
 };

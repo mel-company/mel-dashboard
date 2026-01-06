@@ -159,3 +159,70 @@ export const useDeleteSettings = () => {
     },
   });
 };
+
+/**
+ * Update store delivery company mutation
+ */
+export const useUpdateDeliveryCompany = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (deliveryCompanyId: string) =>
+      settingsAPI.updateDeliveryCompany(deliveryCompanyId),
+    onSuccess: (data) => {
+      // Invalidate and refetch settings list
+      queryClient.invalidateQueries({ queryKey: settingsKeys.lists() });
+      // Update the store-specific settings cache if we have the storeId
+      if (data?.storeId) {
+        queryClient.setQueryData(settingsKeys.byStore(data.storeId), data);
+      }
+      // Update the specific settings cache if we have the ID
+      if (data?.id) {
+        queryClient.setQueryData(settingsKeys.detail(data.id), data);
+      }
+      // Invalidate current settings
+      queryClient.invalidateQueries({ queryKey: ["settings", "current"] });
+    },
+  });
+};
+
+/**
+ * Query key for current store settings
+ */
+export const currentSettingsKey = ["settings", "current"] as const;
+
+/**
+ * Fetch settings for the current store user
+ */
+export const useFetchCurrentSettings = (enabled: boolean = true) => {
+  return useQuery<any>({
+    queryKey: currentSettingsKey,
+    queryFn: () => settingsAPI.fetchCurrent(),
+    enabled,
+  });
+};
+
+/**
+ * Update settings for the current store user mutation (upsert - creates if not exists)
+ */
+export const useUpdateCurrentSettings = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, any>({
+    mutationFn: (settings: any) => settingsAPI.updateCurrent(settings),
+    onSuccess: (data) => {
+      // Invalidate and refetch settings list
+      queryClient.invalidateQueries({ queryKey: settingsKeys.lists() });
+      // Update the current settings cache
+      queryClient.setQueryData(currentSettingsKey, data);
+      // Update the store-specific settings cache if we have the storeId
+      if (data?.storeId) {
+        queryClient.setQueryData(settingsKeys.byStore(data.storeId), data);
+      }
+      // Update the specific settings cache if we have the ID
+      if (data?.id) {
+        queryClient.setQueryData(settingsKeys.detail(data.id), data);
+      }
+    },
+  });
+};
