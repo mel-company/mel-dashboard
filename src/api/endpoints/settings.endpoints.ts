@@ -93,6 +93,17 @@ export const settingsAPI = {
   },
 
   /**
+   * Update store general settings
+   */
+  updateGeneralSettings: async (generalSettings: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      "/settings/general-settings",
+      generalSettings
+    );
+    return data;
+  },
+
+  /**
    * Get settings for the current store user
    */
   fetchCurrent: async (): Promise<any> => {

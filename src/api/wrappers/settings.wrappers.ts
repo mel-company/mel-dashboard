@@ -212,6 +212,31 @@ export const useUpdatePaymentMethods = () => {
 };
 
 /**
+ * Update store general settings mutation
+ */
+export const useUpdateGeneralSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, any>({
+    mutationFn: (generalSettings: any) =>
+      settingsAPI.updateGeneralSettings(generalSettings),
+    onSuccess: (data) => {
+      // Invalidate and refetch settings list
+      queryClient.invalidateQueries({ queryKey: settingsKeys.lists() });
+      // Update the store-specific settings cache if we have the storeId
+      if (data?.storeId) {
+        queryClient.setQueryData(settingsKeys.byStore(data.storeId), data);
+      }
+      // Update the specific settings cache if we have the ID
+      if (data?.id) {
+        queryClient.setQueryData(settingsKeys.detail(data.id), data);
+      }
+      // Invalidate current settings
+      queryClient.invalidateQueries({ queryKey: ["settings", "current"] });
+    },
+  });
+};
+
+/**
  * Query key for current store settings
  */
 export const currentSettingsKey = ["settings", "current"] as const;

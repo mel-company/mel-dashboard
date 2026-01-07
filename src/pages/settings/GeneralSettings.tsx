@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -10,15 +10,24 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Settings, ShoppingCart, Package, Save } from "lucide-react";
+import { Settings, ShoppingCart, Package, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  useUpdateGeneralSettings,
+  useFetchCurrentSettings,
+} from "@/api/wrappers/settings.wrappers";
+import { PRODUCT_STATUS } from "@/utils/constants";
 
 type Props = {};
 
 const GeneralSettings = ({}: Props) => {
+  const { data: currentSettings, isLoading: isLoadingSettings } =
+    useFetchCurrentSettings();
+  const updateGeneralSettingsMutation = useUpdateGeneralSettings();
+
   const [settings, setSettings] = useState({
     // Products & Inventory
-    defaultProductStatus: "draft",
+    defaultProductStatus: "DRAFT",
     inventoryTracking: true,
     lowStockThreshold: 10,
     allowBackorders: false,
@@ -45,6 +54,30 @@ const GeneralSettings = ({}: Props) => {
     maintenanceMode: false,
   });
 
+  const originalSettingsRef = useRef<typeof settings | null>(null);
+
+  // Load current settings when they're available
+  useEffect(() => {
+    if (currentSettings) {
+      setSettings((prev) => {
+        const updatedSettings = {
+          ...prev,
+          defaultProductStatus:
+            currentSettings.product_default_state?.toUpperCase() || "DRAFT",
+          lowStockThreshold: currentSettings.low_stock_alert ?? 10,
+          autoCancelUnpaidHours: currentSettings.cancel_order_after_hours ?? 24,
+          allowOrderEditing: currentSettings.allow_edit_order ?? false,
+          maintenanceMode: currentSettings.under_maintenance ?? false,
+        };
+        // Store original values for comparison
+        originalSettingsRef.current = JSON.parse(
+          JSON.stringify(updatedSettings)
+        );
+        return updatedSettings;
+      });
+    }
+  }, [currentSettings]);
+
   const handleToggle = (key: keyof typeof settings) => {
     setSettings((prev) => ({
       ...prev,
@@ -65,11 +98,65 @@ const GeneralSettings = ({}: Props) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Submit to API
-    toast.success("تم حفظ الإعدادات بنجاح");
+  // Check if values have changed
+  const hasChanges = () => {
+    if (!originalSettingsRef.current) return false;
+    const original = originalSettingsRef.current;
+    const current = settings;
+
+    return (
+      original.defaultProductStatus !== current.defaultProductStatus ||
+      original.lowStockThreshold !== current.lowStockThreshold ||
+      original.autoCancelUnpaidHours !== current.autoCancelUnpaidHours ||
+      original.allowOrderEditing !== current.allowOrderEditing ||
+      original.maintenanceMode !== current.maintenanceMode
+    );
   };
+
+  const handleCancel = () => {
+    if (originalSettingsRef.current) {
+      setSettings(JSON.parse(JSON.stringify(originalSettingsRef.current)));
+      toast.info("تم إلغاء التغييرات");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Transform settings to backend format
+      const generalSettingsData = {
+        product_default_state: settings.defaultProductStatus.toUpperCase(),
+        low_stock_alert: settings.lowStockThreshold,
+        cancel_order_after_hours: settings.autoCancelUnpaidHours,
+        allow_edit_order: settings.allowOrderEditing,
+        under_maintenance: settings.maintenanceMode,
+      };
+
+      await updateGeneralSettingsMutation.mutateAsync(generalSettingsData);
+      // Update original values after successful save
+      if (originalSettingsRef.current) {
+        originalSettingsRef.current = JSON.parse(JSON.stringify(settings));
+      }
+      toast.success("تم حفظ الإعدادات بنجاح");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "حدث خطأ أثناء حفظ الإعدادات. يرجى المحاولة مرة أخرى."
+      );
+    }
+  };
+
+  if (isLoadingSettings) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const isSubmitting = updateGeneralSettingsMutation.isPending;
+  const hasUnsavedChanges = hasChanges();
 
   return (
     <div className="space-y-6 min-h-screen pb-6">
@@ -83,21 +170,46 @@ const GeneralSettings = ({}: Props) => {
           </p>
         </div>
 
-        <div>
-          {/* Submit Button */}
-          <div className="flex justify-end gap-4">
-            <Button type="button" variant="secondary">
-              إلغاء
-            </Button>
-            <Button type="submit" className="gap-2">
-              <Save className="size-4" />
-              حفظ الإعدادات
-            </Button>
+        {hasUnsavedChanges && (
+          <div>
+            {/* Submit Button */}
+            <div className="flex justify-end gap-4">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isSubmitting}
+                onClick={handleCancel}
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="submit"
+                className="gap-2"
+                disabled={isSubmitting}
+                form="general-settings-form"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    جاري الحفظ...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4" />
+                    حفظ الإعدادات
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form
+        id="general-settings-form"
+        onSubmit={handleSubmit}
+        className="space-y-6"
+      >
         {/* Products & Inventory */}
         <Card>
           <CardHeader>
@@ -158,8 +270,8 @@ const GeneralSettings = ({}: Props) => {
                 onChange={handleInputChange}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-right"
               >
-                <option value="draft">مسودة</option>
-                <option value="published">منشور</option>
+                <option value={PRODUCT_STATUS.DRAFT}>مسودة</option>
+                <option value={PRODUCT_STATUS.PUBLISHED}>منشور</option>
               </select>
             </div>
 
