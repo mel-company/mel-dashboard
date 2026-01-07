@@ -77,25 +77,25 @@ const SettingsLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
-  // Redirect to general settings if on /settings
-  if (location.pathname === "/settings") {
-    return <Navigate to="/settings/general" replace />;
-  }
-
   // Auto-expand policies dropdown if on any policy page
   useEffect(() => {
     const isOnPolicyPage =
-      location.pathname.startsWith("/settings/terms-and-conditions") ||
-      location.pathname.startsWith("/settings/privacy-policy") ||
-      location.pathname.startsWith("/settings/refund-policy");
+      location.pathname.startsWith("/settings/policies/terms-and-conditions") ||
+      location.pathname.startsWith("/settings/policies/privacy-policy") ||
+      location.pathname.startsWith("/settings/policies/refund-policy");
 
-    const policiesPath = "/settings/terms-and-conditions";
+    const policiesPath = "/settings/policies";
     if (isOnPolicyPage) {
       setExpandedItems((prev) =>
         prev.includes(policiesPath) ? prev : [...prev, policiesPath]
       );
     }
   }, [location.pathname]);
+
+  // Redirect to general settings if on /settings
+  if (location.pathname === "/settings") {
+    return <Navigate to="/settings/general" replace />;
+  }
 
   const handleLinkClick = () => {
     setIsMobileMenuOpen(false);
@@ -154,7 +154,7 @@ const SettingsLayout = () => {
                   className={cn(
                     "flex items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors w-full",
                     isSubItemActive || isExpanded
-                      ? "bg-primary text-primary-foreground shadow-sm"
+                      ? ""
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   )}
                 >

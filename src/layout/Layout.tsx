@@ -49,6 +49,7 @@ const Layout = () => {
       policies: "سياسات المتجر",
       "privacy-policy": "سياسة الخصوصية",
       "refund-policy": "سياسة الإسترداد",
+      subscription: "الاشتراك",
     };
 
     const detailLabels: Record<string, string> = {
@@ -127,7 +128,7 @@ const Layout = () => {
       {/* Content Area */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden w-full custom-scrollbar hide-scrollbar mt-2 rounded-lg">
         {/* Global Breadcrumb - top, aligned to the right */}
-        {!location.pathname.includes("payment") && (
+        {location.pathname && (
           <div className="px-4 sm:px-6 lg:px-8 pt-2">
             <Breadcrumb className="justify-start">
               <BreadcrumbList>

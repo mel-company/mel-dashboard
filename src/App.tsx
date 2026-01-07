@@ -109,11 +109,8 @@ function App() {
 
             {/* settings routes */}
             <Route path="/settings" element={<SettingsLayout />}>
-              <Route
-                index
-                element={<Navigate to="/settings/general" replace />}
-              />
-              <Route path="general" element={<GeneralSettings />} />
+              <Route index path="general" element={<GeneralSettings />} />
+              {/* <Route path="general" element={<GeneralSettings />} /> */}
               <Route path="store" element={<DetailsSettings />} />
               <Route path="domain" element={<DomainSettings />} />
               <Route
