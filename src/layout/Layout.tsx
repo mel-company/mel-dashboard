@@ -46,6 +46,9 @@ const Layout = () => {
       plans: "الاشتراكات",
       payment: "الدفع",
       pos: "نقطة البيع",
+      policies: "سياسات المتجر",
+      "privacy-policy": "سياسة الخصوصية",
+      "refund-policy": "سياسة الإسترداد",
     };
 
     const detailLabels: Record<string, string> = {

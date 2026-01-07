@@ -14,14 +14,14 @@ import SlateContentRenderer from "@/components/text-editor/SlateContentRenderer"
 import { useState, useEffect } from "react";
 import type { Descendant } from "slate";
 import {
-  useFetchTermsAndConditions,
-  useCreateTermsAndConditions,
-  useUpdateTermsAndConditions,
+  useFetchPrivacyPolicy,
+  useCreatePrivacyPolicy,
+  useUpdatePrivacyPolicy,
 } from "@/api/wrappers/policies.wrappers";
 
 type Props = {};
 
-const TermsAndConditionsSettings = ({}: Props) => {
+const PrivacyPolicySettings = ({}: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editorValue, setEditorValue] = useState<Descendant[]>([
     {
@@ -31,24 +31,24 @@ const TermsAndConditionsSettings = ({}: Props) => {
   ]);
 
   const {
-    data: termsAndConditions,
+    data: privacyPolicy,
     isLoading,
     isError,
     error,
-  } = useFetchTermsAndConditions();
+  } = useFetchPrivacyPolicy();
 
-  const createMutation = useCreateTermsAndConditions();
-  const updateMutation = useUpdateTermsAndConditions();
+  const createMutation = useCreatePrivacyPolicy();
+  const updateMutation = useUpdatePrivacyPolicy();
 
   // Initialize editor with API data when it loads
   useEffect(() => {
-    if (termsAndConditions?.content) {
+    if (privacyPolicy?.content) {
       try {
         // If content is a string, parse it; otherwise use it directly
         const content =
-          typeof termsAndConditions.content === "string"
-            ? JSON.parse(termsAndConditions.content)
-            : termsAndConditions.content;
+          typeof privacyPolicy.content === "string"
+            ? JSON.parse(privacyPolicy.content)
+            : privacyPolicy.content;
 
         if (Array.isArray(content) && content.length > 0) {
           setEditorValue(content);
@@ -57,23 +57,23 @@ const TermsAndConditionsSettings = ({}: Props) => {
         console.error("Error parsing content:", e);
       }
     }
-  }, [termsAndConditions]);
+  }, [privacyPolicy]);
 
   const handleSubmit = async () => {
     try {
-      if (termsAndConditions?.id) {
+      if (privacyPolicy?.id) {
         // Update existing
         await updateMutation.mutateAsync(editorValue);
-        toast.success("تم تحديث الشروط والأحكام بنجاح");
+        toast.success("تم تحديث سياسة الخصوصية بنجاح");
       } else {
         // Create new
         await createMutation.mutateAsync(editorValue);
-        toast.success("تم إنشاء الشروط والأحكام بنجاح");
+        toast.success("تم إنشاء سياسة الخصوصية بنجاح");
       }
       setIsEditing(false);
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "حدث خطأ أثناء حفظ الشروط والأحكام"
+        error?.response?.data?.message || "حدث خطأ أثناء حفظ سياسة الخصوصية"
       );
     }
   };
@@ -84,12 +84,12 @@ const TermsAndConditionsSettings = ({}: Props) => {
 
   const handleCancel = () => {
     // Reset to original content
-    if (termsAndConditions?.content) {
+    if (privacyPolicy?.content) {
       try {
         const content =
-          typeof termsAndConditions.content === "string"
-            ? JSON.parse(termsAndConditions.content)
-            : termsAndConditions.content;
+          typeof privacyPolicy.content === "string"
+            ? JSON.parse(privacyPolicy.content)
+            : privacyPolicy.content;
 
         if (Array.isArray(content) && content.length > 0) {
           setEditorValue(content);
@@ -108,11 +108,9 @@ const TermsAndConditionsSettings = ({}: Props) => {
     <div className="space-y-6 min-h-full pb-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            الشروط والأحكام
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground">سياسة الخصوصية</h1>
           <p className="text-muted-foreground mt-1">
-            إدارة المستندات القانونية وسياسات المتجر
+            إدارة سياسة الخصوصية وكيفية جمع واستخدام بيانات العملاء
           </p>
         </div>
 
@@ -157,21 +155,18 @@ const TermsAndConditionsSettings = ({}: Props) => {
       </div>
 
       <div className="space-y-6">
-        {/* Terms and Conditions */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="size-5" />
-              الشروط والأحكام
+              سياسة الخصوصية
             </CardTitle>
-            <CardDescription>
-              الشروط والأحكام التي يوافق عليها العملاء عند الشراء
-            </CardDescription>
+            <CardDescription>كيفية جمع واستخدام بيانات العملاء</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-y-4">
-              <Label htmlFor="termsAndConditions">نص الشروط والأحكام</Label>
-              {isLoadingData && !termsAndConditions ? (
+              <Label htmlFor="privacyPolicy">نص سياسة الخصوصية</Label>
+              {isLoadingData && !privacyPolicy ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="size-6 animate-spin text-muted-foreground" />
                 </div>
@@ -184,14 +179,14 @@ const TermsAndConditionsSettings = ({}: Props) => {
                   value={editorValue}
                   onChange={setEditorValue}
                 />
-              ) : termsAndConditions?.content ? (
+              ) : privacyPolicy?.content ? (
                 <div className="border rounded-lg p-6 bg-muted/30 min-h-[200px]">
                   <SlateContentRenderer
                     content={(() => {
                       try {
-                        return typeof termsAndConditions.content === "string"
-                          ? JSON.parse(termsAndConditions.content)
-                          : termsAndConditions.content;
+                        return typeof privacyPolicy.content === "string"
+                          ? JSON.parse(privacyPolicy.content)
+                          : privacyPolicy.content;
                       } catch (e) {
                         console.error("Error parsing content for display:", e);
                         return [
@@ -206,7 +201,7 @@ const TermsAndConditionsSettings = ({}: Props) => {
                 </div>
               ) : (
                 <div className="border rounded-lg p-6 bg-muted/30 min-h-[200px] flex items-center justify-center text-muted-foreground">
-                  لا يوجد محتوى. اضغط على تعديل لإضافة الشروط والأحكام.
+                  لا يوجد محتوى. اضغط على تعديل لإضافة سياسة الخصوصية.
                 </div>
               )}
             </div>
@@ -217,4 +212,4 @@ const TermsAndConditionsSettings = ({}: Props) => {
   );
 };
 
-export default TermsAndConditionsSettings;
+export default PrivacyPolicySettings;

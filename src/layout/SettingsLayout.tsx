@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import {
   Settings,
@@ -9,59 +9,104 @@ import {
   Menu,
   X,
   CreditCard,
+  Shield,
+  Book,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+const settingsItems = [
+  {
+    label: "عامة",
+    path: "/settings/general",
+    icon: Settings,
+  },
+  {
+    label: "المتجر",
+    path: "/settings/store",
+    icon: Store,
+  },
+  {
+    label: "الدفع",
+    path: "/settings/payment-methods",
+    icon: Truck,
+  },
+  {
+    label: "التوصيل",
+    path: "/settings/delivery",
+    icon: Truck,
+  },
+  {
+    label: "النطاق",
+    path: "/settings/domain",
+    icon: Globe,
+  },
+  {
+    label: "الاشتراك",
+    path: "/settings/subscription",
+    icon: CreditCard,
+  },
+  {
+    label: "سياسات المتجر",
+    path: "/settings/policies",
+    icon: Book,
+    subItems: [
+      {
+        label: "الشروط والأحكام",
+        path: "/settings/policies/terms-and-conditions",
+        icon: FileText,
+      },
+      {
+        label: "سياسة الخصوصية",
+        path: "/settings/policies/privacy-policy",
+        icon: Shield,
+      },
+      {
+        label: "سياسة الإسترداد",
+        path: "/settings/policies/refund-policy",
+        icon: CreditCard,
+      },
+    ],
+  },
+];
+
 const SettingsLayout = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const settingsItems = [
-    {
-      label: "عامة",
-      path: "/settings/general",
-      icon: Settings,
-    },
-    {
-      label: "المتجر",
-      path: "/settings/store",
-      icon: Store,
-    },
-    {
-      label: "الدفع",
-      path: "/settings/payment-methods",
-      icon: Truck,
-    },
-    {
-      label: "التوصيل",
-      path: "/settings/delivery",
-      icon: Truck,
-    },
-    {
-      label: "النطاق",
-      path: "/settings/domain",
-      icon: Globe,
-    },
-    {
-      label: "الاشتراك",
-      path: "/settings/subscription",
-      icon: CreditCard,
-    },
-    {
-      label: "الشروط والأحكام",
-      path: "/settings/terms-and-conditions",
-      icon: FileText,
-    },
-  ];
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   // Redirect to general settings if on /settings
   if (location.pathname === "/settings") {
     return <Navigate to="/settings/general" replace />;
   }
 
+  // Auto-expand policies dropdown if on any policy page
+  useEffect(() => {
+    const isOnPolicyPage =
+      location.pathname.startsWith("/settings/terms-and-conditions") ||
+      location.pathname.startsWith("/settings/privacy-policy") ||
+      location.pathname.startsWith("/settings/refund-policy");
+
+    const policiesPath = "/settings/terms-and-conditions";
+    if (isOnPolicyPage) {
+      setExpandedItems((prev) =>
+        prev.includes(policiesPath) ? prev : [...prev, policiesPath]
+      );
+    }
+  }, [location.pathname]);
+
   const handleLinkClick = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const toggleDropdown = (itemPath: string) => {
+    setExpandedItems((prev) =>
+      prev.includes(itemPath)
+        ? prev.filter((path) => path !== itemPath)
+        : [...prev, itemPath]
+    );
   };
 
   const SidebarContent = ({
@@ -85,10 +130,71 @@ const SettingsLayout = () => {
       <nav className="flex flex-col gap-1">
         {settingsItems.map((item) => {
           const Icon = item.icon;
+          const hasSubItems = item.subItems && item.subItems.length > 0;
+          const isExpanded = expandedItems.includes(item.path);
+
+          // Check if any sub-item is active
+          const isSubItemActive = hasSubItems
+            ? item.subItems?.some(
+                (subItem) => location.pathname === subItem.path
+              )
+            : false;
+
           const isActive =
-            location.pathname === item.path ||
-            (item.path !== "/settings" &&
-              location.pathname.startsWith(item.path));
+            !hasSubItems &&
+            (location.pathname === item.path ||
+              (item.path !== "/settings" &&
+                location.pathname.startsWith(item.path)));
+
+          if (hasSubItems) {
+            return (
+              <div key={item.path} className="flex flex-col gap-1">
+                <button
+                  onClick={() => toggleDropdown(item.path)}
+                  className={cn(
+                    "flex items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors w-full",
+                    isSubItemActive || isExpanded
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="size-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronUp className="size-4 shrink-0" />
+                  ) : (
+                    <ChevronDown className="size-4 shrink-0" />
+                  )}
+                </button>
+                {isExpanded && (
+                  <div className="flex flex-col gap-1 pr-4 mt-1">
+                    {item.subItems?.map((subItem) => {
+                      const SubIcon = subItem.icon;
+                      const isSubActive = location.pathname === subItem.path;
+                      return (
+                        <Link
+                          key={subItem.path}
+                          to={subItem.path}
+                          onClick={handleLinkClick}
+                          className={cn(
+                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                            isSubActive
+                              ? "bg-primary/80 text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          )}
+                        >
+                          <SubIcon className="size-3.5 shrink-0" />
+                          <span>{subItem.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
 
           return (
             <Link

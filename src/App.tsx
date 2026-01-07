@@ -47,6 +47,8 @@ import SubscriptionSettings from "./pages/settings/SubscriptionSettings";
 import Plans from "./pages/plan/Plans";
 import Payment from "./pages/payment/Payment";
 import POS from "./pages/pos/POS";
+import PrivacyPolicySettings from "./pages/settings/PrivacyPolicySettings";
+import RefundPolicySettings from "./pages/settings/RefundPolicySettings";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -119,10 +121,21 @@ function App() {
                 element={<PaymentMethodsSettings />}
               />
               <Route path="delivery" element={<DeliverySettings />} />
-              <Route
-                path="terms-and-conditions"
-                element={<TermsAndConditionsSettings />}
-              />
+              <Route path="policies">
+                <Route
+                  index
+                  path="terms-and-conditions"
+                  element={<TermsAndConditionsSettings />}
+                />
+                <Route
+                  path="privacy-policy"
+                  element={<PrivacyPolicySettings />}
+                />
+                <Route
+                  path="refund-policy"
+                  element={<RefundPolicySettings />}
+                />
+              </Route>
               <Route path="subscription" element={<SubscriptionSettings />} />
             </Route>
 

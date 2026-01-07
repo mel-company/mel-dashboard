@@ -7,21 +7,21 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { FileText, Pencil, Save, X, Loader2 } from "lucide-react";
+import { Shield, Pencil, Save, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import DemoUsageTextEditor from "./DemoUsageTextEditor";
 import SlateContentRenderer from "@/components/text-editor/SlateContentRenderer";
 import { useState, useEffect } from "react";
 import type { Descendant } from "slate";
 import {
-  useFetchTermsAndConditions,
-  useCreateTermsAndConditions,
-  useUpdateTermsAndConditions,
+  useFetchRefundPolicy,
+  useCreateRefundPolicy,
+  useUpdateRefundPolicy,
 } from "@/api/wrappers/policies.wrappers";
 
 type Props = {};
 
-const TermsAndConditionsSettings = ({}: Props) => {
+const RefundPolicySettings = ({}: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editorValue, setEditorValue] = useState<Descendant[]>([
     {
@@ -31,24 +31,24 @@ const TermsAndConditionsSettings = ({}: Props) => {
   ]);
 
   const {
-    data: termsAndConditions,
+    data: refundPolicy,
     isLoading,
     isError,
     error,
-  } = useFetchTermsAndConditions();
+  } = useFetchRefundPolicy();
 
-  const createMutation = useCreateTermsAndConditions();
-  const updateMutation = useUpdateTermsAndConditions();
+  const createMutation = useCreateRefundPolicy();
+  const updateMutation = useUpdateRefundPolicy();
 
   // Initialize editor with API data when it loads
   useEffect(() => {
-    if (termsAndConditions?.content) {
+    if (refundPolicy?.content) {
       try {
         // If content is a string, parse it; otherwise use it directly
         const content =
-          typeof termsAndConditions.content === "string"
-            ? JSON.parse(termsAndConditions.content)
-            : termsAndConditions.content;
+          typeof refundPolicy.content === "string"
+            ? JSON.parse(refundPolicy.content)
+            : refundPolicy.content;
 
         if (Array.isArray(content) && content.length > 0) {
           setEditorValue(content);
@@ -57,23 +57,23 @@ const TermsAndConditionsSettings = ({}: Props) => {
         console.error("Error parsing content:", e);
       }
     }
-  }, [termsAndConditions]);
+  }, [refundPolicy]);
 
   const handleSubmit = async () => {
     try {
-      if (termsAndConditions?.id) {
+      if (refundPolicy?.id) {
         // Update existing
         await updateMutation.mutateAsync(editorValue);
-        toast.success("تم تحديث الشروط والأحكام بنجاح");
+        toast.success("تم تحديث سياسة الإسترداد بنجاح");
       } else {
         // Create new
         await createMutation.mutateAsync(editorValue);
-        toast.success("تم إنشاء الشروط والأحكام بنجاح");
+        toast.success("تم إنشاء سياسة الإسترداد بنجاح");
       }
       setIsEditing(false);
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "حدث خطأ أثناء حفظ الشروط والأحكام"
+        error?.response?.data?.message || "حدث خطأ أثناء حفظ سياسة الإسترداد"
       );
     }
   };
@@ -84,12 +84,12 @@ const TermsAndConditionsSettings = ({}: Props) => {
 
   const handleCancel = () => {
     // Reset to original content
-    if (termsAndConditions?.content) {
+    if (refundPolicy?.content) {
       try {
         const content =
-          typeof termsAndConditions.content === "string"
-            ? JSON.parse(termsAndConditions.content)
-            : termsAndConditions.content;
+          typeof refundPolicy.content === "string"
+            ? JSON.parse(refundPolicy.content)
+            : refundPolicy.content;
 
         if (Array.isArray(content) && content.length > 0) {
           setEditorValue(content);
@@ -109,10 +109,10 @@ const TermsAndConditionsSettings = ({}: Props) => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            الشروط والأحكام
+            سياسة الإسترداد
           </h1>
           <p className="text-muted-foreground mt-1">
-            إدارة المستندات القانونية وسياسات المتجر
+            إدارة سياسة الإسترداد والاسترجاع
           </p>
         </div>
 
@@ -157,21 +157,20 @@ const TermsAndConditionsSettings = ({}: Props) => {
       </div>
 
       <div className="space-y-6">
-        {/* Terms and Conditions */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="size-5" />
-              الشروط والأحكام
+              <Shield className="size-5" />
+              سياسة الإسترداد
             </CardTitle>
             <CardDescription>
-              الشروط والأحكام التي يوافق عليها العملاء عند الشراء
+              شروط إرجاع المنتجات واسترداد المبالغ
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-y-4">
-              <Label htmlFor="termsAndConditions">نص الشروط والأحكام</Label>
-              {isLoadingData && !termsAndConditions ? (
+              <Label htmlFor="refundPolicy">نص سياسة الإسترداد</Label>
+              {isLoadingData && !refundPolicy ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="size-6 animate-spin text-muted-foreground" />
                 </div>
@@ -184,14 +183,14 @@ const TermsAndConditionsSettings = ({}: Props) => {
                   value={editorValue}
                   onChange={setEditorValue}
                 />
-              ) : termsAndConditions?.content ? (
+              ) : refundPolicy?.content ? (
                 <div className="border rounded-lg p-6 bg-muted/30 min-h-[200px]">
                   <SlateContentRenderer
                     content={(() => {
                       try {
-                        return typeof termsAndConditions.content === "string"
-                          ? JSON.parse(termsAndConditions.content)
-                          : termsAndConditions.content;
+                        return typeof refundPolicy.content === "string"
+                          ? JSON.parse(refundPolicy.content)
+                          : refundPolicy.content;
                       } catch (e) {
                         console.error("Error parsing content for display:", e);
                         return [
@@ -206,7 +205,7 @@ const TermsAndConditionsSettings = ({}: Props) => {
                 </div>
               ) : (
                 <div className="border rounded-lg p-6 bg-muted/30 min-h-[200px] flex items-center justify-center text-muted-foreground">
-                  لا يوجد محتوى. اضغط على تعديل لإضافة الشروط والأحكام.
+                  لا يوجد محتوى. اضغط على تعديل لإضافة سياسة الإسترداد.
                 </div>
               )}
             </div>
@@ -217,4 +216,4 @@ const TermsAndConditionsSettings = ({}: Props) => {
   );
 };
 
-export default TermsAndConditionsSettings;
+export default RefundPolicySettings;
