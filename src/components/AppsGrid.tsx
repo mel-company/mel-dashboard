@@ -54,7 +54,7 @@ const baseApps: AppItem[] = [
     icon: Package,
     gradient: "from-emerald-500 to-emerald-600",
     description: "إدارة المنتجات",
-    badge: "جديد",
+    // badge: "جديد",
   },
   {
     label: "الفئات",
@@ -69,7 +69,7 @@ const baseApps: AppItem[] = [
     icon: Percent,
     gradient: "from-rose-500 to-rose-600",
     description: "إدارة الخصومات",
-    badge: "عروض",
+    // badge: "عروض",
   },
   {
     label: "الطلبات",
@@ -107,14 +107,14 @@ const baseApps: AppItem[] = [
     gradient: "from-green-500 to-green-600",
     description: "إدارة الحسابات المالية",
   },
-  {
-    label: "متجر التطبيقات",
-    path: "/app-store",
-    icon: AppWindow,
-    gradient: "from-purple-500 to-purple-600",
-    description: "تطبيقات مع إمكانية التكامل",
-    badge: "جديد",
-  },
+  // {
+  //   label: "متجر التطبيقات",
+  //   path: "/app-store",
+  //   icon: AppWindow,
+  //   gradient: "from-purple-500 to-purple-600",
+  //   description: "تطبيقات مع إمكانية التكامل",
+  //   // badge: "جديد",
+  // },
 ];
 
 // Helper function to convert AppStoreApp to AppItem
@@ -201,8 +201,6 @@ const AppsGrid = () => {
       app.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-
-  
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
