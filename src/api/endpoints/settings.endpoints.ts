@@ -82,6 +82,28 @@ export const settingsAPI = {
   },
 
   /**
+   * Update store payment methods
+   */
+  updatePaymentMethods: async (paymentMethods: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      "/settings/payment-methods",
+      paymentMethods
+    );
+    return data;
+  },
+
+  /**
+   * Update store general settings
+   */
+  updateGeneralSettings: async (generalSettings: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      "/settings/general-settings",
+      generalSettings
+    );
+    return data;
+  },
+
+  /**
    * Get settings for the current store user
    */
   fetchCurrent: async (): Promise<any> => {
