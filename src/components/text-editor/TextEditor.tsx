@@ -34,7 +34,7 @@ const TextEditor = ({
         <Toolbar />
         <Editable
           dir="rtl"
-          placeholder="اكتب هنا..."
+          placeholder=""
           className="text-right h-[500px] min-h-[500px] py-4 px-8 focus:outline-none overflow-x-hidden overflow-y-scroll"
           renderElement={renderElement}
           renderLeaf={renderLeaf}
@@ -364,6 +364,9 @@ const toggleMark = (editor: CustomEditor, format: string) => {
 };
 
 const isMarkActive = (editor: CustomEditor, format: string) => {
+  const { selection } = editor;
+  if (!selection) return false;
+
   const marks = Editor.marks(editor);
   if (!marks) return false;
 
@@ -376,9 +379,27 @@ const isMarkActive = (editor: CustomEditor, format: string) => {
 const Toolbar = () => {
   const editor = useSlate();
 
+  // useSlate() automatically causes re-renders when editor state changes,
+  // including selection changes. This ensures toolbar buttons highlight
+  // correctly based on the current cursor position and active formatting.
+
   const isBlockActive = (format: string) => {
     const { selection } = editor;
     if (!selection) return false;
+
+    // For list types, we need to check if we're inside a list-item that belongs to the list type
+    if (format === "numbered-list" || format === "bulleted-list") {
+      const [match] = Array.from(
+        Editor.nodes(editor, {
+          at: Editor.unhangRange(editor, selection),
+          match: (n) =>
+            !Editor.isEditor(n) &&
+            SlateElement.isElement(n) &&
+            n.type === format,
+        })
+      );
+      return !!match;
+    }
 
     const [match] = Array.from(
       Editor.nodes(editor, {
@@ -509,7 +530,8 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isBlockActive("heading-one") && "bg-accent"
+              isBlockActive("heading-one") &&
+                "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleBlock("heading-one")}
             type="button"
@@ -522,7 +544,8 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isBlockActive("heading-two") && "bg-accent"
+              isBlockActive("heading-two") &&
+                "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleBlock("heading-two")}
             type="button"
@@ -535,7 +558,8 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isBlockActive("heading-three") && "bg-accent"
+              isBlockActive("heading-three") &&
+                "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleBlock("heading-three")}
             type="button"
@@ -553,7 +577,8 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isMarkActive(editor, "bold") && "bg-accent"
+              isMarkActive(editor, "bold") &&
+                "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleMark(editor, "bold")}
             type="button"
@@ -566,7 +591,8 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isMarkActive(editor, "italic") && "bg-accent"
+              isMarkActive(editor, "italic") &&
+                "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleMark(editor, "italic")}
             type="button"
@@ -579,7 +605,8 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isMarkActive(editor, "underline") && "bg-accent"
+              isMarkActive(editor, "underline") &&
+                "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleMark(editor, "underline")}
             type="button"
@@ -597,7 +624,8 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isBlockActive("numbered-list") && "bg-accent"
+              isBlockActive("numbered-list") &&
+                "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleBlock("numbered-list")}
             type="button"
@@ -610,7 +638,8 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isBlockActive("bulleted-list") && "bg-accent"
+              isBlockActive("bulleted-list") &&
+                "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleBlock("bulleted-list")}
             type="button"
@@ -628,7 +657,7 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isAlignmentActive("right") && "bg-accent"
+              isAlignmentActive("right") && "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleAlignment("right")}
             type="button"
@@ -641,7 +670,8 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isAlignmentActive("center") && "bg-accent"
+              isAlignmentActive("center") &&
+                "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleAlignment("center")}
             type="button"
@@ -654,7 +684,7 @@ const Toolbar = () => {
             size="sm"
             className={cn(
               "h-8 w-8 p-0",
-              isAlignmentActive("left") && "bg-accent"
+              isAlignmentActive("left") && "bg-primary text-primary-foreground"
             )}
             onClick={() => toggleAlignment("left")}
             type="button"
