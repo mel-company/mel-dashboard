@@ -13,6 +13,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FileText, Shield, Upload, Save } from "lucide-react";
 import { toast } from "sonner";
+import { withReact } from "slate-react";
+import { createEditor } from "slate";
+import type { Descendant } from "slate";
+import { withHistory } from "slate-history";
+import { useMemo } from "react";
+// @ts-ignore
+import TextEditor from "@/components/text-editor/TextEditor";
 
 type Props = {};
 
@@ -25,6 +32,17 @@ const TermsAndConditionsSettings = ({}: Props) => {
     ageRestriction: false,
     minAge: 18,
   });
+
+  // @ts-ignore
+  const editor = useMemo(() => withHistory(withReact(createEditor())), []);
+
+  // @ts-ignore
+  const [value, setValue] = useState<Descendant[]>([
+    {
+      type: "paragraph",
+      children: [{ text: "اكتب سياسات المتجر هنا..." }],
+    } as Descendant,
+  ]);
 
   const [uploadedFiles, setUploadedFiles] = useState<
     Record<string, File | null>
@@ -95,6 +113,7 @@ const TermsAndConditionsSettings = ({}: Props) => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="termsAndConditions">نص الشروط والأحكام</Label>
+              {/* <TextEditor editor={editor} value={value} setValue={setValue} /> */}
               <Textarea
                 id="termsAndConditions"
                 name="termsAndConditions"
