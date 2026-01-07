@@ -13,13 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FileText, Shield, Upload, Save } from "lucide-react";
 import { toast } from "sonner";
-import { withReact } from "slate-react";
-import { createEditor } from "slate";
-import type { Descendant } from "slate";
-import { withHistory } from "slate-history";
-import { useMemo } from "react";
-// @ts-ignore
-import TextEditor from "@/components/text-editor/TextEditor";
+import DemoUsageTextEditor from "./DemoUsageTextEditor";
 
 type Props = {};
 
@@ -32,17 +26,6 @@ const TermsAndConditionsSettings = ({}: Props) => {
     ageRestriction: false,
     minAge: 18,
   });
-
-  // @ts-ignore
-  const editor = useMemo(() => withHistory(withReact(createEditor())), []);
-
-  // @ts-ignore
-  const [value, setValue] = useState<Descendant[]>([
-    {
-      type: "paragraph",
-      children: [{ text: "اكتب سياسات المتجر هنا..." }],
-    } as Descendant,
-  ]);
 
   const [uploadedFiles, setUploadedFiles] = useState<
     Record<string, File | null>
@@ -113,63 +96,7 @@ const TermsAndConditionsSettings = ({}: Props) => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="termsAndConditions">نص الشروط والأحكام</Label>
-              {/* <TextEditor editor={editor} value={value} setValue={setValue} /> */}
-              <Textarea
-                id="termsAndConditions"
-                name="termsAndConditions"
-                value={legalDocs.termsAndConditions}
-                onChange={handleTextChange}
-                placeholder="أدخل نص الشروط والأحكام هنا..."
-                rows={10}
-                className="text-right font-mono text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                يمكنك استخدام HTML لتنسيق النص
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>أو رفع ملف PDF</Label>
-              <div className="flex items-center gap-4">
-                {uploadedFiles.termsFile ? (
-                  <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
-                    <FileText className="size-4" />
-                    <span className="text-sm">
-                      {uploadedFiles.termsFile.name}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setUploadedFiles((prev) => ({
-                          ...prev,
-                          termsFile: null,
-                        }))
-                      }
-                    >
-                      إزالة
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <Label
-                      htmlFor="termsFile"
-                      className="cursor-pointer flex items-center gap-2 text-sm border border-input rounded-md px-4 py-2 hover:bg-accent"
-                    >
-                      <Upload className="size-4" />
-                      اختر ملف PDF
-                    </Label>
-                    <Input
-                      id="termsFile"
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) => handleFileUpload(e, "termsFile")}
-                      className="hidden"
-                    />
-                  </>
-                )}
-              </div>
+              <DemoUsageTextEditor />
             </div>
           </CardContent>
         </Card>
