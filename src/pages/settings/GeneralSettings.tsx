@@ -10,14 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Settings,
-  ShoppingCart,
-  Package,
-  DollarSign,
-  Users,
-  Save,
-} from "lucide-react";
+import { Settings, ShoppingCart, Package, Save } from "lucide-react";
 import { toast } from "sonner";
 
 type Props = {};
@@ -154,7 +147,7 @@ const GeneralSettings = ({}: Props) => {
               />
             </div> */}
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-y-2">
               <Label htmlFor="defaultProductStatus">
                 حالة المنتج الافتراضية
               </Label>
@@ -171,7 +164,7 @@ const GeneralSettings = ({}: Props) => {
             </div>
 
             {settings.inventoryTracking && (
-              <div className="space-y-2">
+              <div className="flex flex-col gap-y-2">
                 <Label htmlFor="lowStockThreshold">
                   حد تنبيه المخزون المنخفض
                 </Label>
@@ -214,19 +207,6 @@ const GeneralSettings = ({}: Props) => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>تأكيد الطلبات تلقائياً</Label>
-                <p className="text-sm text-muted-foreground">
-                  تأكيد الطلبات فور استلامها
-                </p>
-              </div>
-              <Switch
-                checked={settings.autoConfirmOrders}
-                onCheckedChange={() => handleToggle("autoConfirmOrders")}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
                 <Label>السماح بتعديل الطلبات</Label>
                 <p className="text-sm text-muted-foreground">
                   السماح بتعديل الطلبات قبل المعالجة والشحن
@@ -238,7 +218,7 @@ const GeneralSettings = ({}: Props) => {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-y-2">
               <Label htmlFor="autoCancelUnpaidHours">
                 إلغاء الطلبات غير المدفوعة بعد (ساعة)
               </Label>
