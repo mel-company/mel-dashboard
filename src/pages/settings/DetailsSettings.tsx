@@ -15,20 +15,23 @@ import {
   Mail,
   Phone,
   MapPin,
-  Globe,
-  DollarSign,
-  Languages,
   Upload,
   Save,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import { useUpdateStoreDetails } from "@/api/wrappers/settings.wrappers";
 import { CURRENCY, LANGUAGE, TIMEZONE } from "@/utils/constants";
+import { sanitizePhoneNumber } from "@/utils/helpers";
+import DetailsSettingsSkeleton from "./DetailsSettingsSkeleton";
 
 type Props = {};
 
 const DetailsSettings = ({}: Props) => {
-  const { data: storeDetails } = useFetchStoreDetails();
+  const { data: storeDetails, isLoading } = useFetchStoreDetails();
+  const { mutate: updateStoreDetails, isPending: isUpdating } =
+    useUpdateStoreDetails();
 
   const [formData, setFormData] = useState({
     storeName: "",
@@ -76,7 +79,7 @@ const DetailsSettings = ({}: Props) => {
         storeName: storeDetails.name || "",
         storeDescription: storeDetails.description || "",
         businessEmail: storeDetails.email || "",
-        businessPhone: storeDetails.phone || "",
+        businessPhone: storeDetails.phone,
         physicalAddress: storeDetails.location || "",
         timezone: timezoneValue,
         currency: currencyValue,
@@ -109,9 +112,53 @@ const DetailsSettings = ({}: Props) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Submit to API
-    toast.success("تم حفظ الإعدادات بنجاح");
+
+    // Prepare the update data
+    const updateData: any = {
+      name: formData.storeName,
+      description: formData.storeDescription,
+      email: formData.businessEmail,
+      location: formData.physicalAddress,
+    };
+
+    // Sanitize and add phone number if provided
+    if (formData.businessPhone) {
+      try {
+        const sanitizedPhone = sanitizePhoneNumber(
+          formData.businessPhone,
+          "+964"
+        );
+        updateData.phone = sanitizedPhone;
+      } catch (error: any) {
+        toast.error(
+          error?.message ||
+            "رقم الهاتف غير صحيح. يجب أن يبدأ بـ 7 ويتكون من 10 أرقام"
+        );
+        return;
+      }
+    }
+
+    // Add logo if a new one was uploaded (this would need file upload handling)
+    // For now, we'll skip logo update as it requires multipart/form-data
+
+    // Call the update mutation
+    updateStoreDetails(updateData, {
+      onSuccess: () => {
+        toast.success("تم حفظ الإعدادات بنجاح");
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message ||
+            "حدث خطأ أثناء حفظ الإعدادات. يرجى المحاولة مرة أخرى"
+        );
+      },
+    });
   };
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return <DetailsSettingsSkeleton />;
+  }
 
   return (
     <div className="space-y-6 min-h-full pb-6">
@@ -287,20 +334,43 @@ const DetailsSettings = ({}: Props) => {
                 </div>
               </div>
 
+              {/* <div>
+                <PhoneNumberInput
+                  value={formData.businessPhone}
+                  onChange={(phone) => {
+                    const digitsOnly = phone.replace(/\D/g, "");
+                    const phoneDigits =
+                      digitsOnly.length > 10
+                        ? digitsOnly.slice(-10)
+                        : digitsOnly;
+                    setFormData((prev) => ({
+                      ...prev,
+                      businessPhone: phoneDigits,
+                    }));
+                  }}
+                  placeholder="750 123 4567"
+                  required
+                  className="text-right pr-10"
+                />
+              </div> */}
+
               <div className="space-y-2">
                 <Label htmlFor="businessPhone">رقم الهاتف *</Label>
                 <div className="relative">
-                  <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
                   <Input
                     id="businessPhone"
                     name="businessPhone"
                     type="tel"
                     value={formData.businessPhone}
                     onChange={handleInputChange}
-                    placeholder="+964 750 123 4567"
+                    placeholder="7xx xxx xxxx"
                     required
-                    className="text-right pr-10"
+                    className="text-left pl-20"
                   />
+                  <div className="flex items-center justify-center gap-x-2 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                    964+
+                    <Phone className="size-4" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -323,7 +393,7 @@ const DetailsSettings = ({}: Props) => {
           </CardContent>
         </Card>
 
-        {/* Regional Settings */}
+        {/* Regional Settings
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -397,16 +467,25 @@ const DetailsSettings = ({}: Props) => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Submit Button */}
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="secondary">
+          <Button type="button" variant="secondary" disabled={isUpdating}>
             إلغاء
           </Button>
-          <Button type="submit" className="gap-2">
-            <Save className="size-4" />
-            حفظ الإعدادات
+          <Button type="submit" className="gap-2" disabled={isUpdating}>
+            {isUpdating ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                جاري الحفظ...
+              </>
+            ) : (
+              <>
+                <Save className="size-4" />
+                حفظ الإعدادات
+              </>
+            )}
           </Button>
         </div>
       </form>

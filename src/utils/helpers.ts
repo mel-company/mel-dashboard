@@ -74,10 +74,6 @@ export const sanitizePhoneNumber = (
   phone: string,
   countryCode: string
 ): string => {
-  if (!phone || !countryCode) {
-    throw new Error("Phone and country code are required");
-  }
-
   const countryCodeWithoutPlus = countryCode.replace("+", "");
 
   if (phone.startsWith("+")) {
@@ -87,17 +83,27 @@ export const sanitizePhoneNumber = (
     phone = phone.replace("00", "");
   }
   if (phone.startsWith("0")) {
-    phone = phone.replace("0", "");
+    phone = phone.replace(/^0+/, "");
   }
   if (phone.startsWith(countryCode)) {
-    phone = phone.replace(countryCode, "");
+    phone = phone.replace(/^countryCode+/, "");
   }
   if (phone.startsWith(countryCodeWithoutPlus)) {
     phone = phone.replace(countryCodeWithoutPlus, "");
   }
 
+  console.log("Phone before error: ", phone);
+  console.log("Phone length before error: ", phone.length);
+
   if (!phone.startsWith("7") || phone.length !== 10) {
+    console.log("Inside Error: ", phone, phone.length);
     throw new Error("Invalid phone number: must start with 7 and be 10 digits");
+  }
+
+  const validPrefixes = ["75", "77", "78"];
+
+  if (!validPrefixes.some((p) => phone.startsWith(p))) {
+    throw new Error("Invalid Iraqi mobile prefix");
   }
 
   return countryCode + phone;

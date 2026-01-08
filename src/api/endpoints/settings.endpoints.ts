@@ -93,6 +93,17 @@ export const settingsAPI = {
   },
 
   /**
+   * Update store details
+   */
+  updateStoreDetails: async (storeDetails: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      "/settings/details",
+      storeDetails
+    );
+    return data;
+  },
+
+  /**
    * Update store general settings
    */
   updateGeneralSettings: async (generalSettings: any): Promise<any> => {

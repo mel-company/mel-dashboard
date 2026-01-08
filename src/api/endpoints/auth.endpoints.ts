@@ -1,4 +1,3 @@
-
 import axiosInstance from "@/utils/AxiosInstance";
 
 export const authAPI = {
@@ -13,7 +12,17 @@ export const authAPI = {
       },
     });
 
-    console.log("Verification Code: ", data)
+    console.log("Verification Code: ", data);
+    return data;
+  },
+
+  validatePhone: async (params?: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/store-user-auth/validate-phone",
+      {
+        phone: params?.phone,
+      }
+    );
     return data;
   },
 

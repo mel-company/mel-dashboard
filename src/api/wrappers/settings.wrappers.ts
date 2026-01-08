@@ -212,6 +212,27 @@ export const useUpdatePaymentMethods = () => {
 };
 
 /**
+ * Update store details mutation
+ */
+export const useUpdateStoreDetails = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, any>({
+    mutationFn: (storeDetails: any) =>
+      settingsAPI.updateStoreDetails(storeDetails),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.lists() });
+      if (data?.storeId) {
+        queryClient.setQueryData(settingsKeys.byStore(data.storeId), data);
+      }
+      if (data?.id) {
+        queryClient.setQueryData(settingsKeys.detail(data.id), data);
+      }
+      queryClient.invalidateQueries({ queryKey: ["settings", "current"] });
+    },
+  });
+};
+
+/**
  * Update store general settings mutation
  */
 export const useUpdateGeneralSettings = () => {

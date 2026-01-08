@@ -22,6 +22,15 @@ export const useLogin = () => {
 };
 
 /**
+ * Validate Phone
+ */
+export const useValidatePhone = () => {
+  return useMutation<any, Error, any>({
+    mutationFn: (params: any) => authAPI.validatePhone(params),
+  });
+};
+
+/**
  * Verify
  */
 export const useVerify = () => {
