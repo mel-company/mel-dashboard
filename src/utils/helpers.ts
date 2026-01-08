@@ -6,16 +6,16 @@
  * 4. No periods (.) allowed
  * 5. No underscores (_) allowed
  * 6. No special symbols allowed
- * 
+ *
  * Valid examples: mystore, my-store, store123
  * Invalid examples: 123store, my_store, store.com
- * 
+ *
  * @param domain - The domain string to validate
  * @returns true if the domain is valid, false otherwise
  */
 export const isValidDomain = (domain: string): boolean => {
   // Check if domain is empty or null
-  if (!domain || typeof domain !== 'string' || domain.trim().length === 0) {
+  if (!domain || typeof domain !== "string" || domain.trim().length === 0) {
     return false;
   }
 
@@ -42,12 +42,12 @@ export const isValidDomain = (domain: string): boolean => {
   }
 
   // Check for periods
-  if (trimmedDomain.includes('.')) {
+  if (trimmedDomain.includes(".")) {
     return false;
   }
 
   // Check for underscores
-  if (trimmedDomain.includes('_')) {
+  if (trimmedDomain.includes("_")) {
     return false;
   }
 
@@ -58,14 +58,47 @@ export const isValidDomain = (domain: string): boolean => {
   }
 
   // Check that domain doesn't end with a hyphen
-  if (trimmedDomain.endsWith('-')) {
+  if (trimmedDomain.endsWith("-")) {
     return false;
   }
 
   // Check that domain doesn't have consecutive hyphens
-  if (trimmedDomain.includes('--')) {
+  if (trimmedDomain.includes("--")) {
     return false;
   }
 
   return true;
+};
+
+export const sanitizePhoneNumber = (
+  phone: string,
+  countryCode: string
+): string => {
+  if (!phone || !countryCode) {
+    throw new Error("Phone and country code are required");
+  }
+
+  const countryCodeWithoutPlus = countryCode.replace("+", "");
+
+  if (phone.startsWith("+")) {
+    phone = phone.replace("+", "");
+  }
+  if (phone.startsWith("00")) {
+    phone = phone.replace("00", "");
+  }
+  if (phone.startsWith("0")) {
+    phone = phone.replace("0", "");
+  }
+  if (phone.startsWith(countryCode)) {
+    phone = phone.replace(countryCode, "");
+  }
+  if (phone.startsWith(countryCodeWithoutPlus)) {
+    phone = phone.replace(countryCodeWithoutPlus, "");
+  }
+
+  if (!phone.startsWith("7") || phone.length !== 10) {
+    throw new Error("Invalid phone number: must start with 7 and be 10 digits");
+  }
+
+  return countryCode + phone;
 };
