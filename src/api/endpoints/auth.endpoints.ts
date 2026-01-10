@@ -1,5 +1,6 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
+
 export const authAPI = {
   login: async (params?: any): Promise<any> => {
     const storeName = params?.store?.name ?? params?.name;
