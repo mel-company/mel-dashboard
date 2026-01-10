@@ -36,6 +36,8 @@ interface AppItem {
   badge?: string;
   emojiIcon?: string;
   locked?: boolean;
+
+  
 }
 
 // Base apps - always shown
