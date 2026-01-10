@@ -11,7 +11,6 @@ import {
   Search,
   BarChart2,
   Calculator,
-  AppWindow,
   Maximize2,
   Minimize2,
   Lock,
