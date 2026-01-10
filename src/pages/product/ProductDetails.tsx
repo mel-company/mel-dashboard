@@ -47,6 +47,7 @@ import AddVariantDialog from "./AddVariantDialog";
 import EditVariantDialog from "./EditVariantDialog";
 import RemoveCategoryFromProductDialog from "./RemoveCategoryFromProductDialog";
 import AddCategoryToProductDialog from "./AddCategoryToProductDialog";
+import ProductImageDialog from "./ProductImageDialog";
 import {
   useFetchVariants,
   useDeleteVariant,
@@ -73,6 +74,7 @@ const ProductDetails = () => {
     name: string;
   } | null>(null);
   const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? ""
@@ -181,21 +183,29 @@ const ProductDetails = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="relative h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
-                {/* <img
-                  src={product.image}
-                  alt={product.title}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    target.src = `https://via.placeholder.com/600x400/cccccc/666666?text=${encodeURIComponent(
-                      product.title
-                    )}`;
-                    target.onerror = null;
-                  }}
-                /> */}
-                <ShoppingCart className="size-24 text-white bg-cyan/40 rounded-full p-6" />
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsImageDialogOpen(true)}
+                className="relative group h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10 transition-opacity hover:opacity-90 cursor-pointer"
+              >
+                {data.image ? (
+                  <img
+                    src={data.image}
+                    alt={data.title}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <ShoppingCart className="size-24 text-white bg-cyan/40 rounded-full p-6" />
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                  <span className="text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    تعديل الصورة
+                  </span>
+                </div>
+              </button>
 
               <Separator />
 
@@ -265,9 +275,9 @@ const ProductDetails = () => {
               </div>
             </CardHeader>
             <CardContent>
-              {data.categories && data.categories.length > 0 ? (
+              {data?.categories && data?.categories?.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {data.categories.map((category: any) => (
+                  {data?.categories?.map((category: any) => (
                     <Link
                       key={category.id}
                       to={`/categories/${category.id}`}
@@ -328,7 +338,7 @@ const ProductDetails = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data.properties.map((property: any) => (
+                {data?.properties?.map((property: any) => (
                   <div
                     key={property.id || property.name}
                     className="flex items-center justify-between p-4 rounded-lg border bg-card"
@@ -768,6 +778,15 @@ const ProductDetails = () => {
           onSuccess={() => {
             refetch();
           }}
+        />
+      )}
+
+      {/* Product Image Dialog */}
+      {id && (
+        <ProductImageDialog
+          open={isImageDialogOpen}
+          onOpenChange={setIsImageDialogOpen}
+          productId={id}
         />
       )}
     </div>

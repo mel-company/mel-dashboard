@@ -292,3 +292,51 @@ export const useFindVariantByOptions = () => {
       productAPI.findVariantByOptions(productId, selectedOptions),
   });
 };
+
+/**
+ * Update product image mutation
+ */
+export const useUpdateProductImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { productId: string; image: File }>({
+    mutationFn: ({ productId, image }) =>
+      productAPI.updateProductImage(productId, image),
+    onSuccess: (data) => {
+      // Invalidate and refetch products list
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      // Update the specific product cache if we have the ID
+      if (data?.id) {
+        queryClient.setQueryData(productKeys.detail(data.id), data);
+        // Also invalidate to ensure fresh data
+        queryClient.invalidateQueries({
+          queryKey: productKeys.detail(data.id),
+        });
+      }
+    },
+  });
+};
+
+/**
+ * Delete product image mutation
+ */
+export const useDeleteProductImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (productId: string) =>
+      productAPI.deleteProductImage(productId),
+    onSuccess: (data) => {
+      // Invalidate and refetch products list
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      // Update the specific product cache if we have the ID
+      if (data?.id) {
+        queryClient.setQueryData(productKeys.detail(data.id), data);
+        // Also invalidate to ensure fresh data
+        queryClient.invalidateQueries({
+          queryKey: productKeys.detail(data.id),
+        });
+      }
+    },
+  });
+};

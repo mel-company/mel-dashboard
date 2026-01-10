@@ -132,4 +132,22 @@ export const settingsAPI = {
     );
     return data;
   },
+
+  /**
+   * Update store logo
+   */
+  updateStoreLogo: async (logo: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append("logo", logo);
+    const { data } = await axiosInstance.put<any>("/settings/logo", formData);
+    return data;
+  },
+
+  /**
+   * Delete store logo
+   */
+  deleteStoreLogo: async (): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>("/settings/logo");
+    return data;
+  },
 };

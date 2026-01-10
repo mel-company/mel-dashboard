@@ -10,21 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Store,
-  Mail,
-  Phone,
-  MapPin,
-  Upload,
-  Save,
-  Loader2,
-} from "lucide-react";
+import { Store, Mail, Phone, MapPin, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import { useUpdateStoreDetails } from "@/api/wrappers/settings.wrappers";
 import { CURRENCY, LANGUAGE, TIMEZONE } from "@/utils/constants";
 import { sanitizePhoneNumber } from "@/utils/helpers";
 import DetailsSettingsSkeleton from "./DetailsSettingsSkeleton";
+import LogoDialog from "./LogoDialog";
 
 type Props = {};
 
@@ -44,7 +37,7 @@ const DetailsSettings = ({}: Props) => {
     language: LANGUAGE.AR,
   });
 
-  const [storeLogo, setStoreLogo] = useState<File | null>(null);
+  const [logoDialogOpen, setLogoDialogOpen] = useState(false);
   // @ts-ignore
   const [favicon, setFavicon] = useState<File | null>(null);
 
@@ -93,21 +86,6 @@ const DetailsSettings = ({}: Props) => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "logo" | "favicon"
-  ) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (type === "logo") {
-        setStoreLogo(file);
-      } else {
-        setFavicon(file);
-      }
-      toast.success(`تم رفع ${type === "logo" ? "الشعار" : "الأيقونة"} بنجاح`);
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -174,41 +152,35 @@ const DetailsSettings = ({}: Props) => {
           <div className="space-y-2">
             <Label>شعار المتجر</Label>
             <div className="flex items-center gap-4">
-              {storeLogo ? (
-                <img
-                  src={URL.createObjectURL(storeLogo)}
-                  alt="Store Logo"
-                  className="w-20 h-20 object-cover rounded-lg border"
-                />
-              ) : storeDetails?.logo ? (
-                <img
-                  src={storeDetails.logo}
-                  alt="Store Logo"
-                  className="w-20 h-20 object-cover rounded-lg border"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              ) : (
-                <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
-                  <Store className="size-8 text-muted-foreground" />
+              <button
+                type="button"
+                onClick={() => setLogoDialogOpen(true)}
+                className="relative group cursor-pointer"
+              >
+                {storeDetails?.logo ? (
+                  <img
+                    src={storeDetails.logo}
+                    alt="Store Logo"
+                    className="w-20 h-20 object-cover rounded-lg border transition-opacity group-hover:opacity-80"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center transition-opacity group-hover:opacity-80">
+                    <Store className="size-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition-colors flex items-center justify-center">
+                  <span className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                    تعديل
+                  </span>
                 </div>
-              )}
+              </button>
               <div className="flex-1">
-                <Label
-                  htmlFor="storeLogo"
-                  className="cursor-pointer flex items-center gap-2 text-sm"
-                >
-                  <Upload className="size-4" />
-                  اختر صورة
-                </Label>
-                <Input
-                  id="storeLogo"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "logo")}
-                  className="hidden"
-                />
+                <p className="text-sm text-muted-foreground">
+                  اضغط على الشعار لإدارته
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   PNG, JPG حتى 2MB
                 </p>
@@ -489,6 +461,9 @@ const DetailsSettings = ({}: Props) => {
           </Button>
         </div>
       </form>
+
+      {/* Logo Dialog */}
+      <LogoDialog open={logoDialogOpen} onOpenChange={setLogoDialogOpen} />
     </div>
   );
 };
