@@ -49,6 +49,8 @@ import Payment from "./pages/payment/Payment";
 import POS from "./pages/pos/POS";
 import PrivacyPolicySettings from "./pages/settings/PrivacyPolicySettings";
 import RefundPolicySettings from "./pages/settings/RefundPolicySettings";
+import { useRefresh } from "./api/wrappers/auth.wrappers";
+import { useEffect } from "react";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -56,6 +58,25 @@ function RootRedirect() {
 }
 
 function App() {
+  // @ts-ignore
+  const {
+    // @ts-ignore
+    data: refreshData,
+    // @ts-ignore
+    isLoading: isRefreshing,
+    // @ts-ignore
+    error: refreshError,
+    // @ts-ignore
+    refetch: refreshRefetch,
+  } = useRefresh();
+
+  useEffect(() => {
+    if (refreshData) {
+      console.log("Refresh Data: ", refreshData);
+      refreshRefetch();
+    }
+  }, [refreshData]);
+
   return (
     <>
       <Toaster />

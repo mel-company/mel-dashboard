@@ -1,6 +1,5 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
-
 export const authAPI = {
   login: async (params?: any): Promise<any> => {
     const storeName = params?.store?.name ?? params?.name;
@@ -47,6 +46,12 @@ export const authAPI = {
 
   logout: async (): Promise<any> => {
     const { data } = await axiosInstance.post<any>("/store-user-auth/logout");
+    return data;
+  },
+
+  refresh: async (): Promise<any> => {
+    console.log("Endpoint Refreshing...");
+    const { data } = await axiosInstance.get<any>("/store-user-auth/refresh");
     return data;
   },
 };
