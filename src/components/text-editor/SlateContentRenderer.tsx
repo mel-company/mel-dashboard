@@ -4,7 +4,7 @@ import type { Descendant } from "slate";
 // Render different element types
 const renderElement = (element: any, index: number) => {
   const style = { textAlign: element.align || "right" };
-
+   
   switch (element.type) {
     case "heading-one":
       return (
