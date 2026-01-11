@@ -50,7 +50,6 @@ export const authAPI = {
   },
 
   refresh: async (): Promise<any> => {
-    console.log("Endpoint Refreshing...");
     const { data } = await axiosInstance.get<any>("/store-user-auth/refresh");
     return data;
   },

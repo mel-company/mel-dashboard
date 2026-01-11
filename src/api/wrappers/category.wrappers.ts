@@ -199,3 +199,45 @@ export const useToggleCategoryEnabled = () => {
     },
   });
 };
+
+/**
+ * Update category image mutation
+ */
+export const useUpdateCategoryImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { categoryId: string; image: File }>({
+    mutationFn: ({ categoryId, image }) =>
+      categoryAPI.updateCategoryImage(categoryId, image),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      if (data?.id) {
+        queryClient.setQueryData(categoryKeys.detail(data.id), data);
+        queryClient.invalidateQueries({
+          queryKey: categoryKeys.detail(data.id),
+        });
+      }
+    },
+  });
+};
+
+/**
+ * Delete category image mutation
+ */
+export const useDeleteCategoryImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (categoryId: string) =>
+      categoryAPI.deleteCategoryImage(categoryId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      if (data?.id) {
+        queryClient.setQueryData(categoryKeys.detail(data.id), data);
+        queryClient.invalidateQueries({
+          queryKey: categoryKeys.detail(data.id),
+        });
+      }
+    },
+  });
+};

@@ -41,6 +41,7 @@ import CategoryDetailsSkeleton from "./CategoryDetailsSkeleton";
 import AddProductToCategoryDialog from "./AddProductToCategoryDialog";
 import RemoveProductFromCategoryDialog from "./RemoveProductFromCategoryDialog";
 import ToggleEnableCategoryDialog from "./ToggleEnableCategoryDialog";
+import CategoryImageDialog from "./CategoryImageDialog";
 import { toast } from "sonner";
 
 const CategoryDetails = () => {
@@ -54,6 +55,7 @@ const CategoryDetails = () => {
     id: string;
     name: string;
   } | null>(null);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
   const {
     data: category,
@@ -143,21 +145,29 @@ const CategoryDetails = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="relative h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
-                {/* <img
-                  src={category.image}
-                  alt={category.name}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    target.src = `https://via.placeholder.com/600x400/cccccc/666666?text=${encodeURIComponent(
-                      category.name
-                    )}`;
-                    target.onerror = null;
-                  }}
-                /> */}
-                <Folder className="size-24 text-white bg-cyan/40 rounded-full p-6" />
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsImageDialogOpen(true)}
+                className="relative group h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10 transition-opacity hover:opacity-90 cursor-pointer"
+              >
+                {category.image ? (
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <Folder className="size-24 text-white bg-cyan/40 rounded-full p-6" />
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                  <span className="text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    تعديل الصورة
+                  </span>
+                </div>
+              </button>
 
               <Separator />
 
@@ -468,6 +478,15 @@ const CategoryDetails = () => {
           onSuccess={() => {
             refetch();
           }}
+        />
+      )}
+
+      {/* Category Image Dialog */}
+      {id && (
+        <CategoryImageDialog
+          open={isImageDialogOpen}
+          onOpenChange={setIsImageDialogOpen}
+          categoryId={id}
         />
       )}
     </div>

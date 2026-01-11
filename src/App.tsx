@@ -72,7 +72,6 @@ function App() {
 
   useEffect(() => {
     if (refreshData) {
-      console.log("Refresh Data: ", refreshData);
       refreshRefetch();
     }
   }, [refreshData]);
