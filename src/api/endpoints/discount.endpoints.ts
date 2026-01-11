@@ -30,7 +30,6 @@ export const discountAPI = {
     return data;
   },
 
-
   /**
    * Get a single discount by ID
    */
@@ -93,9 +92,12 @@ export const discountAPI = {
    * Add categories to a discount
    */
   addCategories: async (id: string, categoryIds: string[]): Promise<any> => {
-    const { data } = await axiosInstance.put<any>(`/discount/${id}/categories`, {
-      categoryIds,
-    });
+    const { data } = await axiosInstance.put<any>(
+      `/discount/${id}/categories`,
+      {
+        categoryIds,
+      }
+    );
     return data;
   },
 
@@ -115,6 +117,32 @@ export const discountAPI = {
   removeCategory: async (id: string, categoryId: string): Promise<any> => {
     const { data } = await axiosInstance.delete<any>(
       `/discount/${id}/categories/${categoryId}`
+    );
+    return data;
+  },
+
+  /**
+   * Update discount image
+   */
+  updateDiscountImage: async (
+    discountId: string,
+    image: File
+  ): Promise<any> => {
+    const formData = new FormData();
+    formData.append("image", image);
+    const { data } = await axiosInstance.put<any>(
+      `/discount/${discountId}/image`,
+      formData
+    );
+    return data;
+  },
+
+  /**
+   * Delete Discount image
+   */
+  deleteDiscountImage: async (discountId: string): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(
+      `/discount/${discountId}/image`
     );
     return data;
   },
