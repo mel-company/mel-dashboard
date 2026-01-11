@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Save, ArrowLeft, Loader2, Folder } from "lucide-react";
+import { Save, ArrowLeft, Loader2, Folder, Upload, X } from "lucide-react";
 import {
   useFetchCategory,
   useUpdateCategory,
@@ -28,6 +28,9 @@ const EditCategory = ({}: Props) => {
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
   const [enabled, setEnabled] = useState(true);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Populate form when category data is loaded
   useEffect(() => {
@@ -36,8 +39,39 @@ const EditCategory = ({}: Props) => {
       setDescription(data.description ?? "");
       setImage(data.image ?? "");
       setEnabled(data.enabled ?? true);
+      // Reset image file selection when data loads
+      setSelectedImageFile(null);
+      setPreviewUrl(null);
     }
   }, [data]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("الرجاء اختيار ملف صورة");
+        return;
+      }
+
+      // Validate file size (2MB max)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("حجم الملف يجب أن يكون أقل من 2MB");
+        return;
+      }
+
+      setSelectedImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImageFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,15 +81,19 @@ const EditCategory = ({}: Props) => {
       return;
     }
 
-    const categoryData = {
-      name,
-      description,
-      image: image || "/images/categories/default.jpg",
-      enabled,
-    };
+    // Create FormData for multipart/form-data
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("description", description);
+    formData.append("enabled", enabled.toString());
+
+    // Add image file if selected
+    if (selectedImageFile) {
+      formData.append("image", selectedImageFile);
+    }
 
     updateCategory(
-      { id, data: categoryData },
+      { id, data: formData },
       {
         onSuccess: () => {
           toast.success("تم تحديث الفئة بنجاح");
@@ -110,57 +148,77 @@ const EditCategory = ({}: Props) => {
         <Card className="gap-2">
           <CardContent className="space-y-4">
             {/* Image Preview and Input */}
-            <div className="flex gap-x-2 mb-4">
-              <div className="w-32 h-32 flex items-center justify-center bg-muted rounded-lg overflow-hidden shrink-0">
-                {image ? (
-                  <img
-                    src={image}
-                    alt={name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      target.style.display = "none";
-                      const parent = target.parentElement;
-                      if (parent) {
-                        const folderIcon = document.createElement("div");
-                        folderIcon.className =
-                          "flex items-center justify-center w-full h-full";
-                        folderIcon.innerHTML =
-                          '<svg class="w-12 h-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>';
-                        parent.appendChild(folderIcon);
-                      }
-                    }}
-                  />
-                ) : (
-                  <Folder className="w-12 h-12 text-muted-foreground" />
-                )}
-              </div>
-              <div className="space-y-2 flex items-center">
-                <div>
-                  <h3 className="text-xl font-bold">صورة الفئة</h3>
-                  <p className="text-sm text-muted-foreground">
-                    يمكنك تحديث صورة الفئة من خلال إدخال رابط الصورة
+            <div className="space-y-2 mb-4">
+              <label className="text-sm font-medium text-right block">
+                صورة الفئة
+              </label>
+              <div className="flex gap-x-4">
+                <div className="w-32 h-32 flex items-center justify-center bg-muted rounded-lg overflow-hidden shrink-0">
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : image ? (
+                    <img
+                      src={image}
+                      alt={name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.style.display = "none";
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const folderIcon = document.createElement("div");
+                          folderIcon.className =
+                            "flex items-center justify-center w-full h-full";
+                          folderIcon.innerHTML =
+                            '<svg class="w-12 h-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>';
+                          parent.appendChild(folderIcon);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <Folder className="w-12 h-12 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="gap-2"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {previewUrl || image ? "تغيير الصورة" : "اختر صورة"}
+                    </Button>
+                    {(previewUrl || selectedImageFile) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleRemoveImage}
+                        className="gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        إزالة
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    PNG, JPG حتى 2MB
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* Image URL Input */}
-            <div className="space-y-2">
-              <label
-                htmlFor="image"
-                className="text-sm font-medium text-right block"
-              >
-                رابط الصورة
-              </label>
-              <input
-                id="image"
-                type="text"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-              />
             </div>
 
             {/* Name */}

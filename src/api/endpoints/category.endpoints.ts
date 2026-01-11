@@ -61,6 +61,7 @@ export const categoryAPI = {
 
   /**
    * Update an existing category
+   * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
   update: async (id: string, category: any): Promise<any> => {
     const { data } = await axiosInstance.put<any>(`/category/${id}`, category);
