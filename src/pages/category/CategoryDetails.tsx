@@ -485,7 +485,13 @@ const CategoryDetails = () => {
       {id && (
         <CategoryImageDialog
           open={isImageDialogOpen}
-          onOpenChange={setIsImageDialogOpen}
+          onOpenChange={(open) => {
+            setIsImageDialogOpen(open);
+            // Refetch category data when dialog closes to update the image
+            if (!open) {
+              refetch();
+            }
+          }}
           categoryId={id}
         />
       )}

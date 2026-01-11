@@ -104,6 +104,7 @@ const CategoryImageDialog = ({ open, onOpenChange, categoryId }: Props) => {
     deleteImage(categoryId, {
       onSuccess: () => {
         toast.success("تم حذف صورة الفئة بنجاح");
+        // Refetch to get the updated category
         refetchCategory();
         onOpenChange(false);
       },

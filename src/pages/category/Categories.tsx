@@ -257,8 +257,8 @@ const Categories = () => {
               <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
                 <CardHeader className="pb-4">
                   <div className="relative h-40 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
-                    {/* <img
-                      src={category.image}
+                    <img
+                      src={`${listData?.baseUrl}/${category.image}`}
                       alt={category.name}
                       className="h-full w-full object-cover transition-transform group-hover:scale-110"
                       onError={(e) => {
@@ -269,8 +269,8 @@ const Categories = () => {
                         )}`;
                         target.onerror = null; // Prevent infinite loop
                       }}
-                    /> */}
-                    <Folder className="size-18 text-white bg-cyan/40 rounded-full p-4" />
+                    />
+                    {/* <Folder className="size-18 text-white bg-cyan/40 rounded-full p-4" /> */}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">

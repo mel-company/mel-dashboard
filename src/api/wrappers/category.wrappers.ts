@@ -210,9 +210,10 @@ export const useUpdateCategoryImage = () => {
     mutationFn: ({ categoryId, image }) =>
       categoryAPI.updateCategoryImage(categoryId, image),
     onSuccess: (data) => {
+      // Invalidate and refetch categories list
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      // Invalidate the specific category detail to force refetch with new image URL
       if (data?.id) {
-        queryClient.setQueryData(categoryKeys.detail(data.id), data);
         queryClient.invalidateQueries({
           queryKey: categoryKeys.detail(data.id),
         });
@@ -231,9 +232,10 @@ export const useDeleteCategoryImage = () => {
     mutationFn: (categoryId: string) =>
       categoryAPI.deleteCategoryImage(categoryId),
     onSuccess: (data) => {
+      // Invalidate and refetch categories list
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      // Invalidate the specific category detail to force refetch
       if (data?.id) {
-        queryClient.setQueryData(categoryKeys.detail(data.id), data);
         queryClient.invalidateQueries({
           queryKey: categoryKeys.detail(data.id),
         });
