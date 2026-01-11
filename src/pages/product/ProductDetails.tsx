@@ -88,6 +88,8 @@ const ProductDetails = () => {
   const { mutate: deleteVariant, isPending: isDeletingVariant } =
     useDeleteVariant();
 
+  console.log(data?.image);
+
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const handleDelete = () => {

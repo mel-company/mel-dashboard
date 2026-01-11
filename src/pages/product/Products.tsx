@@ -86,8 +86,6 @@ const Products = () => {
     !isSearching
   );
 
-  console.log(listData);
-
   const {
     data: searchData,
     isLoading: isSearchLoading,

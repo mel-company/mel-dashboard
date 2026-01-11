@@ -145,6 +145,7 @@ export const productAPI = {
 
   /**
    * Update an existing product
+   * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
   update: async (id: string, product: any): Promise<any> => {
     const { data } = await axiosInstance.put<any>(`/product/${id}`, product);
