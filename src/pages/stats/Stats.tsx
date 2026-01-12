@@ -7,12 +7,18 @@ import {
   Users,
   BarChart3,
   Activity,
-  DollarSign,
   FileText,
   Download,
   Calendar,
   ShoppingBag,
 } from "lucide-react";
+import {
+  useFetchStoreStats,
+  useFetchMonthlySales,
+  useFetchOrdersStatusStats,
+  useFetchMostBoughtProducts,
+} from "@/api/wrappers/stats.wrappers";
+import StatsSkeleton from "./StatsSkeleton";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,7 +33,7 @@ import {
   Legend,
   Filler,
 } from "chart.js";
-import { Chart, Bar, Line, Doughnut, Radar, PolarArea } from "react-chartjs-2";
+import { Chart, Bar, Line } from "react-chartjs-2";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -53,78 +59,21 @@ ChartJS.register(
   Filler
 );
 
-// Dummy data (نفس بيانات Home للإحصائيات)
-const dmy_orders = [
-  { id: 1, status: "pending", products: [{ price: 50 }, { price: 30 }] },
-  { id: 2, status: "processing", products: [{ price: 75 }] },
-  { id: 3, status: "shipped", products: [{ price: 120 }, { price: 45 }] },
-  { id: 4, status: "delivered", products: [{ price: 90 }] },
-  { id: 5, status: "pending", products: [{ price: 65 }] },
-  { id: 6, status: "delivered", products: [{ price: 110 }] },
-  { id: 7, status: "processing", products: [{ price: 85 }] },
-  { id: 8, status: "shipped", products: [{ price: 95 }] },
-];
-
-const dmy_products = [
-  {
-    title: "Laptop Pro 15",
-    rate: 4.5,
-    price: 899,
-    properties: { brand: "TechCorp" },
-  },
-  {
-    title: "Wireless Mouse",
-    rate: 4.2,
-    price: 25,
-    properties: { brand: "Logitech" },
-  },
-  {
-    title: "Mechanical Keyboard",
-    rate: 4.8,
-    price: 120,
-    properties: { brand: "Corsair" },
-  },
-  { title: "USB-C Hub", rate: 4.0, price: 45, properties: { brand: "Anker" } },
-  {
-    title: "Monitor 27 inch",
-    rate: 4.6,
-    price: 350,
-    properties: { brand: "Dell" },
-  },
-  {
-    title: "Webcam HD",
-    rate: 3.9,
-    price: 65,
-    properties: { brand: "Logitech" },
-  },
-  { title: "Desk Lamp", rate: 4.3, price: 35, properties: { brand: "IKEA" } },
-  {
-    title: "Gaming Headset",
-    rate: 4.7,
-    price: 85,
-    properties: { brand: "Corsair" },
-  },
-];
-
-const dmy_categories = Array(8).fill(null);
-const dmy_users = [
-  { location: "Baghdad, Iraq" },
-  { location: "Basra, Iraq" },
-  { location: "Baghdad, Iraq" },
-  { location: "Erbil, Iraq" },
-  { location: "Basra, Iraq" },
-  { location: "Mosul, Iraq" },
-];
-
-const dmy_discounts = [
-  { discount_status: "ACTIVE" },
-  { discount_status: "ACTIVE" },
-  { discount_status: "EXPIRED" },
-  { discount_status: "ACTIVE" },
-];
-
 const Stats = () => {
-  // Detect theme (نفس من Home)
+  // Fetch data from API
+  const { data: storeStats, isLoading: isLoadingStoreStats } =
+    useFetchStoreStats();
+
+  const { data: monthlySales, isLoading: isLoadingMonthlySales } =
+    useFetchMonthlySales();
+
+  const { data: ordersStatusStats, isLoading: isLoadingOrdersStatus } =
+    useFetchOrdersStatusStats();
+
+  const { data: mostBoughtProducts, isLoading: isLoadingMostBought } =
+    useFetchMostBoughtProducts();
+
+  // Detect theme (نفس من Home) - Must be called before any conditional returns
   const isDark = useMemo(
     () => document.documentElement.classList.contains("dark"),
     []
@@ -187,70 +136,45 @@ const Stats = () => {
 
   // Order Status Chart Data
   const orderStatusData = useMemo(() => {
-    const statusCounts = [
-      {
-        status: "Pending",
-        count: dmy_orders.filter((o) => o.status === "pending").length,
-      },
-      {
-        status: "Processing",
-        count: dmy_orders.filter((o) => o.status === "processing").length,
-      },
-      {
-        status: "Shipped",
-        count: dmy_orders.filter((o) => o.status === "shipped").length,
-      },
-      {
-        status: "Delivered",
-        count: dmy_orders.filter((o) => o.status === "delivered").length,
-      },
-    ];
+    const statusCounts = ordersStatusStats || [];
 
     return {
-      labels: statusCounts.map((d) => d.status),
+      labels: statusCounts.map((d: { status: string }) => d.status),
       datasets: [
         {
           label: "الطلبات",
-          data: statusCounts.map((d) => d.count),
+          data: statusCounts.map((d: { count: number }) => d.count),
           backgroundColor: "#3b82f6",
           borderRadius: 8,
           borderSkipped: false,
         },
       ],
     };
-  }, []);
+  }, [ordersStatusStats]);
 
-  // Product Ratings Chart Data
+  // Most Bought Products Chart Data (using product name and count)
   const productRatingsData = useMemo(() => {
-    const productData = dmy_products.slice(0, 6).map((p) => ({
-      name: p.title.split(" ").slice(0, 2).join(" "),
-      rating: p.rate,
-      price: p.price,
-    }));
+    const productData = (mostBoughtProducts || [])
+      .slice(0, 6)
+      .map((p: { name: string; count: number }) => ({
+        name: p.name.split(" ").slice(0, 2).join(" "),
+        count: p.count,
+      }));
 
     return {
-      labels: productData.map((p) => p.name),
+      labels: productData.map((p: { name: string }) => p.name),
       datasets: [
         {
-          label: "التقييم",
-          data: productData.map((p) => p.rating),
+          label: "عدد المشتريات",
+          data: productData.map((p: { count: number }) => p.count),
           backgroundColor: "#10b981",
           type: "bar" as const,
           yAxisID: "y",
           borderRadius: 6,
         },
-        {
-          label: "السعر ($)",
-          data: productData.map((p) => p.price),
-          borderColor: "#f59e0b",
-          backgroundColor: "transparent",
-          type: "line" as const,
-          yAxisID: "y1",
-          tension: 0.4,
-        },
       ],
     };
-  }, []);
+  }, [mostBoughtProducts]);
 
   const productRatingsOptions = useMemo(() => {
     return {
@@ -263,161 +187,63 @@ const Stats = () => {
           position: "left" as const,
           title: {
             display: true,
-            text: "التقييم",
+            text: "عدد المشتريات",
             color: "#10b981",
-          },
-        },
-        y1: {
-          type: "linear" as const,
-          position: "right" as const,
-          title: {
-            display: true,
-            text: "السعر ($)",
-            color: "#f59e0b",
-          },
-          ticks: {
-            color: textColor,
-            font: {
-              family: "Cairo, sans-serif",
-            },
-          },
-          grid: {
-            drawOnChartArea: false,
           },
         },
       },
     };
   }, [chartOptions, textColor]);
 
-  // Brand Distribution Chart Data
-  const brandData = useMemo(() => {
-    const brandCounts = dmy_products.reduce(
-      (acc: { brand: string; count: number }[], product) => {
-        const brand = product.properties.brand;
-        const existing = acc.find((item) => item.brand === brand);
-        if (existing) existing.count++;
-        else acc.push({ brand, count: 1 });
-        return acc;
-      },
-      []
-    );
+  // Most Bought Products Distribution Chart Data (Doughnut)
+  // const brandData = useMemo(() => {
+  //   const products = mostBoughtProducts || [];
 
-    return {
-      labels: brandCounts.map((d) => d.brand),
-      datasets: [
-        {
-          label: "المنتجات",
-          data: brandCounts.map((d) => d.count),
-          backgroundColor: [
-            "#3b82f6",
-            "#10b981",
-            "#f59e0b",
-            "#ef4444",
-            "#8b5cf6",
-            "#ec4899",
-          ],
-          borderWidth: 0,
-        },
-      ],
-    };
-  }, []);
+  //   return {
+  //     labels: products.map((p: { name: string }) => p.name),
+  //     datasets: [
+  //       {
+  //         label: "المنتجات",
+  //         data: products.map((p: { count: number }) => p.count),
+  //         backgroundColor: [
+  //           "#3b82f6",
+  //           "#10b981",
+  //           "#f59e0b",
+  //           "#ef4444",
+  //           "#8b5cf6",
+  //           "#ec4899",
+  //         ],
+  //         borderWidth: 0,
+  //       },
+  //     ],
+  //   };
+  // }, [mostBoughtProducts]);
 
-  const brandChartOptions = useMemo(
-    () => ({
-      ...chartOptions,
-      cutout: "65%",
-      plugins: {
-        ...chartOptions.plugins,
-        legend: {
-          ...chartOptions.plugins.legend,
-          position: "bottom" as const,
-        },
-      },
-    }),
-    [chartOptions]
-  );
-
-  // User Locations Chart Data (using Radar)
-  const locationData = useMemo(() => {
-    const locationCounts = dmy_users.reduce(
-      (acc: { location: string; users: number }[], user) => {
-        const location = user.location.split(",")[0];
-        const existing = acc.find((item) => item.location === location);
-        if (existing) existing.users++;
-        else acc.push({ location, users: 1 });
-        return acc;
-      },
-      []
-    );
-
-    return {
-      labels: locationCounts.map((d) => d.location),
-      datasets: [
-        {
-          label: "المستخدمين",
-          data: locationCounts.map((d) => (d.users / dmy_users.length) * 100),
-          backgroundColor: "rgba(59, 130, 246, 0.2)",
-          borderColor: "#3b82f6",
-          pointBackgroundColor: "#3b82f6",
-          pointBorderColor: "#fff",
-          pointHoverBackgroundColor: "#fff",
-          pointHoverBorderColor: "#3b82f6",
-        },
-      ],
-    };
-  }, []);
-
-  const locationChartOptions = useMemo(
-    () => ({
-      ...chartOptions,
-      scales: {
-        r: {
-          ticks: {
-            color: textColor,
-            font: {
-              family: "Cairo, sans-serif",
-            },
-            backdropColor: "transparent",
-          },
-          grid: {
-            color: gridColor,
-          },
-          pointLabels: {
-            color: textColor,
-            font: {
-              family: "Cairo, sans-serif",
-            },
-          },
-        },
-      },
-      plugins: {
-        ...chartOptions.plugins,
-        legend: {
-          ...chartOptions.plugins.legend,
-          position: "bottom" as const,
-        },
-      },
-    }),
-    [chartOptions, textColor, gridColor]
-  );
+  // const brandChartOptions = useMemo(
+  //   () => ({
+  //     ...chartOptions,
+  //     cutout: "65%",
+  //     plugins: {
+  //       ...chartOptions.plugins,
+  //       legend: {
+  //         ...chartOptions.plugins.legend,
+  //         position: "bottom" as const,
+  //       },
+  //     },
+  //   }),
+  //   [chartOptions]
+  // );
 
   // Monthly Sales Chart Data
   const salesData = useMemo(() => {
-    const monthlySalesData = [
-      { month: "Jan", sales: 4500, orders: 12 },
-      { month: "Feb", sales: 5200, orders: 15 },
-      { month: "Mar", sales: 4800, orders: 14 },
-      { month: "Apr", sales: 6100, orders: 18 },
-      { month: "May", sales: 5500, orders: 16 },
-      { month: "Jun", sales: 7200, orders: 22 },
-    ];
+    const monthlySalesData = monthlySales || [];
 
     return {
-      labels: monthlySalesData.map((d) => d.month),
+      labels: monthlySalesData.map((d: { month: string }) => d.month),
       datasets: [
         {
-          label: "المبيعات ($)",
-          data: monthlySalesData.map((d) => d.sales),
+          label: "المبيعات",
+          data: monthlySalesData.map((d: { sales: number }) => d.sales),
           borderColor: "#3b82f6",
           backgroundColor: "rgba(59, 130, 246, 0.1)",
           fill: true,
@@ -425,7 +251,7 @@ const Stats = () => {
         },
         {
           label: "الطلبات",
-          data: monthlySalesData.map((d) => d.orders * 100),
+          data: monthlySalesData.map((d: { orders: number }) => d.orders * 100),
           borderColor: "#10b981",
           backgroundColor: "rgba(16, 185, 129, 0.1)",
           fill: true,
@@ -433,116 +259,120 @@ const Stats = () => {
         },
       ],
     };
-  }, []);
+  }, [monthlySales]);
 
-  // Price Range Chart Data
-  const priceData = useMemo(() => {
-    const priceRangeData = [
+  // Most Bought Products Count Chart Data (PolarArea)
+  // const priceData = useMemo(() => {
+  //   const products = mostBoughtProducts || [];
+
+  //   return {
+  //     labels: products.map((p: { name: string }) => p.name),
+  //     datasets: [
+  //       {
+  //         label: "المنتجات",
+  //         data: products.map((p: { count: number }) => p.count),
+  //         backgroundColor: [
+  //           "rgba(59, 130, 246, 0.8)",
+  //           "rgba(16, 185, 129, 0.8)",
+  //           "rgba(245, 158, 11, 0.8)",
+  //           "rgba(239, 68, 68, 0.8)",
+  //           "rgba(139, 92, 246, 0.8)",
+  //           "rgba(236, 72, 153, 0.8)",
+  //         ],
+  //         borderColor: "#fff",
+  //         borderWidth: 2,
+  //       },
+  //     ],
+  //   };
+  // }, [mostBoughtProducts]);
+
+  const statsCards = useMemo(() => {
+    const stats = storeStats || {
+      orders: 0,
+      products: 0,
+      categories: 0,
+      discounts: 0,
+      customers: 0,
+    };
+
+    return [
       {
-        range: "$0-25",
-        count: dmy_products.filter((p) => p.price <= 25).length,
+        title: "إجمالي الطلبات",
+        value: stats.orders || 0,
+        icon: TrendingUp,
+        gradient: "from-blue-500 to-blue-600",
+        bgGradient:
+          "from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20",
+        iconColor: "text-blue-600 dark:text-blue-400",
+        change: "+12.5%",
+        changeColor: "text-green-600 dark:text-green-400",
       },
       {
-        range: "$26-50",
-        count: dmy_products.filter((p) => p.price > 25 && p.price <= 50).length,
+        title: "المنتجات",
+        value: stats.products || 0,
+        icon: Package,
+        gradient: "from-emerald-500 to-emerald-600",
+        bgGradient:
+          "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20",
+        iconColor: "text-emerald-600 dark:text-emerald-400",
+        change: "+8.2%",
+        changeColor: "text-green-600 dark:text-green-400",
       },
       {
-        range: "$51-75",
-        count: dmy_products.filter((p) => p.price > 50 && p.price <= 75).length,
+        title: "الفئات",
+        value: stats.categories || 0,
+        icon: Layers,
+        gradient: "from-amber-500 to-amber-600",
+        bgGradient:
+          "from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20",
+        iconColor: "text-amber-600 dark:text-amber-400",
+        change: "+5.1%",
+        changeColor: "text-green-600 dark:text-green-400",
       },
       {
-        range: "$76+",
-        count: dmy_products.filter((p) => p.price > 75).length,
+        title: "الخصومات النشطة",
+        value: stats.discounts || 0,
+        icon: Tag,
+        gradient: "from-purple-500 to-purple-600",
+        bgGradient:
+          "from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        change: "+3.7%",
+        changeColor: "text-green-600 dark:text-green-400",
+      },
+      {
+        title: "إجمالي المستخدمين",
+        value: stats.customers || 0,
+        icon: Users,
+        gradient: "from-rose-500 to-rose-600",
+        bgGradient:
+          "from-rose-50 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20",
+        iconColor: "text-rose-600 dark:text-rose-400",
+        change: "+15.3%",
+        changeColor: "text-green-600 dark:text-green-400",
       },
     ];
+  }, [storeStats]);
 
-    return {
-      labels: priceRangeData.map((d) => d.range),
-      datasets: [
-        {
-          label: "المنتجات",
-          data: priceRangeData.map((d) => d.count),
-          backgroundColor: [
-            "rgba(59, 130, 246, 0.8)",
-            "rgba(16, 185, 129, 0.8)",
-            "rgba(245, 158, 11, 0.8)",
-            "rgba(239, 68, 68, 0.8)",
-          ],
-          borderColor: "#fff",
-          borderWidth: 2,
-        },
-      ],
-    };
-  }, []);
+  // Check if any data is loading - Must be after all hooks
+  const isLoading =
+    isLoadingStoreStats ||
+    isLoadingMonthlySales ||
+    isLoadingOrdersStatus ||
+    isLoadingMostBought;
 
-  const statsCards = [
-    {
-      title: "إجمالي الطلبات",
-      value: dmy_orders.length,
-      icon: TrendingUp,
-      gradient: "from-blue-500 to-blue-600",
-      bgGradient:
-        "from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20",
-      iconColor: "text-blue-600 dark:text-blue-400",
-      change: "+12.5%",
-      changeColor: "text-green-600 dark:text-green-400",
-    },
-    {
-      title: "المنتجات",
-      value: dmy_products.length,
-      icon: Package,
-      gradient: "from-emerald-500 to-emerald-600",
-      bgGradient:
-        "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
-      change: "+8.2%",
-      changeColor: "text-green-600 dark:text-green-400",
-    },
-    {
-      title: "الفئات",
-      value: dmy_categories.length,
-      icon: Layers,
-      gradient: "from-amber-500 to-amber-600",
-      bgGradient:
-        "from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20",
-      iconColor: "text-amber-600 dark:text-amber-400",
-      change: "+5.1%",
-      changeColor: "text-green-600 dark:text-green-400",
-    },
-    {
-      title: "الخصومات النشطة",
-      value: dmy_discounts.filter(
-        (d: { discount_status: string }) => d.discount_status === "ACTIVE"
-      ).length,
-      icon: Tag,
-      gradient: "from-purple-500 to-purple-600",
-      bgGradient:
-        "from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20",
-      iconColor: "text-purple-600 dark:text-purple-400",
-      change: "+3.7%",
-      changeColor: "text-green-600 dark:text-green-400",
-    },
-    {
-      title: "إجمالي المستخدمين",
-      value: dmy_users.length,
-      icon: Users,
-      gradient: "from-rose-500 to-rose-600",
-      bgGradient:
-        "from-rose-50 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20",
-      iconColor: "text-rose-600 dark:text-rose-400",
-      change: "+15.3%",
-      changeColor: "text-green-600 dark:text-green-400",
-    },
-  ];
+  // Show skeleton while loading
+  if (isLoading) {
+    return <StatsSkeleton />;
+  }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
+    <div className="min-h-screen bg-background p4 sm:p6 lg:p8">
+      <div className="mx-auto space-y-6 lg:space-y-8">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            إحصائيات المتجر
-          </h1>
+          {/* <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent"> */}
+          <h1 className="text-xl sm:text-4xl font-bold">إحصائيات المتجر</h1>
           <p className="text-muted-foreground text-sm sm:text-base">
             نظرة تفصيلية على أداء المتجر، الطلبات، المنتجات والمستخدمين
           </p>
@@ -752,10 +582,10 @@ const Stats = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-foreground">
-                      تقييمات وأسعار المنتجات
+                      أكثر المنتجات مبيعاً
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      مقارنة التقييمات والأسعار
+                      عدد مرات شراء المنتجات
                     </p>
                   </div>
                 </div>
@@ -770,7 +600,7 @@ const Stats = () => {
             </div>
 
             {/* Brand Distribution Chart */}
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+            {/* <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-purple-100 dark:bg-purple-950/50 rounded-lg">
@@ -778,10 +608,10 @@ const Stats = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-foreground">
-                      توزيع العلامات التجارية
+                      توزيع المنتجات الأكثر مبيعاً
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      نسبة المنتجات حسب العلامة
+                      نسبة المنتجات حسب عدد المشتريات
                     </p>
                   </div>
                 </div>
@@ -789,10 +619,10 @@ const Stats = () => {
               <div className="h-[280px]">
                 <Doughnut data={brandData} options={brandChartOptions} />
               </div>
-            </div>
+            </div> */}
 
             {/* Price Ranges Chart */}
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+            {/* <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-amber-100 dark:bg-amber-950/50 rounded-lg">
@@ -800,10 +630,10 @@ const Stats = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-foreground">
-                      نطاقات الأسعار
+                      المنتجات الأكثر مبيعاً
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      توزيع المنتجات حسب السعر
+                      توزيع المنتجات حسب عدد المشتريات
                     </p>
                   </div>
                 </div>
@@ -811,11 +641,11 @@ const Stats = () => {
               <div className="h-[280px]">
                 <PolarArea data={priceData} options={chartOptions} />
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* User Locations Chart - Full Width */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+          {/* <div className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl shadow-md">
@@ -834,7 +664,7 @@ const Stats = () => {
             <div className="h-[350px]">
               <Radar data={locationData} options={locationChartOptions} />
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
