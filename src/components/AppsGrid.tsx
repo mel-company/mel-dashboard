@@ -14,6 +14,7 @@ import {
   Maximize2,
   Minimize2,
   Lock,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -83,6 +84,13 @@ const baseApps: AppItem[] = [
     icon: Users,
     gradient: "from-cyan-500 to-cyan-600",
     description: "إدارة العملاء",
+  },
+  {
+    label: "الإشعارات",
+    path: "/notifications",
+    icon: Bell,
+    gradient: "from-yellow-500 to-yellow-600",
+    description: "إدارة الإشعارات",
   },
   {
     label: "الموظفين",
