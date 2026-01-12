@@ -136,22 +136,21 @@ const OTP = () => {
             <div className="flex items-center justify-between gap-3">
               <Button
                 type="button"
-                variant="ghost"
-                onClick={() => navigate("/login")}
-              >
-                <ArrowLeft className="w-4 h-4 ml-2" />
-                تعديل الرقم
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={handleResend}
                 disabled={cooldown > 0}
               >
                 {cooldown > 0
                   ? `إعادة الإرسال خلال ${cooldown}s`
                   : "إعادة إرسال"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => navigate("/login")}
+              >
+                تعديل الرقم
+                <ArrowLeft className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </form>
