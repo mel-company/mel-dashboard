@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useFetchNotifications,
   useSearchNotifications,
+  useUpdateNotificationReadStatus,
 } from "@/api/wrappers/notification.wrappers";
 import {
   Table,
@@ -104,6 +105,9 @@ const Notifications = ({}: Props) => {
   // const isFetching = isSearching ? isSearchFetching : isListFetching;
   const isLoading = isSearching ? isSearchLoading : isListLoading;
 
+  // Mutation to update read status
+  const { mutate: updateReadStatus } = useUpdateNotificationReadStatus();
+
   // Format date to Arabic format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -178,18 +182,27 @@ const Notifications = ({}: Props) => {
               </TableRow>
             ) : (
               notifications.map((notification) => {
-                // Check if notification has recipients (read status is at recipient level)
                 const hasRecipients = notification._count?.recipients > 0;
-                const isRead = false; // Since read status is per recipient, we'll default to false
+                const isRead = false;
 
                 return (
                   <TableRow
                     key={notification.id}
-                    className={`hover:bg-muted/50 ${
+                    className={`hover:bg-muted/50 cursor-pointer ${
                       !isRead ? "bg-blue-50/50 dark:bg-blue-950/20" : ""
                     }`}
                     onClick={() => {
-                      navigate(`/notifications/${notification.id}`);
+                      // Update read status when clicking on notification
+                      updateReadStatus(notification.id, {
+                        onSuccess: () => {
+                          // Navigate to details page after updating read status
+                          navigate(`/notifications/${notification.id}`);
+                        },
+                        onError: () => {
+                          // Still navigate even if update fails
+                          navigate(`/notifications/${notification.id}`);
+                        },
+                      });
                     }}
                   >
                     <TableCell className="font-medium">
@@ -244,7 +257,7 @@ const Notifications = ({}: Props) => {
                         )}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Link to={`/notifications/${notification.id}`}>
                         <Button variant="secondary" size="sm" className="gap-2">
                           <FileText className="size-4" />
