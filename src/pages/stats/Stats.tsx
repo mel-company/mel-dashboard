@@ -43,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 // Register Chart.js components
 ChartJS.register(
@@ -60,6 +61,8 @@ ChartJS.register(
 );
 
 const Stats = () => {
+  const navigate = useNavigate();
+
   // Fetch data from API
   const { data: storeStats, isLoading: isLoadingStoreStats } =
     useFetchStoreStats();
@@ -195,45 +198,6 @@ const Stats = () => {
     };
   }, [chartOptions, textColor]);
 
-  // Most Bought Products Distribution Chart Data (Doughnut)
-  // const brandData = useMemo(() => {
-  //   const products = mostBoughtProducts || [];
-
-  //   return {
-  //     labels: products.map((p: { name: string }) => p.name),
-  //     datasets: [
-  //       {
-  //         label: "المنتجات",
-  //         data: products.map((p: { count: number }) => p.count),
-  //         backgroundColor: [
-  //           "#3b82f6",
-  //           "#10b981",
-  //           "#f59e0b",
-  //           "#ef4444",
-  //           "#8b5cf6",
-  //           "#ec4899",
-  //         ],
-  //         borderWidth: 0,
-  //       },
-  //     ],
-  //   };
-  // }, [mostBoughtProducts]);
-
-  // const brandChartOptions = useMemo(
-  //   () => ({
-  //     ...chartOptions,
-  //     cutout: "65%",
-  //     plugins: {
-  //       ...chartOptions.plugins,
-  //       legend: {
-  //         ...chartOptions.plugins.legend,
-  //         position: "bottom" as const,
-  //       },
-  //     },
-  //   }),
-  //   [chartOptions]
-  // );
-
   // Monthly Sales Chart Data
   const salesData = useMemo(() => {
     const monthlySalesData = monthlySales || [];
@@ -261,31 +225,6 @@ const Stats = () => {
     };
   }, [monthlySales]);
 
-  // Most Bought Products Count Chart Data (PolarArea)
-  // const priceData = useMemo(() => {
-  //   const products = mostBoughtProducts || [];
-
-  //   return {
-  //     labels: products.map((p: { name: string }) => p.name),
-  //     datasets: [
-  //       {
-  //         label: "المنتجات",
-  //         data: products.map((p: { count: number }) => p.count),
-  //         backgroundColor: [
-  //           "rgba(59, 130, 246, 0.8)",
-  //           "rgba(16, 185, 129, 0.8)",
-  //           "rgba(245, 158, 11, 0.8)",
-  //           "rgba(239, 68, 68, 0.8)",
-  //           "rgba(139, 92, 246, 0.8)",
-  //           "rgba(236, 72, 153, 0.8)",
-  //         ],
-  //         borderColor: "#fff",
-  //         borderWidth: 2,
-  //       },
-  //     ],
-  //   };
-  // }, [mostBoughtProducts]);
-
   const statsCards = useMemo(() => {
     const stats = storeStats || {
       orders: 0,
@@ -298,6 +237,7 @@ const Stats = () => {
     return [
       {
         title: "إجمالي الطلبات",
+        link: "/orders",
         value: stats.orders || 0,
         icon: TrendingUp,
         gradient: "from-blue-500 to-blue-600",
@@ -309,6 +249,7 @@ const Stats = () => {
       },
       {
         title: "المنتجات",
+        link: "/products",
         value: stats.products || 0,
         icon: Package,
         gradient: "from-emerald-500 to-emerald-600",
@@ -320,6 +261,7 @@ const Stats = () => {
       },
       {
         title: "الفئات",
+        link: "/categories",
         value: stats.categories || 0,
         icon: Layers,
         gradient: "from-amber-500 to-amber-600",
@@ -331,6 +273,7 @@ const Stats = () => {
       },
       {
         title: "الخصومات النشطة",
+        link: "/discounts",
         value: stats.discounts || 0,
         icon: Tag,
         gradient: "from-purple-500 to-purple-600",
@@ -342,6 +285,7 @@ const Stats = () => {
       },
       {
         title: "إجمالي المستخدمين",
+        link: "/customers",
         value: stats.customers || 0,
         icon: Users,
         gradient: "from-rose-500 to-rose-600",
@@ -385,7 +329,8 @@ const Stats = () => {
             return (
               <div
                 key={index}
-                className="group relative bg-card rounded-2xl border border-border p-6 hover:border-border/80 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                className="group cursor-pointer relative bg-card rounded-2xl border border-border p-6 hover:border-border/80 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                onClick={() => navigate(stat.link)}
               >
                 {/* Background Gradient */}
                 <div
