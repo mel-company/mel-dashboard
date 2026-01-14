@@ -57,3 +57,13 @@ export const useLogout = () => {
     mutationFn: () => authAPI.logout(),
   });
 };
+
+/**
+ * Me
+ */
+export const useRefresh = () => {
+  return useQuery<any, Error, any>({
+    queryKey: authKeys.all,
+    queryFn: () => authAPI.refresh(),
+  });
+};

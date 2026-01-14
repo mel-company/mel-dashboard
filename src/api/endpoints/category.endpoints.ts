@@ -61,6 +61,7 @@ export const categoryAPI = {
 
   /**
    * Update an existing category
+   * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
   update: async (id: string, category: any): Promise<any> => {
     const { data } = await axiosInstance.put<any>(`/category/${id}`, category);
@@ -127,6 +128,32 @@ export const categoryAPI = {
   toggleEnabled: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.put<any>(
       `/category/${id}/toggle-enabled`
+    );
+    return data;
+  },
+
+  /**
+   * Update category image
+   */
+  updateCategoryImage: async (
+    categoryId: string,
+    image: File
+  ): Promise<any> => {
+    const formData = new FormData();
+    formData.append("image", image);
+    const { data } = await axiosInstance.put<any>(
+      `/category/${categoryId}/image`,
+      formData
+    );
+    return data;
+  },
+
+  /**
+   * Delete category image
+   */
+  deleteCategoryImage: async (categoryId: string): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(
+      `/category/${categoryId}/image`
     );
     return data;
   },

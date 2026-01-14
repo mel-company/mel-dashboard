@@ -199,3 +199,47 @@ export const useToggleCategoryEnabled = () => {
     },
   });
 };
+
+/**
+ * Update category image mutation
+ */
+export const useUpdateCategoryImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { categoryId: string; image: File }>({
+    mutationFn: ({ categoryId, image }) =>
+      categoryAPI.updateCategoryImage(categoryId, image),
+    onSuccess: (data) => {
+      // Invalidate and refetch categories list
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      // Invalidate the specific category detail to force refetch with new image URL
+      if (data?.id) {
+        queryClient.invalidateQueries({
+          queryKey: categoryKeys.detail(data.id),
+        });
+      }
+    },
+  });
+};
+
+/**
+ * Delete category image mutation
+ */
+export const useDeleteCategoryImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (categoryId: string) =>
+      categoryAPI.deleteCategoryImage(categoryId),
+    onSuccess: (data) => {
+      // Invalidate and refetch categories list
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      // Invalidate the specific category detail to force refetch
+      if (data?.id) {
+        queryClient.invalidateQueries({
+          queryKey: categoryKeys.detail(data.id),
+        });
+      }
+    },
+  });
+};

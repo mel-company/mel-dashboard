@@ -297,3 +297,53 @@ export const useUpdateCurrentSettings = () => {
     },
   });
 };
+
+/**
+ * Update store logo mutation
+ */
+export const useUpdateStoreLogo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, File>({
+    mutationFn: (logo: File) => settingsAPI.updateStoreLogo(logo),
+    onSuccess: (data) => {
+      // Invalidate and refetch settings list
+      queryClient.invalidateQueries({ queryKey: settingsKeys.lists() });
+      // Invalidate current settings to refetch with new logo
+      queryClient.invalidateQueries({ queryKey: currentSettingsKey });
+      // Update the store-specific settings cache if we have the storeId
+      if (data?.storeId) {
+        queryClient.invalidateQueries({
+          queryKey: settingsKeys.byStore(data.storeId),
+        });
+      }
+      // Invalidate store details queries to get updated logo
+      queryClient.invalidateQueries({ queryKey: ["store", "details"] });
+    },
+  });
+};
+
+/**
+ * Delete store logo mutation
+ */
+export const useDeleteStoreLogo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, void>({
+    mutationFn: () => settingsAPI.deleteStoreLogo(),
+    onSuccess: (data) => {
+      // Invalidate and refetch settings list
+      queryClient.invalidateQueries({ queryKey: settingsKeys.lists() });
+      // Invalidate current settings to refetch without logo
+      queryClient.invalidateQueries({ queryKey: currentSettingsKey });
+      // Update the store-specific settings cache if we have the storeId
+      if (data?.storeId) {
+        queryClient.invalidateQueries({
+          queryKey: settingsKeys.byStore(data.storeId),
+        });
+      }
+      // Invalidate store details queries to get updated logo (null)
+      queryClient.invalidateQueries({ queryKey: ["store", "details"] });
+    },
+  });
+};

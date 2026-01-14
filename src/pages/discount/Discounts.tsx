@@ -277,12 +277,20 @@ const Discounts = () => {
                 <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
                   <CardHeader className="pb-4">
                     <div className="relative h-32 flex items-center justify-center w-full overflow-hidden rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
-                      <div className="flex flex-col items-center gap-2">
-                        <Tag className="size-12 text-primary" />
-                        <div className="text-3xl font-bold text-primary">
-                          {discount.discount_percentage}%
+                      {discount.image ? (
+                        <img
+                          src={`${listData?.baseUrl}/${discount.image}`}
+                          alt={discount.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Tag className="size-12 text-primary" />
+                          <div className="text-3xl font-bold text-primary">
+                            {discount.discount_percentage}%
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">

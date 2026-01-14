@@ -145,6 +145,7 @@ export const productAPI = {
 
   /**
    * Update an existing product
+   * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
   update: async (id: string, product: any): Promise<any> => {
     const { data } = await axiosInstance.put<any>(`/product/${id}`, product);
@@ -178,6 +179,29 @@ export const productAPI = {
       productId,
       selectedOptions,
     });
+    return data;
+  },
+
+  /**
+   * Update product image
+   */
+  updateProductImage: async (productId: string, image: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append("image", image);
+    const { data } = await axiosInstance.put<any>(
+      `/product/${productId}/image`,
+      formData
+    );
+    return data;
+  },
+
+  /**
+   * Delete product image
+   */
+  deleteProductImage: async (productId: string): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(
+      `/product/${productId}/image`
+    );
     return data;
   },
 };

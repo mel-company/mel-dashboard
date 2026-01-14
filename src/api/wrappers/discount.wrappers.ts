@@ -153,7 +153,8 @@ export const useAddCategoriesToDiscount = () => {
   const queryClient = useQueryClient();
 
   return useMutation<any, Error, { id: string; categoryIds: string[] }>({
-    mutationFn: ({ id, categoryIds }) => discountAPI.addCategories(id, categoryIds),
+    mutationFn: ({ id, categoryIds }) =>
+      discountAPI.addCategories(id, categoryIds),
     onSuccess: (data) => {
       // Invalidate and refetch discounts list
       queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
@@ -187,12 +188,57 @@ export const useRemoveCategoryFromDiscount = () => {
   const queryClient = useQueryClient();
 
   return useMutation<any, Error, { id: string; categoryId: string }>({
-    mutationFn: ({ id, categoryId }) => discountAPI.removeCategory(id, categoryId),
+    mutationFn: ({ id, categoryId }) =>
+      discountAPI.removeCategory(id, categoryId),
     onSuccess: (data) => {
       // Invalidate and refetch discounts list
       queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
       // Update the specific discount cache
       queryClient.setQueryData(discountKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
+ * Update discount image mutation
+ */
+export const useUpdateDiscountImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { discountId: string; image: File }>({
+    mutationFn: ({ discountId, image }) =>
+      discountAPI.updateDiscountImage(discountId, image),
+    onSuccess: (data) => {
+      // Invalidate and refetch discounts list
+      queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      // Invalidate the specific discount detail to force refetch with new image URL
+      if (data?.id) {
+        queryClient.invalidateQueries({
+          queryKey: discountKeys.detail(data.id),
+        });
+      }
+    },
+  });
+};
+
+/**
+ * Delete discount image mutation
+ */
+export const useDeleteDiscountImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (discountId: string) =>
+      discountAPI.deleteDiscountImage(discountId),
+    onSuccess: (data) => {
+      // Invalidate and refetch discounts list
+      queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      // Invalidate the specific discount detail to force refetch
+      if (data?.id) {
+        queryClient.invalidateQueries({
+          queryKey: discountKeys.detail(data.id),
+        });
+      }
     },
   });
 };

@@ -257,7 +257,7 @@ const Products = () => {
                   <div className="relative h-40 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10 ">
                     {product.image ? (
                       <img
-                        src={product.image}
+                        src={`${listData?.baseUrl}/${product.image}`}
                         alt={product.title}
                         className="h-full w-full object-cover transition-transform"
                       />

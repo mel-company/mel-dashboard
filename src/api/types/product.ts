@@ -13,6 +13,7 @@ export type ProductListItem = {
   title: string;
   description: string | null;
   price: number;
+  cost_to_produce: number;
   image: string | null;
   rate: number;
   enabled: boolean;
@@ -34,5 +35,3 @@ export type ProductListResponse =
       page: number;
       limit: number;
     };
-
-

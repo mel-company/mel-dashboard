@@ -44,6 +44,7 @@ import AddDiscountProductDialog from "./AddDiscountProductDialog";
 import AddDiscountCategoryDialog from "./AddDiscountCategoryDialog";
 import RemoveProductFromDiscountDialog from "./RemoveProductFromDiscountDialog";
 import RemoveCategoryFromDiscountDialog from "./RemoveCategoryFromDiscountDialog";
+import DiscountImageDialog from "./DiscountImageDialog";
 import { toast } from "sonner";
 
 const DiscountDetails = () => {
@@ -63,6 +64,7 @@ const DiscountDetails = () => {
     categoryId: string;
     categoryName: string;
   }>({ open: false, categoryId: "", categoryName: "" });
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
   const {
     data: discount,
@@ -177,15 +179,35 @@ const DiscountDetails = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="relative h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
-                <div className="flex flex-col items-center gap-4">
-                  <Tag className="size-24 text-primary" />
-                  <div className="text-6xl font-bold text-primary">
-                    {discount.discount_percentage}%
+              <button
+                type="button"
+                onClick={() => setIsImageDialogOpen(true)}
+                className="relative group h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-linear-to-br from-primary/20 to-primary/5 transition-opacity hover:opacity-90 cursor-pointer"
+              >
+                {discount.image ? (
+                  <img
+                    src={discount.image}
+                    alt={discount.name}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-4">
+                    <Tag className="size-24 text-primary" />
+                    <div className="text-6xl font-bold text-primary">
+                      {discount.discount_percentage}%
+                    </div>
+                    <p className="text-lg text-muted-foreground">نسبة الخصم</p>
                   </div>
-                  <p className="text-lg text-muted-foreground">نسبة الخصم</p>
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                  <span className="text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    تعديل الصورة
+                  </span>
                 </div>
-              </div>
+              </button>
 
               <Separator />
 
@@ -611,6 +633,21 @@ const DiscountDetails = () => {
           refetch();
         }}
       />
+
+      {/* Discount Image Dialog */}
+      {id && (
+        <DiscountImageDialog
+          open={isImageDialogOpen}
+          onOpenChange={(open) => {
+            setIsImageDialogOpen(open);
+            // Refetch discount data when dialog closes to update the image
+            if (!open) {
+              refetch();
+            }
+          }}
+          discountId={id}
+        />
+      )}
     </div>
   );
 };
