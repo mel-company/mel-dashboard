@@ -13,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -23,8 +22,6 @@ import {
   Clock,
   MessageSquare,
   FileText,
-  CheckCircle2,
-  Circle,
 } from "lucide-react";
 import NotificationsSkeleton from "./NotificationsSkeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
