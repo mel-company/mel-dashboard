@@ -29,6 +29,7 @@ import {
 import NotificationsSkeleton from "./NotificationsSkeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
+import { cn } from "@/lib/utils";
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -80,6 +81,8 @@ const Notifications = ({}: Props) => {
     },
     !isSearching
   );
+
+  console.log(listData);
 
   const {
     data: searchData,
@@ -156,12 +159,9 @@ const Notifications = ({}: Props) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-right">رقم الإشعار</TableHead>
               <TableHead className="text-right">العنوان</TableHead>
               <TableHead className="text-right">الرسالة</TableHead>
-              <TableHead className="text-right">المستلمين</TableHead>
               <TableHead className="text-right">التاريخ</TableHead>
-              <TableHead className="text-right">الحالة</TableHead>
               <TableHead className="text-right">الإجراءات</TableHead>
             </TableRow>
           </TableHeader>
@@ -182,8 +182,7 @@ const Notifications = ({}: Props) => {
               </TableRow>
             ) : (
               notifications.map((notification) => {
-                const hasRecipients = notification._count?.recipients > 0;
-                const isRead = false;
+                const isRead = notification?.recipients[0]?.read;
 
                 return (
                   <TableRow
@@ -193,24 +192,43 @@ const Notifications = ({}: Props) => {
                     }`}
                     onClick={() => {
                       // Update read status when clicking on notification
-                      updateReadStatus(notification.id, {
-                        onSuccess: () => {
-                          // Navigate to details page after updating read status
-                          navigate(`/notifications/${notification.id}`);
-                        },
-                        onError: () => {
-                          // Still navigate even if update fails
-                          navigate(`/notifications/${notification.id}`);
-                        },
-                      });
+                      if (!isRead) {
+                        updateReadStatus(notification?.id, {
+                          onSuccess: () => {
+                            // Navigate to details page after updating read status
+                            navigate(`/notifications/${notification?.id}`);
+                          },
+                          onError: () => {
+                            // Still navigate even if update fails
+                            navigate(`/notifications/${notification?.id}`);
+                          },
+                        });
+                      } else {
+                        navigate(`/notifications/${notification?.id}`);
+                      }
                     }}
                   >
-                    <TableCell className="font-medium">
-                      #{notification.id.slice(0, 8)}
-                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Bell className="size-4 text-muted-foreground" />
+                        <div className="flex items-center gap-x-2">
+                          {!isRead && (
+                            <div className="top-0 right-0 ">
+                              <div className="relative">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-red-500 animate-pulse" />
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full bg-red-500/50 animate-ping" />
+                              </div>
+                            </div>
+                          )}
+
+                          <Bell
+                            className={cn(
+                              "size-4 text-muted-foreground",
+                              isRead
+                                ? "text-muted-foreground"
+                                : "text-yellow-500"
+                            )}
+                          />
+                        </div>
                         <span className="font-medium">
                           {notification.title || "بدون عنوان"}
                         </span>
@@ -225,37 +243,12 @@ const Notifications = ({}: Props) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="gap-1">
-                        {hasRecipients
-                          ? `${notification._count.recipients} مستلم`
-                          : "عام"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
                       <div className="flex items-center gap-2">
                         <Clock className="size-4 text-muted-foreground" />
                         <span className="text-sm">
                           {formatDate(notification.createdAt)}
                         </span>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={isRead ? "secondary" : "default"}
-                        className="gap-1"
-                      >
-                        {isRead ? (
-                          <>
-                            <CheckCircle2 className="size-3" />
-                            مقروء
-                          </>
-                        ) : (
-                          <>
-                            <Circle className="size-3" />
-                            غير مقروء
-                          </>
-                        )}
-                      </Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Link to={`/notifications/${notification.id}`}>

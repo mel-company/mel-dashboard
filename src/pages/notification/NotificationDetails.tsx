@@ -49,7 +49,7 @@ const NotificationDetails = () => {
   const handleDelete = () => {
     if (!id) return;
 
-    deleteNotification(id, {
+    deleteNotification(notification?.recipientId ?? "", {
       onSuccess: () => {
         toast.success("تم حذف الإشعار بنجاح");
         navigate("/notifications", { replace: true });
