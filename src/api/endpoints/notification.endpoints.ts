@@ -75,4 +75,12 @@ export const notificationAPI = {
     const { data } = await axiosInstance.put<any>(`/notification/${id}/read`);
     return data;
   },
+
+  /**
+   * Get sample of notifications (at most 5) for the current user
+   */
+  notificationSample: async (): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/notification/sample");
+    return data;
+  },
 };

@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { useEffect, useRef, useState } from "react";
 import { useLogout, useMe } from "@/api/wrappers/auth.wrappers";
-import { dmy_notifications } from "@/data/dummy";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -22,6 +21,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import {
+  useFetchNotificationSample,
+  useUpdateNotificationReadStatus,
+} from "@/api/wrappers/notification.wrappers";
 
 type Props = {};
 
@@ -33,6 +36,11 @@ const TopBar = ({}: Props) => {
 
   const { mutate: logoutMutation } = useLogout();
   const { data: me } = useMe();
+  const { data: notifications } =
+    useFetchNotificationSample(isNotificationOpen);
+
+  // Mutation to update read status
+  const { mutate: updateReadStatus } = useUpdateNotificationReadStatus();
 
   const handleLogout = () => {
     logoutMutation(
@@ -51,16 +59,9 @@ const TopBar = ({}: Props) => {
   const isHomePage = location.pathname === "/";
   const shouldShowApps = isHomePage;
 
-  // Get latest 4 notifications (sorted by date, most recent first)
-  const latestNotifications = [...dmy_notifications]
-    .sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )
-    .slice(0, 4);
+  const latestNotifications = notifications || [];
 
-  // Count unread notifications
-  const unreadCount = dmy_notifications.filter((n) => !n.read).length;
+  const unreadCount = me?.notificationsCount || 0;
 
   // Format date for notification
   const formatNotificationDate = (dateString: string) => {
@@ -149,42 +150,67 @@ const TopBar = ({}: Props) => {
                     </div>
                   ) : (
                     <div className="divide-y divide-border">
-                      {latestNotifications.map((notification) => (
-                        <Link
-                          key={notification.id}
-                          to={`/notifications/${notification.id}`}
-                          onClick={() => setIsNotificationOpen(false)}
-                          className={cn(
-                            "block p-4 hover:bg-accent transition-colors text-right",
-                            !notification.read &&
-                              "bg-blue-50/50 dark:bg-blue-950/20"
-                          )}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                <p className="text-sm font-medium line-clamp-1">
-                                  {notification.title}
-                                </p>
-                                {!notification.read && (
-                                  <span className="size-2 rounded-full bg-primary shrink-0" />
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                                {notification.message}
-                              </p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Clock className="size-3" />
-                                <span>
-                                  {formatNotificationDate(
-                                    notification.created_at
+                      {latestNotifications.map((notification: any) => {
+                        const isRead = notification?.recipients?.[0]?.read;
+                        return (
+                          <Link
+                            key={notification.id}
+                            to={`/notifications/${notification.id}`}
+                            onClick={() => {
+                              // Update read status when clicking on notification
+                              if (!isRead) {
+                                updateReadStatus(notification?.id, {
+                                  onSuccess: () => {
+                                    // Navigate to details page after updating read status
+                                    setIsNotificationOpen(false);
+                                    navigate(
+                                      `/notifications/${notification?.id}`
+                                    );
+                                  },
+                                  onError: () => {
+                                    // Still navigate even if update fails
+                                    setIsNotificationOpen(false);
+                                    navigate(
+                                      `/notifications/${notification?.id}`
+                                    );
+                                  },
+                                });
+                              } else {
+                                setIsNotificationOpen(false);
+                                navigate(`/notifications/${notification?.id}`);
+                              }
+                            }}
+                            className={cn(
+                              "block p-4 hover:bg-accent transition-colors text-right",
+                              !isRead && "bg-blue-50/50 dark:bg-blue-950/20"
+                            )}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                  <p className="text-sm font-medium line-clamp-1">
+                                    {notification.title || "بدون عنوان"}
+                                  </p>
+                                  {!isRead && (
+                                    <span className="size-2 rounded-full bg-primary shrink-0" />
                                   )}
-                                </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                                  {notification.message || "بدون رسالة"}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Clock className="size-3" />
+                                  <span>
+                                    {formatNotificationDate(
+                                      notification.createdAt
+                                    )}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </Link>
-                      ))}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -193,7 +219,7 @@ const TopBar = ({}: Props) => {
                     to="/notifications"
                     onClick={() => setIsNotificationOpen(false)}
                   >
-                    <Button variant="outline" className="w-full text-sm">
+                    <Button variant="secondary" className="w-full text-sm">
                       عرض جميع الإشعارات
                     </Button>
                   </Link>

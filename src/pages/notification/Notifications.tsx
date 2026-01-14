@@ -82,8 +82,6 @@ const Notifications = ({}: Props) => {
     !isSearching
   );
 
-  console.log(listData);
-
   const {
     data: searchData,
     isLoading: isSearchLoading,
@@ -123,16 +121,6 @@ const Notifications = ({}: Props) => {
     }).format(date);
   };
 
-  // Show loading skeleton
-  if (isLoading) {
-    return <NotificationsSkeleton />;
-  }
-
-  // Show error page
-  if (error) {
-    return <ErrorPage error={error} onRetry={refetch} />;
-  }
-
   return (
     <div className="space-y-6">
       {/* Search and Add Notification Section */}
@@ -156,114 +144,128 @@ const Notifications = ({}: Props) => {
 
       {/* Notifications Table */}
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-right">العنوان</TableHead>
-              <TableHead className="text-right">الرسالة</TableHead>
-              <TableHead className="text-right">التاريخ</TableHead>
-              <TableHead className="text-right">الإجراءات</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {notifications.length === 0 ? (
+        {isLoading ? (
+          <div className="p-6">
+            <NotificationsSkeleton count={5} showHeader={false} />
+          </div>
+        ) : error ? (
+          <div className="p-6">
+            <ErrorPage error={error} onRetry={refetch} />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
-                  <EmptyPage
-                    icon={<Bell className="size-7 text-muted-foreground" />}
-                    title="لا يوجد إشعارات"
-                    description={
-                      searchQuery
-                        ? "لم يتم العثور على إشعارات تطابق البحث"
-                        : "ابدأ بإضافة إشعار جديد"
-                    }
-                  />
-                </TableCell>
+                <TableHead className="text-right">العنوان</TableHead>
+                <TableHead className="text-right">الرسالة</TableHead>
+                <TableHead className="text-right">التاريخ</TableHead>
+                <TableHead className="text-right">الإجراءات</TableHead>
               </TableRow>
-            ) : (
-              notifications.map((notification) => {
-                const isRead = notification?.recipients[0]?.read;
-
-                return (
-                  <TableRow
-                    key={notification.id}
-                    className={`hover:bg-muted/50 cursor-pointer ${
-                      !isRead ? "bg-blue-50/50 dark:bg-blue-950/20" : ""
-                    }`}
-                    onClick={() => {
-                      // Update read status when clicking on notification
-                      if (!isRead) {
-                        updateReadStatus(notification?.id, {
-                          onSuccess: () => {
-                            // Navigate to details page after updating read status
-                            navigate(`/notifications/${notification?.id}`);
-                          },
-                          onError: () => {
-                            // Still navigate even if update fails
-                            navigate(`/notifications/${notification?.id}`);
-                          },
-                        });
-                      } else {
-                        navigate(`/notifications/${notification?.id}`);
+            </TableHeader>
+            <TableBody>
+              {notifications.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-12">
+                    <EmptyPage
+                      icon={<Bell className="size-7 text-muted-foreground" />}
+                      title="لا يوجد إشعارات"
+                      description={
+                        searchQuery
+                          ? "لم يتم العثور على إشعارات تطابق البحث"
+                          : "ابدأ بإضافة إشعار جديد"
                       }
-                    }}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-x-2">
-                          {!isRead && (
-                            <div className="top-0 right-0 ">
-                              <div className="relative">
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-red-500 animate-pulse" />
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full bg-red-500/50 animate-ping" />
-                              </div>
-                            </div>
-                          )}
+                    />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                notifications.map((notification) => {
+                  const isRead = notification?.recipients[0]?.read;
 
-                          <Bell
-                            className={cn(
-                              "size-4 text-muted-foreground",
-                              isRead
-                                ? "text-muted-foreground"
-                                : "text-yellow-500"
+                  return (
+                    <TableRow
+                      key={notification.id}
+                      className={`hover:bg-muted/50 cursor-pointer ${
+                        !isRead ? "bg-blue-50/50 dark:bg-blue-950/20" : ""
+                      }`}
+                      onClick={() => {
+                        // Update read status when clicking on notification
+                        if (!isRead) {
+                          updateReadStatus(notification?.id, {
+                            onSuccess: () => {
+                              // Navigate to details page after updating read status
+                              navigate(`/notifications/${notification?.id}`);
+                            },
+                            onError: () => {
+                              // Still navigate even if update fails
+                              navigate(`/notifications/${notification?.id}`);
+                            },
+                          });
+                        } else {
+                          navigate(`/notifications/${notification?.id}`);
+                        }
+                      }}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-x-2">
+                            {!isRead && (
+                              <div className="top-0 right-0 ">
+                                <div className="relative">
+                                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-red-500 animate-pulse" />
+                                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full bg-red-500/50 animate-ping" />
+                                </div>
+                              </div>
                             )}
-                          />
+
+                            <Bell
+                              className={cn(
+                                "size-4 text-muted-foreground",
+                                isRead
+                                  ? "text-muted-foreground"
+                                  : "text-yellow-500"
+                              )}
+                            />
+                          </div>
+                          <span className="font-medium">
+                            {notification.title || "بدون عنوان"}
+                          </span>
                         </div>
-                        <span className="font-medium">
-                          {notification.title || "بدون عنوان"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 max-w-xs">
-                        <MessageSquare className="size-4 text-muted-foreground shrink-0" />
-                        <span className="text-sm line-clamp-2">
-                          {notification.message || "بدون رسالة"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Clock className="size-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {formatDate(notification.createdAt)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Link to={`/notifications/${notification.id}`}>
-                        <Button variant="secondary" size="sm" className="gap-2">
-                          <FileText className="size-4" />
-                          التفاصيل
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 max-w-xs">
+                          <MessageSquare className="size-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm line-clamp-2">
+                            {notification.message || "بدون رسالة"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Clock className="size-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {formatDate(notification.createdAt)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Link to={`/notifications/${notification.id}`}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="gap-2"
+                          >
+                            <FileText className="size-4" />
+                            التفاصيل
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </div>
   );

@@ -12,6 +12,7 @@ export const notificationKeys = {
   detail: (id: string) => [...notificationKeys.details(), id] as const,
   search: (params?: any) =>
     [...notificationKeys.all, "search", params] as const,
+  sample: () => [...notificationKeys.all, "sample"] as const,
 };
 
 /**
@@ -119,6 +120,19 @@ export const useUpdateNotificationReadStatus = () => {
       queryClient.invalidateQueries({
         queryKey: notificationKeys.detail(notificationId),
       });
+      // Invalidate sample cache
+      queryClient.invalidateQueries({ queryKey: notificationKeys.sample() });
     },
+  });
+};
+
+/**
+ * Fetch sample of notifications (at most 5) for the current user
+ */
+export const useFetchNotificationSample = (enabled: boolean = true) => {
+  return useQuery<any>({
+    queryKey: notificationKeys.sample(),
+    queryFn: () => notificationAPI.notificationSample(),
+    enabled,
   });
 };
