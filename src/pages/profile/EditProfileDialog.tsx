@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { User, Mail, Phone, MapPin } from "lucide-react";
+import { sanitizePhoneNumber } from "@/utils/helpers";
 
 type Props = {
   open: boolean;
@@ -39,13 +40,26 @@ const EditProfileDialog = ({ open, onOpenChange }: Props) => {
     location: "",
   });
 
+  // Helper function to remove country code from phone number
+  const removeCountryCode = (phone: string): string => {
+    if (!phone) return "";
+    // Remove +964 prefix if present
+    if (phone.startsWith("+964")) {
+      return phone.replace("+964", "");
+    }
+    if (phone.startsWith("964")) {
+      return phone.replace("964", "");
+    }
+    return phone;
+  };
+
   // Initialize form data when user data is available
   useEffect(() => {
     if (user) {
       const initialData = {
         name: user.fullName || "",
         email: user.email || "",
-        alternative_phone: user.alternative_phone || "",
+        alternative_phone: removeCountryCode(user.alternative_phone || ""),
         location: user.location || "",
       };
       setFormData(initialData);
@@ -54,10 +68,40 @@ const EditProfileDialog = ({ open, onOpenChange }: Props) => {
   }, [user, open]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    // Special handling for alternative_phone to only allow digits and validate format
+    if (field === "alternative_phone") {
+      // Remove any non-digit characters
+      const digitsOnly = value.replace(/\D/g, "");
+
+      // Only allow if it starts with 7 and is max 10 digits
+      if (digitsOnly.length === 0) {
+        setFormData((prev) => ({
+          ...prev,
+          [field]: "",
+        }));
+        return;
+      }
+
+      // Must start with 7
+      if (digitsOnly.length > 0 && !digitsOnly.startsWith("7")) {
+        return; // Don't update if it doesn't start with 7
+      }
+
+      // Limit to 10 digits
+      if (digitsOnly.length > 10) {
+        return; // Don't update if more than 10 digits
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        [field]: digitsOnly,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
   };
 
   const hasChanges = () => {
@@ -74,7 +118,7 @@ const EditProfileDialog = ({ open, onOpenChange }: Props) => {
       const resetData = {
         name: user.fullName || "",
         email: user.email || "",
-        alternative_phone: user.alternative_phone || "",
+        alternative_phone: removeCountryCode(user.alternative_phone || ""),
         location: user.location || "",
       };
       setFormData(resetData);
@@ -89,11 +133,26 @@ const EditProfileDialog = ({ open, onOpenChange }: Props) => {
       return;
     }
 
+    // Validate alternative_phone if provided
+    let alternativePhoneToSend = formData.alternative_phone;
+    if (formData.alternative_phone) {
+      try {
+        // Validate and sanitize the phone number
+        alternativePhoneToSend = sanitizePhoneNumber(
+          formData.alternative_phone,
+          "+964"
+        );
+      } catch (error: any) {
+        toast.error(error.message || "رقم الهاتف البديل غير صحيح");
+        return;
+      }
+    }
+
     updateProfile(
       {
         name: formData.name,
         email: formData.email,
-        alternative_phone: formData.alternative_phone,
+        alternative_phone: alternativePhoneToSend,
         location: formData.location,
       },
       {
@@ -187,16 +246,32 @@ const EditProfileDialog = ({ open, onOpenChange }: Props) => {
               <Phone className="size-4 text-muted-foreground" />
               الهاتف البديل
             </Label>
-            <Input
-              id="alternative_phone"
-              type="tel"
-              value={formData.alternative_phone}
-              onChange={(e) =>
-                handleInputChange("alternative_phone", e.target.value)
-              }
-              placeholder="أدخل رقم الهاتف البديل"
-              className="text-right"
-            />
+            <div className="relative flex items-center">
+              <span className="absolute left-3 text-sm text-muted-foreground pointer-events-none">
+                +964
+              </span>
+              <Input
+                id="alternative_phone"
+                type="tel"
+                value={formData.alternative_phone}
+                onChange={(e) =>
+                  handleInputChange("alternative_phone", e.target.value)
+                }
+                placeholder="7XXXXXXXXX"
+                className="text-left pl-15"
+                maxLength={10}
+              />
+            </div>
+            {formData.alternative_phone && (
+              <p className="text-xs text-muted-foreground text-right">
+                {formData.alternative_phone.length}/10 أرقام
+                {!formData.alternative_phone.startsWith("7") && (
+                  <span className="text-destructive block mt-1">
+                    يجب أن يبدأ الرقم بـ 7
+                  </span>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Location Field */}
