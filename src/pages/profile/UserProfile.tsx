@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -9,13 +10,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Edit, Lock, Shield, Settings, Phone } from "lucide-react";
+import { User, Mail, Edit, Shield, Settings, Phone } from "lucide-react";
 import { useLogout, useMe } from "@/api/wrappers/auth.wrappers";
 import { toast } from "sonner";
+import EditProfileDialog from "./EditProfileDialog";
+import LogoutDialog from "./LogoutDialog";
 
 const UserProfile = () => {
   const navigate = useNavigate();
   const { data: user } = useMe();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const { mutate: logoutMutation } = useLogout();
 
@@ -113,6 +117,24 @@ const UserProfile = () => {
                     <p className="text-lg font-bold">{user.phone}</p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
+                  <Phone className="size-5 text-primary" />
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">
+                      الهاتف البديل
+                    </p>
+                    <p className="text-lg font-bold">
+                      {user.alternative_phone}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
+                  <Phone className="size-5 text-primary" />
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">الموقع</p>
+                    <p className="text-lg font-bold">{user.location}</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -153,33 +175,34 @@ const UserProfile = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full gap-2" variant="default">
+              <Button
+                className="w-full gap-2"
+                variant="default"
+                onClick={() => setIsEditDialogOpen(true)}
+              >
                 <Edit className="size-4" />
                 تعديل الملف الشخصي
               </Button>
-              <Button className="w-full gap-2" variant="secondary">
-                <Lock className="size-4" />
-                تغيير كلمة المرور
-              </Button>
-              <Button className="w-full gap-2" variant="secondary">
+              <Button
+                onClick={() => navigate("/settings/general")}
+                className="w-full gap-2"
+                variant="secondary"
+              >
                 <Settings className="size-4" />
                 الإعدادات
               </Button>
               <Separator />
-              <Button
-                className="w-full gap-2"
-                variant="destructive"
-                onClick={() => {
-                  handleLogout();
-                  // navigate("/login");
-                }}
-              >
-                تسجيل الخروج
-              </Button>
+              <LogoutDialog />
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Edit Profile Dialog */}
+      <EditProfileDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
     </div>
   );
 };

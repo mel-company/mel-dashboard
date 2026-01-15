@@ -53,4 +53,17 @@ export const authAPI = {
     const { data } = await axiosInstance.get<any>("/store-user-auth/refresh");
     return data;
   },
+
+  updateProfile: async (params?: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      "/store-user-auth/update-profile",
+      {
+        name: params?.name,
+        email: params?.email,
+        alternative_phone: params?.alternative_phone,
+        location: params?.location,
+      }
+    );
+    return data;
+  },
 };

@@ -234,26 +234,30 @@ const TopBar = ({}: Props) => {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 bg-accent rounded-full px-3 py-1.5">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-cyan text-white text-xs">
-                {/* {user?.name?.[0] || "ح"} */}
-              </AvatarFallback>
-            </Avatar>
-            <div className="hidden md:flex flex-col items-end">
-              <span className="line-clamp-1 text-xs font-medium text-foreground">
-                {me?.fullName || "المستخدم"}
-              </span>
-              <span className="line-clamp-1 text-xs text-muted-foreground">
-                {me?.email || "البريد الإلكتروني"}
-              </span>
-            </div>
-            {/* Profile Dropdown */}
+          <div className="flex items-center bg-accent rounded-full">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="cursor-pointer">
-                  <ChevronDown size={16} className="text-muted-foreground" />
-                </button>
+              <DropdownMenuTrigger
+                asChild
+                className="cursor-pointer px-3 py-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-cyan text-white text-xs">
+                      {/* {user?.name?.[0] || "ح"} */}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden md:flex flex-col items-end">
+                    <span className="line-clamp-1 text-xs font-medium text-foreground">
+                      {me?.fullName || "المستخدم"}
+                    </span>
+                    <span className="line-clamp-1 text-xs text-muted-foreground">
+                      {me?.email || "البريد الإلكتروني"}
+                    </span>
+                  </div>
+                  <button className="cursor-pointer">
+                    <ChevronDown size={16} className="text-muted-foreground" />
+                  </button>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 text-right">
                 <DropdownMenuItem

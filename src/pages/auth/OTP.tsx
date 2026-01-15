@@ -65,7 +65,7 @@ const OTP = () => {
         },
         {
           onSuccess: () => {
-            navigate("/");
+            navigate("/", { replace: true });
           },
           onError: () => {
             toast.error("فشل تحقق الرمز. يرجى المحاولة مرة أخرى");
