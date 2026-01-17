@@ -51,6 +51,7 @@ import PrivacyPolicySettings from "./pages/settings/PrivacyPolicySettings";
 import RefundPolicySettings from "./pages/settings/RefundPolicySettings";
 import { useRefresh } from "./api/wrappers/auth.wrappers";
 import { useEffect } from "react";
+import Editor from "./pages/settings/Editor";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -130,6 +131,7 @@ function App() {
             {/* settings routes */}
             <Route path="/settings" element={<SettingsLayout />}>
               <Route index path="general" element={<GeneralSettings />} />
+              <Route index path="editor" element={<Editor />} />
               {/* <Route path="general" element={<GeneralSettings />} /> */}
               <Route path="store" element={<DetailsSettings />} />
               <Route path="domain" element={<DomainSettings />} />

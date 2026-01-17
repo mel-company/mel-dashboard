@@ -13,6 +13,7 @@ import {
   Book,
   ChevronDown,
   ChevronUp,
+  Code,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,11 @@ const settingsItems = [
     label: "التوصيل",
     path: "/settings/delivery",
     icon: Truck,
+  },
+  {
+    label: "الموقع",
+    path: "/settings/editor",
+    icon: Code,
   },
   {
     label: "النطاق",
