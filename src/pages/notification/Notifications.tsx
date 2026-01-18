@@ -16,6 +16,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Search,
   Plus,
   Bell,
@@ -103,6 +110,24 @@ const Notifications = ({}: Props) => {
   // const isFetching = isSearching ? isSearchFetching : isListFetching;
   const isLoading = isSearching ? isSearchLoading : isListLoading;
 
+  const totalPages = Math.ceil(
+    (listData?.total ?? searchData?.total ?? 0) / limit
+  );
+
+  // Get the actual current page based on search state
+  const actualCurrentPage = isSearching ? currentSearchPage : currentPage;
+
+  const handlePageChange = (page: number) => {
+    // Ensure page is within valid bounds
+    const safePage = Math.max(1, Math.min(page, totalPages || 1));
+    if (isSearching) {
+      setSearchParams({ s: safePage.toString() });
+    } else {
+      setSearchParams({ page: safePage.toString() });
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // Mutation to update read status
   const { mutate: updateReadStatus } = useUpdateNotificationReadStatus();
 
@@ -138,6 +163,50 @@ const Notifications = ({}: Props) => {
           <span className="sm:hidden">إضافة</span>
         </Button>
       </div>
+
+      {totalPages > 1 && notifications.length > 0 ? (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageChange(actualCurrentPage - 1);
+                }}
+                aria-disabled={actualCurrentPage <= 1}
+                className={
+                  actualCurrentPage <= 1
+                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
+                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
+                }
+              />
+            </PaginationItem>
+
+            <PaginationItem className="mx-4 flex items-center gap-2">
+              <span>{actualCurrentPage}</span>
+              <span>من</span>
+              <span>{totalPages}</span>
+            </PaginationItem>
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageChange(actualCurrentPage + 1);
+                }}
+                aria-disabled={actualCurrentPage >= totalPages}
+                className={
+                  actualCurrentPage >= totalPages
+                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
+                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      ) : null}
 
       {/* Notifications Table */}
       <Card>
