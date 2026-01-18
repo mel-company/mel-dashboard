@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { User, Mail, Edit, Shield, Settings, Phone } from "lucide-react";
-import { useLogout, useMe } from "@/api/wrappers/auth.wrappers";
-import { toast } from "sonner";
+import { useMe } from "@/api/wrappers/auth.wrappers";
+// import { toast } from "sonner";
 import EditProfileDialog from "./EditProfileDialog";
 import LogoutDialog from "./LogoutDialog";
 
@@ -21,7 +21,7 @@ const UserProfile = () => {
   const { data: user } = useMe();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const { mutate: logoutMutation } = useLogout();
+  // const { mutate: logoutMutation } = useLogout();
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -32,20 +32,20 @@ const UserProfile = () => {
     });
   };
 
-  const handleLogout = () => {
-    logoutMutation(
-      {},
-      {
-        onSuccess: () => {
-          toast.success("تم تسجيل الخروج بنجاح");
-          navigate("/login", { replace: true });
-        },
-        onError: () => {
-          toast.error("حدث خطأ أثناء تسجيل الخروج");
-        },
-      }
-    );
-  };
+  // const handleLogout = () => {
+  //   logoutMutation(
+  //     {},
+  //     {
+  //       onSuccess: () => {
+  //         toast.success("تم تسجيل الخروج بنجاح");
+  //         navigate("/login", { replace: true });
+  //       },
+  //       onError: () => {
+  //         toast.error("حدث خطأ أثناء تسجيل الخروج");
+  //       },
+  //     }
+  //   );
+  // };
 
   if (!user) {
     return (

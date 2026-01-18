@@ -13,15 +13,10 @@ import { Separator } from "@/components/ui/separator";
 import {
   Bell,
   MessageSquare,
-  Calendar,
   CheckCircle2,
   Circle,
   Edit,
   Trash2,
-  FileText,
-  Users,
-  Store,
-  User,
 } from "lucide-react";
 import NotificationDetailsSkeleton from "./NotificationDetailsSkeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
@@ -98,7 +93,7 @@ const NotificationDetails = () => {
   };
 
   const isRead = notification.isRead;
-  const isPinned = notification.isPinned;
+  // const isPinned = notification.isPinned;
 
   return (
     <div className="space-y-6">

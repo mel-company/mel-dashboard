@@ -11,7 +11,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { DialogTrigger } from "@radix-ui/react-dialog";
 
 type Props = {};
 
