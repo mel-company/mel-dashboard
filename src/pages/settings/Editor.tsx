@@ -1,5 +1,4 @@
 import { useServeJsonFile } from "@/api/wrappers/editor.wrappers";
-import { useFetchProducts } from "@/api/wrappers/product.wrappers";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -339,6 +338,7 @@ const CarouselHeroSection = ({ content }: { content: CarouselHeroContent; settin
   );
 };
 
+// @ts-ignore
 const ProductsGridSection = ({ content, settings, source }: { content: ProductsGridContent; settings: any; source: any }) => {
   const { items, style } = content;
   const { isMobile, isTablet, isDesktop } = useWindowSize();
