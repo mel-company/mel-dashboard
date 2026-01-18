@@ -50,6 +50,7 @@ const Layout = () => {
       "privacy-policy": "سياسة الخصوصية",
       "refund-policy": "سياسة الإسترداد",
       subscription: "الاشتراك",
+      coupons: "الكوبونات",
     };
 
     const detailLabels: Record<string, string> = {
@@ -61,6 +62,7 @@ const Layout = () => {
       discounts: "تفاصيل الخصم",
       notifications: "تفاصيل الإشعار",
       payment: "تفاصيل الدفع",
+      coupons: "تفاصيل الكوبون",
     };
 
     const path = location.pathname;

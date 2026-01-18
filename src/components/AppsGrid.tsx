@@ -15,6 +15,7 @@ import {
   Minimize2,
   Lock,
   Bell,
+  Ticket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,14 @@ const baseApps: AppItem[] = [
     icon: Percent,
     gradient: "from-rose-500 to-rose-600",
     description: "إدارة الخصومات",
+    // badge: "عروض",
+  },
+  {
+    label: "الكوبونات",
+    path: "/coupons",
+    icon: Ticket,
+    gradient: "from-green-500 to-green-600",
+    description: "إدارة الكوبونات",
     // badge: "عروض",
   },
   {

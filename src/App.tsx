@@ -52,6 +52,10 @@ import RefundPolicySettings from "./pages/settings/RefundPolicySettings";
 import { useRefresh } from "./api/wrappers/auth.wrappers";
 import { useEffect } from "react";
 import Editor from "./pages/settings/Editor";
+import Coupons from "./pages/coupone/Coupons";
+import CouponDetails from "./pages/coupone/CouponDetails";
+import EditCoupon from "./pages/coupone/EditCoupon";
+import AddCoupon from "./pages/coupone/AddCoupon";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -179,6 +183,16 @@ function App() {
                 <Route path="edit" element={<EditDiscount />} />
               </Route>
               <Route path="add" element={<AddDiscount />} />
+            </Route>
+
+            {/* Coupons routes */}
+            <Route path="/coupons">
+              <Route index element={<Coupons />} />
+              <Route path=":id">
+                <Route index element={<CouponDetails />} />
+                <Route path="edit" element={<EditCoupon />} />
+              </Route>
+              <Route path="add" element={<AddCoupon />} />
             </Route>
 
             {/* App Store route */}
