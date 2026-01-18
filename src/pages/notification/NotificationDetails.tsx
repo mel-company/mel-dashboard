@@ -93,6 +93,7 @@ const NotificationDetails = () => {
   };
 
   const isRead = notification.isRead;
+  // const isPinned = notification.isPinned;
 
   return (
     <div className="space-y-6">

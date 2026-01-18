@@ -38,6 +38,11 @@ const settingsItems = [
     path: "/settings/delivery",
     icon: Truck,
   },
+  // {
+  //   label: "الموقع",
+  //   path: "/settings/editor",
+  //   icon: Code,
+  // },
   {
     label: "النطاق",
     path: "/settings/domain",

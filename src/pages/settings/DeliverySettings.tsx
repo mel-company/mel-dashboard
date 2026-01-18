@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, Save, Package, Truck, InfoIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
@@ -34,7 +35,7 @@ const DeliverySettings = ({}: Props) => {
     useState(false);
 
   // Fetch delivery company details if a delivery company is selected
-  const { data: deliveryCompanyDetails } = useFetchDeliveryCompany(
+  const { data: deliveryCompanyDetails, isLoading: isLoadingDeliveryCompanyDetails } = useFetchDeliveryCompany(
     storeDetails?.deliveryCompanyId || "",
     !!storeDetails?.deliveryCompanyId
   );
@@ -286,120 +287,162 @@ const DeliverySettings = ({}: Props) => {
             )}
 
             {/* Delivery Company Details */}
-            {deliveryCompanyDetails && (
+            {isLoadingDeliveryCompanyDetails ? (
               <div className="pt-4 border-t space-y-4">
                 <div>
-                  <Label className="text-base font-semibold mb-3 block">
-                    تفاصيل شركة التوصيل
-                  </Label>
+                  <Skeleton className="h-6 w-40 mb-3" />
                   <div className="space-y-3">
-                    {deliveryCompanyDetails.logo && (
-                      <div className="flex items-center gap-3">
-                        <Label className="text-sm text-muted-foreground min-w-[120px]">
-                          الشعار:
-                        </Label>
-                        <img
-                          src={deliveryCompanyDetails.logo}
-                          alt={deliveryCompanyDetails.name || "شعار الشركة"}
-                          className="h-16 w-16 object-cover rounded-full border"
-                        />
-                      </div>
-                    )}
-                    {deliveryCompanyDetails.name && (
-                      <div className="flex items-center gap-3">
-                        <Label className="text-sm text-muted-foreground min-w-[120px]">
-                          الاسم:
-                        </Label>
-                        <p className="text-sm font-medium">
-                          {deliveryCompanyDetails.name}
-                        </p>
-                      </div>
-                    )}
-                    {deliveryCompanyDetails.description && (
-                      <div className="flex items-start gap-3">
-                        <Label className="text-sm text-muted-foreground min-w-[120px]">
-                          الوصف:
-                        </Label>
-                        <p className="text-sm flex-1">
-                          {deliveryCompanyDetails.description}
-                        </p>
-                      </div>
-                    )}
-                    {deliveryCompanyDetails.phone && (
-                      <div className="flex items-center gap-3">
-                        <Label className="text-sm text-muted-foreground min-w-[120px]">
-                          الهاتف:
-                        </Label>
-                        <p className="text-sm">
-                          {deliveryCompanyDetails.phone}
-                        </p>
-                      </div>
-                    )}
-                    {deliveryCompanyDetails.email && (
-                      <div className="flex items-center gap-3">
-                        <Label className="text-sm text-muted-foreground min-w-[120px]">
-                          البريد الإلكتروني:
-                        </Label>
-                        <p className="text-sm">
-                          {deliveryCompanyDetails.email}
-                        </p>
-                      </div>
-                    )}
-                    {deliveryCompanyDetails.website && (
-                      <div className="flex items-center gap-3">
-                        <Label className="text-sm text-muted-foreground min-w-[120px]">
-                          الموقع الإلكتروني:
-                        </Label>
-                        <a
-                          href={deliveryCompanyDetails.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary hover:underline"
-                        >
-                          {deliveryCompanyDetails.website}
-                        </a>
-                      </div>
-                    )}
-                    {deliveryCompanyDetails.address && (
-                      <div className="flex items-start gap-3">
-                        <Label className="text-sm text-muted-foreground min-w-[120px]">
-                          العنوان:
-                        </Label>
-                        <p className="text-sm flex-1">
-                          {deliveryCompanyDetails.address}
-                        </p>
-                      </div>
-                    )}
-                    {(deliveryCompanyDetails.country ||
-                      deliveryCompanyDetails.state ||
-                      deliveryCompanyDetails.region) && (
-                      <div className="flex items-start gap-3">
-                        <Label className="text-sm text-muted-foreground min-w-[120px]">
-                          الموقع:
-                        </Label>
-                        <div className="text-sm flex-1 space-y-1 flex gap-x-2 items-center">
-                          {deliveryCompanyDetails.country && (
-                            <p>{deliveryCompanyDetails?.country?.name?.ar}</p>
-                          )}
-                          {deliveryCompanyDetails.state && (
-                            <p>
-                              / {deliveryCompanyDetails?.state?.name?.arabic}
-                            </p>
-                          )}
-                          {deliveryCompanyDetails.region && (
-                            <p>
-                              / {deliveryCompanyDetails?.region?.name?.arabic}
-                            </p>
-                          )}
-                          {deliveryCompanyDetails.zip && (
-                            <p>/ {deliveryCompanyDetails.zip}</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-16 w-16 rounded-full" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-48" />
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-full flex-1" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-48" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-40" />
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-full flex-1" />
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-56" />
+                    </div>
                   </div>
                 </div>
               </div>
+            ) : (
+              deliveryCompanyDetails && (
+                <div className="pt-4 border-t space-y-4">
+                  <div>
+                    <Label className="text-base font-semibold mb-3 block">
+                      تفاصيل شركة التوصيل
+                    </Label>
+                    <div className="space-y-3">
+                      {deliveryCompanyDetails.logo && (
+                        <div className="flex items-center gap-3">
+                          <Label className="text-sm text-muted-foreground min-w-[120px]">
+                            الشعار:
+                          </Label>
+                          <img
+                            src={deliveryCompanyDetails.logo}
+                            alt={deliveryCompanyDetails.name || "شعار الشركة"}
+                            className="h-16 w-16 object-cover rounded-full border"
+                          />
+                        </div>
+                      )}
+                      {deliveryCompanyDetails.name && (
+                        <div className="flex items-center gap-3">
+                          <Label className="text-sm text-muted-foreground min-w-[120px]">
+                            الاسم:
+                          </Label>
+                          <p className="text-sm font-medium">
+                            {deliveryCompanyDetails.name}
+                          </p>
+                        </div>
+                      )}
+                      {deliveryCompanyDetails.description && (
+                        <div className="flex items-start gap-3">
+                          <Label className="text-sm text-muted-foreground min-w-[120px]">
+                            الوصف:
+                          </Label>
+                          <p className="text-sm flex-1">
+                            {deliveryCompanyDetails.description}
+                          </p>
+                        </div>
+                      )}
+                      {deliveryCompanyDetails.phone && (
+                        <div className="flex items-center gap-3">
+                          <Label className="text-sm text-muted-foreground min-w-[120px]">
+                            الهاتف:
+                          </Label>
+                          <p className="text-sm">
+                            {deliveryCompanyDetails.phone}
+                          </p>
+                        </div>
+                      )}
+                      {deliveryCompanyDetails.email && (
+                        <div className="flex items-center gap-3">
+                          <Label className="text-sm text-muted-foreground min-w-[120px]">
+                            البريد الإلكتروني:
+                          </Label>
+                          <p className="text-sm">
+                            {deliveryCompanyDetails.email}
+                          </p>
+                        </div>
+                      )}
+                      {deliveryCompanyDetails.website && (
+                        <div className="flex items-center gap-3">
+                          <Label className="text-sm text-muted-foreground min-w-[120px]">
+                            الموقع الإلكتروني:
+                          </Label>
+                          <a
+                            href={deliveryCompanyDetails.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline"
+                          >
+                            {deliveryCompanyDetails.website}
+                          </a>
+                        </div>
+                      )}
+                      {deliveryCompanyDetails.address && (
+                        <div className="flex items-start gap-3">
+                          <Label className="text-sm text-muted-foreground min-w-[120px]">
+                            العنوان:
+                          </Label>
+                          <p className="text-sm flex-1">
+                            {deliveryCompanyDetails.address}
+                          </p>
+                        </div>
+                      )}
+                      {(deliveryCompanyDetails.country ||
+                        deliveryCompanyDetails.state ||
+                        deliveryCompanyDetails.region) && (
+                        <div className="flex items-start gap-3">
+                          <Label className="text-sm text-muted-foreground min-w-[120px]">
+                            الموقع:
+                          </Label>
+                          <div className="text-sm flex-1 space-y-1 flex gap-x-2 items-center">
+                            {deliveryCompanyDetails.country && (
+                              <p>{deliveryCompanyDetails?.country?.name?.ar}</p>
+                            )}
+                            {deliveryCompanyDetails.state && (
+                              <p>
+                                / {deliveryCompanyDetails?.state?.name?.arabic}
+                              </p>
+                            )}
+                            {deliveryCompanyDetails.region && (
+                              <p>
+                                / {deliveryCompanyDetails?.region?.name?.arabic}
+                              </p>
+                            )}
+                            {deliveryCompanyDetails.zip && (
+                              <p>/ {deliveryCompanyDetails.zip}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
             )}
 
             {/* Reset Button - Only show when delivery company section has changes */}

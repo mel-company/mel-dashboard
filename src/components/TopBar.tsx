@@ -115,7 +115,7 @@ const TopBar = ({}: Props) => {
 
         {/* Center - Company Name */}
         <div className="flex justify-center items-center">
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 className="hidden lg:block text-lg font-semibold text-foreground">
             {me?.store || "منصة ميل"}
           </h2>
         </div>
@@ -124,17 +124,24 @@ const TopBar = ({}: Props) => {
         <div className="flex justify-end items-center gap-2 sm:gap-3">
           <ThemeToggle />
           <div ref={notificationRef} className="relative">
-            <button
+            <div
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-              className="relative cursor-pointer p-1 rounded-md hover:bg-accent transition-colors"
+              className="relative cursor-pointer flex items-center gap-x-2 py-2 px-3 rounded-md hover:bg-accent transition-colors border border-border"
             >
-              <Bell size={20} className="size-5" />
-              {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-destructive text-white text-xs font-medium">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </button>
+              <div className="relative">
+                <Bell size={20} className="size-5" />
+                {unreadCount > 0 && (
+                  <div className="absolute top-0 right-0 ">
+                    <div className="relative">
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-red-500 animate-pulse" />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full bg-red-500/50 animate-ping" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {unreadCount > 99 ? "99+" : unreadCount > 0 ? unreadCount : ""}
+            </div>
             {/* Notification Dropdown */}
             {isNotificationOpen && (
               <div className="absolute left-0 top-full mt-2 w-80 bg-background border border-border rounded-lg shadow-lg z-50 max-h-96 overflow-hidden flex flex-col">
@@ -227,26 +234,30 @@ const TopBar = ({}: Props) => {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 bg-accent rounded-full px-3 py-1.5">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-cyan text-white text-xs">
-                {/* {user?.name?.[0] || "ح"} */}
-              </AvatarFallback>
-            </Avatar>
-            <div className="hidden sm:flex flex-col items-end">
-              <span className="line-clamp-1 text-xs font-medium text-foreground">
-                {me?.fullName || "المستخدم"}
-              </span>
-              <span className="line-clamp-1 text-xs text-muted-foreground">
-                {me?.email || "البريد الإلكتروني"}
-              </span>
-            </div>
-            {/* Profile Dropdown */}
+          <div className="flex items-center bg-accent rounded-full">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="cursor-pointer">
-                  <ChevronDown size={16} className="text-muted-foreground" />
-                </button>
+              <DropdownMenuTrigger
+                asChild
+                className="cursor-pointer px-3 py-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-cyan text-white text-xs">
+                      {/* {user?.name?.[0] || "ح"} */}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden md:flex flex-col items-end">
+                    <span className="line-clamp-1 text-xs font-medium text-foreground">
+                      {me?.fullName || "المستخدم"}
+                    </span>
+                    <span className="line-clamp-1 text-xs text-muted-foreground">
+                      {me?.email || "البريد الإلكتروني"}
+                    </span>
+                  </div>
+                  <button className="cursor-pointer">
+                    <ChevronDown size={16} className="text-muted-foreground" />
+                  </button>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 text-right">
                 <DropdownMenuItem

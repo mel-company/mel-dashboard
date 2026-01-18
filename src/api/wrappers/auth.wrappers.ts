@@ -67,3 +67,12 @@ export const useRefresh = () => {
     queryFn: () => authAPI.refresh(),
   });
 };
+
+/**
+ * Update Profile
+ */
+export const useUpdateProfile = () => {
+  return useMutation<any, Error, any>({
+    mutationFn: (params: any) => authAPI.updateProfile(params),
+  });
+};
