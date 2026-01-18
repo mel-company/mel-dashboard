@@ -20,6 +20,7 @@ const AddProduct = ({}: Props) => {
 
   const { data: categories, isLoading } = useFetchCategories();
 
+
   const [image, setImage] = useState("");
   const [rate, setRate] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -1080,7 +1081,7 @@ const AddProduct = ({}: Props) => {
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {categories.map((category: any) => {
+                {categories?.data?.map((category: any) => {
                   const isSelected = selectedCategories.includes(category.id);
                   return (
                     <div
