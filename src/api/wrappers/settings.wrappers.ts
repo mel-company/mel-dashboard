@@ -221,6 +221,9 @@ export const useUpdateStoreDetails = () => {
       settingsAPI.updateStoreDetails(storeDetails),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ["store", "details", "auth"] });
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       if (data?.storeId) {
         queryClient.setQueryData(settingsKeys.byStore(data.storeId), data);
       }
