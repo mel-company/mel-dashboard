@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Bell, ChevronDown, Clock, Grid3x3, LogOut, User } from "lucide-react";
+import { ArrowLeft, Badge, Bell, ChevronDown, Clock, Grid3x3, LogOut, User } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -36,7 +36,7 @@ const TopBar = ({}: Props) => {
 
   const { mutate: logoutMutation } = useLogout();
   const { data: me } = useMe();
-  const { data: notifications } =
+  const { data: notifications, isLoading: isNotificationsLoading } =
     useFetchNotificationSample(isNotificationOpen);
 
   // Mutation to update read status
@@ -145,13 +145,45 @@ const TopBar = ({}: Props) => {
             {/* Notification Dropdown */}
             {isNotificationOpen && (
               <div className="absolute left-0 top-full mt-2 w-80 bg-background border border-border rounded-lg shadow-lg z-50 max-h-96 overflow-hidden flex flex-col">
-                <div className="p-4 border-b border-border">
+                <div className="p-4 flex justify-between items-center border-b border-border">
                   <h3 className="text-sm font-semibold text-right">
                     الإشعارات
                   </h3>
+                  <Link
+                    to="/notifications"
+                    onClick={() => setIsNotificationOpen(false)}
+                    className="flex items-center text-accent hover:bg-foreground/90 bg-foreground group rounded-md p-1 transition-colors"
+                  >
+                    <span className="w-full text-sm flex group-hover:underline">
+                      الكل
+                    </span>
+                      <ArrowLeft className="size-4" />
+
+                  </Link>
                 </div>
                 <div className="overflow-y-auto max-h-64 hide-scrollbar">
-                  {latestNotifications.length === 0 ? (
+                  {isNotificationsLoading ? (
+                    <div className="divide-y divide-border">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="p-4 animate-pulse">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1 min-w-0 space-y-2">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="h-4 bg-muted rounded w-3/4" />
+                                <div className="h-2 w-2 rounded-full bg-muted shrink-0" />
+                              </div>
+                              <div className="h-3 bg-muted rounded w-full" />
+                              <div className="h-3 bg-muted rounded w-2/3" />
+                              <div className="flex items-center gap-2 mt-2">
+                                <div className="h-3 w-3 bg-muted rounded" />
+                                <div className="h-3 bg-muted rounded w-20" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : latestNotifications.length === 0 ? (
                     <div className="p-4 text-center text-sm text-muted-foreground">
                       لا توجد إشعارات
                     </div>
@@ -221,7 +253,7 @@ const TopBar = ({}: Props) => {
                     </div>
                   )}
                 </div>
-                <div className="p-3 border-t border-border">
+                {/* <div className="p-3 border-t border-border">
                   <Link
                     to="/notifications"
                     onClick={() => setIsNotificationOpen(false)}
@@ -230,7 +262,7 @@ const TopBar = ({}: Props) => {
                       عرض جميع الإشعارات
                     </Button>
                   </Link>
-                </div>
+                </div> */}
               </div>
             )}
           </div>

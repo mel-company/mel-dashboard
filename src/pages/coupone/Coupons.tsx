@@ -49,16 +49,6 @@ const Coupons = () => {
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
 
-  // Reset to page 1 when search query changes
-  useEffect(() => {
-    if (debouncedQuery) {
-      setSearchParams({ s: "1" });
-    } else {
-      setSearchParams({ page: "1" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
-
   const {
     data: listData,
     isLoading: isListLoading,
@@ -72,6 +62,17 @@ const Coupons = () => {
     },
     !isSearching
   );
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    if (debouncedQuery) {
+      setSearchParams({ s: "1" });
+    } else {
+      setSearchParams({ page: "1" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery]);
+
 
   const {
     data: searchData,
@@ -87,6 +88,7 @@ const Coupons = () => {
     },
     isSearching
   );
+
 
   const activeData = isSearching ? searchData : listData;
   const coupons: any[] = !activeData

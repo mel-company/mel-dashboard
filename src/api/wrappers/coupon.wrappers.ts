@@ -93,3 +93,35 @@ export const useCheckCodeAvailability = (
     enabled: enabled && !!params?.code,
   });
 };
+
+/**
+ * Toggle coupon active status mutation
+ */
+export const useToggleCouponActive = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, string>({
+    mutationFn: (id: string) => couponAPI.toggleActive(id),
+    onSuccess: (_, id) => {
+      // Invalidate and refetch relevant queries
+      queryClient.invalidateQueries({ queryKey: couponKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: couponKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: couponKeys.search() });
+    },
+  });
+};
+
+/**
+ * Update a coupon mutation
+ */
+export const useUpdateCoupon = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, { id: string; data: any }>({
+    mutationFn: ({ id, data }) => couponAPI.update(id, data),
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch relevant queries
+      queryClient.invalidateQueries({ queryKey: couponKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: couponKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: couponKeys.search() });
+    },
+  });
+};

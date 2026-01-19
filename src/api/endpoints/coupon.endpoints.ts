@@ -119,5 +119,23 @@ export const couponAPI = {
     );
     return data;
   },
+
+  /**
+   * Toggle coupon active status
+   */
+  toggleActive: async (id: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/coupon/${id}/toggle-active`
+    );
+    return data;
+  },
+
+  /**
+   * Update a coupon
+   */
+  update: async (id: string, coupon: any): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/coupon/${id}`, coupon);
+    return data;
+  },
 };
 

@@ -45,11 +45,17 @@ import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import EnableCouponDialog from "./EnableCouponDialog";
+import DisableCouponDialog from "./DisableCouponDialog";
+import EditCouponDialog from "./EditCouponDialog";
 
 const CouponDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEnableDialogOpen, setIsEnableDialogOpen] = useState(false);
+  const [isDisableDialogOpen, setIsDisableDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
   const { data, isLoading, error, refetch, isFetching } = useFetchCoupon(
@@ -100,7 +106,7 @@ const CouponDetails = () => {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
@@ -111,7 +117,7 @@ const CouponDetails = () => {
               </CardContent>
             </Card>
           </div>
-          <div className="space-y-6">
+          {/* <div className="space-y-6">
             <Card>
               <CardHeader>
                 <div className="h-6 bg-muted rounded w-1/2 animate-pulse" />
@@ -122,7 +128,7 @@ const CouponDetails = () => {
                 ))}
               </CardContent>
             </Card>
-          </div>
+          </div> */}
         </div>
       </div>
     );
@@ -197,7 +203,7 @@ const CouponDetails = () => {
       return (
         <Badge variant="secondary" className="gap-1">
           <XCircle className="size-3" />
-          غير مفعل
+          معطّل
         </Badge>
       );
     }
@@ -268,36 +274,34 @@ const CouponDetails = () => {
                 </div>
                 <div className="flex gap-x-2 items-center">
                   {/* {getStatusBadge()} */}
-                  {
-                    data.isActive && (
+                  {data.isActive && (
                     <Button
                       variant="destructive"
                       size="sm"
                       className="gap-2"
+                      onClick={() => setIsDisableDialogOpen(true)}
                     >
                       <XCircle className="size-4" />
                       تعطيل
                     </Button>
-                    )
-                  }
-                  {
-                  !data.isActive && (
+                  )}
+                  {!data.isActive && (
                     <Button
                       variant="default"
                       size="sm"
-                      className="gap-2 bg-green-600 text-white"
+                      className="gap-2 bg-green-600 text-white hover:bg-green-700"
+                      onClick={() => setIsEnableDialogOpen(true)}
                     >
                       <CheckCircle2 className="size-4" />
                       تفعيل
                     </Button>
-                    )
-                  }
+                  )}
 
                   <Button
                     variant="default"
                     size="sm"
                     className="gap-2"
-                    onClick={() => navigate(`/coupons/${id}/edit`)}
+                    onClick={() => setIsEditDialogOpen(true)}
                   >
                     <Edit className="size-4" />
                     تعديل
@@ -366,7 +370,7 @@ const CouponDetails = () => {
                   </span>
                 </div>
 
-                {data.maxDiscount && (
+                {/* {data.maxDiscount && (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <DollarSign className="size-5 text-muted-foreground" />
@@ -378,7 +382,7 @@ const CouponDetails = () => {
                       {data.maxDiscount} د.ع
                     </span>
                   </div>
-                )}
+                )} */}
 
                 {data.minOrderTotal && (
                   <div className="flex items-center justify-between">
@@ -670,6 +674,35 @@ const CouponDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Enable Coupon Dialog */}
+      {id && (
+        <EnableCouponDialog
+          open={isEnableDialogOpen}
+          onOpenChange={setIsEnableDialogOpen}
+          couponId={id}
+          couponCode={data.code}
+        />
+      )}
+
+      {/* Disable Coupon Dialog */}
+      {id && (
+        <DisableCouponDialog
+          open={isDisableDialogOpen}
+          onOpenChange={setIsDisableDialogOpen}
+          couponId={id}
+          couponCode={data.code}
+        />
+      )}
+
+      {/* Edit Coupon Dialog */}
+      {id && (
+        <EditCouponDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          couponId={id}
+        />
+      )}
     </div>
   );
 };
