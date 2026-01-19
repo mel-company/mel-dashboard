@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ArrowLeft, Badge, Bell, ChevronDown, Clock, Grid3x3, LogOut, User } from "lucide-react";
+import { ArrowLeft, Bell, ChevronDown, Clock, Grid3x3, LogOut, User } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "./ui/avatar";
