@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileText, X, List, Circle, CircleCheck, CircleDot, CircleAlert, BookOpen } from "lucide-react";
+import { Search, Plus, FileText, X, List, BookOpen } from "lucide-react";
 import {
   useFetchTicketsStore,
   useSearchTicketsStore,
