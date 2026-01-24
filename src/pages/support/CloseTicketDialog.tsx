@@ -7,9 +7,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, XCircle } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 
-export interface CancelTicketDialogProps {
+export interface CloseTicketDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ticketTitle?: string;
@@ -17,13 +17,13 @@ export interface CancelTicketDialogProps {
   isPending?: boolean;
 }
 
-const CancelTicketDialog = ({
+const CloseTicketDialog = ({
   open,
   onOpenChange,
   ticketTitle,
   onConfirm,
   isPending = false,
-}: CancelTicketDialogProps) => {
+}: CloseTicketDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -37,18 +37,18 @@ const CancelTicketDialog = ({
         }}
       >
         <DialogHeader className="text-right">
-          <DialogTitle className="flex items-center gap-2 justifyend">
-            <XCircle className="size-5 text-destructive" />
-            إلغاء التذكرة
+          <DialogTitle className="flex items-center gap-2">
+            <Lock className="size-5 text-destructive" />
+            إغلاق التذكرة
           </DialogTitle>
           <DialogDescription className="text-right">
-            هل أنت متأكد من إلغاء هذه التذكرة
-            {ticketTitle ? ` «${ticketTitle}»` : ""}؟ لا يمكن إضافة ردود أو إعادة فتحها بعد الإلغاء.
+            هل أنت متأكد من إغلاق هذه التذكرة
+            {ticketTitle ? ` «${ticketTitle}»` : ""}؟ لن تتمكن من إضافة ردود جديدة بعد الإغلاق.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 md:justify-start flex-col">
           <Button
-            variant="destructive"
+            variant="default"
             onClick={onConfirm}
             disabled={isPending}
             className="gap-2"
@@ -56,16 +56,16 @@ const CancelTicketDialog = ({
             {isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              <XCircle className="size-4" />
+              <Lock className="size-4" />
             )}
-            نعم، إلغاء التذكرة
+            نعم، إغلاق التذكرة
           </Button>
           <Button
             variant="secondary"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
-            غلق
+            إلغاء
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -73,4 +73,4 @@ const CancelTicketDialog = ({
   );
 };
 
-export default CancelTicketDialog;
+export default CloseTicketDialog;

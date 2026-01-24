@@ -17,11 +17,11 @@ import { useCreateTicketStore } from "@/api/wrappers/ticket.wrappers";
 import { toast } from "sonner";
 
 const TICKET_TYPES = [
-  { value: "BUG", label: "علة الخطأ" },
+  { value: "BUG", label: "خطأ" },
   { value: "FEATURE_REQUEST", label: "طلب ميزة" },
   { value: "QUESTION", label: "سؤال" },
   { value: "SUPPORT", label: "دعم" },
-  { value: "FEEDBACK", label: "ملاحظات" },
+  { value: "FEEDBACK", label: "ملاحظة" },
   { value: "REPORT", label: "بلاغ" },
   { value: "OTHER", label: "أخرى" },
 ] as const;

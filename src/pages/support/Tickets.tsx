@@ -119,11 +119,11 @@ const Tickets = () => {
   };
 
 const TICKET_TYPES = [
-  { value: "BUG", label: "علة الخطأ" },
+  { value: "BUG", label: "خطأ" },
   { value: "FEATURE_REQUEST", label: "طلب ميزة" },
   { value: "QUESTION", label: "سؤال" },
   { value: "SUPPORT", label: "دعم" },
-  { value: "FEEDBACK", label: "ملاحظات" },
+  { value: "FEEDBACK", label: "ملاحظة" },
   { value: "REPORT", label: "بلاغ" },
   { value: "OTHER", label: "أخرى" },
 ] as const;
@@ -229,7 +229,7 @@ const STATUS = [
                   label: "مسح البحث",
                   onClick: () => setSearchQuery(""),
                   icon: <X className="size-4" />,
-                  variant: "outline",
+                  variant: "secondary",
                 }
               : {
                   label: "فتح تذكرة",
@@ -252,22 +252,12 @@ const STATUS = [
             placeholder="ابحث في التذاكر..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10 pl-10"
+            className="w-full text-right pr-10"
             dir="rtl"
           />
-          {searchQuery ? (
-            <button
-              type="button"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              onClick={() => setSearchQuery("")}
-              aria-label="مسح البحث"
-            >
-              <X className="size-4" />
-            </button>
-          ) : null}
         </div>
         <Button className="gap-2" asChild>
-          <Link to="/support/open">
+          <Link to="/tickets/new">
             <Plus className="size-4" />
             فتح تذكرة
           </Link>

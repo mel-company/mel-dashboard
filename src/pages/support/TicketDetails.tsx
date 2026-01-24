@@ -27,15 +27,17 @@ import {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import { Skeleton } from "@/components/ui/skeleton";
+import CancelTicketDialog from "./CancelTicketDialog";
+import CloseTicketDialog from "./CloseTicketDialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const TICKET_TYPES = [
-  { value: "BUG", label: "علة الخطأ" },
+  { value: "BUG", label: "خطأ" },
   { value: "FEATURE_REQUEST", label: "طلب ميزة" },
   { value: "QUESTION", label: "سؤال" },
   { value: "SUPPORT", label: "دعم" },
-  { value: "FEEDBACK", label: "ملاحظات" },
+  { value: "FEEDBACK", label: "ملاحظة" },
   { value: "REPORT", label: "بلاغ" },
   { value: "OTHER", label: "أخرى" },
 ] as const;
@@ -66,6 +68,8 @@ const TicketDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [reply, setReply] = useState("");
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -134,12 +138,16 @@ const TicketDetails = () => {
     doSendReply();
   };
 
-  const handleCancel = () => {
-    if (!id || !window.confirm("هل أنت متأكد من إلغاء هذه التذكرة؟")) return;
+  const handleCancelClick = () => setCancelDialogOpen(true);
+  const handleCloseClick = () => setCloseDialogOpen(true);
+
+  const handleCancelConfirm = () => {
+    if (!id) return;
     cancelTicket(id, {
       onSuccess: () => {
         toast.success("تم إلغاء التذكرة");
         refetch();
+        setCancelDialogOpen(false);
       },
       onError: (err: unknown) => {
         const msg =
@@ -150,12 +158,13 @@ const TicketDetails = () => {
     });
   };
 
-  const handleClose = () => {
-    if (!id || !window.confirm("هل أنت متأكد من إغلاق هذه التذكرة؟")) return;
+  const handleCloseConfirm = () => {
+    if (!id) return;
     closeTicket(id, {
       onSuccess: () => {
         toast.success("تم إغلاق التذكرة");
         refetch();
+        setCloseDialogOpen(false);
       },
       onError: (err: unknown) => {
         const msg =
@@ -240,7 +249,7 @@ const TicketDetails = () => {
             <Button
               variant="default"
               size="sm"
-              onClick={handleCancel}
+              onClick={handleCancelClick}
               disabled={isCancelling}
             >
               إلغاء التذكرة
@@ -248,7 +257,7 @@ const TicketDetails = () => {
             <Button
               variant="secondary"
               size="sm"
-              onClick={handleClose}
+              onClick={handleCloseClick}
               disabled={isClosing}
             >
               إغلاق التذكرة
@@ -402,6 +411,21 @@ const TicketDetails = () => {
           </CardContent>
         </Card>
       </div>
+
+      <CancelTicketDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        ticketTitle={ticket.title ?? undefined}
+        onConfirm={handleCancelConfirm}
+        isPending={isCancelling}
+      />
+      <CloseTicketDialog
+        open={closeDialogOpen}
+        onOpenChange={setCloseDialogOpen}
+        ticketTitle={ticket.title ?? undefined}
+        onConfirm={handleCloseConfirm}
+        isPending={isClosing}
+      />
     </div>
   );
 };
