@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ticketAPI } from "../endpoints/ticket.endpoints";
 import type { CreateStoreSupportTicketDto } from "../endpoints/ticket.endpoints";
 
-/** Params for fetch-all (pagination) */
+/** Params for fetch-all (pagination). status: "all" = no filter; omitted = backend default "open". */
 export interface FetchTicketsStoreParams {
   page?: number;
   limit?: number;
+  status?: string;
 }
 
 /** Params for search (query required, pagination optional) */

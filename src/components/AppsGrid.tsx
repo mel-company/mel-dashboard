@@ -126,13 +126,13 @@ const baseApps: AppItem[] = [
     gradient: "from-slate-500 to-slate-600",
     description: "إعدادات النظام",
   },
-  {
-    label: "المحاسبة",
-    path: "/accounting",
-    icon: Calculator,
-    gradient: "from-green-500 to-green-600",
-    description: "إدارة الحسابات المالية",
-  },
+  // {
+  //   label: "المحاسبة",
+  //   path: "/accounting",
+  //   icon: Calculator,
+  //   gradient: "from-green-500 to-green-600",
+  //   description: "إدارة الحسابات المالية",
+  // },
   // {
   //   label: "متجر التطبيقات",
   //   path: "/app-store",

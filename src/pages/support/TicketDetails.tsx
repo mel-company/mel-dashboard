@@ -23,12 +23,14 @@ import {
   useSendMessageStore,
   useCancelTicketStore,
   useCloseTicketStore,
+  useDeleteTicketStore,
 } from "@/api/wrappers/ticket.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import { Skeleton } from "@/components/ui/skeleton";
 import CancelTicketDialog from "./CancelTicketDialog";
 import CloseTicketDialog from "./CloseTicketDialog";
+import DeleteTicketDialog from "./DeleteTicketDialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +72,7 @@ const TicketDetails = () => {
   const [reply, setReply] = useState("");
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -84,6 +87,7 @@ const TicketDetails = () => {
   const { mutate: cancelTicket, isPending: isCancelling } =
     useCancelTicketStore();
   const { mutate: closeTicket, isPending: isClosing } = useCloseTicketStore();
+  const { mutate: deleteTicket, isPending: isDeleting } = useDeleteTicketStore();
 
   const messages = ticket?.messages ?? [];
   const canReply =
@@ -139,7 +143,8 @@ const TicketDetails = () => {
   };
 
   const handleCancelClick = () => setCancelDialogOpen(true);
-  const handleCloseClick = () => setCloseDialogOpen(true);
+  const handleDeleteClick = () => setDeleteDialogOpen(true);
+//   const handleCloseClick = () => setCloseDialogOpen(true);
 
   const handleCancelConfirm = () => {
     if (!id) return;
@@ -170,6 +175,23 @@ const TicketDetails = () => {
         const msg =
           (err as { response?: { data?: { message?: string } } })?.response
             ?.data?.message || "فشل في إغلاق التذكرة.";
+        toast.error(msg);
+      },
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!id) return;
+    deleteTicket(id, {
+      onSuccess: () => {
+        toast.success("تم حذف التذكرة");
+        setDeleteDialogOpen(false);
+        navigate("/tickets");
+      },
+      onError: (err: unknown) => {
+        const msg =
+          (err as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message || "فشل في حذف التذكرة.";
         toast.error(msg);
       },
     });
@@ -244,24 +266,29 @@ const TicketDetails = () => {
             </div>
           </div>
         </div>
-        {canCancelOrClose && (
+        {(canCancelOrClose || ticket.status !== "OPEN") && (
           <div className="flex gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleCancelClick}
-              disabled={isCancelling}
-            >
-              إلغاء التذكرة
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleCloseClick}
-              disabled={isClosing}
-            >
-              إغلاق التذكرة
-            </Button>
+            {canCancelOrClose && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleCancelClick}
+                disabled={isCancelling}
+              >
+                إلغاء التذكرة
+              </Button>
+            )}
+            {ticket.status !== "OPEN" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDeleteClick}
+                disabled={isDeleting}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                حذف التذكرة
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -425,6 +452,13 @@ const TicketDetails = () => {
         ticketTitle={ticket.title ?? undefined}
         onConfirm={handleCloseConfirm}
         isPending={isClosing}
+      />
+      <DeleteTicketDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        ticketTitle={ticket.title ?? undefined}
+        onConfirm={handleDeleteConfirm}
+        isPending={isDeleting}
       />
     </div>
   );

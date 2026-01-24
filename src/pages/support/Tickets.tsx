@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileText, X } from "lucide-react";
+import { Search, Plus, FileText, X, List, Circle, CircleCheck, CircleDot, CircleAlert, BookOpen } from "lucide-react";
 import {
   useFetchTicketsStore,
   useSearchTicketsStore,
@@ -49,6 +49,7 @@ const Tickets = () => {
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
   const searchPageParam = searchParams.get("s");
   const currentSearchPage = searchPageParam ? parseInt(searchPageParam, 10) : 1;
+  const statusParam = searchParams.get("status");
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
@@ -60,7 +61,11 @@ const Tickets = () => {
     refetch: refetchList,
     isFetching: isListFetching,
   } = useFetchTicketsStore(
-    { page: currentPage, limit: LIMIT },
+    {
+      page: currentPage,
+      limit: LIMIT,
+      ...(statusParam === "all" && { status: "all" }),
+    },
     !isSearching
   );
 
@@ -208,12 +213,37 @@ const STATUS = [
               </button>
             ) : null}
           </div>
+          <div className="flex gap-2">
+
+
+{
+    statusParam !== "all" && 
+        <Button
+          className="gap-2"
+          variant="secondary"
+          onClick={() => {
+            setSearchParams((prev) => {
+              const next = new URLSearchParams(prev);
+              next.set("status", "all");
+              if (prev.get("status") !== "all") next.delete("page");
+              return next;
+            });
+          }}
+        >
+          <List className="size-4" />
+          الكل
+        </Button>
+}
           <Button className="gap-2" asChild>
             <Link to="/tickets/new">
               <Plus className="size-4" />
               فتح تذكرة
+              {/* slkfjasldkjf */}
             </Link>
           </Button>
+          </div>
+
+
         </div>
         <EmptyPage
           title={searchQuery.trim() ? "لا توجد نتائج" : "لا توجد تذاكر"}
@@ -256,12 +286,54 @@ const STATUS = [
             dir="rtl"
           />
         </div>
+        <div className="flex gap-2">
+
+{
+    statusParam !== "all" && 
+        <Button
+          className="gap-2"
+          variant="secondary"
+          onClick={() => {
+            setSearchParams((prev) => {
+              const next = new URLSearchParams(prev);
+              next.set("status", "all");
+              if (prev.get("status") !== "all") next.delete("page");
+              return next;
+            });
+          }}
+        >
+          <List className="size-4" />
+          الكل
+        </Button>
+}
+{
+    statusParam === "all" &&
+        <Button
+          className="gap-2"
+          variant="secondary"
+          onClick={() => {
+            setSearchParams((prev) => {
+              const next = new URLSearchParams(prev);
+              next.delete("status");
+              if (prev.get("status") === "all") next.delete("page");
+              return next;
+            });
+          }}
+        >
+            <BookOpen className="size-4" />
+            التذاكر المفتوحة
+        </Button>
+}
+
         <Button className="gap-2" asChild>
           <Link to="/tickets/new">
             <Plus className="size-4" />
             فتح تذكرة
           </Link>
         </Button>
+        </div>
+
+
       </div>
 
       <Pagination>

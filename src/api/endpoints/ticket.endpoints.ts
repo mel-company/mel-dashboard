@@ -45,11 +45,13 @@ export const ticketAPI = {
   fetchAllStore: async (params?: {
     page?: number;
     limit?: number;
+    status?: string;
   }): Promise<any> => {
     const { data } = await axiosInstance.get<any>("/support-ticket/store", {
       params: {
         ...(params?.page != null && { page: params.page }),
         ...(params?.limit != null && { limit: params.limit }),
+        ...(params?.status != null && { status: params.status }),
       },
     });
     return data;

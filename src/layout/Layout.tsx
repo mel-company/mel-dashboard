@@ -33,7 +33,7 @@ const Layout = () => {
       profile: "الملف الشخصي",
       settings: "الإعدادات",
       "app-store": "متجر التطبيقات",
-      accounting: "المحاسبة",
+      // accounting: "المحاسبة",
       stats: "إحصائيات المتجر",
       add: "إضافة",
       new: "إضافة",
