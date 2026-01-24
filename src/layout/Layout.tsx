@@ -36,6 +36,7 @@ const Layout = () => {
       accounting: "المحاسبة",
       stats: "إحصائيات المتجر",
       add: "إضافة",
+      new: "إضافة",
       general: "عام",
       store: "المتجر",
       domain: "النطاق",
@@ -51,6 +52,7 @@ const Layout = () => {
       "refund-policy": "سياسة الإسترداد",
       subscription: "الاشتراك",
       coupons: "الكوبونات",
+      tickets: "الدعم",
     };
 
     const detailLabels: Record<string, string> = {
@@ -63,6 +65,7 @@ const Layout = () => {
       notifications: "تفاصيل الإشعار",
       payment: "تفاصيل الدفع",
       coupons: "تفاصيل الكوبون",
+      tickets: "تفاصيل التذكرة",
     };
 
     const path = location.pathname;

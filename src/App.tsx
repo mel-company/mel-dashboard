@@ -56,6 +56,9 @@ import Coupons from "./pages/coupone/Coupons";
 import CouponDetails from "./pages/coupone/CouponDetails";
 import EditCoupon from "./pages/coupone/EditCoupon";
 import AddCoupon from "./pages/coupone/AddCoupon";
+import Tickets from "./pages/support/Tickets";
+import TicketDetails from "./pages/support/TicketDetails";
+import OpenTicket from "./pages/support/OpenTicket";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -98,6 +101,15 @@ function App() {
                 <Route path="edit" element={<EditProduct />} />
               </Route>
               <Route path="add" element={<AddProduct />} />
+            </Route>
+
+            {/* support tickets routes */}
+            <Route path="/tickets">
+              <Route index element={<Tickets />} />
+              <Route path=":id">
+                <Route index element={<TicketDetails />} />
+              </Route>
+              <Route path="new" element={<OpenTicket />} />
             </Route>
 
             {/* customers routes */}

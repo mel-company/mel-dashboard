@@ -16,6 +16,7 @@ import {
   Lock,
   Bell,
   Ticket,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -102,6 +103,13 @@ const baseApps: AppItem[] = [
     icon: Bell,
     gradient: "from-yellow-500 to-yellow-600",
     description: "إدارة الإشعارات",
+  },
+  {
+    label: "الدعم",
+    path: "/tickets",
+    icon: MessageCircle,
+    gradient: "from-cyan-500 to-cyan-600",
+    description: "إدارة الدعم",
   },
   {
     label: "الموظفين",
