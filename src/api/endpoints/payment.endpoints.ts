@@ -4,7 +4,7 @@ export const paymentAPI = {
   /**
    * Get all payments provider
   */
-  fetchAll: async (params?: any): Promise<any> => {
+  fetchAll: async (): Promise<any> => {
     const { data } = await axiosInstance.get<any>("/payment-provider");
     return data;
   },

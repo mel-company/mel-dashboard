@@ -1,5 +1,4 @@
-
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { paymentAPI } from "../endpoints/payment.endpoints";
 
 /**
@@ -14,10 +13,10 @@ export const paymentKeys = {
 /**
  * Fetch all orders with optional filtering and pagination
  */
-export const useFetchPaymentProviders = (params?: any, enabled: boolean = true) => {
+export const useFetchPaymentProviders = (enabled: boolean = true) => {
   return useQuery<any>({
-    queryKey: paymentKeys.list(params),
-    queryFn: () => paymentAPI.fetchAll(params),
+    queryKey: paymentKeys.list(),
+    queryFn: () => paymentAPI.fetchAll(),
     enabled,
   });
 };
