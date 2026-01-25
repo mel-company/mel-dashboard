@@ -12,6 +12,7 @@ export const settingsKeys = {
   detail: (id: string) => [...settingsKeys.details(), id] as const,
   byStore: (storeId: string) =>
     [...settingsKeys.all, "store", storeId] as const,
+  storePaymentMethods: () => [...settingsKeys.all, "store-payment-methods"] as const,
 };
 
 /**
@@ -182,6 +183,34 @@ export const useUpdateDeliveryCompany = () => {
       }
       // Invalidate current settings
       queryClient.invalidateQueries({ queryKey: ["settings", "current"] });
+    },
+  });
+};
+
+/**
+ * Fetch store payment methods (StorePaymentMethod with credentials) for the current store
+ */
+export const useFetchStorePaymentMethods = (enabled: boolean = true) => {
+  return useQuery<any>({
+    queryKey: settingsKeys.storePaymentMethods(),
+    queryFn: () => settingsAPI.fetchStorePaymentMethods(),
+    enabled,
+  });
+};
+
+/**
+ * Upsert a store payment method (create or update isEnabled, credentials)
+ */
+export const useUpsertStorePaymentMethod = () => {
+  const queryClient = useQueryClient();
+  return useMutation<
+    any,
+    Error,
+    { paymentMethodId: string; isEnabled?: boolean; credentials?: Record<string, unknown> }
+  >({
+    mutationFn: (body) => settingsAPI.upsertStorePaymentMethod(body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.storePaymentMethods() });
     },
   });
 };

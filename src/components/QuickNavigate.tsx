@@ -11,6 +11,11 @@ import {
   Calculator,
   AppWindow,
   Keyboard,
+  Store,
+  Globe,
+  CreditCard,
+  Truck,
+  FileText,
 } from "lucide-react";
 import {
   Dialog,
@@ -35,7 +40,17 @@ interface AppItem {
   description?: string;
   badge?: string;
   emojiIcon?: string;
+  subItems?: { label: string; path: string; icon: React.ComponentType<{ className?: string }> }[];
 }
+
+type SearchableItem = {
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
+  gradient: string;
+  description?: string;
+  badge?: string;
+};
 
 const baseApps: AppItem[] = [
   {
@@ -95,6 +110,48 @@ const baseApps: AppItem[] = [
     icon: Settings,
     gradient: "from-slate-500 to-slate-600",
     description: "إعدادات النظام",
+    subItems: [
+      {
+        label: "عامة",
+        path: "/settings/general",
+        icon: Settings,
+      },
+      {
+        label: "المتجر",
+        path: "/settings/store",
+        icon: Store,
+      },
+      {
+        label: "الدفع",
+        path: "/settings/payment-methods",
+        icon: CreditCard,
+      },
+      {
+        label: "التوصيل",
+        path: "/settings/delivery",
+        icon: Truck,
+      },
+      {
+        label: "النطاق",
+        path: "/settings/domain",
+        icon: Globe,
+      },
+      {
+        label: "الاشتراك",
+        path: "/settings/subscription",
+        icon: CreditCard,
+      },
+      {
+        label: "الشروط والأحكام",
+        path: "/settings/policies/terms-and-conditions",
+        icon: FileText,
+      },
+      {
+        label: "اختصارات",
+        path: "/settings/shortcuts",
+        icon: Keyboard,
+      },
+    ]
   },
   {
     label: "المحاسبة",
@@ -164,14 +221,58 @@ const QuickNavigate = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const filteredApps = useMemo(() => {
+  const filteredApps = useMemo((): SearchableItem[] => {
     const q = query.trim().toLowerCase();
-    if (!q) return baseApps;
-    return baseApps.filter(
-      (app) =>
+    const items: SearchableItem[] = [];
+
+    for (const app of baseApps) {
+      const hasSubItems = app.subItems && app.subItems.length > 0;
+      const appMatches =
+        !q ||
         app.label.toLowerCase().includes(q) ||
-        (app.description?.toLowerCase().includes(q) ?? false)
-    );
+        (app.description?.toLowerCase().includes(q) ?? false);
+
+      if (hasSubItems) {
+        // Parent: include when no query, or when parent matches
+        if (!q || appMatches) {
+          items.push({
+            label: app.label,
+            path: app.path,
+            icon: app.icon,
+            gradient: app.gradient,
+            description: app.description,
+            badge: app.badge,
+          });
+        }
+        // SubItems: only when there is a query; include each matching subItem
+        if (q) {
+          for (const sub of app.subItems!) {
+            if (sub.label.toLowerCase().includes(q)) {
+              items.push({
+                label: sub.label,
+                path: sub.path,
+                icon: sub.icon,
+                gradient: app.gradient,
+              });
+            }
+          }
+        }
+      } else {
+        // No subItems: same as before
+        if (!q || appMatches) {
+          items.push({
+            label: app.label,
+            path: app.path,
+            icon: app.icon,
+            gradient: app.gradient,
+            description: app.description,
+            badge: app.badge,
+          });
+        }
+      }
+    }
+
+    return items;
   }, [query]);
 
   useEffect(() => {

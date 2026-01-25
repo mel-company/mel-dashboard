@@ -32,7 +32,7 @@ const settingsItems = [
   {
     label: "الدفع",
     path: "/settings/payment-methods",
-    icon: Truck,
+    icon: CreditCard,
   },
   {
     label: "التوصيل",

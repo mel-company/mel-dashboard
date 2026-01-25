@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -13,174 +13,208 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   CreditCard,
-  Wallet,
-  Building2,
   Save,
   Eye,
   EyeOff,
-  AlertCircle,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  useUpdatePaymentMethods,
   useFetchCurrentSettings,
+  useFetchStorePaymentMethods,
+  useUpdatePaymentMethods,
+  useUpsertStorePaymentMethod,
 } from "@/api/wrappers/settings.wrappers";
+import { useFetchPaymentProviders } from "@/api/wrappers/payment.wrappers";
 
 type Props = {};
 
-interface PaymentMethod {
-  id: string;
-  name: string;
-  enabled: boolean;
-  testMode: boolean;
-  credentials: Record<string, string>;
-  autoCapture: boolean;
+type RequirementsSchema = Record<
+  string,
+  { type?: string; required?: boolean; [k: string]: unknown }
+>;
+
+function isSecretLike(key: string): boolean {
+  const k = key.toLowerCase();
+  return [
+    "apikey",
+    "api_key",
+    "secret",
+    "secretkey",
+    "secret_key",
+    "password",
+    "privatekey",
+    "private_key",
+    "token",
+  ].some((s) => k.includes(s));
+}
+
+function requirementLabel(key: string): string {
+  const labels: Record<string, string> = {
+    apiKey: "مفتاح API",
+    api_key: "مفتاح API",
+    secretKey: "المفتاح السري",
+    secret_key: "المفتاح السري",
+    password: "كلمة المرور",
+    merchantId: "معرف التاجر",
+    merchant_id: "معرف التاجر",
+  };
+  return labels[key] ?? key;
 }
 
 const PaymentMethodsSettings = ({}: Props) => {
   const { data: currentSettings, isLoading: isLoadingSettings } =
     useFetchCurrentSettings();
+  const { data: paymentProviders, isLoading: isLoadingProviders } =
+    useFetchPaymentProviders();
+  const { data: storePaymentMethods, isLoading: isLoadingStore } =
+    useFetchStorePaymentMethods();
   const updatePaymentMethodsMutation = useUpdatePaymentMethods();
+  const upsertMutation = useUpsertStorePaymentMethod();
 
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    {
-      id: "cash-on-delivery",
-      name: "الدفع عند الاستلام",
-      enabled: false,
-      testMode: false,
-      credentials: {},
-      autoCapture: false,
-    },
-    {
-      id: "credit-card",
-      name: "الدفع بالبطاقة الائتمانية",
-      enabled: false,
-      testMode: false,
-      credentials: {
-        merchantId: "",
-        IBAN: "",
-      },
-      autoCapture: false,
-    },
-  ]);
+  const [cashOnDelivery, setCashOnDelivery] = useState(false);
+  const initialCashOnDeliveryRef = useRef<boolean | null>(null);
 
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
-  const originalPaymentMethodsRef = useRef<PaymentMethod[]>([]);
+  const [formState, setFormState] = useState<
+    Record<string, { isEnabled: boolean; credentials: Record<string, string> }>
+  >({});
+  const initialRef = useRef<typeof formState | null>(null);
 
-  // Load current settings when they're available
+  const methodsByProvider = useMemo(() => {
+    if (!paymentProviders) return [];
+    return paymentProviders.flatMap((p: any) =>
+      (p.methods ?? []).map((m: any) => ({ ...m, providerName: p.name }))
+    );
+  }, [paymentProviders]);
+
   useEffect(() => {
-    if (currentSettings) {
-      setPaymentMethods((prev) => {
-        const updatedMethods = prev.map((method) => {
-          if (method.id === "cash-on-delivery") {
-            return {
-              ...method,
-              enabled: currentSettings.cash_on_delivery ?? false,
-            };
-          }
-          if (method.id === "credit-card") {
-            return {
-              ...method,
-              enabled: currentSettings.credit_card ?? false,
-            };
-          }
-          return method;
-        });
-        // Store original values for comparison
-        originalPaymentMethodsRef.current = JSON.parse(
-          JSON.stringify(updatedMethods)
+    if (!paymentProviders || !storePaymentMethods) return;
+
+    const next: typeof formState = {};
+    for (const provider of paymentProviders) {
+      for (const method of provider.methods ?? []) {
+        const storePm = (storePaymentMethods as any[]).find(
+          (s: any) => s.paymentMethodId === method.id
         );
-        return updatedMethods;
-      });
+        const creds = (storePm?.credentials ?? {}) as Record<string, unknown>;
+        const credentials: Record<string, string> = {};
+        const req = method.requirements as RequirementsSchema | null | undefined;
+        if (req && typeof req === "object") {
+          for (const key of Object.keys(req)) {
+            const v = creds[key];
+            credentials[key] =
+              v === null || v === undefined ? "" : String(v);
+          }
+        }
+        next[method.id] = {
+          isEnabled: storePm?.isEnabled ?? false,
+          credentials,
+        };
+      }
+    }
+    setFormState(next);
+    if (initialRef.current === null) {
+      initialRef.current = JSON.parse(JSON.stringify(next));
+    }
+  }, [paymentProviders, storePaymentMethods]);
+
+  useEffect(() => {
+    if (currentSettings == null) return;
+    const v = currentSettings.cash_on_delivery ?? false;
+    setCashOnDelivery(v);
+    if (initialCashOnDeliveryRef.current === null) {
+      initialCashOnDeliveryRef.current = v;
     }
   }, [currentSettings]);
 
-  // Check if values have changed
   const hasChanges = () => {
-    const original = originalPaymentMethodsRef.current;
-    const current = paymentMethods;
+    if (initialCashOnDeliveryRef.current !== null && cashOnDelivery !== initialCashOnDeliveryRef.current)
+      return true;
+    if (initialRef.current === null) return false;
+    const a = initialRef.current;
+    const b = formState;
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    for (const id of keys) {
+      if (a[id]?.isEnabled !== b[id]?.isEnabled) return true;
+      if (
+        JSON.stringify(a[id]?.credentials ?? {}) !==
+        JSON.stringify(b[id]?.credentials ?? {})
+      )
+        return true;
+    }
+    return false;
+  };
 
-    if (original.length !== current.length) return true;
+  const setEnabled = (methodId: string, isEnabled: boolean) => {
+    setFormState((prev) => ({
+      ...prev,
+      [methodId]: {
+        ...(prev[methodId] ?? { credentials: {} }),
+        isEnabled,
+      },
+    }));
+  };
 
-    return original.some((originalMethod, index) => {
-      const currentMethod = current[index];
-      return (
-        originalMethod.enabled !== currentMethod.enabled ||
-        JSON.stringify(originalMethod.credentials) !==
-          JSON.stringify(currentMethod.credentials)
-      );
-    });
+  const setCredential = (methodId: string, key: string, value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      [methodId]: {
+        ...(prev[methodId] ?? { isEnabled: false, credentials: {} }),
+        credentials: {
+          ...(prev[methodId]?.credentials ?? {}),
+          [key]: value,
+        },
+      },
+    }));
+  };
+
+  const toggleShowSecret = (methodId: string, key: string) => {
+    const k = `${methodId}-${key}`;
+    setShowSecrets((s) => ({ ...s, [k]: !s[k] }));
   };
 
   const handleCancel = () => {
-    // Reset to original values
-    setPaymentMethods(
-      JSON.parse(JSON.stringify(originalPaymentMethodsRef.current))
-    );
+    if (initialRef.current) setFormState(JSON.parse(JSON.stringify(initialRef.current)));
+    if (initialCashOnDeliveryRef.current !== null) setCashOnDelivery(initialCashOnDeliveryRef.current);
     toast.info("تم إلغاء التغييرات");
-  };
-
-  const togglePaymentMethod = (id: string) => {
-    setPaymentMethods((prev) =>
-      prev.map((method) =>
-        method.id === id ? { ...method, enabled: !method.enabled } : method
-      )
-    );
-  };
-
-  const updateCredentials = (id: string, key: string, value: string) => {
-    setPaymentMethods((prev) =>
-      prev.map((method) =>
-        method.id === id
-          ? {
-              ...method,
-              credentials: { ...method.credentials, [key]: value },
-            }
-          : method
-      )
-    );
-  };
-
-  const toggleShowSecret = (id: string, key: string) => {
-    const secretKey = `${id}-${key}`;
-    setShowSecrets((prev) => ({
-      ...prev,
-      [secretKey]: !prev[secretKey],
-    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      // Transform payment methods state to backend format
-      const cashOnDelivery = paymentMethods.find(
-        (m) => m.id === "cash-on-delivery"
-      );
-      const creditCard = paymentMethods.find((m) => m.id === "credit-card");
-
-      const paymentMethodsData = {
-        cash_on_delivery: cashOnDelivery?.enabled ?? false,
-        credit_card: creditCard?.enabled ?? false,
-      };
-
-      await updatePaymentMethodsMutation.mutateAsync(paymentMethodsData);
-      // Update original values after successful save
-      originalPaymentMethodsRef.current = JSON.parse(
-        JSON.stringify(paymentMethods)
-      );
-      toast.success("تم حفظ إعدادات الدفع بنجاح");
-    } catch (error: any) {
+      const paymentLegacyPromise = updatePaymentMethodsMutation.mutateAsync({
+        cash_on_delivery: cashOnDelivery,
+        credit_card: currentSettings?.credit_card ?? false,
+      });
+      const methodPromises = methodsByProvider.map((method: { id: string }) => {
+        const s = formState[method.id];
+        if (!s) return Promise.resolve();
+        return upsertMutation.mutateAsync({
+          paymentMethodId: method.id,
+          isEnabled: s.isEnabled,
+          credentials: s.credentials,
+        });
+      });
+      await Promise.all([paymentLegacyPromise, ...methodPromises]);
+      initialRef.current = JSON.parse(JSON.stringify(formState));
+      initialCashOnDeliveryRef.current = cashOnDelivery;
+      toast.success("تم حفظ إعدادات طرق الدفع بنجاح");
+    } catch (err: any) {
       toast.error(
-        error?.response?.data?.message ||
+        err?.response?.data?.message ??
           "حدث خطأ أثناء حفظ إعدادات الدفع. يرجى المحاولة مرة أخرى."
       );
     }
   };
 
-  if (isLoadingSettings) {
+  const isLoading = isLoadingSettings || isLoadingProviders || isLoadingStore;
+  const isSubmitting = updatePaymentMethodsMutation.isPending || upsertMutation.isPending;
+  const hasUnsavedChanges = hasChanges();
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -188,49 +222,43 @@ const PaymentMethodsSettings = ({}: Props) => {
     );
   }
 
-  const isSubmitting = updatePaymentMethodsMutation.isPending;
-  const hasUnsavedChanges = hasChanges();
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 lg:p-0">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">طرق الدفع</h1>
           <p className="text-muted-foreground mt-1">
-            قم بتكوين طرق الدفع المتاحة للعملاء
+            قم بتفعيل طرق الدفع التي تتناسب مع عملك
           </p>
         </div>
         {hasUnsavedChanges && (
-          <div>
-            {/* Submit Button */}
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={isSubmitting}
-                onClick={handleCancel}
-              >
-                إلغاء
-              </Button>
-              <Button
-                type="submit"
-                className="gap-2"
-                disabled={isSubmitting}
-                form="payment-methods-form"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    جاري الحفظ...
-                  </>
-                ) : (
-                  <>
-                    <Save className="size-4" />
-                    حفظ الإعدادات
-                  </>
-                )}
-              </Button>
-            </div>
+          <div className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isSubmitting}
+              onClick={handleCancel}
+            >
+              إلغاء
+            </Button>
+            <Button
+              type="submit"
+              className="gap-2"
+              disabled={isSubmitting}
+              form="payment-methods-form"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  جاري الحفظ...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4" />
+                  حفظ الإعدادات
+                </>
+              )}
+            </Button>
           </div>
         )}
       </div>
@@ -240,121 +268,145 @@ const PaymentMethodsSettings = ({}: Props) => {
         onSubmit={handleSubmit}
         className="space-y-6"
       >
-        {paymentMethods.map((method) => (
-          <Card key={method.id} className="gap-0">
-            <CardHeader className="">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    {method.id === "cash-on-delivery" ? (
-                      <Wallet className="size-5" />
-                    ) : method.id === "credit-card" ? (
-                      <CreditCard className="size-5" />
-                    ) : (
-                      <Building2 className="size-5" />
-                    )}
-                    {method.name}
-                  </CardTitle>
-                  <CardDescription>
-                    {method.id === "cash-on-delivery"
-                      ? "الدفع نقداً عند استلام الطلب"
-                      : "بوابة دفع إلكترونية"}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-3">
-                  {method.enabled && (
-                    <Badge variant="default" className="gap-1">
-                      <CheckCircle2 className="size-3" />
-                      مفعّل
-                    </Badge>
-                  )}
-                  <Switch
-                    checked={method.enabled}
-                    onCheckedChange={() => togglePaymentMethod(method.id)}
-                  />
-                </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CreditCard className="size-5 text-muted-foreground" />
+                <CardTitle>دفع عند الإستلام</CardTitle>
               </div>
-            </CardHeader>
-
-            {method.enabled && (
-              <CardContent className="space-y-4">
-                {method.id !== "cash-on-delivery" && (
-                  <>
-                    {method.testMode && (
-                      <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg flex items-start gap-2">
-                        <AlertCircle className="size-5 text-yellow-600 dark:text-yellow-500 mt-0.5" />
-                        <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                          وضع الاختبار مفعّل. لن يتم خصم مبالغ حقيقية من
-                          العملاء.
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="space-y-4 border-t pt-4">
-                      <h4 className="font-medium">بيانات الاعتماد</h4>
-                      {Object.keys(method.credentials).map((key) => (
-                        <div key={key} className="space-y-2">
-                          <Label htmlFor={`${method.id}-${key}`}>
-                            {key === "apiKey"
-                              ? "مفتاح API"
-                              : key === "secretKey"
-                              ? "المفتاح السري"
-                              : key === "merchantId"
-                              ? "معرف التاجر"
-                              : key}
-                          </Label>
-                          <div className="relative">
-                            <Input
-                              id={`${method.id}-${key}`}
-                              type={
-                                key.includes("secret") || key.includes("Secret")
-                                  ? showSecrets[`${method.id}-${key}`]
-                                    ? "text"
-                                    : "password"
-                                  : "text"
-                              }
-                              value={method.credentials[key] || ""}
-                              onChange={(e) =>
-                                updateCredentials(
-                                  method.id,
-                                  key,
-                                  e.target.value
-                                )
-                              }
-                              placeholder={`أدخل ${key}`}
-                              className="text-right pr-10"
-                            />
-                            {(key.includes("secret") ||
-                              key.includes("Secret")) && (
-                              <button
-                                type="button"
-                                onClick={() => toggleShowSecret(method.id, key)}
-                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                              >
-                                {showSecrets[`${method.id}-${key}`] ? (
-                                  <EyeOff className="size-4" />
-                                ) : (
-                                  <Eye className="size-4" />
-                                )}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
+              <div className="flex items-center gap-3">
+                {cashOnDelivery && (
+                  <Badge variant="default" className="gap-1">
+                    <CheckCircle2 className="size-3" />
+                    مفعّل
+                  </Badge>
                 )}
+                <Switch
+                  checked={cashOnDelivery}
+                  onCheckedChange={setCashOnDelivery}
+                />
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
 
-                {/* {method.id === "cash-on-delivery" && (
-                  <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      لا يتطلب هذا الأسلوب أي إعدادات إضافية. سيتم تفعيله
-                      تلقائياً عند تفعيله.
-                    </p>
-                  </div>
-                )} */}
-              </CardContent>
-            )}
+
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">الدفع الإلكتروني</h1>
+        </div>
+        {paymentProviders?.map((provider: any) => (
+          <Card key={provider.id}>
+            <CardHeader>
+              <CardTitle>{provider.name}</CardTitle>
+              {provider.description && (
+                <CardDescription>{provider.description}</CardDescription>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {(provider.methods ?? []).map((method: any) => {
+                const req = method.requirements as RequirementsSchema | null | undefined;
+                const requirementKeys =
+                  req && typeof req === "object"
+                    ? Object.keys(req)
+                    : [];
+                const s = formState[method.id] ?? {
+                  isEnabled: false,
+                  credentials: {} as Record<string, string>,
+                };
+
+                return (
+                  <Card key={method.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="size-5 text-muted-foreground" />
+                          <CardTitle>{method.name}</CardTitle>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {s.isEnabled && (
+                            <Badge variant="default" className="gap-1">
+                              <CheckCircle2 className="size-3" />
+                              مفعّل
+                            </Badge>
+                          )}
+                          <Switch
+                            checked={s.isEnabled}
+                            onCheckedChange={(v) => setEnabled(method.id, v)}
+                          />
+                        </div>
+                      </div>
+                    </CardHeader>
+                    {(s.isEnabled && requirementKeys.length > 0) && (
+                      <CardContent className="pt-0 space-y-4 border-t">
+                        <h4 className="font-medium pt-4">بيانات الاعتماد</h4>
+                        {requirementKeys.map((key) => {
+                          const schema = req![key];
+                          const isSecret = isSecretLike(key);
+                          const inputId = `${method.id}-${key}`;
+                          const show = showSecrets[`${method.id}-${key}`];
+
+                          return (
+                            <div key={key} className="space-y-2">
+                              <Label htmlFor={inputId}>
+                                {requirementLabel(key)}
+                                {schema?.required && (
+                                  <span className="text-destructive mr-1">*</span>
+                                )}
+                              </Label>
+                              <div className="relative">
+                                <Input
+                                  id={inputId}
+                                  type={
+                                    isSecret
+                                      ? show
+                                        ? "text"
+                                        : "password"
+                                      : schema?.type === "number"
+                                      ? "number"
+                                      : "text"
+                                  }
+                                  value={s.credentials[key] ?? ""}
+                                  onChange={(e) =>
+                                    setCredential(method.id, key, e.target.value)
+                                  }
+                                  placeholder={`أدخل ${requirementLabel(key)}`}
+                                  className="text-right pr-10"
+                                  dir="rtl"
+                                />
+                                {isSecret && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      toggleShowSecret(method.id, key)
+                                    }
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                  >
+                                    {show ? (
+                                      <EyeOff className="size-4" />
+                                    ) : (
+                                      <Eye className="size-4" />
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </CardContent>
+                    )}
+                    {s.isEnabled && requirementKeys.length === 0 && (
+                      <CardContent className="pt-0">
+                        <p className="text-sm text-muted-foreground">
+                          لا يتطلب هذا الأسلوب إعدادات إضافية.
+                        </p>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
+            </CardContent>
           </Card>
         ))}
       </form>

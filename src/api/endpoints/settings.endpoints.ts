@@ -115,6 +115,26 @@ export const settingsAPI = {
   },
 
   /**
+   * Get store payment methods (StorePaymentMethod with credentials) for the current store
+   */
+  fetchStorePaymentMethods: async (): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/settings/store/payment-methods");
+    return data;
+  },
+
+  /**
+   * Upsert a store payment method (create or update isEnabled, credentials)
+   */
+  upsertStorePaymentMethod: async (body: {
+    paymentMethodId: string;
+    isEnabled?: boolean;
+    credentials?: Record<string, unknown>;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.put<any>("/settings/store-payment-method", body);
+    return data;
+  },
+
+  /**
    * Get settings for the current store user
    */
   fetchCurrent: async (): Promise<any> => {
