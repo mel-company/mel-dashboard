@@ -10,11 +10,19 @@ import {
   BarChart2,
   Calculator,
   AppWindow,
+  Keyboard,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Mousetrap from "mousetrap";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -105,9 +113,52 @@ const baseApps: AppItem[] = [
   },
 ];
 
+type ShortcutItem = { description: string; keys: React.ReactNode };
+
+const shortcutItems: ShortcutItem[] = [
+  {
+    description: "انتقل الى الصفحة الرئيسية",
+    keys: (
+      <KbdGroup>
+        <Kbd>Ctrl</Kbd>
+        <Kbd>H</Kbd>
+      </KbdGroup>
+    ),
+  },
+  {
+    description: "عرض قائمة التنقل",
+    keys: (
+      <KbdGroup>
+        <Kbd>Ctrl</Kbd>
+        <Kbd>K</Kbd>
+      </KbdGroup>
+    ),
+  },
+  {
+    description: "افتح الإعدادات",
+    keys: (
+      <KbdGroup>
+        <Kbd>Ctrl</Kbd>
+        <Kbd>,</Kbd>
+      </KbdGroup>
+    ),
+  },
+  {
+    description: "افتح قائمة الاختصارات",
+    keys: (
+      <KbdGroup>
+        <Kbd>Ctrl</Kbd>
+        <Kbd>/</Kbd>
+      </KbdGroup>
+    ),
+  },
+];
+
 const QuickNavigate = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [openShortcutsDialog, setOpenShortcutsDialog] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -139,24 +190,61 @@ const QuickNavigate = () => {
 
     // Allow Ctrl+K even when focused inside inputs/textareas.
     trap.stopCallback = (e, element, combo) => {
+      if (combo === "ctrl+h" || combo === "command+h") return false;
       if (combo === "ctrl+k" || combo === "command+k") return false;
+      if (combo === "ctrl+," || combo === "command+,") return false;
+      if (combo === "ctrl+/" || combo === "command+/") return false;
       return Mousetrap.stopCallback(e as any, element, combo);
     };
 
-    const toggle = (e: KeyboardEvent) => {
+    // keydown: prevent browser defaults (Ctrl+H history, Ctrl+K address bar, etc.)
+    const preventBrowserDefault = (e: KeyboardEvent) => {
       e.preventDefault();
+    };
+
+    const toggle = () => {
+      setOpenShortcutsDialog(false);
       setOpen((v) => !v);
     };
 
-    trap.bind(["ctrl+k", "command+k"], toggle);
-    trap.bind("esc", () => setOpen(false));
+    const handleCtrlH = () => {
+      if (location.pathname === "/") return;
+      setOpen(false);
+      setOpenShortcutsDialog(false);
+      navigate("/");
+    };
+
+    const handleCtrlSettings = () => {
+      if (location.pathname.startsWith("/settings")) return;
+      setOpen(false);
+      setOpenShortcutsDialog(false);
+      navigate("/settings/general");
+    };
+
+    const handleCtrlShortcuts = () => {
+      if (location.pathname === "/settings/shortcuts") return;
+      setOpen(false);
+      setOpenShortcutsDialog((v) => !v);
+    };
+
+    // keydown: block browser shortcuts (must run before keyup / browser default)
+    trap.bind(["ctrl+h", "command+h"], preventBrowserDefault, "keydown");
+    trap.bind(["ctrl+k", "command+k"], preventBrowserDefault, "keydown");
+    trap.bind(["ctrl+,", "command+,"], preventBrowserDefault, "keydown");
+    trap.bind(["ctrl+/", "command+/"], preventBrowserDefault, "keydown");
+
+    // keyup: run our actions once per press (avoids repeat when holding)
+    trap.bind(["ctrl+h", "command+h"], handleCtrlH, "keyup");
+    trap.bind(["ctrl+k", "command+k"], toggle, "keyup");
+    trap.bind(["ctrl+,", "command+,"], handleCtrlSettings, "keyup");
+    trap.bind(["ctrl+/", "command+/"], handleCtrlShortcuts, "keyup");
 
     return () => {
       trap.unbind(["ctrl+k", "command+k"]);
       trap.unbind("esc");
       trap.reset();
     };
-  }, []);
+  }, [location.pathname]);
 
   const onOpenChange = (next: boolean) => {
     setOpen(next);
@@ -173,7 +261,13 @@ const QuickNavigate = () => {
     setActiveIndex(0);
   };
 
+  const openShortcutsPage = () => {
+    setOpenShortcutsDialog(false);
+    navigate("/settings/shortcuts");
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         aria-describedby={undefined}
@@ -305,6 +399,41 @@ const QuickNavigate = () => {
         </div>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={openShortcutsDialog} onOpenChange={setOpenShortcutsDialog}>
+      <DialogContent aria-describedby={undefined} className="sm:max-w-[480px]" dir="rtl">
+        <DialogHeader className="text-right">
+          <div className="flex items-center gap-2">
+            <Keyboard className="size-5 text-muted-foreground" />
+            <DialogTitle className="text-right">اختصارات لوحة المفاتيح</DialogTitle>
+          </div>
+          <DialogDescription className="text-right">
+            اختصارات عامة متاحة في جميع أجزاء التطبيق.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="divide-y divide-border">
+          {shortcutItems.map(({ description, keys }, i) => (
+            <div
+              key={i}
+              className="flex flex-col gap-1.5 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+            >
+              <span className="text-sm text-foreground">{description}</span>
+              <div className="shrink-0">{keys}</div>
+            </div>
+          ))}
+        </div>
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={openShortcutsPage}
+            className="text-sm text-primary hover:underline"
+          >
+            عرض كامل قائمة الاختصارات في الإعدادات
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 

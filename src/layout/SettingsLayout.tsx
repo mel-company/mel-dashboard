@@ -13,6 +13,7 @@ import {
   Book,
   ChevronDown,
   ChevronUp,
+  Keyboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,11 @@ const settingsItems = [
         icon: CreditCard,
       },
     ],
+  },
+  {
+    label: "اختصارات",
+    path: "/settings/shortcuts",
+    icon: Keyboard,
   },
 ];
 

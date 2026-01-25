@@ -59,6 +59,7 @@ import AddCoupon from "./pages/coupone/AddCoupon";
 import Tickets from "./pages/support/Tickets";
 import TicketDetails from "./pages/support/TicketDetails";
 import OpenTicket from "./pages/support/OpenTicket";
+import Shortcuts from "./pages/settings/Shortcuts";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -172,6 +173,7 @@ function App() {
                 />
               </Route>
               <Route path="subscription" element={<SubscriptionSettings />} />
+              <Route path="shortcuts" element={<Shortcuts />} />
             </Route>
 
             <Route path="/plans" element={<Plans />} />
