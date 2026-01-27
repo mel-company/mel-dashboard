@@ -116,8 +116,71 @@ export const validateInternationalPhoneNumber = (phoneNumber: string, countryCod
   return validPhoneNumber.isValid;
 }
 
+export function formatDate(dateString: string) {
+  if (!dateString || dateString === "") return { date: "", day: "" };
 
+  try {
+    const dateObj = new Date(dateString);
 
+    // Check if the date is valid
+    if (isNaN(dateObj.getTime())) {
+      return { date: "", day: "", time: "" };
+    }
 
+    const date = dateObj.toISOString().split("T")[0];
+    const formatter = new Intl.DateTimeFormat("ar-IQ", { weekday: "long" });
+    const day = formatter.format(dateObj);
+    const time = dateObj.toLocaleTimeString();
+    return { date, day, time };
+  } catch (error) {
+    console.warn("Invalid date format:", dateString, error);
+    return { date: "", day: "", time: "" };
+  }
+}
 
+// CSV Export utility function
+export const exportToCSV = (data: any[], filename: string) => {
+  if (!data || data.length === 0) {
+    console.warn("No data to export");
+    return;
+  }
 
+  // Get headers from the first object
+  const headers = Object.keys(data[0]);
+
+  // Create CSV content
+  const csvContent = [
+    // Headers row
+    headers.join(","),
+    // Data rows
+    ...data.map((row) =>
+      headers
+        .map((header) => {
+          const value = row[header];
+          // Handle values that contain commas, quotes, or newlines
+          if (
+            typeof value === "string" &&
+            (value.includes(",") || value.includes('"') || value.includes("\n"))
+          ) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value || "";
+        })
+        .join(",")
+    ),
+  ].join("\n");
+
+  // Create and download the file
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${filename}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
