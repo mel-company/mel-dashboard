@@ -16,10 +16,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Phone, Loader2, Search } from "lucide-react";
+import { Phone, Loader2 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 
 type Props = {
   open: boolean;
