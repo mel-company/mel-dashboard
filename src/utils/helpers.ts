@@ -1,3 +1,5 @@
+import { phone } from "phone";
+
 /**
  * Validates a domain name based on the following rules:
  * 1. Must start with a letter (not a number)
@@ -108,3 +110,14 @@ export const sanitizePhoneNumber = (
 
   return countryCode + phone;
 };
+
+export const validateInternationalPhoneNumber = (phoneNumber: string, countryCode: string): boolean => {
+  const validPhoneNumber = phone(phoneNumber, { country: countryCode });
+  return validPhoneNumber.isValid;
+}
+
+
+
+
+
+

@@ -18,6 +18,7 @@ import { CURRENCY, LANGUAGE, TIMEZONE } from "@/utils/constants";
 import { sanitizePhoneNumber } from "@/utils/helpers";
 import DetailsSettingsSkeleton from "./DetailsSettingsSkeleton";
 import LogoDialog from "./LogoDialog";
+import PhoneNumberDialog from "./PhoneNumberDialog";
 
 type Props = {};
 
@@ -40,6 +41,7 @@ const DetailsSettings = ({}: Props) => {
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
   // @ts-ignore
   const [favicon, setFavicon] = useState<File | null>(null);
+  const [phoneNumberDialogOpen, setPhoneNumberDialogOpen] = useState(false);
 
   // Populate form when store details are loaded
   useEffect(() => {
@@ -146,6 +148,7 @@ const DetailsSettings = ({}: Props) => {
           قم بتحديث معلومات المتجر الأساسية والهوية التجارية
         </p>
       </div>
+
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -279,6 +282,8 @@ const DetailsSettings = ({}: Props) => {
         {/* Contact Information */}
         <Card>
           <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
             <CardTitle className="flex items-center gap-2">
               <Mail className="size-5" />
               معلومات الاتصال
@@ -286,6 +291,9 @@ const DetailsSettings = ({}: Props) => {
             <CardDescription>
               معلومات التواصل مع العملاء والدعم الفني
             </CardDescription>
+              </div>
+            <PhoneNumberDialog open={phoneNumberDialogOpen} onOpenChange={setPhoneNumberDialogOpen} />
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -441,6 +449,7 @@ const DetailsSettings = ({}: Props) => {
           </CardContent>
         </Card> */}
 
+
         {/* Submit Button */}
         <div className="flex justify-end gap-4">
           <Button type="button" variant="secondary" disabled={isUpdating}>
@@ -462,8 +471,14 @@ const DetailsSettings = ({}: Props) => {
         </div>
       </form>
 
+
       {/* Logo Dialog */}
       <LogoDialog open={logoDialogOpen} onOpenChange={setLogoDialogOpen} />
+
+      {/* Temporary Code */}
+      <PhoneNumberDialog open={phoneNumberDialogOpen} onOpenChange={setPhoneNumberDialogOpen} />
+      {/* Temporary Code */}
+
     </div>
   );
 };

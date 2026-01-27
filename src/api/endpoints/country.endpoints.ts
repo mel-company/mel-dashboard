@@ -16,5 +16,14 @@ export const countryAPI = {
     const { data } = await axiosInstance.get<any>(`/country/${id}`);
     return data;
   },
+  /**
+   * Fetch all countries phone codes
+   */
+  fetchPhoneCodes: async (order: "ar" | "en" = "ar"): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/country/phone-codes", {
+      params: { order },
+    });
+    return data;
+  },
 };
 
