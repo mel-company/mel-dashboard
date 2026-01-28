@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   TrendingUp,
   Package,
@@ -12,6 +12,8 @@ import {
   Calendar,
   ShoppingBag,
 } from "lucide-react";
+import { pdf } from "@react-pdf/renderer";
+import { StatsReportPDF } from "@/utils/files/report/stats.report";
 import {
   useFetchStoreStats,
   useFetchMonthlySales,
@@ -62,6 +64,7 @@ ChartJS.register(
 
 const Stats = () => {
   const navigate = useNavigate();
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // Fetch data from API
   const { data: storeStats, isLoading: isLoadingStoreStats } =
@@ -298,6 +301,35 @@ const Stats = () => {
     ];
   }, [storeStats]);
 
+  const handleExportPdf = async () => {
+    setIsExportingPdf(true);
+    try {
+      const reportData = {
+        storeStats: storeStats ?? {
+          orders: 0,
+          products: 0,
+          categories: 0,
+          discounts: 0,
+          customers: 0,
+        },
+        monthlySales: monthlySales ?? [],
+        ordersStatusStats: ordersStatusStats ?? [],
+        mostBoughtProducts: mostBoughtProducts ?? [],
+      };
+      const blob = await pdf(
+        <StatsReportPDF data={reportData} />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `stats-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   // Check if any data is loading - Must be after all hooks
   const isLoading =
     isLoadingStoreStats ||
@@ -452,9 +484,11 @@ const Stats = () => {
                 <Button
                   type="button"
                   className="h-10 px-6 gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
+                  onClick={handleExportPdf}
+                  disabled={isExportingPdf}
                 >
                   <Download className="w-4 h-4" />
-                  تحميل التقرير
+                  {isExportingPdf ? "جاري التوليد..." : "تحميل التقرير"}
                 </Button>
               </div>
             </div>

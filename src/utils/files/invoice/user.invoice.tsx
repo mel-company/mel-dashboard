@@ -7,7 +7,7 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import Almarai from "../../assets/fonts/Almarai-Regular.ttf";
-import { formatDate } from "../helpers";
+import { formatDate } from "../../helpers";
 
 Font.register({ family: "Almarai", src: Almarai });
 
