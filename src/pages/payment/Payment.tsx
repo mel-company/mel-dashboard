@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useFetchPlan } from "@/api/wrappers/plan.wrappers";
 import {
   Card,
@@ -13,6 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   CreditCard,
   Calendar,
   Lock,
@@ -22,6 +31,8 @@ import {
   Settings,
   Star,
   ArrowRight,
+  Download,
+  FileText,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
@@ -29,24 +40,34 @@ import { Badge } from "@/components/ui/badge";
 import {
   useChangePlan,
   useFetchStoreSubscription,
-  useUpdateSubscription,
+  subscriptionKeys,
 } from "@/api/wrappers/subscription.wrapper";
 import { toast } from "sonner";
+import { pdf } from "@react-pdf/renderer";
+import {
+  SubscriptionInvoicePDF,
+  type SubscriptionInvoiceData,
+} from "@/utils/files/invoice/subscription.invoice";
 
 type Props = {};
 
 const Payment = ({}: Props) => {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: plan, isLoading, error } = useFetchPlan(planId ?? "");
 
-  const { data: storeSubscription } = useFetchStoreSubscription();
+  useFetchStoreSubscription();
   const { mutate: changePlan, isPending } = useChangePlan();
 
   const [cardNumber, setCardNumber] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [cvc, setCvc] = useState("");
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [successSubscription, setSuccessSubscription] =
+    useState<SubscriptionInvoiceData | null>(null);
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -94,15 +115,64 @@ const Payment = ({}: Props) => {
       return;
     }
 
-    changePlan(
-      planId,
-      {
-        onSuccess: () => {
-          toast.success("تم تغيير الخطة بنجاح");
-          navigate("/settings/subscription");
-        },
-      }
-    );
+    changePlan(planId, {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: subscriptionKeys.detail("store") });
+        toast.success("تم تغيير الخطة بنجاح");
+        const invoiceData: SubscriptionInvoiceData = {
+          ...data,
+          plan: plan
+            ? {
+                id: plan.id,
+                name: plan.name,
+                description: plan.description ?? null,
+                monthly_price: plan.monthly_price,
+                yearly_price: plan.yearly_price,
+                features: plan.features,
+                modules: plan.modules,
+              }
+            : undefined,
+        };
+        setSuccessSubscription(invoiceData);
+        setSuccessDialogOpen(true);
+      },
+      onError: (err: any) => {
+        toast.error(
+          err?.response?.data?.message || "فشل في تغيير الخطة. حاول مرة أخرى."
+        );
+      },
+    });
+  };
+
+  const handleSuccessDialogOpenChange = (open: boolean) => {
+    setSuccessDialogOpen(open);
+    if (!open) {
+      navigate("/settings/subscription");
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!successSubscription) return;
+    setIsDownloadingInvoice(true);
+    try {
+      const blob = await pdf(
+        <SubscriptionInvoicePDF subscription={successSubscription} />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `subscription-invoice-${String(successSubscription.id).slice(0, 8)}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("تم تحميل الفاتورة");
+    } finally {
+      setIsDownloadingInvoice(false);
+    }
+  };
+
+  const handleContinue = () => {
+    setSuccessDialogOpen(false);
+    navigate("/settings/subscription");
   };
 
   if (isLoading) {
@@ -362,6 +432,50 @@ const Payment = ({}: Props) => {
           </Card>
         </div>
       </div>
+
+      {/* Success dialog after plan change */}
+      <Dialog open={successDialogOpen} onOpenChange={handleSuccessDialogOpenChange}>
+        <DialogContent className="text-right sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <div className="flex justify-center mb-2">
+              <div className="rounded-full bg-green-100 p-3">
+                <CheckCircle2 className="size-10 text-green-600" />
+              </div>
+            </div>
+            <DialogTitle className="text-center">
+              تم تحديث الاشتراك بنجاح
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              تم تغيير خطتك بنجاح. يمكنك تحميل فاتورة الاشتراك أو متابعة إلى صفحة
+              الاشتراك.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 pt-4">
+            <Button
+              type="button"
+              className="gap-2"
+              onClick={handleDownloadInvoice}
+              disabled={isDownloadingInvoice}
+            >
+              {isDownloadingInvoice ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
+              {isDownloadingInvoice ? "جاري التحميل..." : "تحميل فاتورة الاشتراك"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="gap-2"
+              onClick={handleContinue}
+            >
+              <FileText className="size-4" />
+              متابعة إلى الاشتراك
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
