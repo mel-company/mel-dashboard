@@ -268,7 +268,7 @@ const SettingsLayout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto min-w-0 w-full lg:w-auto pt-16 lg:pt-0">
+      <div className="flex-1 overflow-y-auto min-w-0 w-full lg:w-auto lg:pt-0">
         <Outlet />
       </div>
     </div>

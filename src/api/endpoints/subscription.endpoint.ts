@@ -48,6 +48,14 @@ export const subscriptionAPI = {
   },
 
   /**
+   * Update an existing subscription
+   */
+  changePlan: async (planId: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(`/subscription/change-plan/${planId}`);
+    return data;
+  },
+
+  /**
    * Delete a subscription (soft delete)
    */
   delete: async (id: string): Promise<any> => {

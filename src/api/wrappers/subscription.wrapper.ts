@@ -13,6 +13,15 @@ export const subscriptionKeys = {
 };
 
 /**
+ * Change plan mutation
+ */
+export const useChangePlan = () => {
+  return useMutation<any, Error, string>({
+    mutationFn: (planId: string) => subscriptionAPI.changePlan(planId),
+  });
+};
+
+/**
  * Fetch all subscriptions with optional filtering and pagination
  */
 export const useFetchSubscriptions = (params?: any) => {

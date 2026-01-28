@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import { Badge } from "@/components/ui/badge";
 import {
+  useChangePlan,
   useFetchStoreSubscription,
   useUpdateSubscription,
 } from "@/api/wrappers/subscription.wrapper";
@@ -39,6 +40,9 @@ const Payment = ({}: Props) => {
   const navigate = useNavigate();
 
   const { data: plan, isLoading, error } = useFetchPlan(planId ?? "");
+
+  const { data: storeSubscription } = useFetchStoreSubscription();
+  const { mutate: changePlan, isPending } = useChangePlan();
 
   const [cardNumber, setCardNumber] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
@@ -85,33 +89,21 @@ const Payment = ({}: Props) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!storeSubscription?.id) {
-      toast.error("لا يمكن تغيير الخطة. لا يوجد اشتراك نشط.");
+    if (!planId) {
+      toast.error("لا يمكن تغيير الخطة. لا يوجد خطة محددة.");
       return;
     }
 
-    updateSubscription(
-      {
-        id: storeSubscription.id,
-        data: { planId },
-      },
+    changePlan(
+      planId,
       {
         onSuccess: () => {
           toast.success("تم تغيير الخطة بنجاح");
           navigate("/settings/subscription");
         },
-        onError: (error: any) => {
-          toast.error(
-            error?.response?.data?.message ||
-              "فشل في تغيير الخطة. حاول مرة أخرى."
-          );
-        },
       }
     );
   };
-
-  const { data: storeSubscription } = useFetchStoreSubscription();
-  const { mutate: updateSubscription, isPending } = useUpdateSubscription();
 
   if (isLoading) {
     return (
