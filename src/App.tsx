@@ -11,6 +11,7 @@ import ProductDetails from "./pages/product/ProductDetails";
 import Customers from "./pages/customer/Customers";
 import CustomerDetails from "./pages/customer/CustomerDetails";
 import OrderDetails from "./pages/order/OrderDetails";
+import OrderInvoicePreview from "./pages/order/OrderInvoicePreview";
 import Employees from "./pages/employee/Employees";
 import EmployeeDetails from "./pages/employee/EmployeeDetails";
 import AddProduct from "./pages/product/AddProduct";
@@ -218,6 +219,8 @@ function App() {
             {/* POS route */}
             <Route path="/pos" element={<POS />} />
           </Route>
+          {/* Order invoice preview popup - no Layout */}
+          <Route path="/order-invoice-preview" element={<OrderInvoicePreview />} />
         </Route>
         {/* Public routes */}
         <Route path="/login" element={<StoreLogin />} />

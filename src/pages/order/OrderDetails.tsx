@@ -55,6 +55,7 @@ import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
 import EditDeliveryAddressDialog from "./EditDeliveryAddressDialog";
 import EditProductVariantDialog from "./EditProductVariantDialog";
 import RemoveOrderProduct from "./RemoveOrderProduct";
+import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "./OrderInvoicePreview";
 import { toast } from "sonner";
 
 const OrderDetails = () => {
@@ -334,6 +335,19 @@ const OrderDetails = () => {
   const handleCancelOrder = () => {
     if (!id || !order) return;
     handleStatusUpdate("CANCELLED");
+  };
+
+  const handleOpenInvoicePreview = () => {
+    if (!order) return;
+    sessionStorage.setItem(
+      ORDER_INVOICE_PREVIEW_STORAGE_KEY,
+      JSON.stringify(order)
+    );
+    window.open(
+      "/order-invoice-preview",
+      "orderInvoicePreview",
+      "width=900,height=900,scrollbars=yes,resizable=yes"
+    );
   };
 
   // Check if any status update is in progress
@@ -862,9 +876,13 @@ const OrderDetails = () => {
                   تأكيد التسليم
                 </Button>
               )}
-              <Button className="w-full gap-2" variant="secondary">
-                <Printer className="size-4" />
-                طباعة الفاتورة
+              <Button
+                className="w-full gap-2"
+                variant="secondary"
+                onClick={handleOpenInvoicePreview}
+              >
+                <FileText className="size-4" />
+                معاينة / تحميل الفاتورة
               </Button>
               <Button
                 onClick={() => setIsDeleteDialogOpen(true)}

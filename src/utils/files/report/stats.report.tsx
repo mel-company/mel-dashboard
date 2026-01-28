@@ -161,12 +161,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: "absolute",
-    bottom: 24,
-    left: 36,
-    right: 36,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
+    bottom: 10,
+    right: 35,
     textAlign: "center",
   },
   footerText: {
@@ -344,13 +340,10 @@ export const StatsReportPDF = ({ data }: { data: StatsReportData }) => {
 
         {/* Footer */}
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>
-            تقرير إحصائيات المتجر — وثيقة إلكترونية
-          </Text>
           <Text
             style={styles.pageNumber}
             render={({ pageNumber, totalPages }) =>
-              `صفحة ${pageNumber} من ${totalPages}`
+              pageNumber > 1 ? `صفحة ${pageNumber} من ${totalPages}` : ""
             }
           />
         </View>
