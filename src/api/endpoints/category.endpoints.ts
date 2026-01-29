@@ -15,6 +15,34 @@ export const categoryAPI = {
     return data;
   },
 
+  fetchAllCursor: async (params?: {
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/category/cursor", {
+      params: {
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  fetchSearchCursor: async (params?: {
+    query: string;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/category/search-cursor", {
+      params: {
+        query: params?.query,
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
   /**
    * Get all categories by store domain with optional filtering and pagination
    */

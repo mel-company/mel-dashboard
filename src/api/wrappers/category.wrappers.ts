@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { categoryAPI } from "../endpoints/category.endpoints";
 
 /**
@@ -11,6 +11,7 @@ export const categoryKeys = {
   details: () => [...categoryKeys.all, "detail"] as const,
   detail: (id: string) => [...categoryKeys.details(), id] as const,
   search: (params?: any) => [...categoryKeys.all, "search", params] as const,
+  cursor: (params?: any) => [...categoryKeys.all, "cursor", params] as const,
   available: (params?: any) =>
     [...categoryKeys.all, "available", params] as const,
   availableProducts: (id: string) =>
@@ -27,6 +28,44 @@ export const useFetchCategories = (params?: any, enabled: boolean = true) => {
     enabled,
   });
 };
+
+  /**
+   * Fetch all categories with cursor pagination (infinite scroll)
+   */
+  export const useFetchCategoriesCursor = (params?: any, enabled: boolean = true) => {
+    return useInfiniteQuery<any>({
+      queryKey: categoryKeys.cursor(params),
+      enabled,
+      queryFn: ({ pageParam }) =>
+        categoryAPI.fetchAllCursor({
+          ...params,
+          cursor: typeof pageParam === "string" ? pageParam : undefined,
+        }),
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      initialPageParam: null as string | null | undefined,
+    });
+  };
+
+  /**
+   * Search categories with cursor pagination (infinite scroll)
+   */
+  export const useSearchCategoriesCursor = (
+    params?: { query: string; limit?: number },
+    enabled = true,
+  ) => {
+    return useInfiniteQuery<any>({
+      queryKey: categoryKeys.search({ ...params, cursor: true }),
+      enabled: enabled && !!params?.query?.trim(),
+      queryFn: ({ pageParam }) =>
+        categoryAPI.fetchSearchCursor({
+          query: params?.query ?? "",
+          limit: params?.limit,
+          cursor: typeof pageParam === "string" ? pageParam : undefined,
+        }),
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      initialPageParam: null as string | null | undefined,
+    });
+  };
 
 /**
  * Fetch all categories by store domain with optional filtering and pagination
@@ -74,7 +113,7 @@ export const useCreateCategory = () => {
     mutationFn: (category: any) => categoryAPI.create(category),
     onSuccess: () => {
       // Invalidate and refetch categories list
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
     },
   });
 };
@@ -89,7 +128,7 @@ export const useUpdateCategory = () => {
     mutationFn: ({ id, data }) => categoryAPI.update(id, data),
     onSuccess: (data) => {
       // Invalidate and refetch categories list
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       // Update the specific category cache
       queryClient.setQueryData(categoryKeys.detail(data.id), data);
     },
@@ -106,7 +145,7 @@ export const useDeleteCategory = () => {
     mutationFn: (id: string) => categoryAPI.delete(id),
     onSuccess: (_, deletedId) => {
       // Invalidate and refetch categories list
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       // Remove the deleted category from cache
       queryClient.removeQueries({ queryKey: categoryKeys.detail(deletedId) });
     },
@@ -137,7 +176,7 @@ export const useAddProductsToCategory = () => {
     mutationFn: ({ id, productIds }) => categoryAPI.addProducts(id, productIds),
     onSuccess: (data) => {
       // Invalidate and refetch categories list
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       // Update the specific category cache
       queryClient.setQueryData(categoryKeys.detail(data.id), data);
       // Invalidate available products for this category
@@ -158,7 +197,7 @@ export const useRemoveProductFromCategory = () => {
     mutationFn: ({ id, productId }) => categoryAPI.removeProduct(id, productId),
     onSuccess: (data) => {
       // Invalidate and refetch categories list
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       // Update the specific category cache
       queryClient.setQueryData(categoryKeys.detail(data.id), data);
       // Invalidate available products for this category
@@ -193,7 +232,7 @@ export const useToggleCategoryEnabled = () => {
     mutationFn: (id: string) => categoryAPI.toggleEnabled(id),
     onSuccess: (data) => {
       // Invalidate and refetch categories list
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       // Update the specific category cache
       queryClient.setQueryData(categoryKeys.detail(data.id), data);
     },
@@ -211,7 +250,7 @@ export const useUpdateCategoryImage = () => {
       categoryAPI.updateCategoryImage(categoryId, image),
     onSuccess: (data) => {
       // Invalidate and refetch categories list
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       // Invalidate the specific category detail to force refetch with new image URL
       if (data?.id) {
         queryClient.invalidateQueries({
@@ -233,7 +272,7 @@ export const useDeleteCategoryImage = () => {
       categoryAPI.deleteCategoryImage(categoryId),
     onSuccess: (data) => {
       // Invalidate and refetch categories list
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       // Invalidate the specific category detail to force refetch
       if (data?.id) {
         queryClient.invalidateQueries({
