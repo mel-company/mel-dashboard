@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useCallback, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -10,22 +10,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Star, ShoppingCart, Search, Plus, X, Loader2 } from "lucide-react";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Star, ShoppingCart, Search, Plus, X } from "lucide-react";
-import {
-  useFetchProducts,
-  useSearchProducts,
+  useFetchProductsCursor,
+  useFetchProductsSearchCursor,
 } from "@/api/wrappers/product.wrappers";
 import type { ProductListItem } from "@/api/types/product";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import ProductsSkeleton from "./ProductsSkeleton";
 import EmptyPage from "../miscellaneous/EmptyPage";
+
+const CURSOR_LIMIT = 10;
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -40,97 +35,80 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = searchParams.get("page");
-  const currentPage = pageParam ? parseInt(pageParam) : 1;
-  const searchPageParam = searchParams.get("s");
-  const currentSearchPage = searchPageParam ? parseInt(searchPageParam) : 1;
-  const limit = 10;
   const navigate = useNavigate();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
 
-  // const handleSeedDummyProducts = () => {
-  //   seedDummyProducts({
-  //     onSuccess: () => {
-  //       toast.success("منتجات تجريبية إضافة بنجاح");
-  //     },
-  //     onError: () => {
-  //       toast.error("فشل إضافة منتجات تجريبية");
-  //     },
-  //   });
-  // };
-
-  // Reset to page 1 when search query changes
-  useEffect(() => {
-    if (debouncedQuery) {
-      setSearchParams({ s: "1" });
-    } else {
-      setSearchParams({ page: "1" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
-
   const {
-    data: listData,
-    isLoading: isListLoading,
-    error: listError,
-    refetch: refetchList,
-    isFetching: isListFetching,
-  } = useFetchProducts(
-    {
-      page: currentPage,
-      limit,
-    },
+    data: cursorData,
+    fetchNextPage: fetchNextCursor,
+    hasNextPage: hasNextCursor,
+    isFetchingNextPage: isFetchingNextCursor,
+    isLoading: isCursorLoading,
+    error: cursorError,
+    refetch: refetchCursor,
+    isFetching: isCursorFetching,
+  } = useFetchProductsCursor(
+    { limit: CURSOR_LIMIT },
     !isSearching
   );
 
   const {
     data: searchData,
+    fetchNextPage: fetchNextSearch,
+    hasNextPage: hasNextSearch,
+    isFetchingNextPage: isFetchingNextSearch,
     isLoading: isSearchLoading,
     error: searchError,
     refetch: refetchSearch,
     isFetching: isSearchFetching,
-  } = useSearchProducts({
-    query: debouncedQuery,
-    page: currentSearchPage,
-    limit,
-  });
-
-  const activeData = isSearching ? searchData : listData;
-  const products: ProductListItem[] = !activeData
-    ? []
-    : Array.isArray(activeData)
-    ? activeData
-    : activeData.data ?? [];
-
-  const error = isSearching ? searchError : listError;
-  const refetch = isSearching ? refetchSearch : refetchList;
-  const isFetching = isSearching ? isSearchFetching : isListFetching;
-  const isLoading = isSearching ? isSearchLoading : isListLoading;
-
-  const totalPages = Math.ceil(
-    (listData?.total ?? searchData?.total ?? 0) / limit
+  } = useFetchProductsSearchCursor(
+    { query: debouncedQuery, limit: CURSOR_LIMIT },
+    isSearching
   );
 
-  // Get the actual current page based on search state
-  const actualCurrentPage = isSearching ? currentSearchPage : currentPage;
+  const flatProducts = cursorData?.pages.flatMap((p) => p.data) ?? [];
+  const flatSearchProducts = searchData?.pages.flatMap((p) => p.data) ?? [];
 
-  const handlePageChange = (page: number) => {
-    // Ensure page is within valid bounds
-    const safePage = Math.max(1, Math.min(page, totalPages || 1));
-    if (isSearching) {
-      setSearchParams({ s: safePage.toString() });
-    } else {
-      setSearchParams({ page: safePage.toString() });
+  const products: ProductListItem[] = isSearching ? flatSearchProducts : flatProducts;
+
+  const baseUrl = cursorData?.pages?.[0]?.baseUrl ?? "";
+  const searchBaseUrl = searchData?.pages?.[0]?.baseUrl ?? "";
+  const imageBaseUrl = isSearching ? searchBaseUrl : baseUrl;
+
+  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
+  const isFetchingNextPage = isSearching ? isFetchingNextSearch : isFetchingNextCursor;
+  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
+
+  const error = isSearching ? searchError : cursorError;
+  const refetch = isSearching ? refetchSearch : refetchCursor;
+  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
+  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMore();
+      },
+      { rootMargin: "200px", threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleLoadMore, hasNextPage, isFetchingNextPage]);
 
   return (
     <div className="space-y-6">
-      {/* Search and Add Product Section */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-full sm:max-w-md">
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -139,10 +117,10 @@ const Products = () => {
             placeholder="ابحث عن منتج..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10 pl-10"
+            className="w-full text-right pr-10"
             dir="rtl"
           />
-          {searchQuery ? (
+          {/* {searchQuery ? (
             <button
               type="button"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
@@ -151,7 +129,7 @@ const Products = () => {
             >
               <X className="size-4" />
             </button>
-          ) : null}
+          ) : null} */}
         </div>
         <Button
           className="gap-2 w-full sm:w-auto"
@@ -161,61 +139,14 @@ const Products = () => {
           <span className="hidden sm:inline">إضافة منتج</span>
           <span className="sm:hidden">إضافة</span>
         </Button>
-        {/* <Button className="gap-2 w-full sm:w-auto">
-          <span>Seed</span>
-        </Button> */}
       </div>
 
-      {totalPages > 1 && products.length > 0 ? (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage - 1);
-                }}
-                aria-disabled={actualCurrentPage <= 1}
-                className={
-                  actualCurrentPage <= 1
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-
-            <PaginationItem className="mx-4 flex items-center gap-2">
-              <span>{actualCurrentPage}</span>
-              <span>من</span>
-              <span>{totalPages}</span>
-            </PaginationItem>
-
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage + 1);
-                }}
-                aria-disabled={actualCurrentPage >= totalPages}
-                className={
-                  actualCurrentPage >= totalPages
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      ) : null}
-
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {isLoading && !activeData ? (
+        {isLoading && products.length === 0 ? (
           <div className="col-span-full">
             <ProductsSkeleton count={8} showHeader={false} />
           </div>
-        ) : error && !activeData ? (
+        ) : error && products.length === 0 ? (
           <div className="col-span-full">
             <ErrorPage
               error={error}
@@ -250,74 +181,95 @@ const Products = () => {
             />
           </div>
         ) : (
-          products.map((product) => (
-            <Link key={product.id} to={`/products/${product.id}`}>
-              <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
-                <CardHeader className="pb-4">
-                  <div className="relative h-40 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10 ">
-                    {product.image ? (
-                      <img
-                        src={`${listData?.baseUrl}/${product.image}`}
-                        alt={product.title}
-                        className="h-full w-full object-cover transition-transform"
-                      />
-                    ) : (
-                      <ShoppingCart className="size-18 text-white bg-cyan/40 rounded-full p-4" />
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <CardTitle className="line-clamp-2 text-right">
-                    {product.title}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground line-clamp-2 text-right">
-                    {product.description || "—"}
-                  </p>
-                  {typeof product.rate === "number" ? (
-                    <div className="flex items-center gap-1">
-                      <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-medium">
-                        {product.rate.toFixed(1)}
-                      </span>
+          <>
+            {products.map((product) => (
+              <Link key={product.id} to={`/products/${product.id}`}>
+                <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
+                  <CardHeader className="pb-4">
+                    <div className="relative h-40 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
+                      {product.image ? (
+                        <img
+                          src={`${imageBaseUrl}/${product.image}`}
+                          alt={product.title}
+                          className="h-full w-full object-cover transition-transform"
+                        />
+                      ) : (
+                        <ShoppingCart className="size-18 text-white bg-cyan/40 rounded-full p-4" />
+                      )}
                     </div>
-                  ) : null}
-                  <div className="flex mb-2 flex-wrap gap-2">
-                    {(product.categories ?? []).length > 0 ? (
-                      (product.categories ?? []).slice(0, 3).map((c) => (
-                        <Badge key={c.id} variant="outline" className="text-xs">
-                          {c.name}
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <CardTitle className="line-clamp-2 leading-8 text-right">
+                      {product.title}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground line-clamp-2 text-right">
+                      {product.description || "—"}
+                    </p>
+                    {typeof product.rate === "number" ? (
+                      <div className="flex items-center gap-1">
+                        <Star className="size-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-medium">
+                          {product.rate.toFixed(1)}
+                        </span>
+                      </div>
+                    ) : null}
+                    <div className="flex mb-2 flex-wrap gap-2">
+                      {(product.categories ?? []).length > 0 ? (
+                        (product.categories ?? []).slice(0, 3).map((c) => (
+                          <Badge key={c.id} variant="outline" className="text-xs">
+                            {c.name}
+                          </Badge>
+                        ))
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          بدون فئة
                         </Badge>
-                      ))
-                    ) : (
-                      <Badge variant="outline" className="text-xs">
-                        بدون فئة
-                      </Badge>
-                    )}
-                    {(product.categories ?? []).length > 3 ? (
-                      <Badge variant="secondary" className="text-xs">
-                        +{(product.categories ?? []).length - 3}
-                      </Badge>
-                    ) : null}
-                    {product.enabled === false ? (
-                      <Badge variant="secondary" className="text-xs">
-                        غير مفعل
-                      </Badge>
-                    ) : null}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex items-center justify-between border-t pt-2">
-                  <span className="text-lg font-bold text-primary">
-                    {typeof product.price === "number"
-                      ? `${product.price.toFixed(2)} د.ع`
-                      : "—"}
-                  </span>
-                  <Badge variant="default" className="px-2 py-1">
-                    عرض التفاصيل
-                  </Badge>
-                </CardFooter>
-              </Card>
-            </Link>
-          ))
+                      )}
+                      {(product.categories ?? []).length > 3 ? (
+                        <Badge variant="secondary" className="text-xs">
+                          +{(product.categories ?? []).length - 3}
+                        </Badge>
+                      ) : null}
+                      {product.enabled === false ? (
+                        <Badge variant="secondary" className="text-xs">
+                          غير مفعل
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex items-center justify-between border-t pt-2">
+                    <span className="text-lg font-bold text-primary">
+                      {typeof product.price === "number"
+                        ? `${product.price.toFixed(2)} د.ع`
+                        : "—"}
+                    </span>
+                    <Badge variant="default" className="px-2 py-1">
+                      عرض التفاصيل
+                    </Badge>
+                  </CardFooter>
+                </Card>
+              </Link>
+            ))}
+            <div ref={loadMoreRef} className="col-span-full flex justify-center py-6">
+              {hasNextPage && (
+                <Button
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      جاري التحميل...
+                    </>
+                  ) : (
+                    "تحميل المزيد"
+                  )}
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

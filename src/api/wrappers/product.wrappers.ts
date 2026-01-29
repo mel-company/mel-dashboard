@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { productAPI } from "../endpoints/product.endpoints";
 
 /**
@@ -8,19 +8,48 @@ export const productKeys = {
   all: ["products"] as const,
   lists: () => [...productKeys.all, "list"] as const,
   list: (params?: any) => [...productKeys.lists(), params] as const,
+  cursor: (params?: any) => [...productKeys.all, "cursor", params] as const,
   details: () => [...productKeys.all, "detail"] as const,
   detail: (id: string) => [...productKeys.details(), id] as const,
   search: (params?: any) => [...productKeys.all, "search", params] as const,
 };
 
 /**
- * Fetch all products with optional filtering and pagination
+ * Fetch first page of products (for dropdowns/selects, e.g. discount forms).
+ * Uses cursor API with a single page.
  */
-export const useFetchProducts = (params?: any, enabled: boolean = true) => {
+export const useFetchProducts = (params?: { limit?: number }, enabled: boolean = true) => {
   return useQuery<any>({
     queryKey: productKeys.list(params),
-    queryFn: () => productAPI.fetchAll(params),
+    queryFn: () =>
+      productAPI.fetchAllCursor({
+        limit: params?.limit ?? 100,
+      }),
     enabled,
+  });
+};
+
+/**
+ * Fetch all products with cursor pagination (infinite scroll)
+ */
+export const useFetchProductsCursor = (
+  params?: {
+    limit?: number;
+    storeId?: string;
+    categoryId?: string;
+  },
+  enabled = true,
+) => {
+  return useInfiniteQuery({
+    queryKey: productKeys.cursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      productAPI.fetchAllCursor({
+        ...params,
+        cursor: pageParam ?? undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
   });
 };
 
@@ -40,13 +69,33 @@ export const useFetchProductsByStoreDomain = (
 };
 
 /**
- * Search for products with optional filtering and pagination
+ * Search for products (page-based, legacy)
  */
 export const useSearchProducts = (params?: any, enabled: boolean = true) => {
   return useQuery<any>({
     queryKey: productKeys.search(params),
     queryFn: () => productAPI.search(params),
     enabled: enabled && !!params?.query,
+  });
+};
+
+/**
+ * Search products with cursor pagination (infinite scroll)
+ */
+export const useFetchProductsSearchCursor = (
+  params: { query: string; limit?: number; categoryId?: string },
+  enabled = true,
+) => {
+  return useInfiniteQuery({
+    queryKey: productKeys.search({ ...params, cursor: true }),
+    enabled: enabled && !!params?.query?.trim(),
+    queryFn: ({ pageParam }) =>
+      productAPI.fetchSearchCursor({
+        ...params,
+        cursor: pageParam ?? undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
   });
 };
 
@@ -71,7 +120,7 @@ export const useAddCategoryToProduct = () => {
       productAPI.addCategory(id, categoryIds),
     onSuccess: (data) => {
       // Invalidate and refetch products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Update the specific product cache
       queryClient.setQueryData(productKeys.detail(data.id), data);
     },
@@ -88,7 +137,7 @@ export const useRemoveCategoryFromProduct = () => {
       productAPI.removeCategory(id, categoryId),
     onSuccess: (data) => {
       // Invalidate and refetch products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Update the specific product cache
       queryClient.setQueryData(productKeys.detail(data.id), data);
     },
@@ -105,7 +154,7 @@ export const useCreateProduct = () => {
     mutationFn: (product: any) => productAPI.create(product),
     onSuccess: () => {
       // Invalidate and refetch products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
     },
   });
 };
@@ -119,7 +168,7 @@ export const useCreateProductOption = () => {
     mutationFn: (option: any) => productAPI.createProductOption(option),
     onSuccess: (_, variables) => {
       // Invalidate products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Invalidate the specific product detail to refresh options
       queryClient.invalidateQueries({
         queryKey: productKeys.detail(variables.productId),
@@ -161,7 +210,7 @@ export const useUpdateProductOption = () => {
         queryKey: productOptionKeys.detail(variables.id),
       });
       // Invalidate products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Invalidate the specific product detail to refresh options
       if (data?.product?.id) {
         queryClient.invalidateQueries({
@@ -185,7 +234,7 @@ export const useDeleteProductOption = () => {
         queryKey: productOptionKeys.detail(deletedId),
       });
       // Invalidate products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Invalidate all product details to refresh options
       queryClient.invalidateQueries({ queryKey: productKeys.details() });
     },
@@ -201,7 +250,7 @@ export const useUpdateProductOptionValue = () => {
     mutationFn: ({ id, data }) => productAPI.updateProductOptionValue(id, data),
     onSuccess: (data) => {
       // Invalidate products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Invalidate all product details to refresh options
       queryClient.invalidateQueries({ queryKey: productKeys.details() });
       // Invalidate product option if we have the option ID
@@ -223,7 +272,7 @@ export const useDeleteProductOptionValue = () => {
     mutationFn: (id: string) => productAPI.deleteProductOptionValue(id),
     onSuccess: (data) => {
       // Invalidate products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Invalidate all product details to refresh options
       queryClient.invalidateQueries({ queryKey: productKeys.details() });
       // Invalidate product option if we have the option ID
@@ -246,7 +295,7 @@ export const useUpdateProduct = () => {
     mutationFn: ({ id, data }) => productAPI.update(id, data),
     onSuccess: (data) => {
       // Invalidate and refetch products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Update the specific product cache
       queryClient.setQueryData(productKeys.detail(data.id), data);
     },
@@ -263,7 +312,7 @@ export const useDeleteProduct = () => {
     mutationFn: (id: string) => productAPI.delete(id),
     onSuccess: (_, deletedId) => {
       // Invalidate and refetch products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Remove the deleted product from cache
       queryClient.removeQueries({ queryKey: productKeys.detail(deletedId) });
     },
@@ -304,7 +353,7 @@ export const useUpdateProductImage = () => {
       productAPI.updateProductImage(productId, image),
     onSuccess: (data) => {
       // Invalidate and refetch products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Update the specific product cache if we have the ID
       if (data?.id) {
         queryClient.setQueryData(productKeys.detail(data.id), data);
@@ -328,7 +377,7 @@ export const useDeleteProductImage = () => {
       productAPI.deleteProductImage(productId),
     onSuccess: (data) => {
       // Invalidate and refetch products list
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Update the specific product cache if we have the ID
       if (data?.id) {
         queryClient.setQueryData(productKeys.detail(data.id), data);

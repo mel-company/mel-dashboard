@@ -4,8 +4,8 @@ type Props = {};
 
 const StatsSkeleton = ({}: Props) => {
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8" dir="rtl">
-      <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
+    <div className="min-h-screen bg-background " dir="rtl">
+      <div className="maxw-7xl mx-auto space-y-6 lg:space-y-8">
         {/* Header Skeleton */}
         <div className="space-y-2">
           <Skeleton className="h-12 w-64 sm:h-14 sm:w-80 lg:h-16 lg:w-96" />

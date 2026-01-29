@@ -3,17 +3,24 @@ import type { ProductListResponse } from "../types/product";
 
 export const productAPI = {
   /**
-   * Get all products with optional filtering and pagination
+   * Get all products with cursor pagination (GET /product/cursor?cursor=&limit=)
    */
-  fetchAll: async (params?: any): Promise<ProductListResponse> => {
-    const { data } = await axiosInstance.get<ProductListResponse>("/product", {
-      params: {
-        ...(params?.storeId && { storeId: params.storeId }),
-        ...(params?.categoryId && { categoryId: params.categoryId }),
-        ...(params?.page && { page: params.page }),
-        ...(params?.limit && { limit: params.limit }),
+  fetchAllCursor: async (params?: {
+    cursor?: string | null;
+    limit?: number;
+    storeId?: string;
+    categoryId?: string;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/product/cursor",
+      {
+        params: {
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
       },
-    });
+    );
+
     return data;
   },
 
@@ -33,7 +40,7 @@ export const productAPI = {
   },
 
   /**
-   * Get all products with optional filtering and pagination
+   * Search products (page-based, legacy)
    */
   search: async (params?: any): Promise<ProductListResponse> => {
     const { data } = await axiosInstance.get<ProductListResponse>(
@@ -45,6 +52,30 @@ export const productAPI = {
           ...(params?.categoryId && { categoryId: params.categoryId }),
           ...(params?.page && { page: params.page }),
           ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
+  /**
+   * Search products with cursor pagination (infinite scroll)
+   * GET /product/search-cursor?query=&cursor=&limit=20
+   */
+  fetchSearchCursor: async (params: {
+    query: string;
+    cursor?: string | null;
+    limit?: number;
+    categoryId?: string;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/product/search-cursor",
+      {
+        params: {
+          query: params.query,
+          ...(params.cursor && { cursor: params.cursor }),
+          ...(params.limit && { limit: params.limit }),
+          ...(params.categoryId && { categoryId: params.categoryId }),
         },
       }
     );
