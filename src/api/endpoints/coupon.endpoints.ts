@@ -15,10 +15,42 @@ export const couponAPI = {
     return data;
   },
 
-
+  /**
+   * Get all coupons with cursor pagination (infinite scroll)
+   */
+  fetchAllCursor: async (params?: {
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/coupon/cursor", {
+      params: {
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
 
   /**
-   * Get a single country by ID
+   * Search coupons with cursor pagination (infinite scroll)
+   */
+  fetchSearchCursor: async (params?: {
+    query: string;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/coupon/search-cursor", {
+      params: {
+        query: params?.query,
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
+   * Get a single coupon by ID
    */
   fetchOne: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.get<any>(`/coupon/${id}`);

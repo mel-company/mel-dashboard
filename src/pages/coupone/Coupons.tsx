@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useCallback, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -10,20 +10,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Search, Plus, X, Ticket, Calendar, Users, Loader2 } from "lucide-react";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Search, Plus, X, Ticket, Calendar, Users } from "lucide-react";
-import {
-  useFetchCoupons,
-  useSearchCoupons,
+  useFetchCouponsCursor,
+  useSearchCouponsCursor,
 } from "@/api/wrappers/coupon.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
+
+const CURSOR_LIMIT = 20;
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -38,87 +33,75 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 
 const Coupons = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = searchParams.get("page");
-  const currentPage = pageParam ? parseInt(pageParam) : 1;
-  const searchPageParam = searchParams.get("s");
-  const currentSearchPage = searchPageParam ? parseInt(searchPageParam) : 1;
-  const limit = 10;
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
 
   const {
-    data: listData,
-    isLoading: isListLoading,
-    error: listError,
-    refetch: refetchList,
-    isFetching: isListFetching,
-  } = useFetchCoupons(
-    {
-      page: currentPage,
-      limit,
-    },
+    data: cursorData,
+    fetchNextPage: fetchNextCursor,
+    hasNextPage: hasNextCursor,
+    isFetchingNextPage: isFetchingNextCursor,
+    isLoading: isCursorLoading,
+    error: cursorError,
+    refetch: refetchCursor,
+    isFetching: isCursorFetching,
+  } = useFetchCouponsCursor(
+    { limit: CURSOR_LIMIT },
     !isSearching
   );
 
-  // Reset to page 1 when search query changes
-  useEffect(() => {
-    if (debouncedQuery) {
-      setSearchParams({ s: "1" });
-    } else {
-      setSearchParams({ page: "1" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
-
-
   const {
     data: searchData,
+    fetchNextPage: fetchNextSearch,
+    hasNextPage: hasNextSearch,
+    isFetchingNextPage: isFetchingNextSearch,
     isLoading: isSearchLoading,
     error: searchError,
     refetch: refetchSearch,
     isFetching: isSearchFetching,
-  } = useSearchCoupons(
-    {
-      query: debouncedQuery,
-      page: currentSearchPage,
-      limit,
-    },
+  } = useSearchCouponsCursor(
+    { query: debouncedQuery, limit: CURSOR_LIMIT },
     isSearching
   );
 
+  const flatCoupons = cursorData?.pages.flatMap((p) => p.data) ?? [];
+  const flatSearchCoupons = searchData?.pages.flatMap((p) => p.data) ?? [];
 
-  const activeData = isSearching ? searchData : listData;
-  const coupons: any[] = !activeData
-    ? []
-    : Array.isArray(activeData)
-    ? activeData
-    : activeData.data ?? [];
+  const coupons: any[] = isSearching ? flatSearchCoupons : flatCoupons;
 
-  const error = isSearching ? searchError : listError;
-  const refetch = isSearching ? refetchSearch : refetchList;
-  const isFetching = isSearching ? isSearchFetching : isListFetching;
-  const isLoading = isSearching ? isSearchLoading : isListLoading;
+  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
+  const isFetchingNextPage = isSearching
+    ? isFetchingNextSearch
+    : isFetchingNextCursor;
+  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
 
-  const totalPages = Math.ceil(
-    (listData?.total ?? searchData?.total ?? 0) / limit
-  );
+  const error = isSearching ? searchError : cursorError;
+  const refetch = isSearching ? refetchSearch : refetchCursor;
+  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
+  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
 
-  // Get the actual current page based on search state
-  const actualCurrentPage = isSearching ? currentSearchPage : currentPage;
-
-  const handlePageChange = (page: number) => {
-    // Ensure page is within valid bounds
-    const safePage = Math.max(1, Math.min(page, totalPages || 1));
-    if (isSearching) {
-      setSearchParams({ s: safePage.toString() });
-    } else {
-      setSearchParams({ page: safePage.toString() });
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMore();
+      },
+      { rootMargin: "200px", threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleLoadMore, hasNextPage, isFetchingNextPage]);
 
   const formatCouponValue = (coupon: any) => {
     if (coupon.type === "PERCENTAGE") {
@@ -196,52 +179,8 @@ const Coupons = () => {
         </Button>
       </div>
 
-      {totalPages > 1 && coupons.length > 0 ? (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage - 1);
-                }}
-                aria-disabled={actualCurrentPage <= 1}
-                className={
-                  actualCurrentPage <= 1
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-
-            <PaginationItem className="mx-4 flex items-center gap-2">
-              <span>{actualCurrentPage}</span>
-              <span>من</span>
-              <span>{totalPages}</span>
-            </PaginationItem>
-
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage + 1);
-                }}
-                aria-disabled={actualCurrentPage >= totalPages}
-                className={
-                  actualCurrentPage >= totalPages
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      ) : null}
-
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {isLoading && !activeData ? (
+        {isLoading && !coupons.length ? (
           <div className="col-span-full">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -258,7 +197,7 @@ const Coupons = () => {
               ))}
             </div>
           </div>
-        ) : error && !activeData ? (
+        ) : error && !coupons.length ? (
           <div className="col-span-full">
             <ErrorPage
               error={error}
@@ -286,111 +225,130 @@ const Coupons = () => {
                     }
                   : {
                       label: "إضافة كوبون",
-                      onClick: () => navigate("/coupons/add"),
+                      to: "/coupons/add",
                       icon: <Plus className="size-4" />,
                     }
               }
             />
           </div>
         ) : (
-          coupons.map((coupon) => (
-            <Link key={coupon.id} to={`/coupons/${coupon.id}`}>
-              <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
-                <CardHeader className="pb-4">
-                  <div className="relative h-40 flex items-center justify-center w-full overflow-hidden rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
-                    <Ticket className="size-18 text-primary" />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <CardTitle className="line-clamp-2 text-right">
-                    {coupon.code}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground line-clamp-2 text-right">
-                    {coupon.description || "—"}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-lg font-bold text-primary">
-                        {formatCouponValue(coupon)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatAppliesTo(coupon.appliesTo)}
-                      </span>
-                    </div>
-                    <Badge
-                      variant={
-                        !coupon.isActive || isExpired(coupon)
-                          ? "secondary"
+          <>
+            {coupons.map((coupon) => (
+              <Link key={coupon.id} to={`/coupons/${coupon.id}`}>
+                <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
+                  <CardContent className="space-y-3">
+                    <CardTitle className="line-clamp-2 text-right">
+                      {coupon.code}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground line-clamp-2 text-right">
+                      {coupon.description || "—"}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-lg font-bold text-primary">
+                          {formatCouponValue(coupon)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatAppliesTo(coupon.appliesTo)}
+                        </span>
+                      </div>
+                      <Badge
+                        variant={
+                          !coupon.isActive || isExpired(coupon)
+                            ? "secondary"
+                            : isNotStarted(coupon)
+                            ? "outline"
+                            : "default"
+                        }
+                      >
+                        {!coupon.isActive
+                          ? "غير مفعل"
+                          : isExpired(coupon)
+                          ? "منتهي"
                           : isNotStarted(coupon)
-                          ? "outline"
-                          : "default"
-                      }
-                    >
-                      {!coupon.isActive
-                        ? "غير مفعل"
-                        : isExpired(coupon)
-                        ? "منتهي"
-                        : isNotStarted(coupon)
-                        ? "لم يبدأ"
-                        : "نشط"}
+                          ? "لم يبدأ"
+                          : "نشط"}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {coupon.minOrderTotal ? (
+                        <Badge variant="outline" className="text-xs">
+                          حد أدنى: {coupon.minOrderTotal} د.ع
+                        </Badge>
+                      ) : null}
+                      {coupon.usageLimit ? (
+                        <Badge variant="outline" className="text-xs">
+                          <Users className="size-3 mr-1" />
+                          {coupon.usedCount || 0}/{coupon.usageLimit}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      {coupon.startsAt ? (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="size-3" />
+                          <span>يبدأ: {formatDate(coupon.startsAt)}</span>
+                        </div>
+                      ) : null}
+                      {coupon.expiresAt ? (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="size-3" />
+                          <span>ينتهي: {formatDate(coupon.expiresAt)}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="flex mb-2 flex-wrap gap-2">
+                      {coupon._count?.products > 0 ? (
+                        <Badge variant="outline" className="text-xs">
+                          {coupon._count.products} منتج
+                        </Badge>
+                      ) : null}
+                      {coupon._count?.categories > 0 ? (
+                        <Badge variant="outline" className="text-xs">
+                          {coupon._count.categories} فئة
+                        </Badge>
+                      ) : null}
+                      {coupon._count?.redemptions > 0 ? (
+                        <Badge variant="secondary" className="text-xs">
+                          {coupon._count.redemptions} استخدام
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex items-center justify-between border-t pt-2">
+                    <span className="text-sm text-muted-foreground">
+                      {formatDate(coupon.createdAt)}
+                    </span>
+                    <Badge variant="default" className="px-2 py-1">
+                      عرض التفاصيل
                     </Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {coupon.minOrderTotal ? (
-                      <Badge variant="outline" className="text-xs">
-                        حد أدنى: {coupon.minOrderTotal} د.ع
-                      </Badge>
-                    ) : null}
-                    {coupon.usageLimit ? (
-                      <Badge variant="outline" className="text-xs">
-                        <Users className="size-3 mr-1" />
-                        {coupon.usedCount || 0}/{coupon.usageLimit}
-                      </Badge>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    {coupon.startsAt ? (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="size-3" />
-                        <span>يبدأ: {formatDate(coupon.startsAt)}</span>
-                      </div>
-                    ) : null}
-                    {coupon.expiresAt ? (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="size-3" />
-                        <span>ينتهي: {formatDate(coupon.expiresAt)}</span>
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="flex mb-2 flex-wrap gap-2">
-                    {coupon._count?.products > 0 ? (
-                      <Badge variant="outline" className="text-xs">
-                        {coupon._count.products} منتج
-                      </Badge>
-                    ) : null}
-                    {coupon._count?.categories > 0 ? (
-                      <Badge variant="outline" className="text-xs">
-                        {coupon._count.categories} فئة
-                      </Badge>
-                    ) : null}
-                    {coupon._count?.redemptions > 0 ? (
-                      <Badge variant="secondary" className="text-xs">
-                        {coupon._count.redemptions} استخدام
-                      </Badge>
-                    ) : null}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex items-center justify-between border-t pt-2">
-                  <span className="text-sm text-muted-foreground">
-                    {formatDate(coupon.createdAt)}
-                  </span>
-                  <Badge variant="default" className="px-2 py-1">
-                    عرض التفاصيل
-                  </Badge>
-                </CardFooter>
-              </Card>
-            </Link>
-          ))
+                  </CardFooter>
+                </Card>
+              </Link>
+            ))}
+            <div
+              ref={loadMoreRef}
+              className="col-span-full flex justify-center py-6"
+            >
+              {hasNextPage && (
+                <Button
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      جاري التحميل...
+                    </>
+                  ) : (
+                    "تحميل المزيد"
+                  )}
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>
