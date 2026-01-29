@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useCallback, useState } from "react";
+import { Link } from "react-router-dom";
 import { DISCOUNT_STATUS } from "@/utils/constants";
 import {
   Card,
@@ -11,110 +11,102 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Search, Plus, Tag, Calendar, Package, X, Loader2 } from "lucide-react";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Search, Plus, Tag, Calendar, Package, X } from "lucide-react";
-import {
-  useFetchDiscounts,
-  useSearchDiscounts,
+  useFetchDiscountsCursor,
+  useSearchDiscountsCursor,
 } from "@/api/wrappers/discount.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import DiscountsSkeleton from "./DiscountsSkeleton";
 
+const CURSOR_LIMIT = 9;
+
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+
+  return debouncedValue;
+}
+
 const Discounts = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = searchParams.get("page");
-  const currentPage = pageParam ? parseInt(pageParam) : 1;
-  const searchPageParam = searchParams.get("s");
-  const currentSearchPage = searchPageParam ? parseInt(searchPageParam) : 1;
-  const limit = 9;
-
-  function useDebouncedValue<T>(value: T, delayMs: number) {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-
-    useEffect(() => {
-      const id = setTimeout(() => setDebouncedValue(value), delayMs);
-      return () => clearTimeout(id);
-    }, [value, delayMs]);
-
-    return debouncedValue;
-  }
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
 
-  // Reset to page 1 when search query changes
-  useEffect(() => {
-    if (debouncedQuery) {
-      setSearchParams({ s: "1" });
-    } else {
-      setSearchParams({ page: "1" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
-
   const {
-    data: listData,
-    isLoading: isListLoading,
-    error: listError,
-    refetch: refetchList,
-    isFetching: isListFetching,
-  } = useFetchDiscounts(
-    {
-      page: currentPage,
-      limit,
-    },
+    data: cursorData,
+    fetchNextPage: fetchNextCursor,
+    hasNextPage: hasNextCursor,
+    isFetchingNextPage: isFetchingNextCursor,
+    isLoading: isCursorLoading,
+    error: cursorError,
+    refetch: refetchCursor,
+    isFetching: isCursorFetching,
+  } = useFetchDiscountsCursor(
+    { limit: CURSOR_LIMIT },
     !isSearching
   );
 
   const {
     data: searchData,
+    fetchNextPage: fetchNextSearch,
+    hasNextPage: hasNextSearch,
+    isFetchingNextPage: isFetchingNextSearch,
     isLoading: isSearchLoading,
     error: searchError,
     refetch: refetchSearch,
     isFetching: isSearchFetching,
-  } = useSearchDiscounts({
-    query: debouncedQuery,
-    page: currentSearchPage,
-    limit,
-  });
-
-  const activeData = isSearching ? searchData : listData;
-  const discounts: any[] = !activeData
-    ? []
-    : Array.isArray(activeData)
-    ? activeData
-    : activeData.data ?? [];
-
-  const error = isSearching ? searchError : listError;
-  const refetch = isSearching ? refetchSearch : refetchList;
-  const isFetching = isSearching ? isSearchFetching : isListFetching;
-  const isLoading = isSearching ? isSearchLoading : isListLoading;
-
-  const totalPages = Math.ceil(
-    (listData?.total ?? searchData?.total ?? 0) / limit
+  } = useSearchDiscountsCursor(
+    { query: debouncedQuery, limit: CURSOR_LIMIT },
+    isSearching
   );
 
-  // Get the actual current page based on search state
-  const actualCurrentPage = isSearching ? currentSearchPage : currentPage;
+  const flatDiscounts = cursorData?.pages.flatMap((p) => p.data) ?? [];
+  const flatSearchDiscounts = searchData?.pages.flatMap((p) => p.data) ?? [];
 
-  const handlePageChange = (page: number) => {
-    // Ensure page is within valid bounds
-    const safePage = Math.max(1, Math.min(page, totalPages || 1));
-    if (isSearching) {
-      setSearchParams({ s: safePage.toString() });
-    } else {
-      setSearchParams({ page: safePage.toString() });
+  const discounts: any[] = isSearching ? flatSearchDiscounts : flatDiscounts;
+
+  const baseUrl = cursorData?.pages?.[0]?.baseUrl ?? "";
+  const searchBaseUrl = searchData?.pages?.[0]?.baseUrl ?? "";
+  const imageBaseUrl = isSearching ? searchBaseUrl : baseUrl;
+
+  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
+  const isFetchingNextPage = isSearching
+    ? isFetchingNextSearch
+    : isFetchingNextCursor;
+  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
+
+  const error = isSearching ? searchError : cursorError;
+  const refetch = isSearching ? refetchSearch : refetchCursor;
+  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
+  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMore();
+      },
+      { rootMargin: "200px", threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleLoadMore, hasNextPage, isFetchingNextPage]);
 
   // Get status badge variant and text
   const getStatusBadge = (status: string) => {
@@ -186,56 +178,12 @@ const Discounts = () => {
         </Link>
       </div>
 
-      {totalPages > 1 && discounts.length > 0 ? (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage - 1);
-                }}
-                aria-disabled={actualCurrentPage <= 1}
-                className={
-                  actualCurrentPage <= 1
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-
-            <PaginationItem className="mx-4 flex items-center gap-2">
-              <span>{actualCurrentPage}</span>
-              <span>من</span>
-              <span>{totalPages}</span>
-            </PaginationItem>
-
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage + 1);
-                }}
-                aria-disabled={actualCurrentPage >= totalPages}
-                className={
-                  actualCurrentPage >= totalPages
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      ) : null}
-
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {isLoading && !activeData ? (
+        {isLoading && !discounts.length ? (
           <div className="col-span-full">
             <DiscountsSkeleton count={6} showHeader={false} />
           </div>
-        ) : error && !activeData ? (
+        ) : error && !discounts.length ? (
           <div className="col-span-full">
             <ErrorPage
               error={error}
@@ -263,80 +211,94 @@ const Discounts = () => {
                     }
                   : {
                       label: "إضافة خصم",
-                      onClick: () => {},
+                      to: "/discounts/add",
                       icon: <Plus className="size-4" />,
                     }
               }
             />
           </div>
         ) : (
-          discounts.map((discount) => {
-            const statusBadge = getStatusBadge(discount.discount_status);
-            return (
-              <Link key={discount.id} to={`/discounts/${discount.id}`}>
-                <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
-                  <CardHeader className="pb-4">
-                    <div className="relative h-32 flex items-center justify-center w-full overflow-hidden rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
-                      {discount.image ? (
-                        <img
-                          src={`${listData?.baseUrl}/${discount.image}`}
-                          alt={discount.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Tag className="size-12 text-primary" />
-                          <div className="text-3xl font-bold text-primary">
-                            {discount.discount_percentage}%
+          <>
+            {discounts.map((discount) => {
+              const statusBadge = getStatusBadge(discount.discount_status);
+              return (
+                <Link key={discount.id} to={`/discounts/${discount.id}`}>
+                  <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
+                    <CardHeader className="pb-4">
+                      <div className="relative h-32 flex items-center justify-center w-full overflow-hidden rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
+                        {discount.image ? (
+                          <img
+                            src={`${imageBaseUrl}/${discount.image}`}
+                            alt={discount.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Tag className="size-12 text-primary" />
+                            <div className="text-3xl font-bold text-primary">
+                              {discount.discount_percentage}%
+                            </div>
                           </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <CardTitle className="line-clamp-1 pb-2 text-right text-lg font-semibold">
+                        {discount.name}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground line-clamp-2 text-right">
+                        {discount.description}
+                      </p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge
+                          variant="default"
+                          className={`${statusBadge.className} text-sm`}
+                        >
+                          {statusBadge.text}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="mb-4 flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="size-4" />
+                          <span>
+                            {formatDate(discount.discount_start_date)} -{" "}
+                            {formatDate(discount.discount_end_date)}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <CardTitle className="line-clamp-1 pb-2 text-right text-lg font-semibold">
-                      {discount.name}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground line-clamp-2 text-right">
-                      {discount.description}
-                    </p>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge
-                        variant="default"
-                        className={`${statusBadge.className} text-sm`}
-                      >
-                        {statusBadge.text}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex items-center justify-end border-t pt-2">
+                      <Badge variant="default" className="px-2 py-1">
+                        عرض التفاصيل
                       </Badge>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="size-4" />
-                        <span>
-                          {formatDate(discount.discount_start_date)} -{" "}
-                          {formatDate(discount.discount_end_date)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Package className="size-4" />
-                          <span>{discount._count?.products ?? 0} منتج</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Tag className="size-4" />
-                          <span>{discount._count?.categories ?? 0} فئة</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex items-center justify-end border-t pt-2">
-                    <Badge variant="default" className="px-2 py-1">
-                      عرض التفاصيل
-                    </Badge>
-                  </CardFooter>
-                </Card>
-              </Link>
-            );
-          })
+                    </CardFooter>
+                  </Card>
+                </Link>
+              );
+            })}
+            <div
+              ref={loadMoreRef}
+              className="col-span-full flex justify-center py-6"
+            >
+              {hasNextPage && (
+                <Button
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      جاري التحميل...
+                    </>
+                  ) : (
+                    "تحميل المزيد"
+                  )}
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

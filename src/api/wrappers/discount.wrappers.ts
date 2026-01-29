@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { discountAPI } from "../endpoints/discount.endpoints";
 
 /**
@@ -11,6 +11,7 @@ export const discountKeys = {
   details: () => [...discountKeys.all, "detail"] as const,
   detail: (id: string) => [...discountKeys.details(), id] as const,
   search: (params?: any) => [...discountKeys.all, "search", params] as const,
+  cursor: (params?: any) => [...discountKeys.all, "cursor", params] as const,
 };
 
 /**
@@ -21,6 +22,44 @@ export const useFetchDiscounts = (params?: any, enabled: boolean = true) => {
     queryKey: discountKeys.list(params),
     queryFn: () => discountAPI.fetchAll(params),
     enabled,
+  });
+};
+
+/**
+ * Fetch all discounts with cursor pagination (infinite scroll)
+ */
+export const useFetchDiscountsCursor = (params?: any, enabled: boolean = true) => {
+  return useInfiniteQuery<any>({
+    queryKey: discountKeys.cursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      discountAPI.fetchAllCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Search discounts with cursor pagination (infinite scroll)
+ */
+export const useSearchDiscountsCursor = (
+  params?: { query: string; limit?: number },
+  enabled = true,
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: discountKeys.search({ ...params, cursor: true }),
+    enabled: enabled && !!params?.query?.trim(),
+    queryFn: ({ pageParam }) =>
+      discountAPI.fetchSearchCursor({
+        query: params?.query ?? "",
+        limit: params?.limit,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
   });
 };
 

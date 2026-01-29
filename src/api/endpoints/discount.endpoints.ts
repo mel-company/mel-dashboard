@@ -16,6 +16,40 @@ export const discountAPI = {
   },
 
   /**
+   * Get all discounts with cursor pagination (infinite scroll)
+   */
+  fetchAllCursor: async (params?: {
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/discount/cursor", {
+      params: {
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
+   * Search discounts with cursor pagination (infinite scroll)
+   */
+  fetchSearchCursor: async (params?: {
+    query: string;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/discount/search-cursor", {
+      params: {
+        query: params?.query,
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
    * Search for discounts with optional filtering and pagination
    */
   search: async (params?: any): Promise<any> => {
