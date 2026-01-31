@@ -11,7 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Package, Search, Check, ShoppingCart } from "lucide-react";
 import { useFetchProducts } from "@/api/wrappers/product.wrappers";
-import { useAddProductsToDiscount } from "@/api/wrappers/discount.wrappers";
+import {
+  useAddProductsToDiscount,
+  useFetchAvailableProducts,
+} from "@/api/wrappers/discount.wrappers";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,8 +36,8 @@ const AddDiscountProductDialog = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
-  const { data: productsData, isLoading } = useFetchProducts(
-    { limit: 100 },
+  const { data: productsData, isLoading } = useFetchAvailableProducts(
+    { discountId },
     open
   );
 

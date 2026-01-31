@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { discountAPI } from "../endpoints/discount.endpoints";
 
 /**
@@ -12,6 +17,10 @@ export const discountKeys = {
   detail: (id: string) => [...discountKeys.details(), id] as const,
   search: (params?: any) => [...discountKeys.all, "search", params] as const,
   cursor: (params?: any) => [...discountKeys.all, "cursor", params] as const,
+  availableProducts: (params?: any) =>
+    [...discountKeys.all, "available-products", params] as const,
+  availableCategories: (params?: any) =>
+    [...discountKeys.all, "available-categories", params] as const,
 };
 
 /**
@@ -26,9 +35,40 @@ export const useFetchDiscounts = (params?: any, enabled: boolean = true) => {
 };
 
 /**
+ * Fetch available products for a discount
+ */
+export const useFetchAvailableProducts = (
+  params?: any,
+  enabled: boolean = true
+) => {
+  return useQuery<any>({
+    queryKey: discountKeys.availableProducts(params),
+    queryFn: () => discountAPI.fetchAvailableProducts(params),
+    enabled,
+  });
+};
+
+/**
+ * Fetch available categories for a discount
+ */
+export const useFetchAvailableCategories = (
+  params?: any,
+  enabled: boolean = true
+) => {
+  return useQuery<any>({
+    queryKey: discountKeys.availableCategories(params),
+    queryFn: () => discountAPI.fetchAvailableCategories(params),
+    enabled,
+  });
+};
+
+/**
  * Fetch all discounts with cursor pagination (infinite scroll)
  */
-export const useFetchDiscountsCursor = (params?: any, enabled: boolean = true) => {
+export const useFetchDiscountsCursor = (
+  params?: any,
+  enabled: boolean = true
+) => {
   return useInfiniteQuery<any>({
     queryKey: discountKeys.cursor(params),
     enabled,
@@ -47,7 +87,7 @@ export const useFetchDiscountsCursor = (params?: any, enabled: boolean = true) =
  */
 export const useSearchDiscountsCursor = (
   params?: { query: string; limit?: number },
-  enabled = true,
+  enabled = true
 ) => {
   return useInfiniteQuery<any>({
     queryKey: discountKeys.search({ ...params, cursor: true }),

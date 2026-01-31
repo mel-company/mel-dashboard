@@ -15,6 +15,26 @@ export const discountAPI = {
     return data;
   },
 
+  fetchAvailableProducts: async (params?: any): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      `/discount/${params?.discountId}/product/available`
+    );
+    return data;
+  },
+
+  fetchAvailableCategories: async (params?: any): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/discount/available-categories",
+      {
+        params: {
+          ...(params?.discountId && { discountId: params.discountId }),
+          ...(params?.categoryId && { categoryId: params.categoryId }),
+        },
+      }
+    );
+    return data;
+  },
+
   /**
    * Get all discounts with cursor pagination (infinite scroll)
    */

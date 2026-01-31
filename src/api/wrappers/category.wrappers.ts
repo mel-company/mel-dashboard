@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { categoryAPI } from "../endpoints/category.endpoints";
 
 /**
@@ -29,43 +34,46 @@ export const useFetchCategories = (params?: any, enabled: boolean = true) => {
   });
 };
 
-  /**
-   * Fetch all categories with cursor pagination (infinite scroll)
-   */
-  export const useFetchCategoriesCursor = (params?: any, enabled: boolean = true) => {
-    return useInfiniteQuery<any>({
-      queryKey: categoryKeys.cursor(params),
-      enabled,
-      queryFn: ({ pageParam }) =>
-        categoryAPI.fetchAllCursor({
-          ...params,
-          cursor: typeof pageParam === "string" ? pageParam : undefined,
-        }),
-      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-      initialPageParam: null as string | null | undefined,
-    });
-  };
+/**
+ * Fetch all categories with cursor pagination (infinite scroll)
+ */
+export const useFetchCategoriesCursor = (
+  params?: any,
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: categoryKeys.cursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      categoryAPI.fetchAllCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
 
-  /**
-   * Search categories with cursor pagination (infinite scroll)
-   */
-  export const useSearchCategoriesCursor = (
-    params?: { query: string; limit?: number },
-    enabled = true,
-  ) => {
-    return useInfiniteQuery<any>({
-      queryKey: categoryKeys.search({ ...params, cursor: true }),
-      enabled: enabled && !!params?.query?.trim(),
-      queryFn: ({ pageParam }) =>
-        categoryAPI.fetchSearchCursor({
-          query: params?.query ?? "",
-          limit: params?.limit,
-          cursor: typeof pageParam === "string" ? pageParam : undefined,
-        }),
-      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-      initialPageParam: null as string | null | undefined,
-    });
-  };
+/**
+ * Search categories with cursor pagination (infinite scroll)
+ */
+export const useSearchCategoriesCursor = (
+  params?: { query: string; limit?: number },
+  enabled = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: categoryKeys.search({ ...params, cursor: true }),
+    enabled: enabled && !!params?.query?.trim(),
+    queryFn: ({ pageParam }) =>
+      categoryAPI.fetchSearchCursor({
+        query: params?.query ?? "",
+        limit: params?.limit,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
 
 /**
  * Fetch all categories by store domain with optional filtering and pagination
@@ -212,13 +220,13 @@ export const useRemoveProductFromCategory = () => {
  * Fetch available products not related to a category
  */
 export const useFetchAvailableProducts = (
-  categoryId: string,
+  discountId: string,
   enabled: boolean = true
 ) => {
   return useQuery<any>({
-    queryKey: categoryKeys.availableProducts(categoryId),
-    queryFn: () => categoryAPI.fetchAvailableProducts(categoryId),
-    enabled: enabled && !!categoryId,
+    queryKey: categoryKeys.availableProducts(discountId),
+    queryFn: () => categoryAPI.fetchAvailableProducts(discountId),
+    enabled: enabled && !!discountId,
   });
 };
 

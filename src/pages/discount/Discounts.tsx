@@ -49,10 +49,7 @@ const Discounts = () => {
     error: cursorError,
     refetch: refetchCursor,
     isFetching: isCursorFetching,
-  } = useFetchDiscountsCursor(
-    { limit: CURSOR_LIMIT },
-    !isSearching
-  );
+  } = useFetchDiscountsCursor({ limit: CURSOR_LIMIT }, !isSearching);
 
   const {
     data: searchData,
@@ -224,7 +221,7 @@ const Discounts = () => {
               return (
                 <Link key={discount.id} to={`/discounts/${discount.id}`}>
                   <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
-                    <CardHeader className="pb-4">
+                    {/* <CardHeader className="pb-4">
                       <div className="relative h-32 flex items-center justify-center w-full overflow-hidden rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
                         {discount.image ? (
                           <img
@@ -241,11 +238,22 @@ const Discounts = () => {
                           </div>
                         )}
                       </div>
-                    </CardHeader>
+                    </CardHeader> */}
                     <CardContent className="space-y-3">
-                      <CardTitle className="line-clamp-1 pb-2 text-right text-lg font-semibold">
-                        {discount.name}
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="line-clamp-1 pb-2 text-right text-lg font-semibold">
+                          {discount.name}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge
+                            variant="default"
+                            className={`text-sm bg-primary/80 text-primary-foreground`}
+                          >
+                            {discount.discount_percentage}%
+                          </Badge>
+                        </div>
+                      </div>
+
                       <p className="text-sm text-muted-foreground line-clamp-2 text-right">
                         {discount.description}
                       </p>
