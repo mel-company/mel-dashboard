@@ -80,6 +80,8 @@ const ProductDetails = () => {
     id ?? ""
   );
 
+  console.log(data);
+
   const { data: variantsData, refetch: refetchVariants } = useFetchVariants(
     { productId: id ?? "" },
     !!id
@@ -281,17 +283,19 @@ const ProductDetails = () => {
                 <div className="flex flex-wrap gap-2">
                   {data?.categories?.map((category: any) => (
                     <Link
-                      key={category.id}
-                      to={`/categories/${category.id}`}
+                      key={category.category.id}
+                      to={`/categories/${category.category.id}`}
                       className="inline-block"
                     >
                       <Badge
                         variant="default"
                         className="group text-sm gap-x-2 flex cursor-pointer hover:bg-primary/95 transition-colors"
                       >
-                        <p className="group-hover:underline">{category.name}</p>
+                        <p className="group-hover:underline">
+                          {category.category.name}
+                        </p>
 
-                        {data.categories.length > 1 && (
+                        {data?.categories?.length > 1 && (
                           <Button
                             tabIndex={-1}
                             variant="ghost"
@@ -301,8 +305,8 @@ const ProductDetails = () => {
                               e.preventDefault();
                               e.stopPropagation();
                               setRemovingCategory({
-                                id: category.id,
-                                name: category.name,
+                                id: category.category.id,
+                                name: category.category.name,
                               });
                             }}
                           >

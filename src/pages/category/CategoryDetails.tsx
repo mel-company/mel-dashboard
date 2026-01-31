@@ -228,16 +228,16 @@ const CategoryDetails = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {categoryProducts.map((product: any) => (
                       <Link
-                        key={product.id}
-                        to={`/products/${product.id}`}
+                        key={product.product.id}
+                        to={`/products/${product.product.id}`}
                         className="flex justify-between items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer"
                       >
                         <div className="flex icenter gap-x-2">
                           <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
-                            {product.image ? (
+                            {product.product.image ? (
                               <img
-                                src={product.image}
-                                alt={product.title}
+                                src={product.product.image}
+                                alt={product.product.title}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
@@ -246,11 +246,11 @@ const CategoryDetails = () => {
                           </div>
                           <div className="flex-1 text-right">
                             <p className="font-semibold line-clamp-1">
-                              {product.title}
+                              {product.product.title}
                             </p>
-                            {product.price && (
+                            {product.product.price && (
                               <p className="text-sm text-muted-foreground">
-                                {product.price.toLocaleString()} د.ع
+                                {product.product.price.toLocaleString()} د.ع
                               </p>
                             )}
                           </div>
@@ -264,8 +264,8 @@ const CategoryDetails = () => {
                               e.preventDefault();
                               e.stopPropagation();
                               setRemovingProduct({
-                                id: product.id,
-                                name: product.title,
+                                id: product.product.id,
+                                name: product.product.title,
                               });
                             }}
                           >

@@ -283,7 +283,7 @@ const EditCategory = ({}: Props) => {
         <div className="flex items-center justify-end gap-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="lg"
             className="gap-2"
             onClick={() => navigate(-1)}
