@@ -25,7 +25,6 @@ import {
   Calendar,
   DollarSign,
   FileText,
-  Printer,
   Truck,
   CheckCircle2,
   Clock,

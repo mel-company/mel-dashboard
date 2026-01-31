@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Package, Search, Check, ShoppingCart } from "lucide-react";
-import { useFetchProducts } from "@/api/wrappers/product.wrappers";
 import {
   useAddProductsToDiscount,
   useFetchAvailableProducts,

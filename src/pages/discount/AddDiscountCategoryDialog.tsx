@@ -10,10 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Folder, Search, Check } from "lucide-react";
-import {
-  useFetchAvailableCategories,
-  useFetchCategories,
-} from "@/api/wrappers/category.wrappers";
+import { useFetchAvailableCategories } from "@/api/wrappers/category.wrappers";
 import { useAddCategoriesToDiscount } from "@/api/wrappers/discount.wrappers";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";

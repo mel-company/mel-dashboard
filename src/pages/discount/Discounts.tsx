@@ -1,17 +1,11 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { DISCOUNT_STATUS } from "@/utils/constants";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Tag, Calendar, Package, X, Loader2 } from "lucide-react";
+import { Search, Plus, Tag, Calendar, X, Loader2 } from "lucide-react";
 import {
   useFetchDiscountsCursor,
   useSearchDiscountsCursor,
@@ -72,6 +66,7 @@ const Discounts = () => {
 
   const baseUrl = cursorData?.pages?.[0]?.baseUrl ?? "";
   const searchBaseUrl = searchData?.pages?.[0]?.baseUrl ?? "";
+  // @ts-ignore
   const imageBaseUrl = isSearching ? searchBaseUrl : baseUrl;
 
   const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
