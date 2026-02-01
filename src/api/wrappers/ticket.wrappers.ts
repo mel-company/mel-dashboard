@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { ticketAPI } from "../endpoints/ticket.endpoints";
 import type { CreateStoreSupportTicketDto } from "../endpoints/ticket.endpoints";
 
@@ -27,6 +27,8 @@ export const ticketKeys = {
       [...ticketKeys.store.lists(), params] as const,
     search: (params?: SearchTicketsStoreParams) =>
       [...ticketKeys.store.lists(), "search", params] as const,
+    cursor: (params?: any) =>
+      [...ticketKeys.store.lists(), "cursor", params] as const,
     details: () => [...ticketKeys.all, "store", "detail"] as const,
     detail: (id: string) => [...ticketKeys.store.details(), id] as const,
   },
@@ -43,6 +45,43 @@ export const useFetchTicketsStore = (
     queryKey: ticketKeys.store.list(params),
     queryFn: () => ticketAPI.fetchAllStore(params),
     enabled,
+  });
+};
+
+/** Fetch all support tickets with cursor pagination (infinite scroll) */
+export const useFetchTicketsStoreCursor = (
+  params?: { limit?: number; status?: string },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: ticketKeys.store.cursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      ticketAPI.fetchAllStoreCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/** Search support tickets with cursor pagination (infinite scroll) */
+export const useSearchTicketsStoreCursor = (
+  params?: { query: string; limit?: number },
+  enabled = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: ticketKeys.store.search({ ...params, cursor: true }),
+    enabled: enabled && !!params?.query?.trim(),
+    queryFn: ({ pageParam }) =>
+      ticketAPI.searchStoreCursor({
+        query: params?.query ?? "",
+        limit: params?.limit,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
   });
 };
 
@@ -74,6 +113,7 @@ export const useCreateTicketStore = () => {
     mutationFn: (body) => ticketAPI.createStore(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.lists() });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.store.cursor() });
     },
   });
 };
@@ -85,6 +125,7 @@ export const useCancelTicketStore = () => {
     mutationFn: (id) => ticketAPI.cancelStore(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.lists() });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.store.cursor() });
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.detail(id) });
     },
   });
@@ -97,6 +138,7 @@ export const useCloseTicketStore = () => {
     mutationFn: (id) => ticketAPI.closeStore(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.lists() });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.store.cursor() });
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.detail(id) });
     },
   });
@@ -109,6 +151,7 @@ export const useDeleteTicketStore = () => {
     mutationFn: (id) => ticketAPI.deleteStore(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.lists() });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.store.cursor() });
       queryClient.removeQueries({ queryKey: ticketKeys.store.detail(id) });
     },
   });
