@@ -16,6 +16,43 @@ export const notificationAPI = {
   },
 
   /**
+   * Get all notifications with cursor pagination (infinite scroll)
+   */
+  fetchAllCursor: async (params?: {
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/notification/cursor", {
+      params: {
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
+   * Search notifications with cursor pagination (infinite scroll)
+   */
+  fetchSearchCursor: async (params?: {
+    query: string;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/notification/search-cursor",
+      {
+        params: {
+          query: params?.query,
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
+  /**
    * Search for notifications with optional filtering and pagination
    */
   search: async (params?: any): Promise<any> => {

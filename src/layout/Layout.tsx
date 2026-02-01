@@ -134,7 +134,13 @@ const Layout = () => {
       <main className="flex-1 overflow-y-auto overflow-x-hidden w-full custom-scrollbar hide-scrollbar mt-2 rounded-lg">
         {/* Global Breadcrumb - top, aligned to the right */}
         {location.pathname && (
-          <div className="px-4 sm:px-6 lg:px-8 pt-2">
+          <div
+            className={`${
+              location.pathname.includes("settings")
+                ? "pr-16 pl-4 sm:pr-20 sm:pl-6 lg:pr-8 lg:pl-8"
+                : "pr-4 pl-4 sm:pr-6 sm:pl-6 lg:pr-8 lg:pl-8"
+            } pt-2`}
+          >
             <Breadcrumb className="justify-start">
               <BreadcrumbList>
                 {breadcrumbItems.map((item, index) => (

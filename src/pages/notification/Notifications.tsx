@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  useFetchNotifications,
-  useSearchNotifications,
+  useFetchNotificationsCursor,
+  useSearchNotificationsCursor,
   useUpdateNotificationReadStatus,
 } from "@/api/wrappers/notification.wrappers";
 import {
@@ -15,13 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { Input } from "@/components/ui/input";
 import {
   Search,
   Plus,
@@ -29,11 +23,15 @@ import {
   Clock,
   MessageSquare,
   FileText,
+  X,
+  Loader2,
 } from "lucide-react";
 import NotificationsSkeleton from "./NotificationsSkeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import { cn } from "@/lib/utils";
+
+const CURSOR_LIMIT = 10;
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -50,83 +48,75 @@ type Props = {};
 
 const Notifications = ({}: Props) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = searchParams.get("page");
-  const currentPage = pageParam ? parseInt(pageParam) : 1;
-  const searchPageParam = searchParams.get("s");
-  const currentSearchPage = searchPageParam ? parseInt(searchPageParam) : 1;
-  const limit = 10;
-
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
 
-  // Reset to page 1 when search query changes
-  useEffect(() => {
-    if (debouncedQuery) {
-      setSearchParams({ s: "1" });
-    } else {
-      setSearchParams({ page: "1" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
-
   const {
-    data: listData,
-    isLoading: isListLoading,
-    error: listError,
-    refetch: refetchList,
-    // isFetching: isListFetching,
-  } = useFetchNotifications(
-    {
-      page: currentPage,
-      limit,
-    },
-    !isSearching
-  );
+    data: cursorData,
+    fetchNextPage: fetchNextCursor,
+    hasNextPage: hasNextCursor,
+    isFetchingNextPage: isFetchingNextCursor,
+    isLoading: isCursorLoading,
+    error: cursorError,
+    refetch: refetchCursor,
+    isFetching: isCursorFetching,
+  } = useFetchNotificationsCursor({ limit: CURSOR_LIMIT }, !isSearching);
 
   const {
     data: searchData,
+    fetchNextPage: fetchNextSearch,
+    hasNextPage: hasNextSearch,
+    isFetchingNextPage: isFetchingNextSearch,
     isLoading: isSearchLoading,
     error: searchError,
     refetch: refetchSearch,
-    // isFetching: isSearchFetching,
-  } = useSearchNotifications({
-    query: debouncedQuery,
-    page: currentSearchPage,
-    limit,
-  });
-
-  const activeData = isSearching ? searchData : listData;
-  const notifications: any[] = !activeData
-    ? []
-    : Array.isArray(activeData)
-    ? activeData
-    : activeData.data ?? [];
-
-  const error = isSearching ? searchError : listError;
-  const refetch = isSearching ? refetchSearch : refetchList;
-  // const isFetching = isSearching ? isSearchFetching : isListFetching;
-  const isLoading = isSearching ? isSearchLoading : isListLoading;
-
-  const totalPages = Math.ceil(
-    (listData?.total ?? searchData?.total ?? 0) / limit
+    isFetching: isSearchFetching,
+  } = useSearchNotificationsCursor(
+    { query: debouncedQuery, limit: CURSOR_LIMIT },
+    isSearching
   );
 
-  // Get the actual current page based on search state
-  const actualCurrentPage = isSearching ? currentSearchPage : currentPage;
+  const flatNotifications = cursorData?.pages.flatMap((p) => p.data) ?? [];
+  const flatSearchNotifications =
+    searchData?.pages.flatMap((p) => p.data) ?? [];
 
-  const handlePageChange = (page: number) => {
-    // Ensure page is within valid bounds
-    const safePage = Math.max(1, Math.min(page, totalPages || 1));
-    if (isSearching) {
-      setSearchParams({ s: safePage.toString() });
-    } else {
-      setSearchParams({ page: safePage.toString() });
+  const notifications: any[] = isSearching
+    ? flatSearchNotifications
+    : flatNotifications;
+
+  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
+  const isFetchingNextPage = isSearching
+    ? isFetchingNextSearch
+    : isFetchingNextCursor;
+  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
+
+  const error = isSearching ? searchError : cursorError;
+  const refetch = isSearching ? refetchSearch : refetchCursor;
+  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
+  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMore();
+      },
+      { rootMargin: "200px", threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleLoadMore, hasNextPage, isFetchingNextPage]);
 
   // Mutation to update read status
   const { mutate: updateReadStatus } = useUpdateNotificationReadStatus();
@@ -149,13 +139,24 @@ const Notifications = ({}: Props) => {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-full sm:max-w-md">
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <Input
             type="search"
             placeholder="ابحث عن إشعار..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right rounded-md border border-input bg-background py-2 pr-10 pl-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
+            className="w-full text-right pr-10 pl-10"
+            dir="rtl"
           />
+          {searchQuery ? (
+            <button
+              type="button"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setSearchQuery("")}
+              aria-label="مسح البحث"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
         </div>
         <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
           <Plus className="size-4" />
@@ -164,175 +165,163 @@ const Notifications = ({}: Props) => {
         </Button>
       </div>
 
-      {totalPages > 1 && notifications.length > 0 ? (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage - 1);
-                }}
-                aria-disabled={actualCurrentPage <= 1}
-                className={
-                  actualCurrentPage <= 1
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-
-            <PaginationItem className="mx-4 flex items-center gap-2">
-              <span>{actualCurrentPage}</span>
-              <span>من</span>
-              <span>{totalPages}</span>
-            </PaginationItem>
-
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage + 1);
-                }}
-                aria-disabled={actualCurrentPage >= totalPages}
-                className={
-                  actualCurrentPage >= totalPages
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      ) : null}
-
-      {/* Notifications Table */}
-      <Card>
-        {isLoading ? (
-          <div className="p-6">
-            <NotificationsSkeleton count={5} showHeader={false} />
-          </div>
-        ) : error ? (
-          <div className="p-6">
-            <ErrorPage error={error} onRetry={refetch} />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-right">العنوان</TableHead>
-                <TableHead className="text-right">الرسالة</TableHead>
-                <TableHead className="text-right">التاريخ</TableHead>
-                <TableHead className="text-right">الإجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {notifications.length === 0 ? (
+      {isLoading && !notifications.length ? (
+        <div className="p-6">
+          <NotificationsSkeleton count={5} showHeader={false} />
+        </div>
+      ) : error && !notifications.length ? (
+        <div className="p-6">
+          <ErrorPage
+            error={error}
+            onRetry={() => refetch()}
+            isRetrying={isFetching}
+          />
+        </div>
+      ) : (
+        <>
+          <Card>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-12">
-                    <EmptyPage
-                      icon={<Bell className="size-7 text-muted-foreground" />}
-                      title="لا يوجد إشعارات"
-                      description={
-                        searchQuery
-                          ? "لم يتم العثور على إشعارات تطابق البحث"
-                          : "ابدأ بإضافة إشعار جديد"
-                      }
-                    />
-                  </TableCell>
+                  <TableHead className="text-right">العنوان</TableHead>
+                  <TableHead className="text-right">الرسالة</TableHead>
+                  <TableHead className="text-right">التاريخ</TableHead>
+                  <TableHead className="text-right">الإجراءات</TableHead>
                 </TableRow>
-              ) : (
-                notifications.map((notification) => {
-                  const isRead = notification?.recipients[0]?.read;
-
-                  return (
-                    <TableRow
-                      key={notification.id}
-                      className={`hover:bg-muted/50 cursor-pointer ${
-                        !isRead ? "bg-blue-50/50 dark:bg-blue-950/20" : ""
-                      }`}
-                      onClick={() => {
-                        // Update read status when clicking on notification
-                        if (!isRead) {
-                          updateReadStatus(notification?.id, {
-                            onSuccess: () => {
-                              // Navigate to details page after updating read status
-                              navigate(`/notifications/${notification?.id}`);
-                            },
-                            onError: () => {
-                              // Still navigate even if update fails
-                              navigate(`/notifications/${notification?.id}`);
-                            },
-                          });
-                        } else {
-                          navigate(`/notifications/${notification?.id}`);
+              </TableHeader>
+              <TableBody>
+                {notifications.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-12">
+                      <EmptyPage
+                        icon={<Bell className="size-7 text-muted-foreground" />}
+                        title={
+                          searchQuery.trim() ? "لا توجد نتائج" : "لا يوجد إشعارات"
                         }
-                      }}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-x-2">
-                            {!isRead && (
-                              <div className="top-0 right-0 ">
-                                <div className="relative">
-                                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-red-500 animate-pulse" />
-                                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full bg-red-500/50 animate-ping" />
-                                </div>
-                              </div>
-                            )}
+                        description={
+                          searchQuery.trim()
+                            ? "لم يتم العثور على إشعارات تطابق البحث"
+                            : "ابدأ بإضافة إشعار جديد"
+                        }
+                        primaryAction={
+                          searchQuery.trim()
+                            ? {
+                                label: "مسح البحث",
+                                onClick: () => setSearchQuery(""),
+                                icon: <X className="size-4" />,
+                                variant: "outline",
+                              }
+                            : undefined
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  notifications.map((notification) => {
+                    const isRead = notification?.recipients?.[0]?.read;
 
-                            <Bell
-                              className={cn(
-                                "size-4 text-muted-foreground",
-                                isRead
-                                  ? "text-muted-foreground"
-                                  : "text-yellow-500"
+                    return (
+                      <TableRow
+                        key={notification.id}
+                        className={`hover:bg-muted/50 cursor-pointer ${
+                          !isRead ? "bg-blue-50/50 dark:bg-blue-950/20" : ""
+                        }`}
+                        onClick={() => {
+                          if (!isRead) {
+                            updateReadStatus(notification?.id, {
+                              onSuccess: () => {
+                                navigate(`/notifications/${notification?.id}`);
+                              },
+                              onError: () => {
+                                navigate(`/notifications/${notification?.id}`);
+                              },
+                            });
+                          } else {
+                            navigate(`/notifications/${notification?.id}`);
+                          }
+                        }}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-x-2">
+                              {!isRead && (
+                                <div className="top-0 right-0 ">
+                                  <div className="relative">
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-red-500 animate-pulse" />
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full bg-red-500/50 animate-ping" />
+                                  </div>
+                                </div>
                               )}
-                            />
+                              <Bell
+                                className={cn(
+                                  "size-4 text-muted-foreground",
+                                  isRead
+                                    ? "text-muted-foreground"
+                                    : "text-yellow-500"
+                                )}
+                              />
+                            </div>
+                            <span className="font-medium">
+                              {notification.title || "بدون عنوان"}
+                            </span>
                           </div>
-                          <span className="font-medium">
-                            {notification.title || "بدون عنوان"}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 max-w-xs">
-                          <MessageSquare className="size-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm line-clamp-2">
-                            {notification.message || "بدون رسالة"}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Clock className="size-4 text-muted-foreground" />
-                          <span className="text-sm">
-                            {formatDate(notification.createdAt)}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Link to={`/notifications/${notification.id}`}>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="gap-2"
-                          >
-                            <FileText className="size-4" />
-                            التفاصيل
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 max-w-xs">
+                            <MessageSquare className="size-4 text-muted-foreground shrink-0" />
+                            <span className="text-sm line-clamp-2">
+                              {notification.message || "بدون رسالة"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Clock className="size-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {formatDate(notification.createdAt)}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Link to={`/notifications/${notification.id}`}>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="gap-2"
+                            >
+                              <FileText className="size-4" />
+                              التفاصيل
+                            </Button>
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+          <div ref={loadMoreRef} className="flex justify-center py-6">
+            {hasNextPage && (
+              <Button
+                variant="secondary"
+                className="gap-2"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    جاري التحميل...
+                  </>
+                ) : (
+                  "تحميل المزيد"
+                )}
+              </Button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

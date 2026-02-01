@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { notificationAPI } from "../endpoints/notification.endpoints";
 
 /**
@@ -12,6 +12,7 @@ export const notificationKeys = {
   detail: (id: string) => [...notificationKeys.details(), id] as const,
   search: (params?: any) =>
     [...notificationKeys.all, "search", params] as const,
+  cursor: (params?: any) => [...notificationKeys.all, "cursor", params] as const,
   sample: () => [...notificationKeys.all, "sample"] as const,
 };
 
@@ -26,6 +27,47 @@ export const useFetchNotifications = (
     queryKey: notificationKeys.list(params),
     queryFn: () => notificationAPI.fetchAll(params),
     enabled,
+  });
+};
+
+/**
+ * Fetch all notifications with cursor pagination (infinite scroll)
+ */
+export const useFetchNotificationsCursor = (
+  params?: any,
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: notificationKeys.cursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      notificationAPI.fetchAllCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Search notifications with cursor pagination (infinite scroll)
+ */
+export const useSearchNotificationsCursor = (
+  params?: { query: string; limit?: number },
+  enabled = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: notificationKeys.search({ ...params, cursor: true }),
+    enabled: enabled && !!params?.query?.trim(),
+    queryFn: ({ pageParam }) =>
+      notificationAPI.fetchSearchCursor({
+        query: params?.query ?? "",
+        limit: params?.limit,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
   });
 };
 
@@ -65,6 +107,7 @@ export const useCreateNotification = () => {
     onSuccess: () => {
       // Invalidate and refetch notifications list
       queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.cursor() });
     },
   });
 };
@@ -80,6 +123,7 @@ export const useUpdateNotification = () => {
     onSuccess: (data, variables) => {
       // Invalidate and refetch notifications list
       queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.cursor() });
       // Update the specific notification cache
       queryClient.setQueryData(notificationKeys.detail(variables.id), data);
     },
@@ -97,6 +141,7 @@ export const useDeleteNotification = () => {
     onSuccess: (_, deletedId) => {
       // Invalidate and refetch notifications list
       queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.cursor() });
       // Remove the deleted notification from cache
       queryClient.removeQueries({
         queryKey: notificationKeys.detail(deletedId),
@@ -116,6 +161,7 @@ export const useUpdateNotificationReadStatus = () => {
     onSuccess: (_, notificationId) => {
       // Invalidate and refetch notifications list
       queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.cursor() });
       // Update the specific notification cache with new read status
       queryClient.invalidateQueries({
         queryKey: notificationKeys.detail(notificationId),

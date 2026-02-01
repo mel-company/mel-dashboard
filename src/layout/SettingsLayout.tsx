@@ -232,7 +232,7 @@ const SettingsLayout = () => {
     <div className="flex h-full w-full gap-0 lg:gap-6 relative">
       {/* Mobile Menu Button */}
       <Button
-        variant="outline"
+        variant="secondary"
         size="icon"
         onClick={() => setIsMobileMenuOpen(true)}
         className="lg:hidden fixed top-20 right-4 z-40 shadow-lg"
