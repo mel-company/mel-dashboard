@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useCallback, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -12,13 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
   Search,
   Plus,
   User,
@@ -27,113 +20,103 @@ import {
   ShoppingBag,
   FileText,
   X,
+  Loader2,
 } from "lucide-react";
 import {
-  useFetchCustomers,
-  useSearchCustomers,
+  useFetchCustomersCursor,
+  useSearchCustomersCursor,
 } from "@/api/wrappers/customer.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import CustomersSkeleton from "./CustomersSkeleton";
 
+const CURSOR_LIMIT = 10;
+
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+
+  return debouncedValue;
+}
+
 const Customers = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = searchParams.get("page");
-  const currentPage = pageParam ? parseInt(pageParam) : 1;
-  const searchPageParam = searchParams.get("s");
-  const currentSearchPage = searchPageParam ? parseInt(searchPageParam) : 1;
-  const limit = 10;
-
-  function useDebouncedValue<T>(value: T, delayMs: number) {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-
-    useEffect(() => {
-      const id = setTimeout(() => setDebouncedValue(value), delayMs);
-      return () => clearTimeout(id);
-    }, [value, delayMs]);
-
-    return debouncedValue;
-  }
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
 
-  // Reset to page 1 when search query changes
-  useEffect(() => {
-    if (debouncedQuery) {
-      setSearchParams({ s: "1" });
-    } else {
-      setSearchParams({ page: "1" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
-
   const {
-    data: listData,
-    isLoading: isListLoading,
-    error: listError,
-    refetch: refetchList,
-    isFetching: isListFetching,
-  } = useFetchCustomers(
-    {
-      page: currentPage,
-      limit,
-    },
-    !isSearching
-  );
+    data: cursorData,
+    fetchNextPage: fetchNextCursor,
+    hasNextPage: hasNextCursor,
+    isFetchingNextPage: isFetchingNextCursor,
+    isLoading: isCursorLoading,
+    error: cursorError,
+    refetch: refetchCursor,
+    isFetching: isCursorFetching,
+  } = useFetchCustomersCursor({ limit: CURSOR_LIMIT }, !isSearching);
 
   const {
     data: searchData,
+    fetchNextPage: fetchNextSearch,
+    hasNextPage: hasNextSearch,
+    isFetchingNextPage: isFetchingNextSearch,
     isLoading: isSearchLoading,
     error: searchError,
     refetch: refetchSearch,
     isFetching: isSearchFetching,
-  } = useSearchCustomers(
-    {
-      query: debouncedQuery,
-      page: currentSearchPage,
-      limit,
-    },
-    true
+  } = useSearchCustomersCursor(
+    { query: debouncedQuery, limit: CURSOR_LIMIT },
+    isSearching
   );
 
-  const activeData = isSearching ? searchData : listData;
-  const customers: any[] = !activeData
-    ? []
-    : Array.isArray(activeData)
-    ? activeData
-    : activeData.data ?? [];
+  const flatCustomers = cursorData?.pages.flatMap((p) => p.data) ?? [];
+  const flatSearchCustomers = searchData?.pages.flatMap((p) => p.data) ?? [];
 
-  const error = isSearching ? searchError : listError;
-  const refetch = isSearching ? refetchSearch : refetchList;
-  const isFetching = isSearching ? isSearchFetching : isListFetching;
-  const isLoading = isSearching ? isSearchLoading : isListLoading;
+  const customers: any[] = isSearching ? flatSearchCustomers : flatCustomers;
 
-  const totalPages = Math.ceil(
-    (listData?.total ?? searchData?.total ?? 0) / limit
-  );
+  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
+  const isFetchingNextPage = isSearching
+    ? isFetchingNextSearch
+    : isFetchingNextCursor;
+  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
 
-  // Get the actual current page based on search state
-  const actualCurrentPage = isSearching ? currentSearchPage : currentPage;
+  const error = isSearching ? searchError : cursorError;
+  const refetch = isSearching ? refetchSearch : refetchCursor;
+  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
+  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
 
-  const handlePageChange = (page: number) => {
-    // Ensure page is within valid bounds
-    const safePage = Math.max(1, Math.min(page, totalPages || 1));
-    if (isSearching) {
-      setSearchParams({ s: safePage.toString() });
-    } else {
-      setSearchParams({ page: safePage.toString() });
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMore();
+      },
+      { rootMargin: "200px", threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleLoadMore, hasNextPage, isFetchingNextPage]);
 
   const hasCustomers = customers.length > 0;
 
   return (
     <div className="space-y-6">
-      {/* Search and Add Customer Section */}
+      {/* Search Section */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-full sm:max-w-md">
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -156,60 +139,11 @@ const Customers = () => {
             </button>
           ) : null}
         </div>
-        {/* <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
-          <Plus className="size-4" />
-          <span className="hidden sm:inline">إضافة عميل</span>
-          <span className="sm:hidden">إضافة</span>
-        </Button> */}
       </div>
 
-      {totalPages > 1 && customers.length > 0 ? (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage - 1);
-                }}
-                aria-disabled={actualCurrentPage <= 1}
-                className={
-                  actualCurrentPage <= 1
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-
-            <PaginationItem className="mx-4 flex items-center gap-2">
-              <span>{actualCurrentPage}</span>
-              <span>من</span>
-              <span>{totalPages}</span>
-            </PaginationItem>
-
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(actualCurrentPage + 1);
-                }}
-                aria-disabled={actualCurrentPage >= totalPages}
-                className={
-                  actualCurrentPage >= totalPages
-                    ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                    : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      ) : null}
-
-      {isLoading && !activeData ? (
+      {isLoading && !customers.length ? (
         <CustomersSkeleton showHeader={false} rows={6} />
-      ) : error && !activeData ? (
+      ) : error && !customers.length ? (
         <ErrorPage
           title="خطأ في تحميل العملاء"
           error={error}
@@ -226,85 +160,110 @@ const Customers = () => {
           }
           icon={<User className="size-7 text-muted-foreground" />}
           primaryAction={
-            !isSearching
+            isSearching
               ? {
-                  label: "إضافة عميل",
-                  onClick: () => {},
-                  icon: <Plus className="size-4" />,
+                  label: "مسح البحث",
+                  onClick: () => setSearchQuery(""),
+                  icon: <X className="size-4" />,
+                  variant: "outline",
                 }
               : undefined
           }
         />
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-right">رقم العميل</TableHead>
-                <TableHead className="text-right">الاسم</TableHead>
-                <TableHead className="text-right">رقم الهاتف</TableHead>
-                <TableHead className="text-right">الموقع</TableHead>
-                <TableHead className="text-right">عدد الطلبات</TableHead>
-                <TableHead className="text-right">الإجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {customers.map((customer) => {
-                const orderCount = customer._count?.orders ?? 0;
-                const user = customer.user;
-                const customerId = customer.id;
+        <>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">رقم العميل</TableHead>
+                  <TableHead className="text-right">الاسم</TableHead>
+                  <TableHead className="text-right">رقم الهاتف</TableHead>
+                  <TableHead className="text-right">الموقع</TableHead>
+                  <TableHead className="text-right">عدد الطلبات</TableHead>
+                  <TableHead className="text-right">الإجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {customers.map((customer) => {
+                  const orderCount = customer._count?.orders ?? 0;
+                  const user = customer.user;
+                  const customerId = customer.id;
 
-                return (
-                  <TableRow
-                    key={customerId}
-                    className="hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/customers/${customerId}`)}
-                  >
-                    <TableCell className="font-medium">
-                      #{customerId.slice(0, 8)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <User className="size-4 text-muted-foreground" />
-                        <span className="font-medium">{user?.name ?? "—"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Phone className="size-4 text-muted-foreground" />
-                        <span className="text-sm">{user?.phone ?? "—"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 max-w-xs">
-                        <MapPin className="size-4 text-muted-foreground shrink-0" />
-                        <span className="text-sm line-clamp-1">
-                          {user?.location ?? "—"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <ShoppingBag className="size-4 text-muted-foreground" />
-                        <span className="font-medium">
-                          {orderCount} {orderCount === 1 ? "طلب" : "طلبات"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Link to={`/customers/${customerId}`}>
-                        <Button variant="secondary" size="sm" className="gap-2">
-                          <FileText className="size-4" />
-                          التفاصيل
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+                  return (
+                    <TableRow
+                      key={customerId}
+                      className="hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => navigate(`/customers/${customerId}`)}
+                    >
+                      <TableCell className="font-medium">
+                        #{customerId.slice(0, 8)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User className="size-4 text-muted-foreground" />
+                          <span className="font-medium">{user?.name ?? "—"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Phone className="size-4 text-muted-foreground" />
+                          <span className="text-sm">{user?.phone ?? "—"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 max-w-xs">
+                          <MapPin className="size-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm line-clamp-1">
+                            {user?.location ?? "—"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <ShoppingBag className="size-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            {orderCount} {orderCount === 1 ? "طلب" : "طلبات"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Link to={`/customers/${customerId}`}>
+                          <Button variant="secondary" size="sm" className="gap-2">
+                            <FileText className="size-4" />
+                            التفاصيل
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+          <div
+            ref={loadMoreRef}
+            className="flex justify-center py-6"
+          >
+            {hasNextPage && (
+              <Button
+                variant="secondary"
+                className="gap-2"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    جاري التحميل...
+                  </>
+                ) : (
+                  "تحميل المزيد"
+                )}
+              </Button>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

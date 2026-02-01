@@ -16,6 +16,7 @@ import {
   CreditCard,
   Truck,
   FileText,
+  Bell,
 } from "lucide-react";
 import {
   Dialog,
@@ -40,7 +41,11 @@ interface AppItem {
   description?: string;
   badge?: string;
   emojiIcon?: string;
-  subItems?: { label: string; path: string; icon: React.ComponentType<{ className?: string }> }[];
+  subItems?: {
+    label: string;
+    path: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[];
 }
 
 type SearchableItem = {
@@ -137,11 +142,6 @@ const baseApps: AppItem[] = [
         icon: Globe,
       },
       {
-        label: "الاشتراك",
-        path: "/settings/subscription",
-        icon: CreditCard,
-      },
-      {
         label: "الشروط والأحكام",
         path: "/settings/policies/terms-and-conditions",
         icon: FileText,
@@ -151,7 +151,14 @@ const baseApps: AppItem[] = [
         path: "/settings/shortcuts",
         icon: Keyboard,
       },
-    ]
+    ],
+  },
+  {
+    label: "الإشعارات",
+    path: "/notifications",
+    icon: Bell,
+    gradient: "from-green-500 to-green-600",
+    description: "إدارة الإشعارات",
   },
   {
     label: "المحاسبة",
@@ -369,171 +376,178 @@ const QuickNavigate = () => {
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        aria-describedby={undefined}
-        className="sm:max-w-[640px]"
-        dir="rtl"
-      >
-        <DialogHeader className="text-right">
-          <DialogTitle className="text-right">انتقل إلى</DialogTitle>
-        </DialogHeader>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          aria-describedby={undefined}
+          className="sm:max-w-[640px]"
+          dir="rtl"
+        >
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-right">انتقل إلى</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              ref={inputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const selected = filteredApps[activeIndex] ?? filteredApps[0];
-                  if (selected) {
-                    e.preventDefault();
-                    onSelect(selected.path);
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const selected =
+                      filteredApps[activeIndex] ?? filteredApps[0];
+                    if (selected) {
+                      e.preventDefault();
+                      onSelect(selected.path);
+                    }
                   }
-                }
 
-                if (e.key === "ArrowDown") {
-                  const first = resultRefs.current[0];
-                  if (first) {
-                    e.preventDefault();
-                    setActiveIndex(0);
-                    first.focus();
+                  if (e.key === "ArrowDown") {
+                    const first = resultRefs.current[0];
+                    if (first) {
+                      e.preventDefault();
+                      setActiveIndex(0);
+                      first.focus();
+                    }
                   }
-                }
-              }}
-              placeholder="ابحث عن صفحة..."
-              className="pr-10"
-              dir="rtl"
-            />
-          </div>
+                }}
+                placeholder="ابحث عن صفحة..."
+                className="pr-10"
+                dir="rtl"
+              />
+            </div>
 
-          <div className="max-h-[360px] overflow-auto rounded-md border">
-            {filteredApps.length === 0 ? (
-              <div className="p-4 text-sm text-muted-foreground text-right">
-                لا توجد نتائج
-              </div>
-            ) : (
-              <div className="divide-y">
-                {filteredApps.map((app, idx) => {
-                  const Icon = app.icon;
-                  const isActive = idx === activeIndex;
-                  return (
-                    <button
-                      key={app.path}
-                      type="button"
-                      onClick={() => onSelect(app.path)}
-                      ref={(el) => {
-                        resultRefs.current[idx] = el;
-                      }}
-                      onMouseEnter={() => setActiveIndex(idx)}
-                      onFocus={() => setActiveIndex(idx)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          onSelect(app.path);
-                        }
-
-                        if (e.key === "ArrowDown") {
-                          e.preventDefault();
-                          const next = Math.min(
-                            idx + 1,
-                            filteredApps.length - 1
-                          );
-                          setActiveIndex(next);
-                          resultRefs.current[next]?.focus();
-                        }
-
-                        if (e.key === "ArrowUp") {
-                          e.preventDefault();
-                          if (idx === 0) {
-                            inputRef.current?.focus();
-                            return;
+            <div className="max-h-[360px] overflow-auto rounded-md border">
+              {filteredApps.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground text-right">
+                  لا توجد نتائج
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {filteredApps.map((app, idx) => {
+                    const Icon = app.icon;
+                    const isActive = idx === activeIndex;
+                    return (
+                      <button
+                        key={app.path}
+                        type="button"
+                        onClick={() => onSelect(app.path)}
+                        ref={(el) => {
+                          resultRefs.current[idx] = el;
+                        }}
+                        onMouseEnter={() => setActiveIndex(idx)}
+                        onFocus={() => setActiveIndex(idx)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onSelect(app.path);
                           }
-                          const prev = Math.max(idx - 1, 0);
-                          setActiveIndex(prev);
-                          resultRefs.current[prev]?.focus();
-                        }
-                      }}
-                      aria-selected={isActive}
-                      className={cn(
-                        "w-full flex items-center gap-3 p-3 text-right transition-colors",
-                        isActive ? "bg-accent" : "hover:bg-accent",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                      )}
-                    >
-                      <div
+
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            const next = Math.min(
+                              idx + 1,
+                              filteredApps.length - 1
+                            );
+                            setActiveIndex(next);
+                            resultRefs.current[next]?.focus();
+                          }
+
+                          if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            if (idx === 0) {
+                              inputRef.current?.focus();
+                              return;
+                            }
+                            const prev = Math.max(idx - 1, 0);
+                            setActiveIndex(prev);
+                            resultRefs.current[prev]?.focus();
+                          }
+                        }}
+                        aria-selected={isActive}
                         className={cn(
-                          "shrink-0 rounded-md bg-linear-to-br p-2 text-white",
-                          app.gradient
+                          "w-full flex items-center gap-3 p-3 text-right transition-colors",
+                          isActive ? "bg-accent" : "hover:bg-accent",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                         )}
                       >
-                        <Icon className="size-4" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium">{app.label}</span>
-                          {app.badge ? (
-                            <span className="text-xs rounded-full bg-primary/10 text-primary px-2 py-0.5">
-                              {app.badge}
-                            </span>
+                        <div
+                          className={cn(
+                            "shrink-0 rounded-md bg-linear-to-br p-2 text-white",
+                            app.gradient
+                          )}
+                        >
+                          <Icon className="size-4" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium">{app.label}</span>
+                            {app.badge ? (
+                              <span className="text-xs rounded-full bg-primary/10 text-primary px-2 py-0.5">
+                                {app.badge}
+                              </span>
+                            ) : null}
+                          </div>
+                          {app.description ? (
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {app.description}
+                            </div>
                           ) : null}
                         </div>
-                        {app.description ? (
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            {app.description}
-                          </div>
-                        ) : null}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="text-xs text-muted-foreground text-right">
-            اختصار: <span className="font-mono">Ctrl + K</span>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-
-    <Dialog open={openShortcutsDialog} onOpenChange={setOpenShortcutsDialog}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-[480px]" dir="rtl">
-        <DialogHeader className="text-right">
-          <div className="flex items-center gap-2">
-            <Keyboard className="size-5 text-muted-foreground" />
-            <DialogTitle className="text-right">اختصارات لوحة المفاتيح</DialogTitle>
-          </div>
-          <DialogDescription className="text-right">
-            اختصارات عامة متاحة في جميع أجزاء التطبيق.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="divide-y divide-border">
-          {shortcutItems.map(({ description, keys }, i) => (
-            <div
-              key={i}
-              className="flex flex-col gap-1.5 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-            >
-              <span className="text-sm text-foreground">{description}</span>
-              <div className="shrink-0">{keys}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={openShortcutsPage}
-            className="text-sm text-primary hover:underline"
-          >
-            عرض كامل قائمة الاختصارات في الإعدادات
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+
+            <div className="text-xs text-muted-foreground text-right">
+              اختصار: <span className="font-mono">Ctrl + K</span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openShortcutsDialog} onOpenChange={setOpenShortcutsDialog}>
+        <DialogContent
+          aria-describedby={undefined}
+          className="sm:max-w-[480px]"
+          dir="rtl"
+        >
+          <DialogHeader className="text-right">
+            <div className="flex items-center gap-2">
+              <Keyboard className="size-5 text-muted-foreground" />
+              <DialogTitle className="text-right">
+                اختصارات لوحة المفاتيح
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-right">
+              اختصارات عامة متاحة في جميع أجزاء التطبيق.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="divide-y divide-border">
+            {shortcutItems.map(({ description, keys }, i) => (
+              <div
+                key={i}
+                className="flex flex-col gap-1.5 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+              >
+                <span className="text-sm text-foreground">{description}</span>
+                <div className="shrink-0">{keys}</div>
+              </div>
+            ))}
+          </div>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={openShortcutsPage}
+              className="text-sm text-primary hover:underline"
+            >
+              عرض كامل قائمة الاختصارات في الإعدادات
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
