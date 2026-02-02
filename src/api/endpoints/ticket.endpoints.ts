@@ -154,4 +154,21 @@ export const ticketAPI = {
     const { data } = await axiosInstance.post<any>("/message/send", body);
     return data;
   },
+
+  /** Get messages for a ticket with cursor pagination (5 per page). */
+  fetchMessagesStoreCursor: async (
+    ticketId: string,
+    params?: { cursor?: string | null; limit?: number }
+  ): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      `/message/store/${ticketId}/messages/cursor`,
+      {
+        params: {
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit != null && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
 };

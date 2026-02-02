@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { ticketAPI } from "../endpoints/ticket.endpoints";
 import type { CreateStoreSupportTicketDto } from "../endpoints/ticket.endpoints";
 
@@ -27,10 +32,14 @@ export const ticketKeys = {
       [...ticketKeys.store.lists(), params] as const,
     search: (params?: SearchTicketsStoreParams) =>
       [...ticketKeys.store.lists(), "search", params] as const,
+    searchCursor: (params?: any) =>
+      [...ticketKeys.store.lists(), "search-cursor", params] as const,
     cursor: (params?: any) =>
       [...ticketKeys.store.lists(), "cursor", params] as const,
     details: () => [...ticketKeys.all, "store", "detail"] as const,
     detail: (id: string) => [...ticketKeys.store.details(), id] as const,
+    messages: (ticketId: string, params?: any) =>
+      [...ticketKeys.store.detail(ticketId), "messages", params] as const,
   },
 };
 
@@ -72,7 +81,7 @@ export const useSearchTicketsStoreCursor = (
   enabled = true
 ) => {
   return useInfiniteQuery<any>({
-    queryKey: ticketKeys.store.search({ ...params, cursor: true }),
+    queryKey: ticketKeys.store.searchCursor(params),
     enabled: enabled && !!params?.query?.trim(),
     queryFn: ({ pageParam }) =>
       ticketAPI.searchStoreCursor({
@@ -160,16 +169,34 @@ export const useDeleteTicketStore = () => {
 /** Send a message on a ticket (store user) */
 export const useSendMessageStore = () => {
   const queryClient = useQueryClient();
-  return useMutation<
-    any,
-    Error,
-    { ticketId: string; message: string }
-  >({
+  return useMutation<any, Error, { ticketId: string; message: string }>({
     mutationFn: (body) => ticketAPI.sendMessageStore(body),
     onSuccess: (_, { ticketId }) => {
       queryClient.invalidateQueries({
         queryKey: ticketKeys.store.detail(ticketId),
       });
+      queryClient.invalidateQueries({
+        queryKey: ticketKeys.store.messages(ticketId),
+      });
     },
+  });
+};
+
+/** Fetch messages for a ticket with cursor pagination (5 per page, infinite scroll) */
+export const useFetchMessagesStoreCursor = (
+  ticketId: string,
+  params?: { limit?: number },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: ticketKeys.store.messages(ticketId, params),
+    enabled: enabled && !!ticketId,
+    queryFn: ({ pageParam }) =>
+      ticketAPI.fetchMessagesStoreCursor(ticketId, {
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
   });
 };

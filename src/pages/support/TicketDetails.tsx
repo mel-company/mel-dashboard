@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Card,
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import {
   useFetchTicketStore,
+  useFetchMessagesStoreCursor,
   useSendMessageStore,
   useCancelTicketStore,
   useCloseTicketStore,
@@ -74,6 +75,10 @@ const TicketDetails = () => {
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesTopRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const scrollStateRef = useRef<{ scrollHeight: number; scrollTop: number; pageCount: number }>({ scrollHeight: 0, scrollTop: 0, pageCount: 0 });
+  const shouldScrollToBottomRef = useRef(true);
 
   const {
     data: ticket,
@@ -83,13 +88,29 @@ const TicketDetails = () => {
     isFetching,
   } = useFetchTicketStore(id ?? "", !!id);
 
+  const {
+    data: messagesData,
+    fetchNextPage: fetchNextMessages,
+    hasNextPage: hasNextMessages,
+    isFetchingNextPage: isFetchingNextMessages,
+    isLoading: isMessagesLoading,
+  } = useFetchMessagesStoreCursor(
+    id ?? "",
+    { limit: 5 },
+    !!id
+  );
+
+  const messages: any[] =
+    messagesData?.pages
+      ?.slice()
+      .reverse()
+      .flatMap((p) => p.data) ?? [];
+
   const { mutate: sendMessage, isPending: isSending } = useSendMessageStore();
   const { mutate: cancelTicket, isPending: isCancelling } =
     useCancelTicketStore();
   const { mutate: closeTicket, isPending: isClosing } = useCloseTicketStore();
   const { mutate: deleteTicket, isPending: isDeleting } = useDeleteTicketStore();
-
-  const messages = ticket?.messages ?? [];
   const canReply =
     ticket &&
     ticket.status !== "CANCELLED" &&
@@ -99,9 +120,63 @@ const TicketDetails = () => {
     ticket &&
     ["OPEN", "IN_PROGRESS", "ON_HOLD"].includes(ticket.status);
 
+  const handleLoadMoreMessages = useCallback(() => {
+    if (hasNextMessages && !isFetchingNextMessages) {
+      const container = messagesContainerRef.current;
+      if (container) {
+        scrollStateRef.current = {
+          scrollHeight: container.scrollHeight,
+          scrollTop: container.scrollTop,
+          pageCount: messagesData?.pages?.length ?? 0,
+        };
+      }
+      fetchNextMessages();
+    }
+  }, [hasNextMessages, isFetchingNextMessages, fetchNextMessages, messagesData?.pages?.length]);
+
+  const pageCount = messagesData?.pages?.length ?? 0;
+
+  // Reset scroll-to-bottom when switching tickets
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+    if (id) shouldScrollToBottomRef.current = true;
+  }, [id]);
+
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || messages.length === 0) return;
+
+    const prevState = scrollStateRef.current;
+    const didPrepend = pageCount > prevState.pageCount && prevState.pageCount > 0;
+
+    if (didPrepend) {
+      const addedHeight = container.scrollHeight - prevState.scrollHeight;
+      container.scrollTop = prevState.scrollTop + addedHeight;
+    } else if (shouldScrollToBottomRef.current) {
+      container.scrollTop = container.scrollHeight;
+      shouldScrollToBottomRef.current = false;
+    }
+
+    scrollStateRef.current = {
+      scrollHeight: container.scrollHeight,
+      scrollTop: container.scrollTop,
+      pageCount,
+    };
+  }, [messages.length, pageCount]);
+
+  useEffect(() => {
+    if (!hasNextMessages || isFetchingNextMessages) return;
+    const el = messagesTopRef.current;
+    const container = messagesContainerRef.current;
+    if (!el || !container) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMoreMessages();
+      },
+      { root: container, rootMargin: "80px 0px 0px 0px", threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleLoadMoreMessages, hasNextMessages, isFetchingNextMessages]);
 
   const formatDate = (dateString: string) => {
     const d = new Date(dateString);
@@ -125,6 +200,7 @@ const TicketDetails = () => {
       {
         onSuccess: () => {
           setReply("");
+          shouldScrollToBottomRef.current = true;
           toast.success("تم إرسال الرد");
         },
         onError: (err: unknown) => {
@@ -350,8 +426,33 @@ const TicketDetails = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 min-h-0 px-4">
-            <div className="flex-1 overflow-y-auto max-h-[360px] space-y-3 pr-1">
-              {messages.length === 0 ? (
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto max-h-[360px] space-y-3 pr-1 flex flex-col"
+            >
+              <div ref={messagesTopRef} className="min-h-[40px] shrink-0" />
+              {hasNextMessages && (
+                <div className="flex justify-center py-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={handleLoadMoreMessages}
+                    disabled={isFetchingNextMessages}
+                  >
+                    {isFetchingNextMessages ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      "تحميل الرسائل الأقدم"
+                    )}
+                  </Button>
+                </div>
+              )}
+              {isMessagesLoading && messages.length === 0 ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : messages.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   لا توجد ردود بعد.
                 </p>
