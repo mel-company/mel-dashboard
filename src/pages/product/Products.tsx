@@ -50,10 +50,7 @@ const Products = () => {
     error: cursorError,
     refetch: refetchCursor,
     isFetching: isCursorFetching,
-  } = useFetchProductsCursor(
-    { limit: CURSOR_LIMIT },
-    !isSearching
-  );
+  } = useFetchProductsCursor({ limit: CURSOR_LIMIT }, !isSearching);
 
   const {
     data: searchData,
@@ -72,14 +69,18 @@ const Products = () => {
   const flatProducts = cursorData?.pages.flatMap((p) => p.data) ?? [];
   const flatSearchProducts = searchData?.pages.flatMap((p) => p.data) ?? [];
 
-  const products: ProductListItem[] = isSearching ? flatSearchProducts : flatProducts;
+  const products: ProductListItem[] = isSearching
+    ? flatSearchProducts
+    : flatProducts;
 
   const baseUrl = cursorData?.pages?.[0]?.baseUrl ?? "";
   const searchBaseUrl = searchData?.pages?.[0]?.baseUrl ?? "";
   const imageBaseUrl = isSearching ? searchBaseUrl : baseUrl;
 
   const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
-  const isFetchingNextPage = isSearching ? isFetchingNextSearch : isFetchingNextCursor;
+  const isFetchingNextPage = isSearching
+    ? isFetchingNextSearch
+    : isFetchingNextCursor;
   const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
 
   const error = isSearching ? searchError : cursorError;
@@ -214,10 +215,14 @@ const Products = () => {
                       </div>
                     ) : null}
                     <div className="flex mb-2 flex-wrap gap-2">
-                      {(product.categories ?? []).length > 0 ? (
-                        (product.categories ?? []).slice(0, 3).map((c) => (
-                          <Badge key={c.id} variant="outline" className="text-xs">
-                            {c.name}
+                      {(product?.categories ?? []).length > 0 ? (
+                        (product.categories ?? []).slice(0, 3).map((c: any) => (
+                          <Badge
+                            key={c.category.id}
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {c.category.name}
                           </Badge>
                         ))
                       ) : (
@@ -250,7 +255,10 @@ const Products = () => {
                 </Card>
               </Link>
             ))}
-            <div ref={loadMoreRef} className="col-span-full flex justify-center py-6">
+            <div
+              ref={loadMoreRef}
+              className="col-span-full flex justify-center py-6"
+            >
               {hasNextPage && (
                 <Button
                   variant="secondary"
