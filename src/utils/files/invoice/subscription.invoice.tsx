@@ -218,7 +218,11 @@ export type SubscriptionInvoiceData = {
     description?: string | null;
     monthly_price?: number;
     yearly_price?: number;
-    features?: Array<{ id?: string; name?: string; description?: string | null }>;
+    features?: Array<{
+      id?: string;
+      name?: string;
+      description?: string | null;
+    }>;
     modules?: Array<{ id?: string; name?: string }>;
   };
 };
@@ -328,9 +332,9 @@ export const SubscriptionInvoicePDF = ({
         {plan?.features && plan.features.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>المميزات</Text>
-            {plan.features.slice(0, 12).map((f, i) => (
+            {plan.features.slice(0, 12).map((f: any, i: number) => (
               <View key={f.id || i} style={styles.featureItem}>
-                <Text style={styles.featureText}>{f.name || "—"}</Text>
+                <Text style={styles.featureText}>{f.feature?.name || "—"}</Text>
                 <Text style={styles.featureBullet}>✓</Text>
               </View>
             ))}
@@ -348,7 +352,10 @@ export const SubscriptionInvoicePDF = ({
             <Text style={styles.sectionTitle}>الوحدات</Text>
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
-                {plan.modules.map((m) => m.name).filter(Boolean).join(" — ")}
+                {plan.modules
+                  .map((m) => m.name)
+                  .filter(Boolean)
+                  .join(" — ")}
               </Text>
             </View>
           </View>
@@ -357,7 +364,9 @@ export const SubscriptionInvoicePDF = ({
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>شكراً لاشتراككم معنا</Text>
-          <Text style={styles.footerText}>فاتورة اشتراك إلكترونية — وثيقة معتمدة</Text>
+          <Text style={styles.footerText}>
+            فاتورة اشتراك إلكترونية — وثيقة معتمدة
+          </Text>
           {storeName && (
             <Text style={styles.footerText}>
               {new Date().getFullYear()} © {storeName}

@@ -211,12 +211,12 @@ const Plans = ({}: Props) => {
                   <div className="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar">
                     {plan.features.map((feature: any) => (
                       <div
-                        key={feature.id}
+                        key={feature.feature?.id}
                         className="flex items-start gap-2 text-sm"
                       >
                         <CheckCircle2 className="size-4 text-green-600 mt-0.5 shrink-0" />
                         <span className="text-right text-muted-foreground">
-                          {feature.name}
+                          {feature.feature?.name}
                         </span>
                       </div>
                     ))}

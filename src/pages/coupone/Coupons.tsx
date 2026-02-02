@@ -10,7 +10,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, X, Ticket, Calendar, Users, Loader2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  X,
+  Ticket,
+  Calendar,
+  Users,
+  Loader2,
+} from "lucide-react";
 import {
   useFetchCouponsCursor,
   useSearchCouponsCursor,
@@ -48,10 +56,7 @@ const Coupons = () => {
     error: cursorError,
     refetch: refetchCursor,
     isFetching: isCursorFetching,
-  } = useFetchCouponsCursor(
-    { limit: CURSOR_LIMIT },
-    !isSearching
-  );
+  } = useFetchCouponsCursor({ limit: CURSOR_LIMIT }, !isSearching);
 
   const {
     data: searchData,
@@ -155,19 +160,9 @@ const Coupons = () => {
             placeholder="ابحث عن كوبون..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10 pl-10"
+            className="w-full text-right pr-10"
             dir="rtl"
           />
-          {searchQuery ? (
-            <button
-              type="button"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setSearchQuery("")}
-              aria-label="مسح البحث"
-            >
-              <X className="size-4" />
-            </button>
-          ) : null}
         </div>
         <Button
           className="gap-2 w-full sm:w-auto"

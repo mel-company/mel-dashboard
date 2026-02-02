@@ -125,19 +125,9 @@ const Customers = () => {
             placeholder="ابحث عن عميل..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10 pl-10"
+            className="w-full text-right pr-10"
             dir="rtl"
           />
-          {searchQuery ? (
-            <button
-              type="button"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setSearchQuery("")}
-              aria-label="مسح البحث"
-            >
-              <X className="size-4" />
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -202,7 +192,9 @@ const Customers = () => {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <User className="size-4 text-muted-foreground" />
-                          <span className="font-medium">{user?.name ?? "—"}</span>
+                          <span className="font-medium">
+                            {user?.name ?? "—"}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -229,7 +221,11 @@ const Customers = () => {
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Link to={`/customers/${customerId}`}>
-                          <Button variant="secondary" size="sm" className="gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="gap-2"
+                          >
                             <FileText className="size-4" />
                             التفاصيل
                           </Button>
@@ -241,10 +237,7 @@ const Customers = () => {
               </TableBody>
             </Table>
           </Card>
-          <div
-            ref={loadMoreRef}
-            className="flex justify-center py-6"
-          >
+          <div ref={loadMoreRef} className="flex justify-center py-6">
             {hasNextPage && (
               <Button
                 variant="secondary"

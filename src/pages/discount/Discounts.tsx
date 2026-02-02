@@ -147,19 +147,9 @@ const Discounts = () => {
             placeholder="ابحث عن خصم..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10 pl-10"
+            className="w-full text-right pr-10"
             dir="rtl"
           />
-          {searchQuery ? (
-            <button
-              type="button"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setSearchQuery("")}
-              aria-label="مسح البحث"
-            >
-              <X className="size-4" />
-            </button>
-          ) : null}
         </div>
         <Link to="/discounts/add">
           <Button className="gap-2 w-full sm:w-auto">

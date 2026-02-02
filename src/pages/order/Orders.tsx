@@ -164,10 +164,10 @@ const Orders = () => {
             placeholder="ابحث عن طلب..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10 pl-10"
+            className="w-full text-right pl10 pr-10"
             dir="rtl"
           />
-          {searchQuery ? (
+          {/* {searchQuery ? (
             <button
               type="button"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
@@ -176,7 +176,7 @@ const Orders = () => {
             >
               <X className="size-4" />
             </button>
-          ) : null}
+          ) : null} */}
         </div>
         {/* <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
           <Plus className="size-4" />
@@ -208,7 +208,7 @@ const Orders = () => {
                   label: "مسح البحث",
                   onClick: () => setSearchQuery(""),
                   icon: <X className="size-4" />,
-                  variant: "outline",
+                  variant: "secondary",
                 }
               : undefined
           }

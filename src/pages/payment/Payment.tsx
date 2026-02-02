@@ -117,7 +117,9 @@ const Payment = ({}: Props) => {
 
     changePlan(planId, {
       onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: subscriptionKeys.detail("store") });
+        queryClient.invalidateQueries({
+          queryKey: subscriptionKeys.detail("store"),
+        });
         toast.success("تم تغيير الخطة بنجاح");
         const invoiceData: SubscriptionInvoiceData = {
           ...data,
@@ -161,7 +163,9 @@ const Payment = ({}: Props) => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `subscription-invoice-${String(successSubscription.id).slice(0, 8)}.pdf`;
+      link.download = `subscription-invoice-${String(
+        successSubscription.id
+      ).slice(0, 8)}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
       toast.success("تم تحميل الفاتورة");
@@ -415,12 +419,12 @@ const Payment = ({}: Props) => {
                     <div className="space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
                       {plan.features.map((feature: any) => (
                         <div
-                          key={feature.id}
+                          key={feature.feature?.id}
                           className="flex items-start gap-2 text-sm text-right"
                         >
                           <CheckCircle2 className="size-4 text-green-600 mt-0.5 shrink-0" />
                           <span className="text-muted-foreground">
-                            {feature.name}
+                            {feature.feature?.name}
                           </span>
                         </div>
                       ))}
@@ -434,7 +438,10 @@ const Payment = ({}: Props) => {
       </div>
 
       {/* Success dialog after plan change */}
-      <Dialog open={successDialogOpen} onOpenChange={handleSuccessDialogOpenChange}>
+      <Dialog
+        open={successDialogOpen}
+        onOpenChange={handleSuccessDialogOpenChange}
+      >
         <DialogContent className="text-right sm:max-w-md" dir="rtl">
           <DialogHeader>
             <div className="flex justify-center mb-2">
@@ -446,8 +453,8 @@ const Payment = ({}: Props) => {
               تم تحديث الاشتراك بنجاح
             </DialogTitle>
             <DialogDescription className="text-center">
-              تم تغيير خطتك بنجاح. يمكنك تحميل فاتورة الاشتراك أو متابعة إلى صفحة
-              الاشتراك.
+              تم تغيير خطتك بنجاح. يمكنك تحميل فاتورة الاشتراك أو متابعة إلى
+              صفحة الاشتراك.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col gap-2 pt-4">
@@ -462,7 +469,9 @@ const Payment = ({}: Props) => {
               ) : (
                 <Download className="size-4" />
               )}
-              {isDownloadingInvoice ? "جاري التحميل..." : "تحميل فاتورة الاشتراك"}
+              {isDownloadingInvoice
+                ? "جاري التحميل..."
+                : "تحميل فاتورة الاشتراك"}
             </Button>
             <Button
               type="button"

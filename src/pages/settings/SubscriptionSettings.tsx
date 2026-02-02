@@ -282,15 +282,17 @@ const SubscriptionSettings = ({}: Props) => {
                 <div className="space-y-3">
                   {plan.features.map((feature: any, index: number) => (
                     <div
-                      key={feature.id || index}
+                      key={feature.feature?.id || index}
                       className="flex items-start gap-3 p-3 rounded-lg border bg-card"
                     >
                       <CheckCircle2 className="size-5 text-green-600 mt-0.5 shrink-0" />
                       <div className="text-right">
-                        <p className="font-medium">{feature.name ?? "—"}</p>
-                        {feature.description && (
+                        <p className="font-medium">
+                          {feature.feature?.name ?? "—"}
+                        </p>
+                        {feature.feature?.description && (
                           <p className="text-sm text-muted-foreground mt-1">
-                            {feature.description}
+                            {feature.feature?.description}
                           </p>
                         )}
                       </div>

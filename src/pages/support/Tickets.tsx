@@ -218,19 +218,9 @@ const Tickets = () => {
               placeholder="ابحث في التذاكر..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-right pr-10 pl-10"
+              className="w-full text-right pr-10"
               dir="rtl"
             />
-            {searchQuery ? (
-              <button
-                type="button"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                onClick={() => setSearchQuery("")}
-                aria-label="مسح البحث"
-              >
-                <X className="size-4" />
-              </button>
-            ) : null}
           </div>
           <div className="flex gap-2">
             {statusParam !== "all" && (
@@ -353,9 +343,7 @@ const Tickets = () => {
               >
                 <TableCell className="font-medium max-w-[200px] truncate">
                   <div className="flex flex-col gap-1">
-                    <span className="font-medium">
-                      {ticket.title ?? "—"}
-                    </span>
+                    <span className="font-medium">{ticket.title ?? "—"}</span>
                     <span className="text-muted-foreground text-sm">
                       {ticket?.description ?? "—"}
                     </span>
@@ -366,12 +354,8 @@ const Tickets = () => {
                     {getTicketTypeBadge(ticket.type)}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {getDepartmentBadge(ticket.department)}
-                </TableCell>
-                <TableCell>
-                  {getStatusBadge(ticket.status)}
-                </TableCell>
+                <TableCell>{getDepartmentBadge(ticket.department)}</TableCell>
+                <TableCell>{getStatusBadge(ticket.status)}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {ticket.createdAt ? formatDate(ticket.createdAt) : "—"}
                 </TableCell>
