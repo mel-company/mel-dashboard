@@ -2,6 +2,40 @@ import axiosInstance from "@/utils/AxiosInstance";
 
 export const orderAPI = {
   /**
+   * Get all orders with cursor pagination (infinite scroll)
+   */
+  fetchAllCursor: async (params?: {
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/order/cursor", {
+      params: {
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit != null && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
+   * Search orders with cursor pagination (infinite scroll)
+   */
+  fetchSearchCursor: async (params?: {
+    query: string;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/order/search-cursor", {
+      params: {
+        query: params?.query ?? "",
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit != null && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
    * Get all orders with optional filtering and pagination
    */
   fetchAll: async (params?: any): Promise<any> => {

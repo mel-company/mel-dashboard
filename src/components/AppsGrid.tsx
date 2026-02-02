@@ -39,8 +39,6 @@ interface AppItem {
   badge?: string;
   emojiIcon?: string;
   locked?: boolean;
-
-  
 }
 
 // Base apps - always shown
@@ -125,6 +123,13 @@ const baseApps: AppItem[] = [
     icon: Settings,
     gradient: "from-slate-500 to-slate-600",
     description: "إعدادات النظام",
+  },
+  {
+    label: "POS",
+    path: "/pos",
+    icon: ShoppingCart,
+    gradient: "from-orange-500 to-orange-600",
+    description: "dev mode",
   },
   // {
   //   label: "المحاسبة",

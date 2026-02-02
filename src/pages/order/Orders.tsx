@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useCallback, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -14,106 +14,114 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Search,
-  Plus,
   Package,
   User,
   MapPin,
   Calendar,
   FileText,
   X,
-  ArrowRight,
+  Loader2,
 } from "lucide-react";
-import { useFetchOrders, useSearchOrders } from "@/api/wrappers/order.wrappers";
+import {
+  useFetchOrdersCursor,
+  useSearchOrdersCursor,
+} from "@/api/wrappers/order.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import OrdersSkeleton from "./OrdersSkeleton";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+
+const CURSOR_LIMIT = 20;
+
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+
+  return debouncedValue;
+}
 
 const Orders = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = searchParams.get("page");
-  const currentPage = pageParam ? parseInt(pageParam) : 1;
-  const searchPageParam = searchParams.get("s");
-  const currentSearchPage = searchPageParam ? parseInt(searchPageParam) : 1;
-
-  function useDebouncedValue<T>(value: T, delayMs: number) {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-
-    useEffect(() => {
-      const id = setTimeout(() => setDebouncedValue(value), delayMs);
-      return () => clearTimeout(id);
-    }, [value, delayMs]);
-
-    return debouncedValue;
-  }
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
   const isSearching = debouncedQuery.length > 0;
 
   const {
-    data: listData,
-    isLoading: isListLoading,
-    error: listError,
-    refetch: refetchList,
-    isFetching: isListFetching,
-  } = useFetchOrders({ page: currentPage, limit: 10 }, !isSearching);
+    data: cursorData,
+    fetchNextPage: fetchNextCursor,
+    hasNextPage: hasNextCursor,
+    isFetchingNextPage: isFetchingNextCursor,
+    isLoading: isCursorLoading,
+    error: cursorError,
+    refetch: refetchCursor,
+    isFetching: isCursorFetching,
+  } = useFetchOrdersCursor({ limit: CURSOR_LIMIT }, !isSearching);
 
   const {
     data: searchData,
+    fetchNextPage: fetchNextSearch,
+    hasNextPage: hasNextSearch,
+    isFetchingNextPage: isFetchingNextSearch,
     isLoading: isSearchLoading,
     error: searchError,
     refetch: refetchSearch,
     isFetching: isSearchFetching,
-  } = useSearchOrders({
-    query: debouncedQuery,
-    page: currentSearchPage,
-    limit: 10,
-  });
-
-  const activeData = isSearching ? searchData : listData;
-  const orders: any[] = !activeData
-    ? []
-    : Array.isArray(activeData)
-    ? activeData
-    : activeData.data ?? [];
-
-  const error = isSearching ? searchError : listError;
-  const refetch = isSearching ? refetchSearch : refetchList;
-  const isFetching = isSearching ? isSearchFetching : isListFetching;
-  const isLoading = isSearching ? isSearchLoading : isListLoading;
-
-  // Calculate total price for order
-  const calculateTotal = (products: Array<{ price?: number | null }> = []) => {
-    return products.reduce((sum, product) => sum + (product.price ?? 0), 0);
-  };
-
-  // const totalPages = Math.ceil(
-  //   (isSearching ? searchData?.totalItems ?? 0 : listData?.totalItems ?? 0) / 10
-  // );
-
-  const totalPages = Math.ceil(
-    (listData?.total ?? searchData?.total ?? 0) / 10
+  } = useSearchOrdersCursor(
+    { query: debouncedQuery, limit: CURSOR_LIMIT },
+    isSearching
   );
 
-  // Get the actual current page based on search state
-  const actualCurrentPage = isSearching ? currentSearchPage : currentPage;
+  const flatOrders = cursorData?.pages.flatMap((p) => p.data) ?? [];
+  const flatSearchOrders = searchData?.pages.flatMap((p) => p.data) ?? [];
 
-  const handlePageChange = (page: number) => {
-    // Ensure page is within valid bounds
-    const safePage = Math.max(1, Math.min(page, totalPages || 1));
-    if (isSearching) {
-      setSearchParams({ s: safePage.toString() });
-    } else {
-      setSearchParams({ page: safePage.toString() });
+  const orders: any[] = isSearching ? flatSearchOrders : flatOrders;
+  const hasData = isSearching
+    ? searchData !== undefined
+    : cursorData !== undefined;
+
+  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
+  const isFetchingNextPage = isSearching
+    ? isFetchingNextSearch
+    : isFetchingNextCursor;
+  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
+
+  const error = isSearching ? searchError : cursorError;
+  const refetch = isSearching ? refetchSearch : refetchCursor;
+  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
+  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMore();
+      },
+      { rootMargin: "200px", threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleLoadMore, hasNextPage, isFetchingNextPage]);
+
+  // Calculate total price for order (supports variant.price and quantity)
+  const calculateTotal = (orderProducts: any[] = []) => {
+    return orderProducts.reduce((sum, op) => {
+      const price = op.variant?.price ?? op.price ?? 0;
+      const qty = op.quantity ?? 1;
+      return sum + price * qty;
+    }, 0);
   };
 
   // Format date
@@ -177,9 +185,9 @@ const Orders = () => {
         </Button> */}
       </div>
 
-      {isLoading && !activeData ? (
+      {isLoading && !hasData ? (
         <OrdersSkeleton showHeader={false} rows={6} />
-      ) : error && !activeData ? (
+      ) : error && !hasData ? (
         <ErrorPage
           error={error}
           onRetry={() => refetch()}
@@ -191,9 +199,7 @@ const Orders = () => {
           description={
             searchQuery.trim()
               ? "لم يتم العثور على طلبات تطابق البحث. جرّب كلمات أخرى."
-              : !currentPage
-              ? "ابدأ بإضافة طلب جديد لعرضه هنا."
-              : "لم يتم العثور على طلبات في لهذه الصفحة"
+              : "لم يتم العثور على طلبات."
           }
           icon={<Package className="size-7 text-muted-foreground" />}
           primaryAction={
@@ -204,65 +210,11 @@ const Orders = () => {
                   icon: <X className="size-4" />,
                   variant: "outline",
                 }
-              : !currentPage
-              ? {
-                  label: "إضافة طلب",
-                  onClick: () => {},
-                  icon: <Plus className="size-4" />,
-                }
-              : {
-                  label: "تراجع",
-                  onClick: () => {
-                    setSearchParams({ page: "1" });
-                  },
-                  icon: <ArrowRight className="size-4" />,
-                }
+              : undefined
           }
         />
       ) : (
         <>
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(actualCurrentPage - 1);
-                  }}
-                  aria-disabled={actualCurrentPage <= 1}
-                  className={
-                    actualCurrentPage <= 1
-                      ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                      : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                  }
-                />
-              </PaginationItem>
-
-              <PaginationItem className="mx-4 flex items-center gap-2">
-                <span>{actualCurrentPage}</span>
-                <span>من</span>
-                <span>{totalPages}</span>
-              </PaginationItem>
-
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(actualCurrentPage + 1);
-                  }}
-                  aria-disabled={actualCurrentPage >= totalPages}
-                  className={
-                    actualCurrentPage >= totalPages
-                      ? "pointer-events-none opacity-50 bg-black hover:bg-black text-white dark:text-black dark:bg-white dark:hover:bg-white"
-                      : "bg-black hover:bg-black/90 text-white dark:text-black dark:bg-white dark:hover:bg-white/80"
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-
           <Card>
             <Table>
               <TableHeader>
@@ -284,6 +236,11 @@ const Orders = () => {
                   const total = calculateTotal(order.products ?? []);
                   const productCount =
                     order._count?.products ?? order.products?.length ?? 0;
+                  const productTitles = (order.products ?? [])
+                    .map(
+                      (p: any) => p.variant?.product?.title ?? p.product?.title
+                    )
+                    .filter(Boolean);
 
                   return (
                     <TableRow
@@ -333,14 +290,10 @@ const Orders = () => {
                               {productCount} منتج
                             </span>
                           </div>
-                          {order.products?.length ? (
+                          {productTitles.length ? (
                             <div className="text-xs text-muted-foreground max-w-xs">
-                              {order.products
-                                .map((p: any) => p.title)
-                                .slice(0, 2)
-                                .filter(Boolean)
-                                .join("، ")}
-                              {order.products.length > 2 ? "..." : ""}
+                              {productTitles.slice(0, 2).join("، ")}
+                              {productTitles.length > 2 ? "..." : ""}
                             </div>
                           ) : null}
                         </div>
@@ -348,9 +301,11 @@ const Orders = () => {
                       <TableCell>
                         <div className="flex items-center gap-2 max-w-xs">
                           <MapPin className="size-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm line-clamp-2">
-                            {order.address}
-                          </span>
+                          <div>
+                            <span className="text-sm line-clamp-2">
+                              {order.nearest_point}
+                            </span>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -397,6 +352,24 @@ const Orders = () => {
               </TableBody>
             </Table>
           </Card>
+
+          {hasNextPage && (
+            <div ref={loadMoreRef} className="flex justify-center py-4">
+              {isFetchingNextPage ? (
+                <Loader2 className="size-6 animate-spin text-muted-foreground" />
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={handleLoadMore}
+                  disabled={isFetchingNextPage}
+                >
+                  تحميل المزيد
+                </Button>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

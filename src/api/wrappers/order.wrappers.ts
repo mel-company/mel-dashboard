@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { orderAPI } from "../endpoints/order.endpoints";
 
 /**
@@ -8,9 +13,12 @@ export const orderKeys = {
   all: ["orders"] as const,
   lists: () => [...orderKeys.all, "list"] as const,
   list: (params?: any) => [...orderKeys.lists(), params] as const,
+  cursor: (params?: any) => [...orderKeys.all, "cursor", params] as const,
+  search: (params?: any) => [...orderKeys.all, "search", params] as const,
+  searchCursor: (params?: any) =>
+    [...orderKeys.all, "search-cursor", params] as const,
   details: () => [...orderKeys.all, "detail"] as const,
   detail: (id: string) => [...orderKeys.details(), id] as const,
-  search: (params?: any) => [...orderKeys.all, "search", params] as const,
   logs: () => [...orderKeys.all, "logs"] as const,
   logsByOrder: (orderId: string) => [...orderKeys.logs(), orderId] as const,
 };
@@ -27,6 +35,47 @@ export const useFetchOrders = (params?: any, enabled: boolean = true) => {
 };
 
 /**
+ * Fetch all orders with cursor pagination (infinite scroll)
+ */
+export const useFetchOrdersCursor = (
+  params?: { limit?: number },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: orderKeys.cursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      orderAPI.fetchAllCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Search orders with cursor pagination (infinite scroll)
+ */
+export const useSearchOrdersCursor = (
+  params?: { query: string; limit?: number },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: orderKeys.searchCursor(params),
+    enabled: enabled && !!params?.query?.trim(),
+    queryFn: ({ pageParam }) =>
+      orderAPI.fetchSearchCursor({
+        query: params?.query ?? "",
+        limit: params?.limit,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
  * Update delivery address of an order by ID
  */
 export const useUpdateDeliveryAddress = (id: string) => {
@@ -38,8 +87,14 @@ export const useUpdateDeliveryAddress = (id: string) => {
     onSuccess: () => {
       // Invalidate and refetch the specific order
       queryClient.invalidateQueries({ queryKey: orderKeys.detail(id) });
-      // Also invalidate the orders list
+      // Also invalidate the orders list and cursor
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
     },
   });
 };
@@ -75,6 +130,12 @@ export const useCheckoutOrder = () => {
     mutationFn: (order: any) => orderAPI.createOrder(order),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
     },
   });
 };
@@ -90,6 +151,12 @@ export const useCreateOrder = () => {
     onSuccess: () => {
       // Invalidate and refetch orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
     },
   });
 };
@@ -105,6 +172,12 @@ export const useUpdateOrder = () => {
     onSuccess: (data) => {
       // Invalidate and refetch orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
       // Update the specific order cache
       queryClient.setQueryData(orderKeys.detail(data.id), data);
     },
@@ -122,6 +195,12 @@ export const useDeleteOrder = () => {
     onSuccess: (_, deletedId) => {
       // Invalidate and refetch orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
       // Remove the deleted order from cache
       queryClient.removeQueries({ queryKey: orderKeys.detail(deletedId) });
     },
@@ -148,6 +227,12 @@ export const useUpdateOrderProduct = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
     },
   });
 };
@@ -168,6 +253,12 @@ export const useAddProductsToOrder = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(variables.orderId),
@@ -192,6 +283,12 @@ export const useRemoveOrderProduct = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(variables.orderId),
@@ -215,6 +312,12 @@ export const useUpdateStatusToPending = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(id),
@@ -238,6 +341,12 @@ export const useUpdateStatusToProcessing = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(id),
@@ -261,6 +370,12 @@ export const useUpdateStatusToShipped = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(id),
@@ -284,6 +399,12 @@ export const useUpdateStatusToDelivered = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(id),
@@ -307,6 +428,12 @@ export const useUpdateStatusToCancelled = () => {
       });
       // Also invalidate the orders list
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "search-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(id),

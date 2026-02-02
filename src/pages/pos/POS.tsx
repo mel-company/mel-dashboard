@@ -137,7 +137,7 @@ const POS = ({}: Props) => {
     paymentMethodId: "",
   });
 
-  const storeDomain = "store-66";
+  const storeDomain = "fashion";
   const { data: categoriesData, isLoading: isLoadingCategories } =
     useFetchCategoriesByStoreDomain(storeDomain);
   const { data: productsData, isLoading: isLoadingProducts } =
