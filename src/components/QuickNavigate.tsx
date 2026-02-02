@@ -17,6 +17,7 @@ import {
   Truck,
   FileText,
   Bell,
+  MessageCircle,
 } from "lucide-react";
 import {
   Dialog,
@@ -159,6 +160,13 @@ const baseApps: AppItem[] = [
     icon: Bell,
     gradient: "from-green-500 to-green-600",
     description: "إدارة الإشعارات",
+  },
+  {
+    label: "الدعم",
+    path: "/tickets",
+    icon: MessageCircle,
+    gradient: "from-cyan-500 to-cyan-600",
+    description: "إدارة الدعم",
   },
   {
     label: "المحاسبة",
