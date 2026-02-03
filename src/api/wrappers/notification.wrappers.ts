@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { notificationAPI } from "../endpoints/notification.endpoints";
+import { authKeys } from "./auth.wrappers";
 
 /**
  * Query key factory for notifications
@@ -166,8 +167,10 @@ export const useUpdateNotificationReadStatus = () => {
       queryClient.invalidateQueries({
         queryKey: notificationKeys.detail(notificationId),
       });
-      // Invalidate sample cache
+      // Invalidate sample cache so dropdown list updates
       queryClient.invalidateQueries({ queryKey: notificationKeys.sample() });
+      // Invalidate auth/me so TopBar unread count (me.notificationsCount) refetches
+      queryClient.invalidateQueries({ queryKey: authKeys.all });
     },
   });
 };
