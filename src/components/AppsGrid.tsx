@@ -17,6 +17,7 @@ import {
   Bell,
   Ticket,
   MessageCircle,
+  Keyboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -127,8 +128,8 @@ const baseApps: AppItem[] = [
   {
     label: "POS",
     path: "/pos",
-    icon: ShoppingCart,
-    gradient: "from-orange-500 to-orange-600",
+    icon: Keyboard,
+    gradient: "from-pink-500 to-pink-600",
     description: "dev mode",
   },
   // {

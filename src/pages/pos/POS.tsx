@@ -30,6 +30,8 @@ import {
   Loader2,
   MapPin,
   Ticket,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import {
   useFetchProductsByStoreDomain,
@@ -40,6 +42,7 @@ import {
   useCheckoutOrder,
   useAddProductsToOrder,
 } from "@/api/wrappers/order.wrappers";
+import { useValidateCoupon } from "@/api/wrappers/coupon.wrappers";
 import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
 import { toast } from "sonner";
@@ -136,6 +139,7 @@ const POS = ({}: Props) => {
     nearest_point: "",
     note: "",
     paymentMethodId: "",
+    couponCode: "",
   });
 
   const storeDomain = "fashion";
@@ -410,6 +414,35 @@ const POS = ({}: Props) => {
 
   const total = calculateTotal();
 
+  // Debounce coupon code for validation when user finishes typing
+  const [debouncedCouponCode, setDebouncedCouponCode] = useState("");
+  useEffect(() => {
+    if (!isCheckoutDialogOpen) return;
+    const trimmed = (checkoutForm.couponCode || "").trim();
+    const timer = setTimeout(() => setDebouncedCouponCode(trimmed), 500);
+    return () => clearTimeout(timer);
+  }, [checkoutForm.couponCode, isCheckoutDialogOpen]);
+
+  const validateCouponParams =
+    debouncedCouponCode.length >= 2
+      ? { code: debouncedCouponCode, orderTotal: total }
+      : null;
+  const {
+    data: couponValidation,
+    isFetching: isValidatingCoupon,
+    error: couponValidateError,
+  } = useValidateCoupon(validateCouponParams, isCheckoutDialogOpen);
+
+  const couponValid = couponValidation?.valid === true;
+  const couponValidationMessage =
+    couponValidation?.message ??
+    (couponValidateError as any)?.response?.data?.message ??
+    (couponValidateError as Error)?.message;
+  const showCouponValidation =
+    isCheckoutDialogOpen &&
+    debouncedCouponCode.length >= 2 &&
+    (isValidatingCoupon || couponValidation || couponValidateError);
+
   // Helper function to get display name from JSON field
   const getDisplayName = (name: any): string => {
     if (typeof name === "string") return name;
@@ -504,6 +537,9 @@ const POS = ({}: Props) => {
       nearest_point: checkoutForm.nearest_point,
       note: checkoutForm.note || undefined,
       paymentMethodId: checkoutForm.paymentMethodId,
+      ...(checkoutForm.couponCode?.trim() && {
+        couponCode: checkoutForm.couponCode.trim(),
+      }),
       products: products,
     };
 
@@ -521,7 +557,9 @@ const POS = ({}: Props) => {
           nearest_point: "",
           note: "",
           paymentMethodId: "",
+          couponCode: "",
         });
+        setDebouncedCouponCode("");
         // Navigate to order details if order ID is available
         if (response?.order?.id) {
           navigate(`/orders/${response.order.id}`);
@@ -1186,13 +1224,49 @@ const POS = ({}: Props) => {
               </Label>
               <Input
                 id="coupon-code"
-                // value={code}
-                // onChange={(e) => setCode(e.target.value)}
+                value={checkoutForm.couponCode}
+                onChange={(e) =>
+                  setCheckoutForm((prev) => ({
+                    ...prev,
+                    couponCode: e.target.value,
+                  }))
+                }
                 placeholder="مثال: RAMADAN20"
                 className="text-right placeholder:text-right"
-                // disabled={isPending}
-                autoFocus
+                disabled={isCheckingOut}
               />
+              {showCouponValidation && (
+                <div
+                  className={`flex items-center gap-2 text-sm ${
+                    couponValid
+                      ? "text-green-600"
+                      : couponValidateError || couponValidation?.valid === false
+                        ? "text-destructive"
+                        : "text-muted-foreground"
+                  }`}
+                >
+                  {isValidatingCoupon ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin shrink-0" />
+                      <span>جاري التحقق...</span>
+                    </>
+                  ) : couponValid ? (
+                    <>
+                      <CheckCircle2 className="size-4 shrink-0" />
+                      <span className="text-right">
+                        {couponValidation?.message}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="size-4 shrink-0" />
+                      <span className="text-right">
+                        {couponValidationMessage}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             <Separator />

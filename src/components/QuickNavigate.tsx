@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 
 interface AppItem {
   label: string;
+  enLabel?: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
   gradient: string;
@@ -45,6 +46,7 @@ interface AppItem {
   emojiIcon?: string;
   subItems?: {
     label: string;
+    enLabel?: string;
     path: string;
     icon: React.ComponentType<{ className?: string }>;
   }[];
@@ -62,6 +64,7 @@ type SearchableItem = {
 const baseApps: AppItem[] = [
   {
     label: "الاحصائيات",
+    enLabel: "Statistics",
     path: "/stats",
     icon: BarChart2,
     gradient: "from-blue-500 to-blue-600",
@@ -69,14 +72,16 @@ const baseApps: AppItem[] = [
   },
   {
     label: "المنتجات",
+    enLabel: "Products",
     path: "/products",
     icon: Package,
     gradient: "from-emerald-500 to-emerald-600",
     description: "إدارة المنتجات",
-    badge: "جديد",
+    // badge: "جديد",
   },
   {
     label: "الفئات",
+    enLabel: "Categories",
     path: "/categories",
     icon: List,
     gradient: "from-violet-500 to-violet-600",
@@ -84,14 +89,16 @@ const baseApps: AppItem[] = [
   },
   {
     label: "الخصومات",
+    enLabel: "Discounts",
     path: "/discounts",
     icon: Percent,
     gradient: "from-rose-500 to-rose-600",
     description: "إدارة الخصومات",
-    badge: "عروض",
+    // badge: "عروض",
   },
   {
     label: "الطلبات",
+    enLabel: "Orders",
     path: "/orders",
     icon: ShoppingCart,
     gradient: "from-orange-500 to-orange-600",
@@ -99,6 +106,7 @@ const baseApps: AppItem[] = [
   },
   {
     label: "العملاء",
+    enLabel: "Customers",
     path: "/customers",
     icon: Users,
     gradient: "from-cyan-500 to-cyan-600",
@@ -106,6 +114,7 @@ const baseApps: AppItem[] = [
   },
   {
     label: "الموظفين",
+    enLabel: "Employees",
     path: "/employees",
     icon: Users2,
     gradient: "from-indigo-500 to-indigo-600",
@@ -113,6 +122,7 @@ const baseApps: AppItem[] = [
   },
   {
     label: "الإعدادات",
+    enLabel: "Settings",
     path: "/settings",
     icon: Settings,
     gradient: "from-slate-500 to-slate-600",
@@ -120,36 +130,43 @@ const baseApps: AppItem[] = [
     subItems: [
       {
         label: "عامة",
+        enLabel: "General",
         path: "/settings/general",
         icon: Settings,
       },
       {
         label: "المتجر",
+        enLabel: "Store",
         path: "/settings/store",
         icon: Store,
       },
       {
         label: "الدفع",
+        enLabel: "Payment",
         path: "/settings/payment-methods",
         icon: CreditCard,
       },
       {
         label: "التوصيل",
+        enLabel: "Delivery",
         path: "/settings/delivery",
         icon: Truck,
       },
       {
         label: "النطاق",
+        enLabel: "Domain",
         path: "/settings/domain",
         icon: Globe,
       },
       {
         label: "الشروط والأحكام",
+        enLabel: "Terms and Conditions",
         path: "/settings/policies/terms-and-conditions",
         icon: FileText,
       },
       {
         label: "اختصارات",
+        enLabel: "Shortcuts",
         path: "/settings/shortcuts",
         icon: Keyboard,
       },
@@ -157,6 +174,7 @@ const baseApps: AppItem[] = [
   },
   {
     label: "الإشعارات",
+    enLabel: "Notifications",
     path: "/notifications",
     icon: Bell,
     gradient: "from-green-500 to-green-600",
@@ -164,6 +182,7 @@ const baseApps: AppItem[] = [
   },
   {
     label: "الكوبونات",
+    enLabel: "Coupons",
     path: "/coupons",
     icon: Ticket,
     gradient: "from-green-500 to-green-600",
@@ -171,26 +190,37 @@ const baseApps: AppItem[] = [
   },
   {
     label: "الدعم",
+    enLabel: "Support",
     path: "/tickets",
     icon: MessageCircle,
     gradient: "from-cyan-500 to-cyan-600",
     description: "إدارة الدعم",
   },
   {
-    label: "المحاسبة",
-    path: "/accounting",
-    icon: Calculator,
-    gradient: "from-green-500 to-green-600",
-    description: "إدارة الحسابات المالية",
+    label: "POS",
+    enLabel: "POS",
+    path: "/pos",
+    icon: Keyboard,
+    gradient: "from-orange-500 to-orange-600",
+    description: "dev mode",
   },
-  {
-    label: "متجر التطبيقات",
-    path: "/app-store",
-    icon: AppWindow,
-    gradient: "from-purple-500 to-purple-600",
-    description: "تطبيقات مع إمكانية التكامل",
-    badge: "جديد",
-  },
+  // {
+  //   label: "المحاسبة",
+  //   enLabel: "Accounting",
+  //   path: "/accounting",
+  //   icon: Calculator,
+  //   gradient: "from-green-500 to-green-600",
+  //   description: "إدارة الحسابات المالية",
+  // },
+  // {
+  //   label: "متجر التطبيقات",
+  //   enLabel: "App Store",
+  //   path: "/app-store",
+  //   icon: AppWindow,
+  //   gradient: "from-purple-500 to-purple-600",
+  //   description: "تطبيقات مع إمكانية التكامل",
+  //   badge: "جديد",
+  // },
 ];
 
 type ShortcutItem = { description: string; keys: React.ReactNode };
@@ -248,11 +278,15 @@ const QuickNavigate = () => {
     const q = query.trim().toLowerCase();
     const items: SearchableItem[] = [];
 
+    const matchesLabelOrEnLabel = (label: string, enLabel?: string) =>
+      label.toLowerCase().includes(q) ||
+      (enLabel?.toLowerCase().includes(q) ?? false);
+
     for (const app of baseApps) {
       const hasSubItems = app.subItems && app.subItems.length > 0;
       const appMatches =
         !q ||
-        app.label.toLowerCase().includes(q) ||
+        matchesLabelOrEnLabel(app.label, app.enLabel) ||
         (app.description?.toLowerCase().includes(q) ?? false);
 
       if (hasSubItems) {
@@ -270,7 +304,7 @@ const QuickNavigate = () => {
         // SubItems: only when there is a query; include each matching subItem
         if (q) {
           for (const sub of app.subItems!) {
-            if (sub.label.toLowerCase().includes(q)) {
+            if (matchesLabelOrEnLabel(sub.label, sub.enLabel)) {
               items.push({
                 label: sub.label,
                 path: sub.path,
