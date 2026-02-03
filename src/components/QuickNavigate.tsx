@@ -8,8 +8,6 @@ import {
   Settings,
   Search,
   BarChart2,
-  Calculator,
-  AppWindow,
   Keyboard,
   Store,
   Globe,
