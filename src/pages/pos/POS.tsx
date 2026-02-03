@@ -29,6 +29,7 @@ import {
   Package,
   Loader2,
   MapPin,
+  Ticket,
 } from "lucide-react";
 import {
   useFetchProductsByStoreDomain,
@@ -800,6 +801,12 @@ const POS = ({}: Props) => {
                   {total.toLocaleString()} د.ع
                 </span>
               </div>
+
+              <Button className="w-full" size="lg">
+                <Ticket className="size-4" />
+                استخدام كوبون خصم
+              </Button>
+
               <Button
                 className="w-full"
                 size="lg"
@@ -936,10 +943,10 @@ const POS = ({}: Props) => {
         open={isCheckoutDialogOpen}
         onOpenChange={setIsCheckoutDialogOpen}
       >
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto text-right">
-          <DialogHeader>
-            <DialogTitle>إتمام الطلب</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto text-right">
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-right">إتمام الطلب</DialogTitle>
+            <DialogDescription className="text-right">
               يرجى إدخال معلومات العميل وعنوان التوصيل لإتمام الطلب
             </DialogDescription>
           </DialogHeader>
@@ -1169,6 +1176,23 @@ const POS = ({}: Props) => {
                   />
                 </div>
               </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="coupon-code" className="text-right block">
+                رمز الكوبون
+              </Label>
+              <Input
+                id="coupon-code"
+                // value={code}
+                // onChange={(e) => setCode(e.target.value)}
+                placeholder="مثال: RAMADAN20"
+                className="text-right placeholder:text-right"
+                // disabled={isPending}
+                autoFocus
+              />
             </div>
 
             <Separator />

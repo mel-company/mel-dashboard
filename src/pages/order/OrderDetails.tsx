@@ -36,6 +36,7 @@ import {
   Edit,
   Plus,
   TruckIcon,
+  Ticket,
 } from "lucide-react";
 import {
   useFetchOrder,
@@ -54,6 +55,7 @@ import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
 import EditDeliveryAddressDialog from "./EditDeliveryAddressDialog";
 import EditProductVariantDialog from "./EditProductVariantDialog";
 import RemoveOrderProduct from "./RemoveOrderProduct";
+import UseCouponDialog from "./UseCouponDialog";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "./OrderInvoicePreview";
 import { toast } from "sonner";
 
@@ -69,6 +71,7 @@ const OrderDetails = () => {
     null
   );
   const [productToRemove, setProductToRemove] = useState<any | null>(null);
+  const [isUseCouponDialogOpen, setIsUseCouponDialogOpen] = useState(false);
 
   const {
     data: order,
@@ -77,6 +80,8 @@ const OrderDetails = () => {
     refetch,
     isFetching,
   } = useFetchOrder(id ?? "", !!id);
+
+  console.log("ORDER: ", order);
 
   const { data: orderLogs, isLoading: isLoadingLogs } = useFetchOrderLogs(
     id ?? "",
@@ -110,6 +115,27 @@ const OrderDetails = () => {
         sum + (product.price ?? 0) * (product.quantity ?? 0),
       0
     );
+  };
+
+  // Format coupon type for display
+  const formatCouponType = (
+    type: string | undefined,
+    value: number | undefined
+  ) => {
+    if (type === "PERCENTAGE" && value != null) return `نسبة مئوية (${value}%)`;
+    if (type === "FIXED" && value != null)
+      return `مبلغ ثابت (${value?.toLocaleString()} د.ع)`;
+    return type ?? "—";
+  };
+
+  // Format appliesTo for display
+  const formatAppliesTo = (appliesTo: string | undefined) => {
+    const map: Record<string, string> = {
+      ALL: "الكل",
+      PRODUCTS: "منتجات محددة",
+      CATEGORIES: "تصنيفات محددة",
+    };
+    return appliesTo ? map[appliesTo] ?? appliesTo : "—";
   };
 
   // Format date
@@ -405,9 +431,20 @@ const OrderDetails = () => {
 
   const statusBadge = getStatusBadge(order.status);
   const StatusIcon = statusBadge.icon;
-  const total = calculateTotal();
+  const subtotal = calculateTotal();
+  const totalDiscount =
+    order.appliedRedemptions?.reduce(
+      (sum: number, r: any) => sum + (Number(r.discount) ?? 0),
+      0
+    ) ?? 0;
+  const totalAfterDiscount = Math.max(0, subtotal - totalDiscount);
   const customer = order.customer?.user;
   const productCount = order._count?.products ?? order.products?.length ?? 0;
+
+  // Get discount amount for a coupon by couponId from appliedRedemptions
+  const getRedemptionDiscount = (couponId: string) =>
+    order.appliedRedemptions?.find((r: any) => r.couponId === couponId)
+      ?.discount ?? 0;
 
   // Check if order can be modified (hide buttons for SHIPPED and DELIVERED)
   const canModifyOrder =
@@ -441,7 +478,13 @@ const OrderDetails = () => {
             </CardHeader>
             <CardContent>
               <Separator className="my-4" />
-              <div className="grid grid-cols-3 gap-4">
+              <div
+                className={`grid gap-4 ${
+                  order.appliedRedemptions?.length
+                    ? "grid-cols-2 sm:grid-cols-4"
+                    : "grid-cols-3"
+                }`}
+              >
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
                   <Package className="size-5 text-primary" />
                   <div className="text-right">
@@ -458,19 +501,46 @@ const OrderDetails = () => {
                       المبلغ الإجمالي
                     </p>
                     <p className="text-lg font-bold">
-                      {total.toLocaleString()} د.ع
+                      {subtotal.toLocaleString()} د.ع
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-                  <TruckIcon className="size-5 text-primary" />
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">التوصيل</p>
-                    <p className="text-lg font-bold">
-                      {(5000).toLocaleString()} د.ع
-                    </p>
+                {order.appliedRedemptions?.length ? (
+                  <>
+                    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                      <Ticket className="size-5 text-primary" />
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">
+                          خصم الكوبونات
+                        </p>
+                        <p className="text-lg font-bold text-green-600">
+                          -{totalDiscount.toLocaleString()} د.ع
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                      <DollarSign className="size-5 text-primary" />
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">
+                          المبلغ النهائي
+                        </p>
+                        <p className="text-lg font-bold">
+                          {totalAfterDiscount.toLocaleString()} د.ع
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                    <TruckIcon className="size-5 text-primary" />
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">التوصيل</p>
+                      <p className="text-lg font-bold">
+                        {(5000).toLocaleString()} د.ع
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -634,6 +704,95 @@ const OrderDetails = () => {
             </CardContent>
           </Card>
 
+          {/* Applied Coupons */}
+          {order.appliedCoupons && order.appliedCoupons.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-right flex items-center gap-2">
+                  <Ticket className="size-5" />
+                  الكوبونات المطبقة
+                </CardTitle>
+                <CardDescription className="text-right">
+                  كوبونات الخصم المطبقة على هذا الطلب
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {order.appliedCoupons.map((coupon: any, index: number) => {
+                    const discountAmount = getRedemptionDiscount(coupon.id);
+                    return (
+                      <div
+                        key={coupon.id || index}
+                        className="p-4 rounded-lg border bg-card space-y-3"
+                      >
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <Badge
+                            variant="secondary"
+                            className="text-sm font-mono"
+                          >
+                            {coupon.code}
+                          </Badge>
+                          {discountAmount > 0 && (
+                            <span className="text-sm font-semibold text-green-600">
+                              خصم: {Number(discountAmount).toLocaleString()} د.ع
+                            </span>
+                          )}
+                          {coupon.description && (
+                            <p className="text-sm text-muted-foreground text-right flex-1 w-full">
+                              {coupon.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              نوع الخصم
+                            </span>
+                            <span>
+                              {formatCouponType(coupon.type, coupon.value)}
+                            </span>
+                          </div>
+                          {coupon.minOrderTotal != null && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                الحد الأدنى للطلب
+                              </span>
+                              <span>
+                                {coupon.minOrderTotal?.toLocaleString()} د.ع
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              ينطبق على
+                            </span>
+                            <span>{formatAppliesTo(coupon.appliesTo)}</span>
+                          </div>
+                          {coupon.startsAt && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                يبدأ
+                              </span>
+                              <span>{formatDate(coupon.startsAt)}</span>
+                            </div>
+                          )}
+                          {coupon.expiresAt && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                ينتهي
+                              </span>
+                              <span>{formatDate(coupon.expiresAt)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Delivery Address */}
           <Card>
             <CardHeader>
@@ -791,7 +950,7 @@ const OrderDetails = () => {
           </Card>
 
           {/* Order Summary */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="text-right">ملخص الطلب</CardTitle>
             </CardHeader>
@@ -834,7 +993,7 @@ const OrderDetails = () => {
                 </span>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Actions Card */}
           <Card>
@@ -842,6 +1001,16 @@ const OrderDetails = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {!(order.appliedCoupons?.length) && (
+                <Button
+                  className="w-full gap-2 bg-green-400 hover:bg-green-500/90"
+                  variant="default"
+                  onClick={() => setIsUseCouponDialogOpen(true)}
+                >
+                  <Ticket className="size-4" />
+                  استخدام كوبون خصم
+                </Button>
+              )}
               {order.status === "PENDING" && (
                 <Button
                   className="w-full gap-2"
@@ -1002,6 +1171,16 @@ const OrderDetails = () => {
             regionId: order.regionId || undefined,
             nearest_point: order.nearest_point || undefined,
           }}
+        />
+      )}
+
+      {/* Use Coupon Dialog */}
+      {id && order && (
+        <UseCouponDialog
+          open={isUseCouponDialogOpen}
+          onOpenChange={setIsUseCouponDialogOpen}
+          orderId={id}
+          orderTotal={subtotal}
         />
       )}
 

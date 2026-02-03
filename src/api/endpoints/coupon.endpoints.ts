@@ -1,4 +1,3 @@
-
 import axiosInstance from "@/utils/AxiosInstance";
 
 export const couponAPI = {
@@ -12,6 +11,32 @@ export const couponAPI = {
         ...(params?.limit && { limit: params.limit }),
       },
     });
+    return data;
+  },
+
+  /**
+   * Use/Apply a coupon
+   */
+  useCoupon: async (params?: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/coupon/apply-coupon",
+      params
+    );
+    return data;
+  },
+
+  /**
+   * Validate a coupon (check if it can be used). Returns { valid: boolean; message: string }.
+   */
+  validateCoupon: async (params?: {
+    code: string;
+    orderTotal: number;
+    orderId?: string;
+  }): Promise<{ valid: boolean; message: string }> => {
+    const { data } = await axiosInstance.post<{ valid: boolean; message: string }>(
+      "/coupon/validate",
+      params
+    );
     return data;
   },
 
@@ -61,17 +86,14 @@ export const couponAPI = {
    * Get all products with optional filtering and pagination
    */
   search: async (params?: any): Promise<any> => {
-    const { data } = await axiosInstance.get<any>(
-      "/coupon/search",
-      {
-        params: {
-          ...(params?.query && { query: params.query }),
-          ...(params?.storeId && { storeId: params.storeId }),
-          ...(params?.page && { page: params.page }),
-          ...(params?.limit && { limit: params.limit }),
-        },
-      }
-    );
+    const { data } = await axiosInstance.get<any>("/coupon/search", {
+      params: {
+        ...(params?.query && { query: params.query }),
+        ...(params?.storeId && { storeId: params.storeId }),
+        ...(params?.page && { page: params.page }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
     return data;
   },
 
@@ -97,9 +119,7 @@ export const couponAPI = {
    * Remove Coupon
    */
   remove: async (id: string): Promise<any> => {
-    const { data } = await axiosInstance.delete<any>(
-      `/coupon/${id}`
-    );
+    const { data } = await axiosInstance.delete<any>(`/coupon/${id}`);
     return data;
   },
 
@@ -145,7 +165,9 @@ export const couponAPI = {
       {
         params: {
           ...(params?.code && { code: params.code }),
-          ...(params?.excludeCouponId && { excludeCouponId: params.excludeCouponId }),
+          ...(params?.excludeCouponId && {
+            excludeCouponId: params.excludeCouponId,
+          }),
         },
       }
     );
@@ -170,4 +192,3 @@ export const couponAPI = {
     return data;
   },
 };
-

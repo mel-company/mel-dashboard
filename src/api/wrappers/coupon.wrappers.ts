@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { couponAPI } from "../endpoints/coupon.endpoints";
 
 /**
@@ -12,7 +17,10 @@ export const couponKeys = {
   detail: (id: string) => [...couponKeys.details(), id] as const,
   search: (params?: any) => [...couponKeys.all, "search", params] as const,
   cursor: (params?: any) => [...couponKeys.all, "cursor", params] as const,
-  codeAvailability: (params?: any) => [...couponKeys.all, "code-availability", params] as const,
+  codeAvailability: (params?: any) =>
+    [...couponKeys.all, "code-availability", params] as const,
+  useCoupon: () => [...couponKeys.all, "use-coupon"] as const,
+  validate: (params?: any) => [...couponKeys.all, "validate", params] as const,
 };
 
 /**
@@ -27,9 +35,44 @@ export const useFetchCoupons = (params?: any, enabled: boolean = true) => {
 };
 
 /**
+ * Use/Apply a coupon
+ */
+export const useCoupon = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, any>({
+    mutationFn: (params: any) => couponAPI.useCoupon(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: couponKeys.useCoupon() });
+    },
+  });
+};
+
+/**
+ * Validate a coupon (check if it can be used). Returns { valid: boolean; message: string }.
+ * Use with debounced code for "validate when user finished typing".
+ */
+export const useValidateCoupon = (
+  params: { code: string; orderTotal: number; orderId?: string } | null,
+  enabled: boolean = true
+) => {
+  return useQuery({
+    queryKey: couponKeys.validate(params),
+    queryFn: () => couponAPI.validateCoupon(params!),
+    enabled:
+      enabled &&
+      !!params?.code?.trim() &&
+      params.code.trim().length >= 2 &&
+      (params.orderTotal ?? 0) >= 0,
+  });
+};
+
+/**
  * Fetch all coupons with cursor pagination (infinite scroll)
  */
-export const useFetchCouponsCursor = (params?: any, enabled: boolean = true) => {
+export const useFetchCouponsCursor = (
+  params?: any,
+  enabled: boolean = true
+) => {
   return useInfiniteQuery<any>({
     queryKey: couponKeys.cursor(params),
     enabled,
@@ -48,7 +91,7 @@ export const useFetchCouponsCursor = (params?: any, enabled: boolean = true) => 
  */
 export const useSearchCouponsCursor = (
   params?: { query: string; limit?: number },
-  enabled = true,
+  enabled = true
 ) => {
   return useInfiniteQuery<any>({
     queryKey: couponKeys.search({ ...params, cursor: true }),
@@ -85,7 +128,6 @@ export const useFetchCoupon = (id: string, enabled: boolean = true) => {
     enabled: enabled && !!id,
   });
 };
-
 
 /**
  * Create a new coupon
@@ -161,7 +203,9 @@ export const useUpdateCoupon = () => {
     mutationFn: ({ id, data }) => couponAPI.update(id, data),
     onSuccess: (_, variables) => {
       // Invalidate and refetch relevant queries
-      queryClient.invalidateQueries({ queryKey: couponKeys.detail(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: couponKeys.detail(variables.id),
+      });
       queryClient.invalidateQueries({ queryKey: couponKeys.lists() });
       queryClient.invalidateQueries({ queryKey: couponKeys.cursor() });
       queryClient.invalidateQueries({ queryKey: couponKeys.search() });
