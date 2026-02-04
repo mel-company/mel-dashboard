@@ -2,14 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link
+    id="favicon"
+    rel="icon" type="image/svg+xml" href="/mel-light.png" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard</title>
+    <title>لوحة التحكم</title>
     <script>
       (function() {
         const storageKey = 'vite-ui-theme';
         const theme = localStorage.getItem(storageKey) || 'system';
         const root = document.documentElement;
+
         
         if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           root.classList.add('dark');

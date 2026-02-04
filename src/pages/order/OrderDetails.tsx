@@ -435,6 +435,8 @@ const OrderDetails = () => {
       (sum: number, r: any) => sum + (Number(r.discount) ?? 0),
       0
     ) ?? 0;
+
+  // @ts-ignore
   const totalAfterDiscount = Math.max(0, subtotal - totalDiscount);
   const customer = order.customer?.user;
   const productCount = order._count?.products ?? order.products?.length ?? 0;

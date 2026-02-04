@@ -220,7 +220,10 @@ function App() {
             <Route path="/pos" element={<POS />} />
           </Route>
           {/* Order invoice preview popup - no Layout */}
-          <Route path="/order-invoice-preview" element={<OrderInvoicePreview />} />
+          <Route
+            path="/order-invoice-preview"
+            element={<OrderInvoicePreview />}
+          />
         </Route>
         {/* Public routes */}
         <Route path="/login" element={<StoreLogin />} />
