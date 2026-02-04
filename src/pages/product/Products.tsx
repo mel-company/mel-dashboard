@@ -192,7 +192,7 @@ const Products = () => {
                         <img
                           src={`${imageBaseUrl}/${product.image}`}
                           alt={product.title}
-                          className="h-full w-full object-cover transition-transform"
+                          className="h-full w-full object-contain transition-transform"
                         />
                       ) : (
                         <ShoppingCart className="size-18 text-white bg-cyan/40 rounded-full p-4" />

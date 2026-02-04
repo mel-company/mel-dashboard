@@ -59,10 +59,7 @@ const Categories = () => {
     error: cursorError,
     refetch: refetchCursor,
     isFetching: isCursorFetching,
-  } = useFetchCategoriesCursor(
-    { limit: CURSOR_LIMIT },
-    !isSearching
-  );
+  } = useFetchCategoriesCursor({ limit: CURSOR_LIMIT }, !isSearching);
 
   const {
     data: searchData,
@@ -194,7 +191,7 @@ const Categories = () => {
                         <img
                           src={`${imageBaseUrl}/${category.image}`}
                           alt={category.name}
-                          className="h-full w-full object-cover transition-transform group-hover:scale-110"
+                          className="h-full w-full object-contain transition-transform group-hover:scale-110"
                           onError={(e) => {
                             const target = e.currentTarget;
                             target.src = `https://via.placeholder.com/300x300/cccccc/666666?text=${encodeURIComponent(
