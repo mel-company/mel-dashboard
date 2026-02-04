@@ -81,14 +81,12 @@ const OrderDetails = () => {
     isFetching,
   } = useFetchOrder(id ?? "", !!id);
 
-  console.log("ORDER: ", order);
+  const baseUrl = order?.baseUrl ?? "";
 
   const { data: orderLogs, isLoading: isLoadingLogs } = useFetchOrderLogs(
     id ?? "",
     !!id
   );
-
-  console.log(order);
 
   const { mutate: updateOrder } = useUpdateOrder();
   const { mutate: deleteOrder, isPending: isDeleting } = useDeleteOrder();
@@ -450,6 +448,25 @@ const OrderDetails = () => {
   const canModifyOrder =
     order.status !== "SHIPPED" && order.status !== "DELIVERED";
 
+  const displayPrice = (price: number, discounts: any) => {
+    const hasDiscount = discounts[0]?.discount;
+    const discountPercentage = discounts[0]?.discount?.discount_percentage;
+
+    if (hasDiscount && discountPercentage) {
+      return (
+        <div className="flex items-center gap-2">
+          <span>
+            {(price - (price * discountPercentage) / 100).toLocaleString()} د.ع
+          </span>
+          <span className="line-through text-sm text-muted-foreground">
+            {price.toLocaleString()} د.ع
+          </span>
+        </div>
+      );
+    }
+    return <span>{price.toLocaleString()} د.ع</span>;
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -500,8 +517,10 @@ const OrderDetails = () => {
                     <p className="text-sm text-muted-foreground">
                       المبلغ الإجمالي
                     </p>
+                    <>{console.log("PRICING: ", order.pricing)}</>
                     <p className="text-lg font-bold">
-                      {subtotal.toLocaleString()} د.ع
+                      {order.pricing?.subtotalAfterProductDiscounts?.toLocaleString()}{" "}
+                      د.ع
                     </p>
                   </div>
                 </div>
@@ -525,7 +544,8 @@ const OrderDetails = () => {
                           المبلغ النهائي
                         </p>
                         <p className="text-lg font-bold">
-                          {totalAfterDiscount.toLocaleString()} د.ع
+                          {/* {totalAfterDiscount.toLocaleString()} د.ع */}
+                          {order.pricing?.totalPrice?.toLocaleString()} د.ع
                         </p>
                       </div>
                     </div>
@@ -575,10 +595,10 @@ const OrderDetails = () => {
                           {product?.variant?.image ||
                           product?.product?.image ? (
                             <img
-                              src={
+                              src={`${baseUrl}/${
                                 product?.variant?.image ||
                                 product?.product?.image
-                              }
+                              }`}
                               alt={product?.product?.title}
                               className="w-full h-full object-cover rounded-lg"
                             />
@@ -622,9 +642,10 @@ const OrderDetails = () => {
                                   <span className="text-xs text-muted-foreground">
                                     السعر:
                                   </span>
-                                  <span className="text-xs font-medium">
-                                    {product.price?.toLocaleString() ?? "—"} د.ع
-                                  </span>
+                                  {displayPrice(
+                                    product?.price,
+                                    product?.product?.discounts
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <span className="text-xs text-muted-foreground">
@@ -1001,7 +1022,7 @@ const OrderDetails = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {!(order.appliedCoupons?.length) && (
+              {!order.appliedCoupons?.length && (
                 <Button
                   className="w-full gap-2 bg-green-400 hover:bg-green-500/90"
                   variant="default"

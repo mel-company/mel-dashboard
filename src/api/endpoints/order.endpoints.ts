@@ -83,7 +83,7 @@ export const orderAPI = {
    * Get a single order by ID
    */
   fetchOne: async (id: string): Promise<any> => {
-    const { data } = await axiosInstance.get<any>(`/order/${id}`);
+    const { data } = await axiosInstance.get<any>(`/order/${id}/details`);
     return data;
   },
 

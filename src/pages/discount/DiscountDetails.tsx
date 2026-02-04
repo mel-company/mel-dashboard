@@ -75,6 +75,8 @@ const DiscountDetails = () => {
   } = useFetchDiscount(id ?? "");
   const { mutate: deleteDiscount, isPending: isDeleting } = useDeleteDiscount();
 
+  const baseUrl = discount?.baseUrl ?? "";
+
   const handleDelete = () => {
     if (!id) return;
 
@@ -278,7 +280,7 @@ const DiscountDetails = () => {
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                           {product.product.image ? (
                             <img
-                              src={product.product.image}
+                              src={`${baseUrl}/${product.product.image}`}
                               alt={product.product.title}
                               className="w-full h-full object-cover"
                             />
@@ -370,7 +372,7 @@ const DiscountDetails = () => {
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                           {category.category.image ? (
                             <img
-                              src={category.category.image}
+                              src={`${baseUrl}/${category.category.image}`}
                               alt={category.category.name}
                               className="w-full h-full object-cover"
                             />
