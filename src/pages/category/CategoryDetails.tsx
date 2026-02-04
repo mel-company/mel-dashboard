@@ -65,6 +65,8 @@ const CategoryDetails = () => {
     isFetching,
   } = useFetchCategory(id ?? "");
 
+  const baseUrl = category?.baseUrl ?? "";
+
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
   const handleDelete = () => {
@@ -236,7 +238,7 @@ const CategoryDetails = () => {
                           <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                             {product.product.image ? (
                               <img
-                                src={product.product.image}
+                                src={`${baseUrl}/${product.product.image}`}
                                 alt={product.product.title}
                                 className="w-full h-full object-cover"
                               />

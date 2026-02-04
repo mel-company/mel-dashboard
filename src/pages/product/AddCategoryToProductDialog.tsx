@@ -47,10 +47,10 @@ const AddCategoryToProductDialog = ({
   }, [open]);
 
   // Filter categories by search
-  const categories = categoriesData
-    ? Array.isArray(categoriesData)
-      ? categoriesData
-      : categoriesData.data || []
+  const categories = categoriesData?.categories
+    ? Array.isArray(categoriesData.categories)
+      ? categoriesData.categories
+      : categoriesData.categories || []
     : [];
 
   const availableCategories = categories.filter(
@@ -92,6 +92,8 @@ const AddCategoryToProductDialog = ({
       }
     );
   };
+
+  const baseUrl = categoriesData?.baseUrl ?? "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -161,7 +163,7 @@ const AddCategoryToProductDialog = ({
                     <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-muted shrink-0 overflow-hidden">
                       {category.image ? (
                         <img
-                          src={category.image}
+                          src={`${baseUrl}/${category.image}`}
                           alt={category.name}
                           className="w-full h-full object-cover"
                         />

@@ -51,10 +51,10 @@ const AddDiscountProductDialog = ({
   }, [open]);
 
   // Filter products: exclude already added products and filter by search
-  const products = productsData
-    ? Array.isArray(productsData)
-      ? productsData
-      : productsData.data || []
+  const products = productsData?.products
+    ? Array.isArray(productsData.products)
+      ? productsData.products
+      : productsData.products || []
     : [];
 
   const availableProducts = products.filter(
@@ -99,6 +99,8 @@ const AddDiscountProductDialog = ({
       }
     );
   };
+
+  const baseUrl = productsData?.baseUrl ?? "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -168,7 +170,7 @@ const AddDiscountProductDialog = ({
                     <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-muted shrink-0 overflow-hidden">
                       {product.image ? (
                         <img
-                          src={product.image}
+                          src={`${baseUrl}/${product.image}`}
                           alt={product.title}
                           className="w-full h-full object-cover"
                         />
