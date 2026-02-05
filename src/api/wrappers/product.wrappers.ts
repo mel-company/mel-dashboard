@@ -123,6 +123,13 @@ export const useAddCategoryToProduct = () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Update the specific product cache
       queryClient.setQueryData(productKeys.detail(data.id), data);
+      // Invalidate available categories cursor and search cursor so dialog list refreshes
+      queryClient.invalidateQueries({
+        queryKey: ["categories", "available-cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["categories", "available-search-cursor"],
+      });
     },
   });
 };

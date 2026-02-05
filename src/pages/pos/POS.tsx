@@ -47,7 +47,6 @@ import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import "./scroll.css";
 
 // Product types matching API structure
 type Product = {
@@ -178,11 +177,11 @@ const POS = ({}: Props) => {
   const products: Product[] = productsData?.data || productsData || [];
 
   // Helper function to get category name (handles JSON field)
-  const getCategoryName = (category: Category): string => {
-    if (typeof category.name === "string") return category.name;
-    if (typeof category.name === "object" && category.name !== null) {
+  const getCategoryName = (category: any): string => {
+    if (typeof category?.name === "string") return category?.name;
+    if (typeof category?.name === "object" && category?.name !== null) {
       return (
-        (category.name as any).ar || (category.name as any).name || "غير محدد"
+        (category?.name as any).ar || (category?.name as any).name || "غير محدد"
       );
     }
     return "غير محدد";
@@ -619,12 +618,12 @@ const POS = ({}: Props) => {
               </Badge>
               {categories.map((category) => (
                 <Badge
-                  key={category.id}
+                  key={category?.id}
                   variant={
                     selectedCategoryId === category.id ? "default" : "secondary"
                   }
                   className="cursor-pointer px-4 py-2 text-sm"
-                  onClick={() => setSelectedCategoryId(category.id)}
+                  onClick={() => setSelectedCategoryId(category?.id)}
                 >
                   {getCategoryName(category)}
                 </Badge>
@@ -706,12 +705,6 @@ const POS = ({}: Props) => {
       {/* Right Side - Cart */}
       <div className="w-96 flex flex-col gap-4 overflow-hidden">
         <Card className="flex-1 flex flex-col overflow-hidden">
-          <CardHeader>
-            <CardTitle className="text-right flex items-center gap-2">
-              <ShoppingCart className="size-5" />
-              السلة ({cart.length})
-            </CardTitle>
-          </CardHeader>
           <CardContent className="flex-1 overflow-y-auto space-y-4">
             {cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
@@ -818,7 +811,7 @@ const POS = ({}: Props) => {
 
         {/* Cart Summary */}
         {cart.length > 0 && (
-          <Card>
+          <Card className="space-y-0 gap-y-0">
             <CardHeader>
               <CardTitle className="text-right">الملخص</CardTitle>
             </CardHeader>

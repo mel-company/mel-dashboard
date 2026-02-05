@@ -121,6 +121,55 @@ export const categoryAPI = {
   },
 
   /**
+   * Get available categories not related to a discount or product (cursor pagination for infinite scroll)
+   */
+  fetchAvailableCategoriesCursor: async (params?: {
+    discountId?: string;
+    productId?: string;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/category/available-cursor",
+      {
+        params: {
+          ...(params?.discountId && { discountId: params.discountId }),
+          ...(params?.productId && { productId: params.productId }),
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
+  /**
+   * Search available categories not related to a discount or product (cursor pagination for infinite scroll)
+   */
+  fetchAvailableCategoriesSearchCursor: async (params?: {
+    discountId?: string;
+    productId?: string;
+    query?: string | null;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/category/available-search-cursor",
+      {
+        params: {
+          ...(params?.discountId && { discountId: params.discountId }),
+          ...(params?.productId && { productId: params.productId }),
+          ...(params?.query != null &&
+            params.query !== "" && { query: params.query }),
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
+  /**
    * Add products to a category
    */
   addProducts: async (id: string, productIds: string[]): Promise<any> => {
@@ -146,6 +195,49 @@ export const categoryAPI = {
   fetchAvailableProducts: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.get<any>(
       `/category/${id}/product/available`
+    );
+    return data;
+  },
+
+  /**
+   * Get available products not related to a category (cursor pagination for infinite scroll)
+   */
+  fetchAvailableProductsCursor: async (
+    id: string,
+    params?: { cursor?: string | null; limit?: number }
+  ): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      `/category/${id}/product/available/cursor`,
+      {
+        params: {
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
+  /**
+   * Search available products not related to a category (cursor pagination for infinite scroll)
+   */
+  fetchAvailableProductsSearchCursor: async (
+    id: string,
+    params?: {
+      query?: string | null;
+      cursor?: string | null;
+      limit?: number;
+    }
+  ): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      `/category/${id}/product/available/search-cursor`,
+      {
+        params: {
+          ...(params?.query != null && params.query !== "" && { query: params.query }),
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
     );
     return data;
   },

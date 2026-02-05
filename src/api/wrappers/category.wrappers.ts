@@ -19,8 +19,32 @@ export const categoryKeys = {
   cursor: (params?: any) => [...categoryKeys.all, "cursor", params] as const,
   available: (params?: any) =>
     [...categoryKeys.all, "available", params] as const,
+  availableCursor: (params?: {
+    discountId?: string;
+    productId?: string;
+    limit?: number;
+  }) => [...categoryKeys.all, "available-cursor", params] as const,
+  availableSearchCursor: (params?: {
+    discountId?: string;
+    productId?: string;
+    query?: string | null;
+    limit?: number;
+  }) =>
+    [...categoryKeys.all, "available-search-cursor", params] as const,
   availableProducts: (id: string) =>
     [...categoryKeys.all, "available-products", id] as const,
+  availableProductsCursor: (id: string, params?: { limit?: number }) =>
+    [...categoryKeys.all, "available-products-cursor", id, params] as const,
+  availableProductsSearchCursor: (
+    id: string,
+    params?: { query?: string | null; limit?: number }
+  ) =>
+    [
+      ...categoryKeys.all,
+      "available-products-search-cursor",
+      id,
+      params,
+    ] as const,
 };
 
 /**
@@ -175,6 +199,57 @@ export const useFetchAvailableCategories = (
 };
 
 /**
+ * Fetch available categories not related to a discount or product with cursor pagination (infinite scroll)
+ */
+export const useFetchAvailableCategoriesCursor = (
+  params?: { discountId?: string; productId?: string; limit?: number },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: categoryKeys.availableCursor(params),
+    enabled:
+      enabled &&
+      !!(params?.discountId || params?.productId) &&
+      !(params?.discountId && params?.productId),
+    queryFn: ({ pageParam }) =>
+      categoryAPI.fetchAvailableCategoriesCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Search available categories not related to a discount or product with cursor pagination (infinite scroll)
+ */
+export const useFetchAvailableCategoriesSearchCursor = (
+  params?: {
+    discountId?: string;
+    productId?: string;
+    query?: string | null;
+    limit?: number;
+  },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: categoryKeys.availableSearchCursor(params),
+    enabled:
+      enabled &&
+      !!(params?.discountId || params?.productId) &&
+      !(params?.discountId && params?.productId),
+    queryFn: ({ pageParam }) =>
+      categoryAPI.fetchAvailableCategoriesSearchCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
  * Add products to a category mutation
  */
 export const useAddProductsToCategory = () => {
@@ -187,9 +262,19 @@ export const useAddProductsToCategory = () => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       // Update the specific category cache
       queryClient.setQueryData(categoryKeys.detail(data.id), data);
-      // Invalidate available products for this category
+      // Invalidate available products (and cursor) for this category
       queryClient.invalidateQueries({
         queryKey: categoryKeys.availableProducts(data.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...categoryKeys.all, "available-products-cursor", data.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...categoryKeys.all,
+          "available-products-search-cursor",
+          data.id,
+        ],
       });
     },
   });
@@ -203,14 +288,26 @@ export const useRemoveProductFromCategory = () => {
 
   return useMutation<any, Error, { id: string; productId: string }>({
     mutationFn: ({ id, productId }) => categoryAPI.removeProduct(id, productId),
-    onSuccess: (data) => {
-      // Invalidate and refetch categories list
+    onSuccess: (_, variables) => {
+      const categoryId = variables.id;
+      // Invalidate and refetch categories list and category detail
       queryClient.invalidateQueries({ queryKey: categoryKeys.all });
-      // Update the specific category cache
-      queryClient.setQueryData(categoryKeys.detail(data.id), data);
-      // Invalidate available products for this category
       queryClient.invalidateQueries({
-        queryKey: categoryKeys.availableProducts(data.id),
+        queryKey: categoryKeys.detail(categoryId),
+      });
+      // Invalidate available products (and cursor) for this category
+      queryClient.invalidateQueries({
+        queryKey: categoryKeys.availableProducts(categoryId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...categoryKeys.all, "available-products-cursor", categoryId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...categoryKeys.all,
+          "available-products-search-cursor",
+          categoryId,
+        ],
       });
     },
   });
@@ -227,6 +324,49 @@ export const useFetchAvailableProducts = (
     queryKey: categoryKeys.availableProducts(discountId),
     queryFn: () => categoryAPI.fetchAvailableProducts(discountId),
     enabled: enabled && !!discountId,
+  });
+};
+
+/**
+ * Fetch available products not related to a category with cursor pagination (infinite scroll)
+ */
+export const useFetchAvailableProductsCursor = (
+  categoryId: string,
+  params?: { limit?: number },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: categoryKeys.availableProductsCursor(categoryId, params),
+    enabled: enabled && !!categoryId,
+    queryFn: ({ pageParam }) =>
+      categoryAPI.fetchAvailableProductsCursor(categoryId, {
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+        limit: params?.limit,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Search available products not related to a category with cursor pagination (infinite scroll)
+ */
+export const useFetchAvailableProductsSearchCursor = (
+  categoryId: string,
+  params?: { query?: string | null; limit?: number },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: categoryKeys.availableProductsSearchCursor(categoryId, params),
+    enabled: enabled && !!categoryId,
+    queryFn: ({ pageParam }) =>
+      categoryAPI.fetchAvailableProductsSearchCursor(categoryId, {
+        query: params?.query ?? undefined,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+        limit: params?.limit,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
   });
 };
 
