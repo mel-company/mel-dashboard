@@ -133,7 +133,7 @@ const Layout = () => {
       {/* Content Area */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden w-full custom-scrollbar hide-scrollbar mt-2 rounded-lg">
         {/* Global Breadcrumb - top, aligned to the right */}
-        {location.pathname && (
+        {location.pathname !== "/pos" && location.pathname && (
           <div
             className={`${
               location.pathname.includes("settings")
@@ -166,7 +166,11 @@ const Layout = () => {
           </div>
         ) : (
           <main>
-            <div className="hfull w-full p-4 sm:p-6 lg:p-8 pb-20">
+            <div
+              className={`hfull w-full ${
+                location.pathname === "/pos" ? "pb-0" : "p-4 sm:p-6 lg:p-8 "
+              }`}
+            >
               <Outlet />
               <footer className="h-full w-full justify-center items-center bg-red-50 " />
             </div>

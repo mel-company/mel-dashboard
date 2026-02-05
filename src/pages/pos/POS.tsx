@@ -47,6 +47,7 @@ import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import "./scroll.css";
 
 // Product types matching API structure
 type Product = {
@@ -150,6 +151,8 @@ const POS = ({}: Props) => {
       storeDomain,
       selectedCategoryId ? { categoryId: selectedCategoryId } : undefined
     );
+
+  const baseUrl = productsData?.baseUrl || "";
 
   // Checkout related hooks
   const { mutate: checkoutOrder, isPending: isCheckingOut } =
@@ -606,7 +609,7 @@ const POS = ({}: Props) => {
             </div>
 
             {/* Categories */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 overflow-x-auto max-w-full">
               <Badge
                 variant={selectedCategoryId === null ? "default" : "secondary"}
                 className="cursor-pointer px-4 py-2 text-sm"
@@ -632,12 +635,6 @@ const POS = ({}: Props) => {
 
         {/* Products Grid */}
         <Card className="flex-1 overflow-hidden flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-right flex items-center gap-2">
-              <Package className="size-5" />
-              المنتجات ({filteredProducts.length})
-            </CardTitle>
-          </CardHeader>
           <CardContent className="flex-1 overflow-y-auto">
             {filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
@@ -656,9 +653,9 @@ const POS = ({}: Props) => {
                       <div className="w-full h-32 bg-muted rounded-lg mb-3 flex items-center justify-center">
                         {product.image ? (
                           <img
-                            src={product.image}
+                            src={`${baseUrl}/${product.image}`}
                             alt={product.title}
-                            className="w-full h-full object-cover rounded-lg"
+                            className="w-full h-full object-contain rounded-lg"
                           />
                         ) : (
                           <Package className="size-12 text-muted-foreground" />
@@ -741,9 +738,9 @@ const POS = ({}: Props) => {
                         <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center shrink-0">
                           {image ? (
                             <img
-                              src={image}
+                              src={`${baseUrl}/${image}`}
                               alt={item.product.title}
-                              className="w-full h-full object-cover rounded-lg"
+                              className="w-full h-full object-contain rounded-lg"
                             />
                           ) : (
                             <Package className="size-8 text-muted-foreground" />
@@ -981,7 +978,7 @@ const POS = ({}: Props) => {
         open={isCheckoutDialogOpen}
         onOpenChange={setIsCheckoutDialogOpen}
       >
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto text-right">
+        <DialogContent className="w-4xl max-w-6xl max-h-[80vh] overflow-y-auto text-right">
           <DialogHeader className="text-right">
             <DialogTitle className="text-right">إتمام الطلب</DialogTitle>
             <DialogDescription className="text-right">
@@ -1241,8 +1238,8 @@ const POS = ({}: Props) => {
                     couponValid
                       ? "text-green-600"
                       : couponValidateError || couponValidation?.valid === false
-                        ? "text-destructive"
-                        : "text-muted-foreground"
+                      ? "text-destructive"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {isValidatingCoupon ? (

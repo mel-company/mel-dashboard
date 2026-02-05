@@ -1,6 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ArrowLeft, Bell, ChevronDown, Clock, Grid3x3, LogOut, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Bell,
+  ChevronDown,
+  Clock,
+  Grid3x3,
+  LogOut,
+  User,
+} from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -157,8 +165,7 @@ const TopBar = ({}: Props) => {
                     <span className="w-full text-sm flex group-hover:underline">
                       الكل
                     </span>
-                      <ArrowLeft className="size-4" />
-
+                    <ArrowLeft className="size-4" />
                   </Link>
                 </div>
                 <div className="overflow-y-auto max-h-64 hide-scrollbar">
@@ -274,8 +281,8 @@ const TopBar = ({}: Props) => {
               >
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-cyan text-white text-xs">
-                      {/* {user?.name?.[0] || "ح"} */}
+                    <AvatarFallback className="bg-pink-400 text-white font-bold text-xs">
+                      {me?.fullName?.[0] || "ح"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:flex flex-col items-end">
