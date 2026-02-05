@@ -19,6 +19,18 @@ export const discountKeys = {
   cursor: (params?: any) => [...discountKeys.all, "cursor", params] as const,
   availableProducts: (params?: any) =>
     [...discountKeys.all, "available-products", params] as const,
+  availableProductsCursor: (id: string, params?: { limit?: number }) =>
+    [...discountKeys.all, "available-products-cursor", id, params] as const,
+  availableProductsSearchCursor: (
+    id: string,
+    params?: { query?: string | null; limit?: number }
+  ) =>
+    [
+      ...discountKeys.all,
+      "available-products-search-cursor",
+      id,
+      params,
+    ] as const,
   availableCategories: (params?: any) =>
     [...discountKeys.all, "available-categories", params] as const,
 };
@@ -45,6 +57,49 @@ export const useFetchAvailableProducts = (
     queryKey: discountKeys.availableProducts(params),
     queryFn: () => discountAPI.fetchAvailableProducts(params),
     enabled,
+  });
+};
+
+/**
+ * Fetch available products not related to a discount with cursor pagination (infinite scroll)
+ */
+export const useFetchAvailableProductsCursor = (
+  discountId: string,
+  params?: { limit?: number },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: discountKeys.availableProductsCursor(discountId, params),
+    enabled: enabled && !!discountId,
+    queryFn: ({ pageParam }) =>
+      discountAPI.fetchAvailableProductsCursor(discountId, {
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+        limit: params?.limit,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Search available products not related to a discount with cursor pagination (infinite scroll)
+ */
+export const useFetchAvailableProductsSearchCursor = (
+  discountId: string,
+  params?: { query?: string | null; limit?: number },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: discountKeys.availableProductsSearchCursor(discountId, params),
+    enabled: enabled && !!discountId,
+    queryFn: ({ pageParam }) =>
+      discountAPI.fetchAvailableProductsSearchCursor(discountId, {
+        query: params?.query ?? undefined,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+        limit: params?.limit,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
   });
 };
 
@@ -221,6 +276,17 @@ export const useAddProductsToDiscount = () => {
       queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
       // Update the specific discount cache
       queryClient.setQueryData(discountKeys.detail(data.id), data);
+      // Invalidate available products cursor/search so AddDiscountProductDialog list refreshes
+      queryClient.invalidateQueries({
+        queryKey: [...discountKeys.all, "available-products-cursor", data.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...discountKeys.all,
+          "available-products-search-cursor",
+          data.id,
+        ],
+      });
     },
   });
 };
@@ -239,6 +305,13 @@ export const useAddCategoriesToDiscount = () => {
       queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
       // Update the specific discount cache
       queryClient.setQueryData(discountKeys.detail(data.id), data);
+      // Invalidate available categories cursor/search so AddDiscountCategoryDialog list refreshes
+      queryClient.invalidateQueries({
+        queryKey: ["categories", "available-cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["categories", "available-search-cursor"],
+      });
     },
   });
 };
@@ -251,11 +324,24 @@ export const useRemoveProductFromDiscount = () => {
 
   return useMutation<any, Error, { id: string; productId: string }>({
     mutationFn: ({ id, productId }) => discountAPI.removeProduct(id, productId),
-    onSuccess: (data) => {
+    onSuccess: (_, variables) => {
+      const discountId = variables.id;
       // Invalidate and refetch discounts list
       queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
-      // Update the specific discount cache
-      queryClient.setQueryData(discountKeys.detail(data.id), data);
+      queryClient.invalidateQueries({
+        queryKey: discountKeys.detail(discountId),
+      });
+      // Invalidate available products cursor/search for this discount
+      queryClient.invalidateQueries({
+        queryKey: [...discountKeys.all, "available-products-cursor", discountId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...discountKeys.all,
+          "available-products-search-cursor",
+          discountId,
+        ],
+      });
     },
   });
 };

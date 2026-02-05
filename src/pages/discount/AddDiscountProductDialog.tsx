@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,21 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Package, Search, Check, ShoppingCart } from "lucide-react";
 import {
   useAddProductsToDiscount,
-  useFetchAvailableProducts,
+  useFetchAvailableProductsSearchCursor,
 } from "@/api/wrappers/discount.wrappers";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const PAGE_SIZE = 20;
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => clearTimeout(t);
+  }, [value, delayMs]);
+  return debouncedValue;
+}
 
 type Props = {
   open: boolean;
@@ -34,13 +45,48 @@ const AddDiscountProductDialog = ({
 }: Props) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const debouncedSearch = useDebouncedValue(searchQuery.trim(), 350);
 
-  const { data: productsData, isLoading } = useFetchAvailableProducts(
-    { discountId },
-    open
-  );
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useFetchAvailableProductsSearchCursor(
+      discountId,
+      { query: debouncedSearch || undefined, limit: PAGE_SIZE },
+      open && !!discountId
+    );
 
   const { mutate: addProducts, isPending } = useAddProductsToDiscount();
+
+  // Flatten paginated products (server-side search; API already excludes products linked to this discount)
+  const products = data?.pages?.flatMap((p) => p.data ?? []) ?? [];
+  const baseUrl = data?.pages?.[0]?.baseUrl ?? "";
+
+  // Optionally exclude existingProductIds if passed (e.g. from parent state that hasn't refetched yet)
+  const availableProducts =
+    existingProductIds.length > 0
+      ? products.filter((p: any) => !existingProductIds.includes(p.id))
+      : products;
+
+  // Infinite scroll: load more when sentinel enters viewport
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const loadMoreCallback = useCallback(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    const root = scrollContainerRef.current;
+    if (!el || !root || !open || !hasNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMoreCallback();
+      },
+      { root, rootMargin: "100px", threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [open, hasNextPage, loadMoreCallback, products.length]);
 
   // Reset selections when dialog opens/closes
   useEffect(() => {
@@ -49,24 +95,6 @@ const AddDiscountProductDialog = ({
       setSelectedProductIds([]);
     }
   }, [open]);
-
-  // Filter products: exclude already added products and filter by search
-  const products = productsData?.products
-    ? Array.isArray(productsData.products)
-      ? productsData.products
-      : productsData.products || []
-    : [];
-
-  const availableProducts = products.filter(
-    (product: any) =>
-      !existingProductIds.includes(product.id) &&
-      (product.title
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase().trim()) ||
-        product.description
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase().trim()))
-  );
 
   const toggleProduct = (productId: string) => {
     setSelectedProductIds((prev) =>
@@ -100,8 +128,6 @@ const AddDiscountProductDialog = ({
     );
   };
 
-  const baseUrl = productsData?.baseUrl ?? "";
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="text-right max-w-2xl max-h-[80vh] flex flex-col">
@@ -128,7 +154,10 @@ const AddDiscountProductDialog = ({
         </div>
 
         {/* Products List */}
-        <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto space-y-2 min-h-0"
+        >
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, idx) => (
@@ -148,7 +177,7 @@ const AddDiscountProductDialog = ({
             <div className="text-center py-12">
               <Package className="size-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-sm text-muted-foreground">
-                {searchQuery.trim()
+                {debouncedSearch
                   ? "لا توجد منتجات تطابق البحث"
                   : "لا توجد منتجات متاحة للإضافة"}
               </p>
@@ -202,6 +231,28 @@ const AddDiscountProductDialog = ({
                   </div>
                 );
               })}
+              {/* Sentinel for infinite scroll + Load more button */}
+              {hasNextPage && (
+                <div ref={loadMoreRef} className="py-4 flex justify-center">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="gap-2"
+                  >
+                    {isFetchingNextPage ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        جاري تحميل المزيد...
+                      </>
+                    ) : (
+                      "تحميل المزيد"
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

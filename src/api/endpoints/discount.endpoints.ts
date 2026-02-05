@@ -22,6 +22,50 @@ export const discountAPI = {
     return data;
   },
 
+  /**
+   * Get available products not related to a discount (cursor pagination for infinite scroll)
+   */
+  fetchAvailableProductsCursor: async (
+    id: string,
+    params?: { cursor?: string | null; limit?: number }
+  ): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      `/discount/${id}/product/available-cursor`,
+      {
+        params: {
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
+  /**
+   * Search available products not related to a discount (cursor pagination for infinite scroll)
+   */
+  fetchAvailableProductsSearchCursor: async (
+    id: string,
+    params?: {
+      query?: string | null;
+      cursor?: string | null;
+      limit?: number;
+    }
+  ): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      `/discount/${id}/product/available-search-cursor`,
+      {
+        params: {
+          ...(params?.query != null &&
+            params.query !== "" && { query: params.query }),
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
   fetchAvailableCategories: async (params?: any): Promise<any> => {
     const { data } = await axiosInstance.get<any>(
       "/discount/available-categories",
