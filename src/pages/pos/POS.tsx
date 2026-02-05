@@ -49,6 +49,7 @@ import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Product types matching API structure
 type Product = {
@@ -57,7 +58,11 @@ type Product = {
   price: number | null;
   image?: string;
   description?: string;
-  categories?: Array<{ id: string; name: any }>;
+  categories?: Array<{
+    id: string;
+    name: any;
+    category: { id: string; name: any };
+  }>;
   options?: Array<{
     id: string;
     name: string;
@@ -660,18 +665,6 @@ const POS = ({}: Props) => {
     });
   };
 
-  // Loading state
-  if (isLoadingCategories || isLoadingProducts) {
-    return (
-      <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
-        <div className="text-center">
-          <Package className="size-16 text-muted-foreground mb-4 mx-auto animate-pulse" />
-          <p className="text-muted-foreground">جاري تحميل البيانات...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-[calc(100vh-4rem)] flex gap-4 p-4">
       {/* Left Side - Products */}
@@ -710,18 +703,24 @@ const POS = ({}: Props) => {
               >
                 الكل
               </Badge>
-              {categories.map((category) => (
-                <Badge
-                  key={category?.id}
-                  variant={
-                    selectedCategoryId === category.id ? "default" : "secondary"
-                  }
-                  className="cursor-pointer px-4 py-2 text-sm"
-                  onClick={() => setSelectedCategoryId(category?.id)}
-                >
-                  {getCategoryName(category)}
-                </Badge>
-              ))}
+              {isLoadingCategories
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-24 rounded-full" />
+                  ))
+                : categories.map((category) => (
+                    <Badge
+                      key={category?.id}
+                      variant={
+                        selectedCategoryId === category.id
+                          ? "default"
+                          : "secondary"
+                      }
+                      className="cursor-pointer px-4 py-2 text-sm"
+                      onClick={() => setSelectedCategoryId(category?.id)}
+                    >
+                      {getCategoryName(category)}
+                    </Badge>
+                  ))}
             </div>
           </CardContent>
         </Card>
@@ -732,7 +731,26 @@ const POS = ({}: Props) => {
             ref={productsScrollRef}
             className="flex-1 overflow-y-auto"
           >
-            {filteredProducts.length === 0 ? (
+            {isLoadingProducts ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Card key={i} className="overflow-hidden">
+                    <CardContent className="p-4">
+                      <Skeleton className="w-full h-32 rounded-lg mb-3" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-full" />
+                        <div className="flex justify-between gap-2">
+                          <Skeleton className="h-5 w-16" />
+                          <Skeleton className="h-5 w-20" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-9 w-full mt-3 rounded-md" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <Package className="size-16 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">لا توجد منتجات متاحة</p>
@@ -772,7 +790,9 @@ const POS = ({}: Props) => {
                           {product.categories &&
                             product.categories.length > 0 && (
                               <Badge variant="secondary" className="text-xs">
-                                {getCategoryName(product.categories[0])}
+                                {getCategoryName(
+                                  product.categories[0]?.category
+                                )}
                               </Badge>
                             )}
                           <span className="font-bold text-primary">
