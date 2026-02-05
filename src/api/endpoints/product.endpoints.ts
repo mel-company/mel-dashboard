@@ -11,16 +11,38 @@ export const productAPI = {
     storeId?: string;
     categoryId?: string;
   }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/product/cursor", {
+      params: {
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+
+    return data;
+  },
+
+  /**
+   * Get all products by store domain with cursor pagination (infinite scroll)
+   */
+  fetchAllByStoreDomainCursor: async (
+    domain: string,
+    params?: {
+      categoryId?: string;
+      cursor?: string | null;
+      limit?: number;
+    }
+  ): Promise<any> => {
     const { data } = await axiosInstance.get<any>(
-      "/product/cursor",
+      "/product/by-store-domain/cursor",
       {
         params: {
+          store: domain,
+          ...(params?.categoryId && { categoryId: params.categoryId }),
           ...(params?.cursor && { cursor: params.cursor }),
           ...(params?.limit && { limit: params.limit }),
         },
-      },
+      }
     );
-
     return data;
   },
 
@@ -68,17 +90,14 @@ export const productAPI = {
     limit?: number;
     categoryId?: string;
   }): Promise<any> => {
-    const { data } = await axiosInstance.get<any>(
-      "/product/search-cursor",
-      {
-        params: {
-          query: params.query,
-          ...(params.cursor && { cursor: params.cursor }),
-          ...(params.limit && { limit: params.limit }),
-          ...(params.categoryId && { categoryId: params.categoryId }),
-        },
-      }
-    );
+    const { data } = await axiosInstance.get<any>("/product/search-cursor", {
+      params: {
+        query: params.query,
+        ...(params.cursor && { cursor: params.cursor }),
+        ...(params.limit && { limit: params.limit }),
+        ...(params.categoryId && { categoryId: params.categoryId }),
+      },
+    });
     return data;
   },
 

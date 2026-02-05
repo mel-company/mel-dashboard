@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,9 +32,11 @@ import {
   Ticket,
   CheckCircle2,
   XCircle,
+  X,
 } from "lucide-react";
 import {
-  useFetchProductsByStoreDomain,
+  useFetchProductsByStoreDomainCursor,
+  useFetchProductsSearchCursor,
   useFindVariantByOptions,
 } from "@/api/wrappers/product.wrappers";
 import { useFetchCategoriesByStoreDomain } from "@/api/wrappers/category.wrappers";
@@ -143,15 +145,92 @@ const POS = ({}: Props) => {
   });
 
   const storeDomain = "fashion";
+  const productsScrollRef = useRef<HTMLDivElement>(null);
+  const productsLoadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Debounced search for server-side search (avoid request on every keystroke)
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+  const isSearchMode = debouncedSearch.length > 0;
+
   const { data: categoriesData, isLoading: isLoadingCategories } =
     useFetchCategoriesByStoreDomain(storeDomain);
-  const { data: productsData, isLoading: isLoadingProducts } =
-    useFetchProductsByStoreDomain(
-      storeDomain,
-      selectedCategoryId ? { categoryId: selectedCategoryId } : undefined
-    );
 
-  const baseUrl = productsData?.baseUrl || "";
+  // List by store domain (when not searching)
+  const {
+    data: productsCursorData,
+    isLoading: isLoadingProductsList,
+    fetchNextPage: fetchNextProductsPage,
+    hasNextPage: hasNextProductsPage,
+    isFetchingNextPage: isFetchingNextProducts,
+  } = useFetchProductsByStoreDomainCursor(
+    storeDomain,
+    {
+      categoryId: selectedCategoryId ?? undefined,
+      limit: 24,
+    },
+    !isSearchMode
+  );
+
+  // Search with cursor (when user has typed a search query)
+  const {
+    data: searchCursorData,
+    isLoading: isLoadingSearch,
+    fetchNextPage: fetchNextSearchPage,
+    hasNextPage: hasNextSearchPage,
+    isFetchingNextPage: isFetchingNextSearch,
+  } = useFetchProductsSearchCursor(
+    {
+      query: debouncedSearch,
+      categoryId: selectedCategoryId ?? undefined,
+      limit: 24,
+    },
+    isSearchMode
+  );
+
+  const baseUrl =
+    (isSearchMode
+      ? searchCursorData?.pages?.[0]?.baseUrl
+      : productsCursorData?.pages?.[0]?.baseUrl) || "";
+
+  // Flatten paginated products from the active source
+  const productsFromApi: Product[] = isSearchMode
+    ? searchCursorData?.pages?.flatMap((p) => p.data ?? []) ?? []
+    : productsCursorData?.pages?.flatMap((p) => p.data ?? []) ?? [];
+
+  const isLoadingProducts = isSearchMode
+    ? isLoadingSearch
+    : isLoadingProductsList;
+  const hasNextPage = isSearchMode ? hasNextSearchPage : hasNextProductsPage;
+  const fetchNextPage = isSearchMode
+    ? fetchNextSearchPage
+    : fetchNextProductsPage;
+  const isFetchingNextPage = isSearchMode
+    ? isFetchingNextSearch
+    : isFetchingNextProducts;
+
+  // Infinite scroll: load more when sentinel enters viewport
+  const loadMoreProducts = useCallback(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    const el = productsLoadMoreRef.current;
+    const root = productsScrollRef.current;
+    if (!el || !root || !hasNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMoreProducts();
+      },
+      { root, rootMargin: "200px", threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, loadMoreProducts, productsFromApi.length]);
 
   // Checkout related hooks
   const { mutate: checkoutOrder, isPending: isCheckingOut } =
@@ -173,8 +252,8 @@ const POS = ({}: Props) => {
   // Extract categories from API response
   const categories: Category[] = categoriesData?.data || categoriesData || [];
 
-  // Extract products from API response
-  const products: Product[] = productsData?.data || productsData || [];
+  // Products from cursor API (already flattened above)
+  const products: Product[] = productsFromApi;
 
   // Helper function to get category name (handles JSON field)
   const getCategoryName = (category: any): string => {
@@ -187,13 +266,17 @@ const POS = ({}: Props) => {
     return "غير محدد";
   };
 
-  // Filter products by search query
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  // When in search mode, products are already from server-side search; otherwise filter list by search query (client-side)
+  const filteredProducts = isSearchMode
+    ? products
+    : products.filter((product) => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase();
+        return (
+          product.title?.toLowerCase().includes(q) ||
+          product.description?.toLowerCase().includes(q)
+        );
+      });
 
   // Find matching variant based on selected options using API
   const findMatchingVariant = useCallback(
@@ -605,6 +688,17 @@ const POS = ({}: Props) => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pr-10 text-right"
               />
+
+              {searchQuery ? (
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="مسح البحث"
+                >
+                  <X className="size-4" />
+                </button>
+              ) : null}
             </div>
 
             {/* Categories */}
@@ -634,7 +728,10 @@ const POS = ({}: Props) => {
 
         {/* Products Grid */}
         <Card className="flex-1 overflow-hidden flex flex-col">
-          <CardContent className="flex-1 overflow-y-auto">
+          <CardContent
+            ref={productsScrollRef}
+            className="flex-1 overflow-y-auto"
+          >
             {filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <Package className="size-16 text-muted-foreground mb-4" />
@@ -696,6 +793,31 @@ const POS = ({}: Props) => {
                     </CardContent>
                   </Card>
                 ))}
+                {/* Sentinel for infinite scroll + Load more */}
+                {hasNextPage && (
+                  <div
+                    ref={productsLoadMoreRef}
+                    className="col-span-full py-6 flex justify-center"
+                  >
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      className="gap-2"
+                    >
+                      {isFetchingNextPage ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" />
+                          جاري تحميل المزيد...
+                        </>
+                      ) : (
+                        "تحميل المزيد"
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

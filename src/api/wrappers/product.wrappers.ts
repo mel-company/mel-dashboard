@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { productAPI } from "../endpoints/product.endpoints";
 
 /**
@@ -9,6 +14,8 @@ export const productKeys = {
   lists: () => [...productKeys.all, "list"] as const,
   list: (params?: any) => [...productKeys.lists(), params] as const,
   cursor: (params?: any) => [...productKeys.all, "cursor", params] as const,
+  byStoreDomainCursor: (domain: string, params?: { categoryId?: string; limit?: number }) =>
+    [...productKeys.all, "by-store-domain-cursor", domain, params] as const,
   details: () => [...productKeys.all, "detail"] as const,
   detail: (id: string) => [...productKeys.details(), id] as const,
   search: (params?: any) => [...productKeys.all, "search", params] as const,
@@ -18,7 +25,10 @@ export const productKeys = {
  * Fetch first page of products (for dropdowns/selects, e.g. discount forms).
  * Uses cursor API with a single page.
  */
-export const useFetchProducts = (params?: { limit?: number }, enabled: boolean = true) => {
+export const useFetchProducts = (
+  params?: { limit?: number },
+  enabled: boolean = true
+) => {
   return useQuery<any>({
     queryKey: productKeys.list(params),
     queryFn: () =>
@@ -38,7 +48,7 @@ export const useFetchProductsCursor = (
     storeId?: string;
     categoryId?: string;
   },
-  enabled = true,
+  enabled = true
 ) => {
   return useInfiniteQuery({
     queryKey: productKeys.cursor(params),
@@ -69,6 +79,28 @@ export const useFetchProductsByStoreDomain = (
 };
 
 /**
+ * Fetch all products by store domain with cursor pagination (infinite scroll)
+ */
+export const useFetchProductsByStoreDomainCursor = (
+  domain: string,
+  params?: { categoryId?: string; limit?: number },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery({
+    queryKey: productKeys.byStoreDomainCursor(domain, params),
+    enabled: enabled && !!domain,
+    queryFn: ({ pageParam }) =>
+      productAPI.fetchAllByStoreDomainCursor(domain, {
+        categoryId: params?.categoryId,
+        limit: params?.limit,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
  * Search for products (page-based, legacy)
  */
 export const useSearchProducts = (params?: any, enabled: boolean = true) => {
@@ -84,7 +116,7 @@ export const useSearchProducts = (params?: any, enabled: boolean = true) => {
  */
 export const useFetchProductsSearchCursor = (
   params: { query: string; limit?: number; categoryId?: string },
-  enabled = true,
+  enabled = true
 ) => {
   return useInfiniteQuery({
     queryKey: productKeys.search({ ...params, cursor: true }),
@@ -380,8 +412,7 @@ export const useDeleteProductImage = () => {
   const queryClient = useQueryClient();
 
   return useMutation<any, Error, string>({
-    mutationFn: (productId: string) =>
-      productAPI.deleteProductImage(productId),
+    mutationFn: (productId: string) => productAPI.deleteProductImage(productId),
     onSuccess: (data) => {
       // Invalidate and refetch products list
       queryClient.invalidateQueries({ queryKey: productKeys.all });
