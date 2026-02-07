@@ -1,4 +1,14 @@
 import axios from "axios";
+import { getDomain, getSubdomain, parse } from "tldts";
+
+const parsed = parse(window.location.hostname);
+console.log("parsed", parsed);
+
+const domain = getDomain(window.location.hostname);
+console.log("domain", domain);
+
+const subdomain = getSubdomain(window.location.hostname);
+console.log("subdomain", subdomain);
 
 // Create an axios instance with Vite environment variables
 const axiosInstance = axios.create({
@@ -7,6 +17,7 @@ const axiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
     Authorization: `Bearer ${import.meta.env.VITE_API_KEY}`,
+    "domain-name": parsed.subdomain,
   },
   // Needed so the browser will store/send httpOnly cookies (e.g. `sat`)
   withCredentials: true,
@@ -19,12 +30,12 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     // If the data is FormData, remove Content-Type header to let browser/axios set it automatically with boundary
     if (config.data instanceof FormData) {
       delete config.headers["Content-Type"];
     }
-    
+
     return config;
   },
   (error) => {
