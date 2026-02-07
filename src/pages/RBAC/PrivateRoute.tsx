@@ -30,7 +30,7 @@ const PrivateRoute = () => {
   }
 
   // Redirect to login if there's an error or no user data
-  if (error || !user) {
+  if (!isLoading && (error || !user)) {
     return <Navigate to="/login" replace />;
   }
 
