@@ -152,7 +152,8 @@ const StoreLogin = () => {
             //   }
             // );
           },
-          onError: () => {
+          onError: (data: any) => {
+            console.log("ERROR DATA", data);
             toast.error("فشل تسجيل الدخول. يرجى المحاولة مرة أخرى");
           },
           onSettled: () => setIsLoading(false),
