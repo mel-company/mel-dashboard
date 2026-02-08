@@ -17,18 +17,23 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { useVerify } from "@/api/wrappers/auth.wrappers";
+import { parse } from "tldts";
 
 const OTP = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const phone = searchParams.get("phone") ?? "";
   const store = searchParams.get("store") ?? "";
+  const v_code = searchParams.get("otp") ?? "";
 
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
   const { mutate: verify, isPending: isVerifyingPending } = useVerify();
+
+  const parsed = parse(window.location.hostname);
+  const subdomain = parsed.subdomain;
 
   const maskedPhone = useMemo(() => {
     const digits = phone.replace(/\D/g, "");
@@ -44,6 +49,12 @@ const OTP = () => {
     const t = setInterval(() => setCooldown((v) => Math.max(0, v - 1)), 1000);
     return () => clearInterval(t);
   }, [cooldown]);
+
+  useEffect(() => {
+    if (subdomain === "fashion" && v_code) {
+      setCode(v_code.toString());
+    }
+  }, [subdomain, v_code]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();

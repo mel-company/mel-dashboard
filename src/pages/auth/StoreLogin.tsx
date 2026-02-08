@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Phone, ArrowLeft, ShieldCheck, Store } from "lucide-react";
+import { parse } from "tldts";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,9 @@ const StoreLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
 
+  const parsed = parse(window.location.hostname);
+  const subdomain = parsed.subdomain;
+
   const { data: stores, isLoading: isLoadingStores } = useFetchDevStores();
 
   const { mutate: login, isPending: isLoginPending } = useLogin();
@@ -49,6 +53,15 @@ const StoreLogin = () => {
     () => phone.replace(/\D/g, "").length,
     [phone]
   );
+
+  useEffect(() => {
+    if (subdomain === "fashion") {
+      setSelectedStoreId(
+        stores?.data?.find((store: any) => store.domain === "fashion")?.id ?? ""
+      );
+      setPhone("+9647717504243");
+    }
+  }, [subdomain, stores?.data]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,12 +97,28 @@ const StoreLogin = () => {
           },
         },
         {
-          onSuccess: () => {
-            navigate(
-              `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                selectedStore.domain
-              }`
-            );
+          onSuccess: (data) => {
+            let url =
+              subdomain === "fashion"
+                ? `/otp?phone=${encodeURIComponent(normalized)}&store=${
+                    selectedStore.domain
+                  }`
+                : `/otp?phone=${encodeURIComponent(normalized)}&store=${
+                    selectedStore.domain
+                  }&otp=${data?.codeOnlyOnDev}`;
+
+            navigate(url);
+            // navigate(
+            //   `/otp?phone=${encodeURIComponent(normalized)}&store=${
+            //     selectedStore.domain
+            //   }`,
+            //   {
+            //     state: {
+            //       v_code:
+            //         subdomain === "fashion" ? data?.codeOnlyOnDev : undefined,
+            //     },
+            //   }
+            // );
           },
           onError: () => {
             toast.error("فشل تسجيل الدخول. يرجى المحاولة مرة أخرى");
