@@ -46,10 +46,10 @@ const StoreLogin = () => {
 
   const { mutate: login, isPending: isLoginPending } = useLogin();
 
-  const selectedStore = useMemo(() => {
-    const list = stores?.data ?? [];
-    return list.find((store: any) => String(store.id) === selectedStoreId);
-  }, [stores?.data, selectedStoreId]);
+  // const selectedStore = useMemo(() => {
+  //   const list = stores?.data ?? [];
+  //   return list.find((store: any) => String(store.id) === selectedStoreId);
+  // }, [stores?.data, selectedStoreId]);
 
   const phoneDigitsCount = useMemo(
     () => phone.replace(/\D/g, "").length,
@@ -76,10 +76,10 @@ const StoreLogin = () => {
       toast.error("يرجى اختيار المتجر");
       return;
     }
-    if (!selectedStore) {
-      toast.error("لم يتم العثور على المتجر المختار");
-      return;
-    }
+    // if (!selectedStore) {
+    //   toast.error("لم يتم العثور على المتجر المختار");
+    //   return;
+    // }
 
     if (!isValidPhone(normalized)) {
       toast.error("يرجى إدخال رقم هاتف صحيح");
@@ -92,8 +92,8 @@ const StoreLogin = () => {
         {
           phone: normalized,
           store: {
-            name: selectedStore?.name,
-            domain: selectedStore?.domain,
+            name: parsed.subdomain === "fashion" ? "fashion" : null,
+            domain: parsed.subdomain === "fashion" ? "fashion" : null,
           },
         },
         {
@@ -101,10 +101,10 @@ const StoreLogin = () => {
             let url =
               subdomain === "fashion"
                 ? `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                    selectedStore.domain
+                    parsed.subdomain === "fashion" ? "fashion" : null
                   }&code=${data?.codeOnlyOnDev}`
                 : `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                    selectedStore.domain
+                    parsed.subdomain === "fashion" ? "fashion" : null
                   }`;
 
             navigate(url);
