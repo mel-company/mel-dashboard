@@ -46,10 +46,10 @@ const StoreLogin = () => {
 
   const { mutate: login, isPending: isLoginPending } = useLogin();
 
-  // const selectedStore = useMemo(() => {
-  //   const list = stores?.data ?? [];
-  //   return list.find((store: any) => String(store.id) === selectedStoreId);
-  // }, [stores?.data, selectedStoreId]);
+  const selectedStore = useMemo(() => {
+    const list = stores?.data ?? [];
+    return list.find((store: any) => String(store.id) === selectedStoreId);
+  }, [stores?.data, selectedStoreId]);
 
   const phoneDigitsCount = useMemo(
     () => phone.replace(/\D/g, "").length,
@@ -76,10 +76,10 @@ const StoreLogin = () => {
       toast.error("يرجى اختيار المتجر");
       return;
     }
-    // if (!selectedStore) {
-    //   toast.error("لم يتم العثور على المتجر المختار");
-    //   return;
-    // }
+    if (!isProduction && !selectedStore) {
+      toast.error("لم يتم العثور على المتجر المختار");
+      return;
+    }
 
     if (!isValidPhone(normalized)) {
       toast.error("يرجى إدخال رقم هاتف صحيح");
@@ -98,16 +98,48 @@ const StoreLogin = () => {
         },
         {
           onSuccess: (data) => {
-            let url =
-              subdomain === "fashion"
-                ? `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                    parsed.subdomain === "fashion" ? "fashion" : null
-                  }&code=${data?.codeOnlyOnDev}`
-                : `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                    parsed.subdomain === "fashion" ? "fashion" : null
-                  }`;
+            let url = "";
+            if (isProduction) {
+              if (subdomain === "fashion") {
+                url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
+                  parsed.subdomain === "fashion" ? "fashion" : null
+                }&code=${data?.codeOnlyOnDev}`;
+              } else {
+                url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
+                  selectedStore.domain
+                }`;
+              }
+            } else {
+              url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
+                selectedStore.domain
+              }&code=${data?.codeOnlyOnDev}`;
+            }
 
             navigate(url);
+            // navigate(
+            //   `/otp?phone=${encodeURIComponent(normalized)}&store=${
+            //     selectedStore.domain
+            //   }`,
+            //   {
+            //     state: {
+            //       v_code:
+            //         subdomain === "fashion" ? data?.codeOnlyOnDev : undefined,
+            //     },
+            //   }
+            // );
+
+            // let url =
+            //   subdomain === "fashion"
+            //     ? `/otp?phone=${encodeURIComponent(normalized)}&store=${
+            //         parsed.subdomain === "fashion" ? "fashion" : null
+            //       }&code=${data?.codeOnlyOnDev}`
+            //     : `/otp?phone=${encodeURIComponent(normalized)}&store=${
+            //         parsed.subdomain === "fashion" ? "fashion" : null
+            //       }`;
+
+            // navigate(url);
+
+            // OLD
             // navigate(
             //   `/otp?phone=${encodeURIComponent(normalized)}&store=${
             //     selectedStore.domain
