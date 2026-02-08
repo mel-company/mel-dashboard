@@ -111,7 +111,7 @@ const StoreLogin = () => {
               }
             } else {
               url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                selectedStore.domain
+                subdomain === "fashion" ? "fashion" : selectedStore.domain
               }&code=${data?.codeOnlyOnDev}`;
             }
 
