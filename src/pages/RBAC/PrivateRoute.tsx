@@ -1,11 +1,19 @@
-import { Navigate, Outlet } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 import { useMe } from "../../api/wrappers/auth.wrappers";
 import LogoLight from "../../assets/imgs/logo/mel-light.png";
+import { useEffect } from "react";
 
 const PrivateRoute = () => {
   const { data: user, isLoading, error } = useMe();
 
-  // Show branded loading screen while checking authentication
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && (!user || error)) {
+      navigate("/login", { replace: true });
+    }
+  }, [user, error, isLoading]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30">
@@ -29,12 +37,6 @@ const PrivateRoute = () => {
     );
   }
 
-  // Redirect to login if there's an error or no user data
-  if (!isLoading && (error || !user)) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // User is authenticated, render protected content
   return <Outlet />;
 };
 
