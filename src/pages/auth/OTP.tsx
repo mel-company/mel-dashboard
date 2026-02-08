@@ -24,7 +24,7 @@ const OTP = () => {
   const [searchParams] = useSearchParams();
   const phone = searchParams.get("phone") ?? "";
   const store = searchParams.get("store") ?? "";
-  const v_code = searchParams.get("otp") ?? "";
+  const v_code = searchParams.get("code") ?? "";
 
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);

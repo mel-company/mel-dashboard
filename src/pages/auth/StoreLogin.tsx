@@ -37,6 +37,8 @@ const StoreLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
 
+  const isProduction = import.meta.env.VITE_ENVIRONMENT === "production";
+
   const parsed = parse(window.location.hostname);
   const subdomain = parsed.subdomain;
 
@@ -56,9 +58,7 @@ const StoreLogin = () => {
 
   useEffect(() => {
     if (subdomain === "fashion") {
-      setSelectedStoreId(
-        stores?.data?.find((store: any) => store.domain === "fashion")?.id ?? ""
-      );
+      setSelectedStoreId("eba098bb-4686-4adb-ba2f-22a92f0507b4");
       setPhone("+9647717504243");
     }
   }, [subdomain, stores?.data]);
@@ -102,10 +102,10 @@ const StoreLogin = () => {
               subdomain === "fashion"
                 ? `/otp?phone=${encodeURIComponent(normalized)}&store=${
                     selectedStore.domain
-                  }`
+                  }&code=${data?.codeOnlyOnDev}`
                 : `/otp?phone=${encodeURIComponent(normalized)}&store=${
                     selectedStore.domain
-                  }&otp=${data?.codeOnlyOnDev}`;
+                  }`;
 
             navigate(url);
             // navigate(
@@ -151,7 +151,7 @@ const StoreLogin = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Dev Only */}
 
-            {isLoadingStores ? (
+            {isProduction ? null : isLoadingStores ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
               </div>
