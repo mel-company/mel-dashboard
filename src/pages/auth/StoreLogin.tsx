@@ -106,12 +106,12 @@ const StoreLogin = () => {
                 }&code=${data?.codeOnlyOnDev}`;
               } else {
                 url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                  selectedStore.domain
+                  selectedStore?.domain
                 }`;
               }
             } else {
               url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                subdomain === "fashion" ? "fashion" : selectedStore.domain
+                subdomain === "fashion" ? "fashion" : selectedStore?.domain
               }&code=${data?.codeOnlyOnDev}`;
             }
 
