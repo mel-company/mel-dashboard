@@ -72,7 +72,7 @@ const StoreLogin = () => {
       return;
     }
 
-    if (!selectedStoreId) {
+    if (!subdomain && !selectedStoreId) {
       toast.error("يرجى اختيار المتجر");
       return;
     }
