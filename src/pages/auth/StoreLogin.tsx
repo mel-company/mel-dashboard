@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Phone, ArrowLeft, ShieldCheck, Store } from "lucide-react";
+import { Phone, ShieldCheck, Store } from "lucide-react";
 import { parse } from "tldts";
 
 import { Button } from "@/components/ui/button";
@@ -260,7 +260,7 @@ const StoreLogin = () => {
               )}
             </Button>
 
-            <Button
+            {/* <Button
               type="button"
               variant="ghost"
               className="w-full"
@@ -268,7 +268,7 @@ const StoreLogin = () => {
             >
               <ArrowLeft className="w-4 h-4 ml-2" />
               تسجيل دخول الإدارة
-            </Button>
+            </Button> */}
           </form>
         </CardContent>
       </Card>
