@@ -4,15 +4,21 @@ import LogoLight from "../../assets/imgs/logo/mel-light.png";
 import { useEffect } from "react";
 
 const PrivateRoute = () => {
-  const { data: user, isLoading, error } = useMe();
+  const { data: user, isLoading, isFetching, error } = useMe();
 
   const navigate = useNavigate();
 
+  // Only redirect when auth check has fully settled and user is missing.
+  // Don't redirect while loading/fetching to avoid racing after login (user not in state yet).
   useEffect(() => {
-    if (!isLoading && (!user || error)) {
+    if (!isLoading && !isFetching && !user) {
       navigate("/login", { replace: true });
     }
-  }, [user, error, isLoading]);
+  }, [user, error, isLoading, isFetching, navigate]);
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   if (isLoading) {
     return (
