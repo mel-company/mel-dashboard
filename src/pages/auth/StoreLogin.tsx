@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Phone, ShieldCheck, Store } from "lucide-react";
 import { parse } from "tldts";
-import LogoLight from "../../assets/imgs/logo/mel-light.png";
+// import LogoLight from "../../assets/imgs/logo/mel-light.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useLogin, useMe } from "@/api/wrappers/auth.wrappers";
+import { useLogin } from "@/api/wrappers/auth.wrappers";
 
 const normalizePhone = (value: string) => value.replace(/[^\d+]/g, "");
 
@@ -37,14 +37,7 @@ const StoreLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
 
-  const { data: user, isLoading: isLoadingUser, error: errorUser } = useMe();
-
-  // If already logged in, redirect away from login (must log out to see login again)
-  useEffect(() => {
-    if (!isLoadingUser && user && !errorUser) {
-      navigate("/", { replace: true });
-    }
-  }, [user, errorUser, isLoadingUser, navigate]);
+  // const { data: user, isLoading: isLoadingUser, error: errorUser } = useMe();
 
   const isProduction = import.meta.env.VITE_ENVIRONMENT === "production";
 
@@ -176,28 +169,28 @@ const StoreLogin = () => {
   };
 
   // Don't show login form until auth check is done; avoids flashing form before redirect
-  if (isLoadingUser || user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30">
-        <div className="flex flex-col items-center gap-0">
-          <div className="relative flex items-center justify-center w-40 h-40">
-            <img
-              src={LogoLight}
-              alt="Mel"
-              className="relative animate-pulse z-10 w-full h-full object-contain"
-            />
-          </div>
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (isLoadingUser || user) {
+  //   return (
+  //     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30">
+  //       <div className="flex flex-col items-center gap-0">
+  //         <div className="relative flex items-center justify-center w-40 h-40">
+  //           <img
+  //             src={LogoLight}
+  //             alt="Mel"
+  //             className="relative animate-pulse z-10 w-full h-full object-contain"
+  //           />
+  //         </div>
+  //         <div className="flex flex-col items-center gap-3">
+  //           <div className="flex gap-1.5">
+  //             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+  //             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+  //             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
