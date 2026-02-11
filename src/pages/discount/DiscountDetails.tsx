@@ -465,7 +465,7 @@ const DiscountDetails = () => {
                   عدد المنتجات
                 </span>
                 <span className="text-sm">
-                  {discount?._count?.products ?? 0}
+                  {discount?.products?.length ?? 0}
                 </span>
               </div>
               <Separator />
@@ -474,7 +474,7 @@ const DiscountDetails = () => {
                   عدد الفئات
                 </span>
                 <span className="text-sm">
-                  {discount?._count?.categories ?? 0}
+                  {discount?.categories?.length ?? 0}
                 </span>
               </div>
             </CardContent>

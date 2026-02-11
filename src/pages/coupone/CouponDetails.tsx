@@ -267,9 +267,7 @@ const CouponDetails = () => {
                   </CardTitle>
                   <CardDescription className="flex flex-col text-right mt-2">
                     <span>{getStatusBadge()}</span>
-                    <p>
-                    {data.description || "لا يوجد وصف"}
-                    </p>
+                    <p>{data.description || "لا يوجد وصف"}</p>
                   </CardDescription>
                 </div>
                 <div className="flex gap-x-2 items-center">
@@ -329,7 +327,7 @@ const CouponDetails = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Coupon Visual */}
+              {/* Coupon Visual
               <div className="relative h-48 flex items-center justify-center w-full overflow-hidden rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
                 <div className="text-center space-y-2">
                   <Ticket className="size-20 text-primary mx-auto" />
@@ -340,7 +338,7 @@ const CouponDetails = () => {
                     {formatAppliesTo()}
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               <Separator />
 
@@ -475,7 +473,9 @@ const CouponDetails = () => {
                         تاريخ الانتهاء
                       </span>
                     </div>
-                    <span className="text-sm">{formatDate(data.expiresAt)}</span>
+                    <span className="text-sm">
+                      {formatDate(data.expiresAt)}
+                    </span>
                   </div>
                 )}
 
@@ -541,7 +541,9 @@ const CouponDetails = () => {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p className="text-sm">لا توجد منتجات مرتبطة بهذا الكوبون</p>
+                    <p className="text-sm">
+                      لا توجد منتجات مرتبطة بهذا الكوبون
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -633,7 +635,6 @@ const CouponDetails = () => {
             </Card>
           )}
         </div>
-
       </div>
 
       {/* Delete Confirmation Dialog */}

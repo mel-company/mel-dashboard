@@ -76,9 +76,11 @@ const OTP = () => {
         },
         {
           onSuccess: () => {
+            localStorage.setItem("lgd", "true");
             navigate("/", { replace: true });
           },
           onError: () => {
+            localStorage.setItem("lgd", "false");
             toast.error("فشل تحقق الرمز. يرجى المحاولة مرة أخرى");
           },
           onSettled: () => setIsVerifying(false),

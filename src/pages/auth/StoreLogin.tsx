@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useLogin } from "@/api/wrappers/auth.wrappers";
+import { useLogin, useMe } from "@/api/wrappers/auth.wrappers";
 
 const normalizePhone = (value: string) => value.replace(/[^\d+]/g, "");
 
@@ -37,7 +37,7 @@ const StoreLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
 
-  // const { data: user, isLoading: isLoadingUser, error: errorUser } = useMe();
+  const isLoggedIn = localStorage.getItem("lgd") === "true";
 
   const isProduction = import.meta.env.VITE_ENVIRONMENT === "production";
 
@@ -59,6 +59,11 @@ const StoreLogin = () => {
   );
 
   useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/", { replace: true });
+      return;
+    }
+
     if (subdomain === "fashion") {
       setSelectedStoreId("eba098bb-4686-4adb-ba2f-22a92f0507b4");
       setPhone("+9647717504243");
