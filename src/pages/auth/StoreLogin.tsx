@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useLogin, useMe } from "@/api/wrappers/auth.wrappers";
+import { useLogin } from "@/api/wrappers/auth.wrappers";
 
 const normalizePhone = (value: string) => value.replace(/[^\d+]/g, "");
 

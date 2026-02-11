@@ -179,6 +179,7 @@ const CouponDetails = () => {
     return data.value;
   };
 
+  // @ts-ignore
   const formatAppliesTo = () => {
     const map: Record<string, string> = {
       ALL: "الكل",
