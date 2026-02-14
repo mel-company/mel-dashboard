@@ -10,9 +10,13 @@ console.log("domain", domain);
 const subdomain = getSubdomain(window.location.hostname);
 console.log("subdomain", subdomain);
 
-// Create an axios instance with Vite environment variables
+// In dev, always use proxy (same-origin) to avoid CORS with subdomains (fashion.localhost, tech.localhost)
+const baseURL = import.meta.env.DEV
+  ? "/api/v1"
+  : (import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1");
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1",
+  baseURL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
