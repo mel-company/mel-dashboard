@@ -22,11 +22,29 @@ export const useLogin = () => {
 };
 
 /**
+ * Dev Login
+ */
+export const useDevLogin = () => {
+  return useMutation<any, Error, any>({
+    mutationFn: (params: any) => authAPI.devLogin(params),
+  });
+};
+
+/**
  * Validate Phone
  */
 export const useValidatePhone = () => {
   return useMutation<any, Error, any>({
     mutationFn: (params: any) => authAPI.validatePhone(params),
+  });
+};
+
+/**
+ * Dev Verify
+ */
+export const useDevVerify = () => {
+  return useMutation<any, Error, any>({
+    mutationFn: (params: any) => authAPI.devVerify(params),
   });
 };
 
@@ -46,6 +64,16 @@ export const useMe = () => {
   return useQuery<any, Error, any>({
     queryKey: authKeys.all,
     queryFn: () => authAPI.me(),
+  });
+};
+
+/**
+ * Dev Me
+ */
+export const useDevMe = () => {
+  return useQuery<any, Error, any>({
+    queryKey: authKeys.all,
+    queryFn: () => authAPI.devMe(),
   });
 };
 

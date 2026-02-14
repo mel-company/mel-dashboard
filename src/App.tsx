@@ -61,6 +61,8 @@ import Tickets from "./pages/support/Tickets";
 import TicketDetails from "./pages/support/TicketDetails";
 import OpenTicket from "./pages/support/OpenTicket";
 import Shortcuts from "./pages/settings/Shortcuts";
+import DevStoreLogin from "./pages/auth/DevStoreLogin";
+import DevOTP from "./pages/auth/DEVOTP";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -227,6 +229,8 @@ function App() {
         </Route>
         {/* Public routes */}
         <Route path="/login" element={<StoreLogin />} />
+        <Route path="/dev-login" element={<DevStoreLogin />} />
+        <Route path="/dev-otp" element={<DevOTP />} />
         {/* <Route path="/store-login" element={<StoreLogin />} /> */}
         <Route path="/otp" element={<OTP />} />
 

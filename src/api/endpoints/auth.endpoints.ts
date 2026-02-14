@@ -15,6 +15,26 @@ export const authAPI = {
     console.log("Verification Code: ", data);
     return data;
   },
+  devLogin: async (params?: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/local-idp/login",
+      {
+        phone: params?.phone,
+        store: {
+          name: params?.store?.name,
+          domain: params?.store?.domain,
+        },
+      },
+      {
+        headers: {
+          "domain-name": params?.domain,
+        },
+      }
+    );
+
+    console.log("Verification Code: ", data);
+    return data;
+  },
 
   validatePhone: async (params?: any): Promise<any> => {
     const { data } = await axiosInstance.post<any>(
@@ -27,8 +47,7 @@ export const authAPI = {
   },
 
   verify: async (params?: any): Promise<any> => {
-    // Store-user flow: this endpoint sets the `sat` cookie on success
-    const { data } = await axiosInstance.post<any>("/store-user-auth/verify", {
+    console.log("VERIFY DTO: ", {
       phone: params?.phone,
       code: params?.code,
       store: {
@@ -36,11 +55,47 @@ export const authAPI = {
         domain: params?.store?.domain,
       },
     });
+
+    // Store-user flow: this endpoint sets the `sat` cookie on success
+    const { data } = await axiosInstance.post<any>("/store-user-auth/verify", {
+      phone: params?.phone,
+      code: parseInt(params?.code ?? "0"),
+      storeDomain: params?.store?.domain,
+      storeName: params?.store?.name,
+    });
+    return data;
+  },
+
+  devVerify: async (params?: any): Promise<any> => {
+    // Store-user flow: this endpoint sets the `sat` cookie on success
+    const { data } = await axiosInstance.post<any>(
+      "/local-idp/verify",
+      {
+        phone: params?.phone,
+        code: parseInt(params?.code),
+        storeDomain: params?.store?.domain,
+        storeName: params?.store?.name,
+      },
+      {
+        headers: {
+          "domain-name": params?.store?.domain,
+        },
+      }
+    );
     return data;
   },
 
   me: async (): Promise<any> => {
-    const { data } = await axiosInstance.get<any>("/store-user-auth/me");
+    const { data } = await axiosInstance.get<any>("/store-user-auth/me", {
+      headers: { "domain-name": "fashion" },
+    });
+    return data;
+  },
+
+  devMe: async (): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/local-idp/me", {
+      headers: { "domain-name": "fashion" },
+    });
     return data;
   },
 
