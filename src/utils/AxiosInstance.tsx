@@ -1,19 +1,16 @@
 import axios from "axios";
-import { getDomain, getSubdomain, parse } from "tldts";
+import { parse } from "tldts";
 
 const parsed = parse(window.location.hostname);
-console.log("parsed", parsed);
 
-const domain = getDomain(window.location.hostname);
-console.log("domain", domain);
+// const domain = getDomain(window.location.hostname);
 
-const subdomain = getSubdomain(window.location.hostname);
-console.log("subdomain", subdomain);
+// const subdomain = getSubdomain(window.location.hostname);
 
 // In dev, always use proxy (same-origin) to avoid CORS with subdomains (fashion.localhost, tech.localhost)
 const baseURL = import.meta.env.DEV
   ? "/api/v1"
-  : (import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1");
+  : import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
 const axiosInstance = axios.create({
   baseURL,
@@ -53,8 +50,7 @@ axiosInstance.interceptors.response.use(
   },
   (error) => {
     if (error.response && error.response.status === 401) {
-      console.log(error.response);
-      // window.location.href = "/login";
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }

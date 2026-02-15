@@ -94,11 +94,7 @@ export const sanitizePhoneNumber = (
     phone = phone.replace(countryCodeWithoutPlus, "");
   }
 
-  console.log("Phone before error: ", phone);
-  console.log("Phone length before error: ", phone.length);
-
   if (!phone.startsWith("7") || phone.length !== 10) {
-    console.log("Inside Error: ", phone, phone.length);
     throw new Error("Invalid phone number: must start with 7 and be 10 digits");
   }
 
@@ -111,10 +107,13 @@ export const sanitizePhoneNumber = (
   return countryCode + phone;
 };
 
-export const validateInternationalPhoneNumber = (phoneNumber: string, countryCode: string): boolean => {
+export const validateInternationalPhoneNumber = (
+  phoneNumber: string,
+  countryCode: string
+): boolean => {
   const validPhoneNumber = phone(phoneNumber, { country: countryCode });
   return validPhoneNumber.isValid;
-}
+};
 
 export function formatDate(dateString: string) {
   if (!dateString || dateString === "") return { date: "", day: "" };

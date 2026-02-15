@@ -36,8 +36,6 @@ const NotificationDetails = () => {
     isFetching,
   } = useFetchNotification(id ?? "", !!id);
 
-  console.log(notification);
-
   const { mutate: deleteNotification, isPending: isDeleting } =
     useDeleteNotification();
 

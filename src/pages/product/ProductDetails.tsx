@@ -80,8 +80,6 @@ const ProductDetails = () => {
     id ?? ""
   );
 
-  console.log(data);
-
   const { data: variantsData, refetch: refetchVariants } = useFetchVariants(
     { productId: id ?? "" },
     !!id
@@ -89,8 +87,6 @@ const ProductDetails = () => {
 
   const { mutate: deleteVariant, isPending: isDeletingVariant } =
     useDeleteVariant();
-
-  console.log(data?.image);
 
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 

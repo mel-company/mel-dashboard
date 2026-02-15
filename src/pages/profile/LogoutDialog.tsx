@@ -25,7 +25,6 @@ const LogoutDialog = ({}: Props) => {
       {},
       {
         onSuccess: (data: any) => {
-          console.log("Successfully logged out: ", data);
           toast.success("تم تسجيل الخروج بنجاح");
           localStorage.setItem("lgd", "false");
           navigate("/login", { replace: true });

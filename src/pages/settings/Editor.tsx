@@ -92,7 +92,12 @@ interface ProductsGridContent {
   style: React.CSSProperties;
 }
 
-const CarouselHeroSection = ({ content }: { content: CarouselHeroContent; settings: any }) => {
+const CarouselHeroSection = ({
+  content,
+}: {
+  content: CarouselHeroContent;
+  settings: any;
+}) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const { slides, carouselSettings } = content;
   const { isMobile, isTablet } = useWindowSize();
@@ -110,7 +115,12 @@ const CarouselHeroSection = ({ content }: { content: CarouselHeroContent; settin
     }, carouselSettings.autoplaySpeed);
 
     return () => clearInterval(interval);
-  }, [carouselSettings.autoplay, carouselSettings.autoplaySpeed, carouselSettings.infinite, slides.length]);
+  }, [
+    carouselSettings.autoplay,
+    carouselSettings.autoplaySpeed,
+    carouselSettings.infinite,
+    slides.length,
+  ]);
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
@@ -149,7 +159,11 @@ const CarouselHeroSection = ({ content }: { content: CarouselHeroContent; settin
           position: "relative",
           width: "100%",
           height: "100%",
-          minHeight: isMobile ? "300px" : isTablet ? "400px" : content.style.minHeight || "500px",
+          minHeight: isMobile
+            ? "300px"
+            : isTablet
+            ? "400px"
+            : content.style.minHeight || "500px",
         }}
       >
         {/* Background Image */}
@@ -193,9 +207,14 @@ const CarouselHeroSection = ({ content }: { content: CarouselHeroContent; settin
             alignItems: content.style.alignItems || "center",
             justifyContent: content.style.justifyContent || "center",
             textAlign: content.style.textAlign || "center",
-            padding: isMobile ? "1rem" : isTablet ? "1.5rem" : content.style.padding || "2rem",
+            padding: isMobile
+              ? "1rem"
+              : isTablet
+              ? "1.5rem"
+              : content.style.padding || "2rem",
             color: currentSlideData.style.color || "#FFFFFF",
-            textShadow: currentSlideData.style.textShadow || "0 2px 10px rgba(0,0,0,0.5)",
+            textShadow:
+              currentSlideData.style.textShadow || "0 2px 10px rgba(0,0,0,0.5)",
           }}
         >
           <h1
@@ -227,8 +246,12 @@ const CarouselHeroSection = ({ content }: { content: CarouselHeroContent; settin
               }}
               style={{
                 ...currentSlideData.button.style,
-                fontSize: isMobile ? "14px" : currentSlideData.button.style.fontSize || "18px",
-                padding: isMobile ? "10px 24px" : currentSlideData.button.style.padding || "14px 32px",
+                fontSize: isMobile
+                  ? "14px"
+                  : currentSlideData.button.style.fontSize || "18px",
+                padding: isMobile
+                  ? "10px 24px"
+                  : currentSlideData.button.style.padding || "14px 32px",
                 cursor: "pointer",
                 border: "none",
                 outline: "none",
@@ -325,7 +348,10 @@ const CarouselHeroSection = ({ content }: { content: CarouselHeroContent; settin
                   height: "12px",
                   borderRadius: "6px",
                   border: "none",
-                  background: currentSlide === index ? "white" : "rgba(255, 255, 255, 0.5)",
+                  background:
+                    currentSlide === index
+                      ? "white"
+                      : "rgba(255, 255, 255, 0.5)",
                   cursor: "pointer",
                   transition: "all 0.3s",
                 }}
@@ -339,14 +365,22 @@ const CarouselHeroSection = ({ content }: { content: CarouselHeroContent; settin
 };
 
 // @ts-ignore
-const ProductsGridSection = ({ content, settings, source }: { content: ProductsGridContent; settings: any; source: any }) => {
+const ProductsGridSection = ({
+  content,
+  settings,
+  source,
+}: {
+  content: ProductsGridContent;
+  settings: any;
+  source: any;
+}) => {
   const { items, style } = content;
   const { isMobile, isTablet, isDesktop } = useWindowSize();
 
   // Get responsive columns based on screen size
   let columns = 3; // default
   let rows = 2; // default
-  
+
   if (settings) {
     if (isMobile && settings.sm) {
       columns = settings.sm.columns || 1;
@@ -364,7 +398,7 @@ const ProductsGridSection = ({ content, settings, source }: { content: ProductsG
     }
   }
 
-//   const {data: products} = useFetchProducts(source.url)
+  //   const {data: products} = useFetchProducts(source.url)
 
   // Convert kebab-case style properties to camelCase for React
   const styleObj = style as Record<string, any>;
@@ -376,12 +410,18 @@ const ProductsGridSection = ({ content, settings, source }: { content: ProductsG
   const textAlign = styleObj["text-align"] || "center";
 
   // Responsive padding and gap
-  const responsivePadding = isMobile 
-    ? `${Math.max(paddingVertical * 0.5, 8)}px ${Math.max(paddingHorizontal * 0.5, 16)}px`
+  const responsivePadding = isMobile
+    ? `${Math.max(paddingVertical * 0.5, 8)}px ${Math.max(
+        paddingHorizontal * 0.5,
+        16
+      )}px`
     : isTablet
-    ? `${Math.max(paddingVertical * 0.75, 12)}px ${Math.max(paddingHorizontal * 0.75, 24)}px`
+    ? `${Math.max(paddingVertical * 0.75, 12)}px ${Math.max(
+        paddingHorizontal * 0.75,
+        24
+      )}px`
     : `${paddingVertical}px ${paddingHorizontal}px`;
-  
+
   const gap = isMobile ? "1rem" : isTablet ? "1.25rem" : "1.5rem";
 
   return (
@@ -420,18 +460,29 @@ const ProductsGridSection = ({ content, settings, source }: { content: ProductsG
 const SectionRenderer = ({ section }: { section: Section }) => {
   const { type, publishedContent, settings, source } = section;
 
-  console.log("SOURCE", section)
-
   switch (type) {
     case "carouselHero":
-      return <CarouselHeroSection content={publishedContent as CarouselHeroContent} settings={settings} />;
+      return (
+        <CarouselHeroSection
+          content={publishedContent as CarouselHeroContent}
+          settings={settings}
+        />
+      );
     case "products_grid":
-      return <ProductsGridSection content={publishedContent as ProductsGridContent} settings={settings} source={source} />;
+      return (
+        <ProductsGridSection
+          content={publishedContent as ProductsGridContent}
+          settings={settings}
+          source={source}
+        />
+      );
     default:
       return (
         <Card className="p-4">
           <CardContent>
-            <p className="text-muted-foreground">Unknown section type: {type}</p>
+            <p className="text-muted-foreground">
+              Unknown section type: {type}
+            </p>
           </CardContent>
         </Card>
       );
@@ -466,13 +517,23 @@ const Editor = ({}: Props) => {
   }
 
   // Sort sections by position
-  const sortedSections = [...(jsonFile.sections || [])].sort((a, b) => a.position - b.position);
+  const sortedSections = [...(jsonFile.sections || [])].sort(
+    (a, b) => a.position - b.position
+  );
 
   return (
     <div className="space-y-0">
       {/* Page Header */}
-      <div className={`bg-card border-b ${isMobile ? "p-4" : isTablet ? "p-5" : "p-6"} mb-6`}>
-        <h1 className={`${isMobile ? "text-xl" : isTablet ? "text-2xl" : "text-3xl"} font-bold mb-2`}>
+      <div
+        className={`bg-card border-b ${
+          isMobile ? "p-4" : isTablet ? "p-5" : "p-6"
+        } mb-6`}
+      >
+        <h1
+          className={`${
+            isMobile ? "text-xl" : isTablet ? "text-2xl" : "text-3xl"
+          } font-bold mb-2`}
+        >
           {jsonFile.title}
         </h1>
         <p className={`text-muted-foreground ${isMobile ? "text-sm" : ""}`}>

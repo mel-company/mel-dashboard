@@ -519,7 +519,6 @@ const OrderDetails = () => {
                     <p className="text-sm text-muted-foreground">
                       المبلغ الإجمالي
                     </p>
-                    <>{console.log("PRICING: ", order.pricing)}</>
                     <p className="text-lg font-bold">
                       {order.pricing?.subtotalAfterProductDiscounts?.toLocaleString()}{" "}
                       د.ع

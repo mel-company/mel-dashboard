@@ -12,7 +12,6 @@ export const authAPI = {
       },
     });
 
-    console.log("Verification Code: ", data);
     return data;
   },
   devLogin: async (params?: any): Promise<any> => {
@@ -32,7 +31,6 @@ export const authAPI = {
       }
     );
 
-    console.log("Verification Code: ", data);
     return data;
   },
 
@@ -47,15 +45,6 @@ export const authAPI = {
   },
 
   verify: async (params?: any): Promise<any> => {
-    console.log("VERIFY DTO: ", {
-      phone: params?.phone,
-      code: params?.code,
-      store: {
-        name: params?.store?.name,
-        domain: params?.store?.domain,
-      },
-    });
-
     // Store-user flow: this endpoint sets the `sat` cookie on success
     const { data } = await axiosInstance.post<any>("/store-user-auth/verify", {
       phone: params?.phone,
