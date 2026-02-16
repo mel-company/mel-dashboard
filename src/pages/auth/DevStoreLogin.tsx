@@ -159,7 +159,7 @@ const DevStoreLogin = () => {
             //   }
             // );
           },
-          onError: (data: any) => {
+          onError: () => {
             toast.error("فشل تسجيل الدخول. يرجى المحاولة مرة أخرى");
           },
           onSettled: () => setIsLoading(false),

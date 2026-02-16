@@ -368,6 +368,7 @@ const CarouselHeroSection = ({
 const ProductsGridSection = ({
   content,
   settings,
+  // @ts-ignore
   source,
 }: {
   content: ProductsGridContent;
