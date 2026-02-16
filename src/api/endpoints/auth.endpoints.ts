@@ -75,18 +75,28 @@ export const authAPI = {
   },
 
   me: async (): Promise<any> => {
-    const { data } = await axiosInstance.get<any>("/store-user-auth/me", {
-      headers: { "domain-name": "fashion" },
-    });
+    const { data } = await axiosInstance.get<any>("/store-user-auth/me");
     return data;
   },
 
   devMe: async (): Promise<any> => {
-    const { data } = await axiosInstance.get<any>("/local-idp/me", {
-      headers: { "domain-name": "fashion" },
-    });
+    const { data } = await axiosInstance.get<any>("/local-idp/me");
     return data;
   },
+
+  // me: async (): Promise<any> => {
+  //   const { data } = await axiosInstance.get<any>("/store-user-auth/me", {
+  //     headers: { "domain-name": "fashion" },
+  //   });
+  //   return data;
+  // },
+
+  // devMe: async (): Promise<any> => {
+  //   const { data } = await axiosInstance.get<any>("/local-idp/me", {
+  //     headers: { "domain-name": "fashion" },
+  //   });
+  //   return data;
+  // },
 
   logout: async (): Promise<any> => {
     const { data } = await axiosInstance.post<any>("/store-user-auth/logout");
