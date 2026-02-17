@@ -50,7 +50,7 @@ import Payment from "./pages/payment/Payment";
 import POS from "./pages/pos/POS";
 import PrivacyPolicySettings from "./pages/settings/PrivacyPolicySettings";
 import RefundPolicySettings from "./pages/settings/RefundPolicySettings";
-import { useRefresh } from "./api/wrappers/auth.wrappers";
+import { useConsumeBridge, useRefresh } from "./api/wrappers/auth.wrappers";
 import { useEffect } from "react";
 import Editor from "./pages/settings/Editor";
 import Coupons from "./pages/coupone/Coupons";
@@ -70,6 +70,27 @@ function RootRedirect() {
 }
 
 function Bridge() {
+  const { mutate: consumeBridge } = useConsumeBridge();
+
+  const token = new URLSearchParams(window.location.search).get("token");
+
+  useEffect(() => {
+    if (token) {
+      consumeBridge(
+        { token },
+        {
+          onSuccess: (data: any) => {
+            console.log("data", data);
+            window.location.href = "/";
+          },
+          onError: (error) => {
+            console.error(error);
+          },
+        },
+      );
+    }
+  }, [token]);
+
   return <div>Bridge</div>;
 }
 
