@@ -8,7 +8,7 @@ const PrivateRoute = () => {
 
   const navigate = useNavigate();
 
-  const token = new URLSearchParams(window.location.search).get("token");
+  // const token = new URLSearchParams(window.location.search).get("token");
 
   // Only redirect when auth check has fully settled and user is missing.
   // Don't redirect while loading/fetching to avoid racing after login (user not in state yet).
