@@ -29,7 +29,7 @@ const PrivateRoute = () => {
   // Don't redirect while loading/fetching to avoid racing after login (user not in state yet).
   useEffect(() => {
     if (!isLoading && !isFetching && !user) {
-      navigate("/login", { replace: true });
+      // navigate("/login", { replace: true });
     }
   }, [user, error, isLoading, isFetching, navigate]);
 
