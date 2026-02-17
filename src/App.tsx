@@ -117,8 +117,8 @@ function App() {
     <>
       <Toaster />
       <Routes>
+        <Route path="/bridge" element={<Bridge />} />
         <Route element={<PrivateRoute />}>
-          <Route path="/bridge" element={<Bridge />} />
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
             <Route path="/stats" element={<Stats />} />
