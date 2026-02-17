@@ -1,12 +1,29 @@
 import { Outlet, useNavigate } from "react-router";
-import { useMe } from "../../api/wrappers/auth.wrappers";
+import { useConsumeBridge, useMe } from "../../api/wrappers/auth.wrappers";
 import LogoLight from "../../assets/imgs/logo/mel-light.png";
 import { useEffect } from "react";
 
 const PrivateRoute = () => {
+  const { mutate: consumeBridge } = useConsumeBridge();
   const { data: user, isLoading, isFetching, error } = useMe();
 
   const navigate = useNavigate();
+
+  const token = new URLSearchParams(window.location.search).get("token");
+
+  if (token) {
+    consumeBridge(
+      { token },
+      {
+        onSuccess: () => {
+          window.location.href = "/";
+        },
+        onError: (error) => {
+          console.error(error);
+        },
+      },
+    );
+  }
 
   // Only redirect when auth check has fully settled and user is missing.
   // Don't redirect while loading/fetching to avoid racing after login (user not in state yet).

@@ -22,6 +22,15 @@ export const useLogin = () => {
 };
 
 /**
+ * Verify Bridge
+ */
+export const useConsumeBridge = () => {
+  return useMutation<any, Error, any>({
+    mutationFn: (params: any) => authAPI.consumeBridge(params),
+  });
+};
+
+/**
  * Dev Login
  */
 export const useDevLogin = () => {

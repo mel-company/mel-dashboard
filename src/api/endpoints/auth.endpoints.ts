@@ -28,7 +28,7 @@ export const authAPI = {
         headers: {
           "domain-name": params?.domain,
         },
-      }
+      },
     );
 
     return data;
@@ -39,7 +39,7 @@ export const authAPI = {
       "/store-user-auth/validate-phone",
       {
         phone: params?.phone,
-      }
+      },
     );
     return data;
   },
@@ -52,6 +52,16 @@ export const authAPI = {
       storeDomain: params?.store?.domain,
       storeName: params?.store?.name,
     });
+    return data;
+  },
+
+  consumeBridge: async (params?: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/store-user-auth/consume-bridge",
+      {
+        token: params?.token,
+      },
+    );
     return data;
   },
 
@@ -69,7 +79,7 @@ export const authAPI = {
         headers: {
           "domain-name": params?.store?.domain,
         },
-      }
+      },
     );
     return data;
   },
@@ -116,7 +126,7 @@ export const authAPI = {
         email: params?.email,
         alternative_phone: params?.alternative_phone,
         location: params?.location,
-      }
+      },
     );
     return data;
   },
