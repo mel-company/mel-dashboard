@@ -69,6 +69,10 @@ function RootRedirect() {
   return isAuthenticated ? <NotFoundPage /> : <Navigate to="/login" replace />;
 }
 
+function Bridge() {
+  return <div>Bridge</div>;
+}
+
 function App() {
   // @ts-ignore
   const {
@@ -93,6 +97,7 @@ function App() {
       <Toaster />
       <Routes>
         <Route element={<PrivateRoute />}>
+          <Route path="/bridge" element={<Bridge />} />
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
             <Route path="/stats" element={<Stats />} />
