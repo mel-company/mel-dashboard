@@ -20,6 +20,7 @@ const axiosInstance = axios.create({
     "Content-Type": "application/json",
     Authorization: `Bearer ${import.meta.env.VITE_API_KEY}`,
     "domain-name": parsed.subdomain,
+    "x-tenant-subdomain": parsed.subdomain,
   },
   // Needed so the browser will store/send httpOnly cookies (e.g. `sat`)
   withCredentials: true,
