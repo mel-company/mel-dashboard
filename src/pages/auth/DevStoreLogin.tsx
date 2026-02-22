@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Phone, ShieldCheck, Store } from "lucide-react";
+import {
+  Phone,
+  ShieldCheck,
+  Store,
+  Search,
+  ChevronDown,
+  Loader2,
+} from "lucide-react";
 import { parse } from "tldts";
-// import LogoLight from "../../assets/imgs/logo/mel-light.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,21 +27,124 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLogin } from "@/api/wrappers/auth.wrappers";
+import {
+  useFetchAllCursor,
+  useSearchCursor,
+} from "@/api/wrappers/country.wrappers";
+import { cn } from "@/lib/utils";
 
 const normalizePhone = (value: string) => value.replace(/[^\d+]/g, "");
 
 const isValidPhone = (phone: string) => {
-  // very permissive: allow +country and 10-15 digits total
   const digits = phone.replace(/\D/g, "");
   return digits.length >= 10 && digits.length <= 15;
 };
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => clearTimeout(t);
+  }, [value, delayMs]);
+  return debouncedValue;
+}
+
+type CountryOption = {
+  id: string;
+  name?: { ar?: string; en?: string };
+  phoneCode?: string | null;
+  code2?: string | null;
+};
+
+const getCountryLabel = (c: CountryOption) => {
+  const name = c.name?.ar || c.name?.en || "";
+  const code = c.phoneCode ? `+${String(c.phoneCode).replace(/^\+/, "")}` : "";
+  return code ? `${name} (${code})` : name || "—";
+};
+
+const DEFAULT_COUNTRY_IRAQ: CountryOption = {
+  id: "5407d29b-741e-430e-9b9b-9f0c86841d9d",
+  name: { ar: "العراق", en: "Iraq" },
+  phoneCode: "+964",
+  code2: "IQ",
+};
+
+const PAGE_SIZE = 10;
 
 const DevStoreLogin = () => {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(
+    DEFAULT_COUNTRY_IRAQ,
+  );
+  const [countrySearchQuery, setCountrySearchQuery] = useState("");
+  const [countryOpen, setCountryOpen] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const debouncedSearch = useDebouncedValue(countrySearchQuery.trim(), 350);
+
+  const {
+    data: countriesAllData,
+    isLoading: isLoadingCountriesAll,
+    fetchNextPage: fetchNextCountriesAll,
+    hasNextPage: hasNextCountriesAll,
+    isFetchingNextPage: isFetchingNextCountriesAll,
+  } = useFetchAllCursor({ limit: PAGE_SIZE }, countryOpen && !debouncedSearch);
+
+  const {
+    data: countriesSearchData,
+    isLoading: isLoadingCountriesSearch,
+    fetchNextPage: fetchNextCountriesSearch,
+    hasNextPage: hasNextCountriesSearch,
+    isFetchingNextPage: isFetchingNextCountriesSearch,
+  } = useSearchCursor(
+    { query: debouncedSearch, limit: PAGE_SIZE },
+    countryOpen && !!debouncedSearch,
+  );
+
+  const isSearchMode = !!debouncedSearch;
+  const countriesData = isSearchMode ? countriesSearchData : countriesAllData;
+  const countries = countriesData?.pages?.flatMap((p) => p.data ?? []) ?? [];
+  const hasNextPage = isSearchMode
+    ? hasNextCountriesSearch
+    : hasNextCountriesAll;
+  const fetchNextPage = isSearchMode
+    ? fetchNextCountriesSearch
+    : fetchNextCountriesAll;
+  const isFetchingNextPage = isSearchMode
+    ? isFetchingNextCountriesSearch
+    : isFetchingNextCountriesAll;
+  const isLoadingCountries = isSearchMode
+    ? isLoadingCountriesSearch
+    : isLoadingCountriesAll;
+
+  const loadMoreCallback = useCallback(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    const root = scrollContainerRef.current;
+    if (!el || !root || !countryOpen || !hasNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMoreCallback();
+      },
+      { root, rootMargin: "80px", threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [countryOpen, hasNextPage, loadMoreCallback, countries.length]);
 
   const isLoggedIn = localStorage.getItem("lgd") === "true";
 
@@ -55,7 +164,7 @@ const DevStoreLogin = () => {
 
   const phoneDigitsCount = useMemo(
     () => phone.replace(/\D/g, "").length,
-    [phone]
+    [phone],
   );
 
   useEffect(() => {
@@ -72,10 +181,26 @@ const DevStoreLogin = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const normalized = normalizePhone(phone);
+    const digits = phone.replace(/\D/g, "").replace(/^0+/, "");
+    const countryCodeDigits = selectedCountry?.phoneCode
+      ? String(selectedCountry.phoneCode).replace(/\D/g, "")
+      : "";
+    const fullPhone =
+      selectedCountry?.phoneCode && countryCodeDigits
+        ? digits.startsWith(countryCodeDigits)
+          ? `+${digits}`
+          : `+${countryCodeDigits}${digits}`
+        : phone;
+
+    const normalized = normalizePhone(fullPhone);
 
     if (!normalized) {
       toast.error("يرجى إدخال رقم الهاتف");
+      return;
+    }
+
+    if (!selectedCountry) {
+      toast.error("يرجى اختيار الدولة");
       return;
     }
 
@@ -123,78 +248,18 @@ const DevStoreLogin = () => {
             }
 
             navigate(url);
-            // navigate(
-            //   `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //     selectedStore.domain
-            //   }`,
-            //   {
-            //     state: {
-            //       v_code:
-            //         subdomain === "fashion" ? data?.codeOnlyOnDev : undefined,
-            //     },
-            //   }
-            // );
-
-            // let url =
-            //   subdomain === "fashion"
-            //     ? `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //         parsed.subdomain === "fashion" ? "fashion" : null
-            //       }&code=${data?.codeOnlyOnDev}`
-            //     : `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //         parsed.subdomain === "fashion" ? "fashion" : null
-            //       }`;
-
-            // navigate(url);
-
-            // OLD
-            // navigate(
-            //   `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //     selectedStore.domain
-            //   }`,
-            //   {
-            //     state: {
-            //       v_code:
-            //         subdomain === "fashion" ? data?.codeOnlyOnDev : undefined,
-            //     },
-            //   }
-            // );
           },
           onError: () => {
             toast.error("فشل تسجيل الدخول. يرجى المحاولة مرة أخرى");
           },
           onSettled: () => setIsLoading(false),
-        }
+        },
       );
       return;
     } finally {
-      // we end loading in onSettled, but keep this as a safety net
       setIsLoading(false);
     }
   };
-
-  // Don't show login form until auth check is done; avoids flashing form before redirect
-  // if (isLoadingUser || user) {
-  //   return (
-  //     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30">
-  //       <div className="flex flex-col items-center gap-0">
-  //         <div className="relative flex items-center justify-center w-40 h-40">
-  //           <img
-  //             src={LogoLight}
-  //             alt="Mel"
-  //             className="relative animate-pulse z-10 w-full h-full object-contain"
-  //           />
-  //         </div>
-  //         <div className="flex flex-col items-center gap-3">
-  //           <div className="flex gap-1.5">
-  //             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-  //             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-  //             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
@@ -245,26 +310,123 @@ const DevStoreLogin = () => {
             )}
 
             <div className="space-y-2">
-              <label
-                htmlFor="phone"
-                className="text-sm font-medium text-foreground"
-              >
+              <label className="text-sm font-medium text-foreground">
                 رقم الهاتف
               </label>
-              <div className="relative">
-                <Phone className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  inputMode="tel"
-                  placeholder="07XXXXXXXXX"
-                  value={phone}
-                  onChange={(e) => setPhone(normalizePhone(e.target.value))}
-                  className="pr-10"
-                  dir="ltr"
-                  autoComplete="tel"
-                  required
-                />
+              <div className="flex items-center gap-2 mt-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    placeholder="07XXXXXXXXX"
+                    value={phone}
+                    onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                    className="pr-10"
+                    dir="ltr"
+                    autoComplete="tel"
+                    required
+                  />
+                </div>
+                <DropdownMenu open={countryOpen} onOpenChange={setCountryOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="min-w-[140px] justify-between shrink-0"
+                    >
+                      {selectedCountry ? (
+                        <span className="truncate text-foreground">
+                          {getCountryLabel(selectedCountry)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          اختر الدولة
+                        </span>
+                      )}
+                      <ChevronDown className="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-(--radix-dropdown-menu-trigger-width) min-w-[200px] p-0"
+                    onCloseAutoFocus={(e) => e.preventDefault()}
+                  >
+                    <div className="p-2 border-b">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          placeholder="بحث"
+                          value={countrySearchQuery}
+                          onChange={(e) =>
+                            setCountrySearchQuery(e.target.value)
+                          }
+                          className="pl-8 pr-3 h-9 text-right"
+                          dir="auto"
+                          onPointerDown={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+                    <div
+                      ref={scrollContainerRef}
+                      className="max-h-[220px] overflow-y-auto"
+                    >
+                      {isLoadingCountries ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : countries.length === 0 ? (
+                        <div className="py-6 text-center text-sm text-muted-foreground">
+                          لا توجد نتائج
+                        </div>
+                      ) : (
+                        countries.map((c: CountryOption) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            className={cn(
+                              "w-full px-3 py-2 text-right text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center justify-between gap-2",
+                              selectedCountry?.id === c.id && "bg-accent",
+                            )}
+                            onClick={() => {
+                              setSelectedCountry(c);
+                              setCountryOpen(false);
+                              setCountrySearchQuery("");
+                            }}
+                          >
+                            <span className="truncate">
+                              {getCountryLabel(c)}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                      {hasNextPage && (
+                        <div
+                          ref={loadMoreRef}
+                          className="py-3 flex justify-center"
+                        >
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => fetchNextPage()}
+                            disabled={isFetchingNextPage}
+                            className="gap-2"
+                          >
+                            {isFetchingNextPage ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                جاري التحميل...
+                              </>
+                            ) : (
+                              "تحميل المزيد"
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div className="text-xs text-muted-foreground flex items-center justify-between">
                 <span>أدخل الرقم بدون مسافات</span>
@@ -289,16 +451,6 @@ const DevStoreLogin = () => {
                 </>
               )}
             </Button>
-
-            {/* <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => navigate("/login")}
-            >
-              <ArrowLeft className="w-4 h-4 ml-2" />
-              تسجيل دخول الإدارة
-            </Button> */}
           </form>
         </CardContent>
       </Card>
