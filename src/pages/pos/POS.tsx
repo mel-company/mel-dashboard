@@ -29,7 +29,6 @@ import {
   Package,
   Loader2,
   MapPin,
-  Ticket,
   CheckCircle2,
   XCircle,
   X,

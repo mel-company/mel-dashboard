@@ -9,7 +9,6 @@ import {
 import CairoRegular from "../../../assets/fonts/Cairo-Regular.ttf";
 import CairoBold from "../../../assets/fonts/Cairo-Bold.ttf";
 import { formatDate } from "../../helpers";
-import { CircleCheckIcon } from "lucide-react";
 
 Font.register({
   family: "Cairo",
