@@ -68,7 +68,7 @@ export const authAPI = {
   devVerify: async (params?: any): Promise<any> => {
     // Store-user flow: this endpoint sets the `sat` cookie on success
     const { data } = await axiosInstance.post<any>(
-      "/local-idp/verify",
+      "/store-user-auth/verify",
       {
         phone: params?.phone,
         code: parseInt(params?.code),
