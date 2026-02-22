@@ -9,6 +9,7 @@ import {
 import CairoRegular from "../../../assets/fonts/Cairo-Regular.ttf";
 import CairoBold from "../../../assets/fonts/Cairo-Bold.ttf";
 import { formatDate } from "../../helpers";
+import { CircleCheckIcon } from "lucide-react";
 
 Font.register({
   family: "Cairo",
@@ -54,6 +55,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 16,
+    textAlign: "right",
   },
   sectionTitle: {
     fontSize: 13,
@@ -335,7 +337,6 @@ export const SubscriptionInvoicePDF = ({
             {plan.features.slice(0, 12).map((f: any, i: number) => (
               <View key={f.id || i} style={styles.featureItem}>
                 <Text style={styles.featureText}>{f.feature?.name || "—"}</Text>
-                <Text style={styles.featureBullet}>✓</Text>
               </View>
             ))}
             {plan.features.length > 12 && (

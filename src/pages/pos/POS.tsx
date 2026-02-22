@@ -122,7 +122,7 @@ const POS = ({}: Props) => {
   const navigate = useNavigate();
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
+    null,
   );
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -177,7 +177,7 @@ const POS = ({}: Props) => {
       categoryId: selectedCategoryId ?? undefined,
       limit: 24,
     },
-    !isSearchMode
+    !isSearchMode,
   );
 
   // Search with cursor (when user has typed a search query)
@@ -193,7 +193,7 @@ const POS = ({}: Props) => {
       categoryId: selectedCategoryId ?? undefined,
       limit: 24,
     },
-    isSearchMode
+    isSearchMode,
   );
 
   const baseUrl =
@@ -203,8 +203,8 @@ const POS = ({}: Props) => {
 
   // Flatten paginated products from the active source
   const productsFromApi: Product[] = isSearchMode
-    ? searchCursorData?.pages?.flatMap((p) => p.data ?? []) ?? []
-    : productsCursorData?.pages?.flatMap((p) => p.data ?? []) ?? [];
+    ? (searchCursorData?.pages?.flatMap((p) => p.data ?? []) ?? [])
+    : (productsCursorData?.pages?.flatMap((p) => p.data ?? []) ?? []);
 
   const isLoadingProducts = isSearchMode
     ? isLoadingSearch
@@ -231,7 +231,7 @@ const POS = ({}: Props) => {
       (entries) => {
         if (entries[0]?.isIntersecting) loadMoreProducts();
       },
-      { root, rootMargin: "200px", threshold: 0.1 }
+      { root, rootMargin: "200px", threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -244,11 +244,11 @@ const POS = ({}: Props) => {
     useAddProductsToOrder();
   const { data: states, isLoading: isLoadingStates } = useFetchStates(
     undefined,
-    isCheckoutDialogOpen
+    isCheckoutDialogOpen,
   );
   const { data: regions, isLoading: isLoadingRegions } = useFetchRegionsByState(
     checkoutForm.stateId,
-    isCheckoutDialogOpen && !!checkoutForm.stateId
+    isCheckoutDialogOpen && !!checkoutForm.stateId,
   );
 
   // Variant finding hook
@@ -287,7 +287,7 @@ const POS = ({}: Props) => {
   const findMatchingVariant = useCallback(
     async (
       product: Product,
-      options: Record<string, string>
+      options: Record<string, string>,
     ): Promise<ProductVariant | null> => {
       // If product has no options, return null (product without variants)
       if (!product.options || product.options.length === 0) {
@@ -335,7 +335,7 @@ const POS = ({}: Props) => {
         console.error("Error finding variant:", error);
         toast.error(
           error?.response?.data?.message ||
-            "فشل في العثور على المتغير. حاول مرة أخرى."
+            "فشل في العثور على المتغير. حاول مرة أخرى.",
         );
         setFoundVariant(null);
         return null;
@@ -343,7 +343,7 @@ const POS = ({}: Props) => {
         setIsFindingVariant(false);
       }
     },
-    [findVariantByOptions]
+    [findVariantByOptions],
   );
 
   // Find variant when options change
@@ -355,7 +355,7 @@ const POS = ({}: Props) => {
     ) {
       // Check if all required options are selected before making API call
       const allOptionsSelected = selectedProduct.options?.every(
-        (option) => selectedOptions[option.name]
+        (option) => selectedOptions[option.name],
       );
 
       if (allOptionsSelected) {
@@ -384,7 +384,7 @@ const POS = ({}: Props) => {
   const addToCart = (
     product: Product,
     variant: ProductVariant | undefined,
-    options: Record<string, string>
+    options: Record<string, string>,
   ) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => {
@@ -400,7 +400,7 @@ const POS = ({}: Props) => {
         return prevCart.map((item) =>
           item === existingItem
             ? { ...item, quantity: item.quantity + 1 }
-            : item
+            : item,
         );
       }
 
@@ -434,11 +434,11 @@ const POS = ({}: Props) => {
         // Try to find variant one more time
         const variant = await findMatchingVariant(
           selectedProduct,
-          selectedOptions
+          selectedOptions,
         );
         if (!variant) {
           toast.error(
-            "لم يتم العثور على متغير مطابق. يرجى التحقق من الخيارات المحددة."
+            "لم يتم العثور على متغير مطابق. يرجى التحقق من الخيارات المحددة.",
           );
           return;
         }
@@ -466,7 +466,7 @@ const POS = ({}: Props) => {
 
     // Check if all options have been selected
     const allOptionsSelected = selectedProduct.options.every(
-      (option) => selectedOptions[option.name]
+      (option) => selectedOptions[option.name],
     );
 
     return allOptionsSelected;
@@ -484,7 +484,7 @@ const POS = ({}: Props) => {
       }
 
       return prevCart.map((cartItem, index) =>
-        index === itemIndex ? { ...cartItem, quantity: newQuantity } : cartItem
+        index === itemIndex ? { ...cartItem, quantity: newQuantity } : cartItem,
       );
     });
   };
@@ -594,10 +594,10 @@ const POS = ({}: Props) => {
           onError: (error: any) => {
             toast.error(
               error?.response?.data?.message ||
-                "فشل في إضافة المنتجات إلى الطلب. حاول مرة أخرى."
+                "فشل في إضافة المنتجات إلى الطلب. حاول مرة أخرى.",
             );
           },
-        }
+        },
       );
       return;
     }
@@ -659,7 +659,8 @@ const POS = ({}: Props) => {
       },
       onError: (error: any) => {
         toast.error(
-          error?.response?.data?.message || "فشل في إنشاء الطلب. حاول مرة أخرى."
+          error?.response?.data?.message ||
+            "فشل في إنشاء الطلب. حاول مرة أخرى.",
         );
       },
     });
@@ -791,7 +792,7 @@ const POS = ({}: Props) => {
                             product.categories.length > 0 && (
                               <Badge variant="secondary" className="text-xs">
                                 {getCategoryName(
-                                  product.categories[0]?.category
+                                  product.categories[0]?.category,
                                 )}
                               </Badge>
                             )}
@@ -898,7 +899,7 @@ const POS = ({}: Props) => {
                                   >
                                     {optionName}: {value}
                                   </Badge>
-                                )
+                                ),
                               )}
                             </div>
                           )}
@@ -971,11 +972,6 @@ const POS = ({}: Props) => {
                   {total.toLocaleString()} د.ع
                 </span>
               </div>
-
-              <Button className="w-full" size="lg">
-                <Ticket className="size-4" />
-                استخدام كوبون خصم
-              </Button>
 
               <Button
                 className="w-full"
@@ -1230,8 +1226,8 @@ const POS = ({}: Props) => {
                           {checkoutForm.stateId &&
                             getDisplayName(
                               states?.find(
-                                (s: any) => s.id === checkoutForm.stateId
-                              )?.name.arabic
+                                (s: any) => s.id === checkoutForm.stateId,
+                              )?.name.arabic,
                             )}
                         </SelectValue>
                         {isLoadingStates && (
@@ -1280,8 +1276,8 @@ const POS = ({}: Props) => {
                           {checkoutForm.regionId &&
                             getDisplayName(
                               regions?.find(
-                                (r: any) => r.id === checkoutForm.regionId
-                              )?.name.arabic
+                                (r: any) => r.id === checkoutForm.regionId,
+                              )?.name.arabic,
                             )}
                         </SelectValue>
                         {isLoadingRegions && (
@@ -1373,8 +1369,8 @@ const POS = ({}: Props) => {
                     couponValid
                       ? "text-green-600"
                       : couponValidateError || couponValidation?.valid === false
-                      ? "text-destructive"
-                      : "text-muted-foreground"
+                        ? "text-destructive"
+                        : "text-muted-foreground"
                   }`}
                 >
                   {isValidatingCoupon ? (
