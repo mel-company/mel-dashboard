@@ -15,6 +15,45 @@ import { phone } from "phone";
  * @param domain - The domain string to validate
  * @returns true if the domain is valid, false otherwise
  */
+/**
+ * Filters domain input to only allow valid characters as the user types.
+ * - First character must be a letter
+ * - Allows letters, numbers, and hyphens (no consecutive hyphens)
+ * - Rejects: / ? ! \ | @ # $ % ^ & * ( ) [ ] space . _
+ *
+ * @param value - The raw input value
+ * @returns The filtered value safe for domain input
+ */
+export const filterDomainInput = (value: string): string => {
+  if (value.length === 0) return "";
+
+  let result = "";
+  for (let i = 0; i < value.length; i++) {
+    const char = value[i];
+
+    // First character must be a letter
+    if (result.length === 0) {
+      if (/[a-zA-Z]/.test(char)) {
+        result += char;
+      }
+      continue;
+    }
+
+    // Letters and numbers allowed
+    if (/[a-zA-Z0-9]/.test(char)) {
+      result += char;
+      continue;
+    }
+
+    // Hyphen allowed but not adjacent to another hyphen
+    if (char === "-" && result[result.length - 1] !== "-") {
+      result += char;
+    }
+  }
+
+  return result;
+};
+
 export const isValidDomain = (domain: string): boolean => {
   // Check if domain is empty or null
   if (!domain || typeof domain !== "string" || domain.trim().length === 0) {

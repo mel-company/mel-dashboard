@@ -28,7 +28,7 @@ import {
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { isValidDomain } from "@/utils/helpers";
+import { isValidDomain, filterDomainInput } from "@/utils/helpers";
 
 type Props = {};
 
@@ -52,7 +52,7 @@ const DomainSettings = ({}: Props) => {
     const lastUpdate = new Date(domainDetails.domain_last_update);
     const now = new Date();
     const daysSinceUpdate = Math.floor(
-      (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24)
+      (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     return daysSinceUpdate >= 30;
@@ -73,7 +73,7 @@ const DomainSettings = ({}: Props) => {
   const handleOpenUpdateDialog = () => {
     if (!canUpdateDomain) {
       toast.error(
-        "لا يمكن تحديث النطاق. يجب الانتظار 30 يومًا على الأقل من آخر تحديث."
+        "لا يمكن تحديث النطاق. يجب الانتظار 30 يومًا على الأقل من آخر تحديث.",
       );
       return;
     }
@@ -166,7 +166,7 @@ const DomainSettings = ({}: Props) => {
       },
       onError: (error: any) => {
         toast.error(
-          error?.response?.data?.message || "حدث خطأ أثناء تحديث النطاق"
+          error?.response?.data?.message || "حدث خطأ أثناء تحديث النطاق",
         );
       },
     });
@@ -267,8 +267,8 @@ const DomainSettings = ({}: Props) => {
                   id="newDomain"
                   value={newDomain}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    setNewDomain(value);
+                    const filtered = filterDomainInput(e.target.value);
+                    setNewDomain(filtered);
                     // Clear availability result when user types
                     setAvailabilityResult(null);
                   }}
@@ -285,6 +285,9 @@ const DomainSettings = ({}: Props) => {
                   placeholder="أدخل النطاق الفرعي الجديد"
                   className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-r-none"
                 />
+                <span dir="ltr" className="text-sm text-muted-foreground ml-2">
+                  https://
+                </span>
               </div>
 
               {/* Availability Result */}
