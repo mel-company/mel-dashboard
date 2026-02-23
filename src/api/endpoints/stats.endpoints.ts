@@ -32,5 +32,28 @@ export const statsAPI = {
     const { data } = await axiosInstance.get<any>("/stats/most-bought-products");
     return data;
   },
+
+  /**
+   * Get combined stats (monthly-sales, orders-status, most-bought-products)
+   * filtered by period or custom from/to date range.
+   */
+  getCombinedStats: async (params?: {
+    period?: string;
+    from?: string;
+    to?: string;
+  }): Promise<{
+    monthlySales: any[];
+    ordersStatusStats: any[];
+    mostBoughtProducts: any[];
+  }> => {
+    const searchParams = new URLSearchParams();
+    if (params?.period) searchParams.set("period", params.period);
+    if (params?.from) searchParams.set("from", params.from);
+    if (params?.to) searchParams.set("to", params.to);
+    const query = searchParams.toString();
+    const url = `/stats/combined${query ? `?${query}` : ""}`;
+    const { data } = await axiosInstance.get<any>(url);
+    return data;
+  },
 };
 

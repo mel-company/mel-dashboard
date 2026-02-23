@@ -56,3 +56,25 @@ export const useFetchMostBoughtProducts = (enabled: boolean = true) => {
   });
 };
 
+/**
+ * Query key for combined stats (includes filter params)
+ */
+export const statsKeysCombined = (
+  params?: { period?: string; from?: string; to?: string }
+) => [...statsKeys.all, "combined", params ?? {}] as const;
+
+/**
+ * Fetch combined stats with optional period or from/to filter.
+ * Use enabled: false and refetch manually when you want to trigger on demand.
+ */
+export const useFetchCombinedStats = (
+  params?: { period?: string; from?: string; to?: string },
+  options?: { enabled?: boolean }
+) => {
+  return useQuery({
+    queryKey: statsKeysCombined(params),
+    queryFn: () => statsAPI.getCombinedStats(params),
+    enabled: options?.enabled ?? true,
+  });
+};
+

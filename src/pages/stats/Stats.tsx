@@ -11,14 +11,13 @@ import {
   Download,
   Calendar,
   ShoppingBag,
+  RefreshCcw,
 } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
 import { StatsReportPDF } from "@/utils/files/report/stats.report";
 import {
   useFetchStoreStats,
-  useFetchMonthlySales,
-  useFetchOrdersStatusStats,
-  useFetchMostBoughtProducts,
+  useFetchCombinedStats,
 } from "@/api/wrappers/stats.wrappers";
 import StatsSkeleton from "./StatsSkeleton";
 import {
@@ -59,30 +58,62 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
+
+const TIME_RANGE_OPTIONS = [
+  { value: "48h", label: "48 ساعة" },
+  { value: "7d", label: "7 أيام" },
+  { value: "14d", label: "14 أيام" },
+  { value: "30d", label: "30 أيام" },
+  { value: "1y", label: "1 سنة" },
+  { value: "custom", label: "مدة مخصصة" },
+] as const;
 
 const Stats = () => {
   const navigate = useNavigate();
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [timeRange, setTimeRange] = useState<string>("7d");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
+
+  // Effective filter for the combined stats API (period or from/to)
+  const [statsFilter, setStatsFilter] = useState<{
+    period?: string;
+    from?: string;
+    to?: string;
+  }>({ period: "7d" });
+
+  const handleTimeRangeChange = (value: string) => {
+    setTimeRange(value);
+    if (value !== "custom") {
+      setStatsFilter({ period: value });
+    }
+  };
+
+  const handleCustomRangeApply = () => {
+    if (customFrom && customTo) {
+      setStatsFilter({ from: customFrom, to: customTo });
+    }
+  };
+
+  const canApplyCustomRange = customFrom && customTo;
 
   // Fetch data from API
   const { data: storeStats, isLoading: isLoadingStoreStats } =
     useFetchStoreStats();
 
-  const { data: monthlySales, isLoading: isLoadingMonthlySales } =
-    useFetchMonthlySales();
+  const { data: combinedStats, isLoading: isLoadingCombinedStats } =
+    useFetchCombinedStats(statsFilter);
 
-  const { data: ordersStatusStats, isLoading: isLoadingOrdersStatus } =
-    useFetchOrdersStatusStats();
-
-  const { data: mostBoughtProducts, isLoading: isLoadingMostBought } =
-    useFetchMostBoughtProducts();
+  const monthlySales = combinedStats?.monthlySales ?? [];
+  const ordersStatusStats = combinedStats?.ordersStatusStats ?? [];
+  const mostBoughtProducts = combinedStats?.mostBoughtProducts ?? [];
 
   // Detect theme (نفس من Home) - Must be called before any conditional returns
   const isDark = useMemo(
     () => document.documentElement.classList.contains("dark"),
-    []
+    [],
   );
   const textColor = isDark ? "#e5e7eb" : "#6b7280";
   const gridColor = isDark ? "#374151" : "#e5e7eb";
@@ -137,7 +168,7 @@ const Stats = () => {
         },
       },
     }),
-    [textColor, gridColor, bgColor]
+    [textColor, gridColor, bgColor],
   );
 
   // Order Status Chart Data
@@ -316,13 +347,17 @@ const Stats = () => {
         ordersStatusStats: ordersStatusStats ?? [],
         mostBoughtProducts: mostBoughtProducts ?? [],
       };
-      const blob = await pdf(
-        <StatsReportPDF data={reportData} />
-      ).toBlob();
+      const blob = await pdf(<StatsReportPDF data={reportData} />).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `stats-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const filterStr = statsFilter.period
+        ? statsFilter.period
+        : statsFilter.from && statsFilter.to
+          ? `${statsFilter.from}-to-${statsFilter.to}`
+          : "";
+      link.download = `stats-report-${dateStr}${filterStr ? `-${filterStr}` : ""}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -331,11 +366,7 @@ const Stats = () => {
   };
 
   // Check if any data is loading - Must be after all hooks
-  const isLoading =
-    isLoadingStoreStats ||
-    isLoadingMonthlySales ||
-    isLoadingOrdersStatus ||
-    isLoadingMostBought;
+  const isLoading = isLoadingStoreStats || isLoadingCombinedStats;
 
   // Show skeleton while loading
   if (isLoading) {
@@ -402,7 +433,7 @@ const Stats = () => {
         </div>
 
         {/* Reports Section */}
-        <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-2xl border border-blue-200/50 dark:border-blue-800/30 shadow-lg p-6 lg:p-8">
+        {/* <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-2xl border border-blue-200/50 dark:border-blue-800/30 shadow-lg p-6 lg:p-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md">
@@ -492,6 +523,82 @@ const Stats = () => {
                 </Button>
               </div>
             </div>
+          </div>
+        </div> */}
+
+        <div className="flex justify-between items-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-2xl border border-blue-200/50 dark:border-blue-800/30 shadow-lg p-6 lg:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h2 className="text-lg font-bold text-foreground">
+                المدة الزمنية
+              </h2>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
+              <div className="space-y-2 ">
+                <Select value={timeRange} onValueChange={handleTimeRangeChange}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="اختر المدة الزمنية" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_RANGE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {timeRange === "custom" && (
+                <div className="flex flex-col sm:flex-row sm:items-end gap-4 flex-1">
+                  <div className="flex space-y-2 items-center gap-2">
+                    <label className="text-sm font-medium text-foreground">
+                      من
+                    </label>
+                    <Input
+                      type="date"
+                      className="h-10"
+                      value={customFrom}
+                      onChange={(e) => setCustomFrom(e.target.value)}
+                      aria-label="From date"
+                    />
+                  </div>
+                  <div className="flex space-y-2 items-center gap-2">
+                    <label className="text-sm font-medium text-foreground">
+                      إلى
+                    </label>
+                    <Input
+                      type="date"
+                      className="h-10"
+                      value={customTo}
+                      onChange={(e) => setCustomTo(e.target.value)}
+                      aria-label="To date"
+                    />
+                  </div>
+                  {canApplyCustomRange && (
+                    <Button
+                      type="button"
+                      onClick={handleCustomRangeApply}
+                      className="h-10 px-4 gap-2"
+                    >
+                      <RefreshCcw className="w-4 h-4" />
+                      تطبيق
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={isExportingPdf}
+              className="h-10 px-4 gap-2"
+            >
+              <Download className="w-4 h-4" />
+              {isExportingPdf ? "جاري التوليد..." : "تحميل التقرير"}
+            </Button>
           </div>
         </div>
 
