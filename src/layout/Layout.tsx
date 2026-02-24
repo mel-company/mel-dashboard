@@ -53,6 +53,7 @@ const Layout = () => {
       subscription: "الاشتراك",
       coupons: "الكوبونات",
       tickets: "الدعم",
+      "category-group": "المجموعات",
     };
 
     const detailLabels: Record<string, string> = {
@@ -66,6 +67,7 @@ const Layout = () => {
       payment: "تفاصيل الدفع",
       coupons: "تفاصيل الكوبون",
       tickets: "تفاصيل التذكرة",
+      "category-group": "تفاصيل المجموعة",
     };
 
     const path = location.pathname;
@@ -85,7 +87,7 @@ const Layout = () => {
       // لو الجزء الحالي شكله UUID (معايير UUID v4 أو v1)، نستخدم اسم تفصيلي حسب الجزء السابق
       const looksLikeUuid =
         /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(
-          segment
+          segment,
         );
       if (!mapped && looksLikeUuid && index > 0) {
         const parentKey = segments[index - 1].toLowerCase();

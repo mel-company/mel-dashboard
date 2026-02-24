@@ -44,6 +44,9 @@ import NotFoundPage from "./pages/miscellaneous/NotFoundPage";
 import EditProduct from "./pages/product/EditProduct";
 import EditCategory from "./pages/category/EditCategory";
 import EditDiscount from "./pages/discount/EditDiscount";
+import CategorieGroups from "./pages/category/category-group/CategorieGroups";
+import CategoryGroupDetails from "./pages/category/category-group/CategoryGroupDetails";
+import EditCategoryGroup from "./pages/category/category-group/EditCategoryGroup";
 import SubscriptionSettings from "./pages/settings/SubscriptionSettings";
 import Plans from "./pages/plan/Plans";
 import Payment from "./pages/payment/Payment";
@@ -216,6 +219,15 @@ function App() {
                 <Route path="edit" element={<EditCategory />} />
               </Route>
               <Route path="add" element={<AddCategory />} />
+            </Route>
+
+            {/* Category groups routes */}
+            <Route path="/category-group">
+              <Route index element={<CategorieGroups />} />
+              <Route path=":id">
+                <Route index element={<CategoryGroupDetails />} />
+                <Route path="edit" element={<EditCategoryGroup />} />
+              </Route>
             </Route>
 
             {/* Discounts routes */}

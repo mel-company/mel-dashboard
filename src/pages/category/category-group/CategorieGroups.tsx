@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
+import AddGroupDialog from "./AddGroupDialog";
 import {
   Card,
   CardContent,
@@ -11,22 +12,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Folder, CheckCircle2, X, Loader2 } from "lucide-react";
-import AddCategoryDialog from "@/components/dialogs/AddCategoryDialog";
 import {
-  useFetchCategoriesCursor,
-  useSearchCategoriesCursor,
-} from "@/api/wrappers/category.wrappers";
-import ErrorPage from "../miscellaneous/ErrorPage";
-import EmptyPage from "../miscellaneous/EmptyPage";
-import CategoriesSkeleton from "./CategoriesSkeleton";
+  useFetchGroupsCursor,
+  useSearchGroupsCursor,
+} from "@/api/wrappers/group.wrappers";
+import ErrorPage from "../../miscellaneous/ErrorPage";
+import EmptyPage from "../../miscellaneous/EmptyPage";
+import CategoryGroupsSkeleton from "./CategoryGroupsSkeleton";
 
-type CategoryListItem = {
+type GroupListItem = {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   enabled: boolean;
-  image: string;
-  _count?: { products: number };
+  image: string | null;
+  _count?: { categories: number };
 };
 
 const CURSOR_LIMIT = 20;
@@ -42,9 +42,9 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debouncedValue;
 }
 
-const Categories = () => {
+const CategorieGroups = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
@@ -59,7 +59,7 @@ const Categories = () => {
     error: cursorError,
     refetch: refetchCursor,
     isFetching: isCursorFetching,
-  } = useFetchCategoriesCursor({ limit: CURSOR_LIMIT }, !isSearching);
+  } = useFetchGroupsCursor({ limit: CURSOR_LIMIT }, !isSearching);
 
   const {
     data: searchData,
@@ -70,17 +70,15 @@ const Categories = () => {
     error: searchError,
     refetch: refetchSearch,
     isFetching: isSearchFetching,
-  } = useSearchCategoriesCursor(
+  } = useSearchGroupsCursor(
     { query: debouncedQuery, limit: CURSOR_LIMIT },
     isSearching,
   );
 
-  const flatCategories = cursorData?.pages.flatMap((p) => p.data) ?? [];
-  const flatSearchCategories = searchData?.pages.flatMap((p) => p.data) ?? [];
+  const flatGroups = cursorData?.pages.flatMap((p) => p.data) ?? [];
+  const flatSearchGroups = searchData?.pages.flatMap((p) => p.data) ?? [];
 
-  const categories: CategoryListItem[] = isSearching
-    ? flatSearchCategories
-    : flatCategories;
+  const groups: GroupListItem[] = isSearching ? flatSearchGroups : flatGroups;
 
   const baseUrl = cursorData?.pages?.[0]?.baseUrl ?? "";
   const searchBaseUrl = searchData?.pages?.[0]?.baseUrl ?? "";
@@ -124,36 +122,29 @@ const Categories = () => {
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="ابحث عن فئة..."
+            placeholder="ابحث عن مجموعة..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full text-right pr-10"
             dir="rtl"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Link className="gap-2 w-full sm:w-auto" to="/category-group">
-            <Button>
-              <span className="">عرض المجموعات</span>
-            </Button>
-          </Link>
-          <Button
-            className="gap-2 w-full sm:w-auto"
-            onClick={() => setIsDialogOpen(true)}
-          >
-            <Plus className="size-4" />
-            <span className="hidden sm:inline">إضافة فئة</span>
-            <span className="sm:hidden">إضافة</span>
-          </Button>
-        </div>
+        <Button
+          className="gap-2 w-full sm:w-auto"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
+          <Plus className="size-4" />
+          <span className="hidden sm:inline">إضافة مجموعة</span>
+          <span className="sm:hidden">إضافة</span>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {isLoading && categories.length === 0 ? (
+        {isLoading && groups.length === 0 ? (
           <div className="col-span-full">
-            <CategoriesSkeleton count={8} showHeader={false} />
+            <CategoryGroupsSkeleton count={8} showHeader={false} />
           </div>
-        ) : error && categories.length === 0 ? (
+        ) : error && groups.length === 0 ? (
           <div className="col-span-full">
             <ErrorPage
               error={error}
@@ -161,14 +152,14 @@ const Categories = () => {
               isRetrying={isFetching}
             />
           </div>
-        ) : categories.length === 0 ? (
+        ) : groups.length === 0 ? (
           <div className="col-span-full">
             <EmptyPage
-              title={searchQuery.trim() ? "لا توجد نتائج" : "لا توجد فئات"}
+              title={searchQuery.trim() ? "لا توجد نتائج" : "لا توجد مجموعات"}
               description={
                 searchQuery.trim()
-                  ? "لم يتم العثور على فئات تطابق البحث. جرّب كلمات أخرى."
-                  : "ابدأ بإضافة فئة جديدة لعرضها هنا."
+                  ? "لم يتم العثور على مجموعات تطابق البحث. جرّب كلمات أخرى."
+                  : "ابدأ بإضافة مجموعة جديدة لعرضها هنا."
               }
               icon={<Folder className="size-7 text-muted-foreground" />}
               primaryAction={
@@ -180,8 +171,8 @@ const Categories = () => {
                       variant: "outline",
                     }
                   : {
-                      label: "إضافة فئة",
-                      onClick: () => setIsDialogOpen(true),
+                      label: "إضافة مجموعة",
+                      onClick: () => setIsAddDialogOpen(true),
                       icon: <Plus className="size-4" />,
                     }
               }
@@ -189,20 +180,20 @@ const Categories = () => {
           </div>
         ) : (
           <>
-            {categories.map((category) => (
-              <Link key={category.id} to={`/categories/${category.id}`}>
+            {groups.map((group) => (
+              <Link key={group.id} to={`/category-group/${group.id}`}>
                 <Card className="group gap-y-0 h-full cursor-pointer transition-all hover:shadow-lg hover:border-primary/25">
                   <CardHeader className="pb-4">
                     <div className="relative h-40 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
-                      {category.image ? (
+                      {group.image ? (
                         <img
-                          src={`${imageBaseUrl}/${category.image}`}
-                          alt={category.name}
+                          src={`${imageBaseUrl}/${group.image}`}
+                          alt={group.name}
                           className="h-full w-full object-contain transition-transform group-hover:scale-110"
                           onError={(e) => {
                             const target = e.currentTarget;
                             target.src = `https://via.placeholder.com/300x300/cccccc/666666?text=${encodeURIComponent(
-                              category.name,
+                              group.name,
                             )}`;
                             target.onerror = null;
                           }}
@@ -214,13 +205,13 @@ const Categories = () => {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <CardTitle className="line-clamp-1 pb-2 text-right text-lg font-semibold">
-                      {category.name}
+                      {group.name}
                     </CardTitle>
                     <p className="text-md text-muted-foreground line-clamp-3 text-right">
-                      {category.description}
+                      {group.description || "—"}
                     </p>
                     <div className="mb-2 flex items-center gap-2">
-                      {category.enabled ? (
+                      {group.enabled ? (
                         <Badge
                           variant="default"
                           className="bg-green-600 gap-1 text-sm"
@@ -241,7 +232,7 @@ const Categories = () => {
                   <CardFooter className="flex items-center justify-between border-t pt-2">
                     <div>
                       <span className="text-md text-muted-foreground">
-                        عدد المنتجات: {category._count?.products ?? 0}
+                        عدد الفئات: {group._count?.categories ?? 0}
                       </span>
                     </div>
                     <Badge variant="default" className="px-2 py-1">
@@ -277,9 +268,12 @@ const Categories = () => {
         )}
       </div>
 
-      <AddCategoryDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <AddGroupDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+      />
     </div>
   );
 };
 
-export default Categories;
+export default CategorieGroups;
