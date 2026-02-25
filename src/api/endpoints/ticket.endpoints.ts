@@ -76,6 +76,31 @@ export const ticketAPI = {
     return data;
   },
 
+  /** Filter support tickets with cursor pagination (infinite scroll) */
+  fetchFilterStoreCursor: async (params?: {
+    query?: string;
+    type?: string;
+    status?: string;
+    department?: string;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/support-ticket/store/filter-cursor",
+      {
+        params: {
+          ...(params?.query && { query: params.query }),
+          ...(params?.type && { type: params.type }),
+          ...(params?.status && { status: params.status }),
+          ...(params?.department && { department: params.department }),
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit != null && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
   /** Search support tickets with cursor pagination (infinite scroll) */
   searchStoreCursor: async (params?: {
     query: string;

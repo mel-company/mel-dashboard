@@ -34,6 +34,8 @@ export const ticketKeys = {
       [...ticketKeys.store.lists(), "search", params] as const,
     searchCursor: (params?: any) =>
       [...ticketKeys.store.lists(), "search-cursor", params] as const,
+    filterCursor: (params?: any) =>
+      [...ticketKeys.store.lists(), "filter-cursor", params] as const,
     cursor: (params?: any) =>
       [...ticketKeys.store.lists(), "cursor", params] as const,
     details: () => [...ticketKeys.all, "store", "detail"] as const,
@@ -67,6 +69,30 @@ export const useFetchTicketsStoreCursor = (
     enabled,
     queryFn: ({ pageParam }) =>
       ticketAPI.fetchAllStoreCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/** Filter support tickets with cursor pagination (infinite scroll) */
+export const useFilterTicketsStoreCursor = (
+  params?: {
+    query?: string;
+    type?: string;
+    status?: string;
+    department?: string;
+    limit?: number;
+  },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: ticketKeys.store.filterCursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      ticketAPI.fetchFilterStoreCursor({
         ...params,
         cursor: typeof pageParam === "string" ? pageParam : undefined,
       }),
@@ -123,6 +149,7 @@ export const useCreateTicketStore = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.lists() });
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.cursor() });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.store.filterCursor() });
     },
   });
 };
@@ -135,6 +162,7 @@ export const useCancelTicketStore = () => {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.lists() });
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.cursor() });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.store.filterCursor() });
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.detail(id) });
     },
   });
@@ -148,6 +176,7 @@ export const useCloseTicketStore = () => {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.lists() });
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.cursor() });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.store.filterCursor() });
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.detail(id) });
     },
   });
@@ -161,6 +190,7 @@ export const useDeleteTicketStore = () => {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.lists() });
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.cursor() });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.store.filterCursor() });
       queryClient.removeQueries({ queryKey: ticketKeys.store.detail(id) });
     },
   });

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -12,19 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Search,
-  Plus,
-  FileText,
-  X,
-  List,
-  BookOpen,
-  Loader2,
-} from "lucide-react";
-import {
-  useFetchTicketsStoreCursor,
-  useSearchTicketsStoreCursor,
-} from "@/api/wrappers/ticket.wrappers";
+import { Search, Plus, FileText, X, Loader2, Filter } from "lucide-react";
+import { useFilterTicketsStoreCursor } from "@/api/wrappers/ticket.wrappers";
+import TicketFilterDialog, {
+  type TicketFilterValues,
+  TICKET_TYPES,
+  TICKET_DEPARTMENTS,
+  TICKET_STATUSES,
+} from "./TicketFilterDialog";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,89 +37,40 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debouncedValue;
 }
 
-const TICKET_TYPES = [
-  { value: "BUG", label: "خطأ" },
-  { value: "FEATURE_REQUEST", label: "طلب ميزة" },
-  { value: "QUESTION", label: "سؤال" },
-  { value: "SUPPORT", label: "دعم" },
-  { value: "FEEDBACK", label: "ملاحظة" },
-  { value: "REPORT", label: "بلاغ" },
-  { value: "OTHER", label: "أخرى" },
-] as const;
-
-const DEPARTMENTS = [
-  { value: "CUSTOMER_SERVICE", label: "خدمة العملاء" },
-  { value: "FINANCE", label: "مالية" },
-  { value: "MARKETING", label: "تسويق" },
-  { value: "SALES", label: "مبيعات" },
-  { value: "IT", label: "تقنية المعلومات" },
-] as const;
-
-const STATUS = [
-  { value: "OPEN", label: "مفتوح" },
-  { value: "CLOSED", label: "مغلق" },
-  { value: "IN_PROGRESS", label: "قيد التنفيذ" },
-  { value: "ON_HOLD", label: "معلق" },
-  { value: "RESOLVED", label: "محلول" },
-  { value: "CANCELLED", label: "ملغي" },
-] as const;
-
 const Tickets = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const statusParam = searchParams.get("status") || "open";
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<TicketFilterValues>({
+    type: undefined,
+    status: undefined,
+    department: undefined,
+  });
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
-  const isSearching = debouncedQuery.length > 0;
 
   const {
-    data: cursorData,
-    fetchNextPage: fetchNextCursor,
-    hasNextPage: hasNextCursor,
-    isFetchingNextPage: isFetchingNextCursor,
-    isLoading: isCursorLoading,
-    error: cursorError,
-    refetch: refetchCursor,
-    isFetching: isCursorFetching,
-  } = useFetchTicketsStoreCursor(
-    {
-      limit: CURSOR_LIMIT,
-      status: statusParam === "all" ? "all" : statusParam,
-    },
-    !isSearching
-  );
+    data: filterData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFilterTicketsStoreCursor({
+    query: debouncedQuery || undefined,
+    type: filters.type,
+    status: filters.status,
+    department: filters.department,
+    limit: CURSOR_LIMIT,
+  });
 
-  const {
-    data: searchData,
-    fetchNextPage: fetchNextSearch,
-    hasNextPage: hasNextSearch,
-    isFetchingNextPage: isFetchingNextSearch,
-    isLoading: isSearchLoading,
-    error: searchError,
-    refetch: refetchSearch,
-    isFetching: isSearchFetching,
-  } = useSearchTicketsStoreCursor(
-    { query: debouncedQuery, limit: CURSOR_LIMIT },
-    isSearching
-  );
-
-  const flatTickets = cursorData?.pages.flatMap((p) => p.data) ?? [];
-  const flatSearchTickets = searchData?.pages.flatMap((p) => p.data) ?? [];
-
-  const tickets: any[] = isSearching ? flatSearchTickets : flatTickets;
-
-  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
-  const isFetchingNextPage = isSearching
-    ? isFetchingNextSearch
-    : isFetchingNextCursor;
-  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
-
-  const error = isSearching ? searchError : cursorError;
-  const refetch = isSearching ? refetchSearch : refetchCursor;
-  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
-  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+  const tickets: any[] = filterData?.pages.flatMap((p) => p.data) ?? [];
+  const hasData = filterData !== undefined;
+  const hasActiveFilters =
+    !!filters.type || !!filters.status || !!filters.department;
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -140,7 +86,7 @@ const Tickets = () => {
       (entries) => {
         if (entries[0]?.isIntersecting) handleLoadMore();
       },
-      { rootMargin: "200px", threshold: 0.1 }
+      { rootMargin: "200px", threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -161,25 +107,16 @@ const Tickets = () => {
     return TICKET_TYPES.find((t) => t.value === type)?.label || type;
   };
   const getDepartmentBadge = (department: string) => {
-    return DEPARTMENTS.find((d) => d.value === department)?.label || department;
+    return (
+      TICKET_DEPARTMENTS.find((d) => d.value === department)?.label ||
+      department
+    );
   };
   const getStatusBadge = (status: string) => {
-    return STATUS.find((s) => s.value === status)?.label || status;
+    return TICKET_STATUSES.find((s) => s.value === status)?.label || status;
   };
 
-  const setStatusFilter = (status: "all" | "open") => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (status === "all") {
-        next.set("status", "all");
-      } else {
-        next.delete("status");
-      }
-      return next;
-    });
-  };
-
-  if (isLoading && !tickets.length) {
+  if (isLoading && !hasData) {
     return (
       <div className="space-y-4" dir="rtl">
         <div className="flex gap-4">
@@ -197,7 +134,7 @@ const Tickets = () => {
     );
   }
 
-  if (error && !tickets.length) {
+  if (error && !hasData) {
     return (
       <ErrorPage
         error={error}
@@ -211,49 +148,88 @@ const Tickets = () => {
     return (
       <div className="space-y-6" dir="rtl">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-full sm:max-w-md">
-            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="ابحث في التذاكر..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-right pr-10"
-              dir="rtl"
-            />
-          </div>
-          <div className="flex gap-2">
-            {statusParam !== "all" && (
+          <div className="flex flex-1 max-w-full sm:max-w-md gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="ابحث في التذاكر..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-right pr-10"
+                dir="rtl"
+              />
+            </div>
+            <Button
+              variant={hasActiveFilters ? "default" : "secondary"}
+              size="icon"
+              onClick={() => setIsFilterDialogOpen(true)}
+              title="تصفية"
+            >
+              <Filter className="size-4" />
+            </Button>
+            {hasActiveFilters && (
               <Button
-                className="gap-2"
-                variant="secondary"
-                onClick={() => setStatusFilter("all")}
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setFilters({
+                    type: undefined,
+                    status: undefined,
+                    department: undefined,
+                  })
+                }
+                className="gap-1"
               >
-                <List className="size-4" />
-                الكل
+                <X className="size-4" />
+                مسح التصفية
               </Button>
             )}
-            <Button className="gap-2" asChild>
-              <Link to="/tickets/new">
-                <Plus className="size-4" />
-                فتح تذكرة
-              </Link>
-            </Button>
           </div>
+          <Button className="gap-2" asChild>
+            <Link to="/tickets/new">
+              <Plus className="size-4" />
+              فتح تذكرة
+            </Link>
+          </Button>
         </div>
+        <TicketFilterDialog
+          open={isFilterDialogOpen}
+          onOpenChange={setIsFilterDialogOpen}
+          values={filters}
+          onApply={setFilters}
+          onClear={() =>
+            setFilters({
+              type: undefined,
+              status: undefined,
+              department: undefined,
+            })
+          }
+        />
         <EmptyPage
-          title={searchQuery.trim() ? "لا توجد نتائج" : "لا توجد تذاكر"}
+          title={
+            searchQuery.trim() || hasActiveFilters
+              ? "لا توجد نتائج"
+              : "لا توجد تذاكر"
+          }
           description={
-            searchQuery.trim()
-              ? "لم يتم العثور على تذاكر تطابق البحث."
+            searchQuery.trim() || hasActiveFilters
+              ? "لم يتم العثور على تذاكر تطابق البحث أو التصفية. جرّب تغيير المعايير."
               : "ليس لديك تذاكر دعم مفتوحة حالياً."
           }
           icon={<FileText className="size-7 text-muted-foreground" />}
           primaryAction={
-            searchQuery.trim()
+            searchQuery.trim() || hasActiveFilters
               ? {
-                  label: "مسح البحث",
-                  onClick: () => setSearchQuery(""),
+                  label: "مسح البحث والتصفية",
+                  onClick: () => {
+                    setSearchQuery("");
+                    setFilters({
+                      type: undefined,
+                      status: undefined,
+                      department: undefined,
+                    });
+                  },
                   icon: <X className="size-4" />,
                   variant: "secondary",
                 }
@@ -271,56 +247,75 @@ const Tickets = () => {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-full sm:max-w-md">
-          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="ابحث في التذاكر..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10 pl-10"
-            dir="rtl"
-          />
-          {searchQuery ? (
-            <button
-              type="button"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              onClick={() => setSearchQuery("")}
-              aria-label="مسح البحث"
+        <div className="flex flex-1 max-w-full sm:max-w-md gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="ابحث في التذاكر..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-right pr-10 pl-10"
+              dir="rtl"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setSearchQuery("")}
+                aria-label="مسح البحث"
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
+          </div>
+          <Button
+            variant={hasActiveFilters ? "default" : "secondary"}
+            size="icon"
+            onClick={() => setIsFilterDialogOpen(true)}
+            title="تصفية"
+          >
+            <Filter className="size-4" />
+          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setFilters({
+                  type: undefined,
+                  status: undefined,
+                  department: undefined,
+                })
+              }
+              className="gap-1"
             >
               <X className="size-4" />
-            </button>
-          ) : null}
-        </div>
-        <div className="flex gap-2">
-          {statusParam !== "all" && (
-            <Button
-              className="gap-2"
-              variant="secondary"
-              onClick={() => setStatusFilter("all")}
-            >
-              <List className="size-4" />
-              الكل
+              مسح التصفية
             </Button>
           )}
-          {statusParam === "all" && (
-            <Button
-              className="gap-2"
-              variant="secondary"
-              onClick={() => setStatusFilter("open")}
-            >
-              <BookOpen className="size-4" />
-              التذاكر المفتوحة
-            </Button>
-          )}
-          <Button className="gap-2" asChild>
-            <Link to="/tickets/new">
-              <Plus className="size-4" />
-              فتح تذكرة
-            </Link>
-          </Button>
         </div>
+        <Button className="gap-2" asChild>
+          <Link to="/tickets/new">
+            <Plus className="size-4" />
+            فتح تذكرة
+          </Link>
+        </Button>
       </div>
+
+      <TicketFilterDialog
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        values={filters}
+        onApply={setFilters}
+        onClear={() =>
+          setFilters({
+            type: undefined,
+            status: undefined,
+            department: undefined,
+          })
+        }
+      />
 
       <Card>
         <Table>
