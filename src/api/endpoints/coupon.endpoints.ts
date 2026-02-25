@@ -75,6 +75,42 @@ export const couponAPI = {
   },
 
   /**
+   * Filter and/or search coupons with cursor pagination.
+   * Supports: isActive, startDate, expireDate, maxUsageLimit. When filters are applied, search runs within filtered data.
+   */
+  fetchFilterCursor: async (params?: {
+    query?: string | null;
+    isActive?: boolean;
+    startDate?: string;
+    expireDate?: string;
+    maxUsageLimit?: number;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/coupon/filter-cursor",
+      {
+        params: {
+          ...(params?.query != null &&
+            params.query !== "" && { query: params.query }),
+          ...(params?.isActive !== undefined && {
+            isActive: params.isActive,
+          }),
+          ...(params?.startDate && { startDate: params.startDate }),
+          ...(params?.expireDate && { expireDate: params.expireDate }),
+          ...(params?.maxUsageLimit !== undefined &&
+            params.maxUsageLimit !== null && {
+              maxUsageLimit: params.maxUsageLimit,
+            }),
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
+  /**
    * Get a single coupon by ID
    */
   fetchOne: async (id: string): Promise<any> => {

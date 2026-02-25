@@ -17,6 +17,14 @@ export const couponKeys = {
   detail: (id: string) => [...couponKeys.details(), id] as const,
   search: (params?: any) => [...couponKeys.all, "search", params] as const,
   cursor: (params?: any) => [...couponKeys.all, "cursor", params] as const,
+  filterCursor: (params?: {
+    query?: string | null;
+    isActive?: boolean;
+    startDate?: string;
+    expireDate?: string;
+    maxUsageLimit?: number;
+    limit?: number;
+  }) => [...couponKeys.all, "filter-cursor", params] as const,
   codeAvailability: (params?: any) =>
     [...couponKeys.all, "code-availability", params] as const,
   useCoupon: () => [...couponKeys.all, "use-coupon"] as const,
@@ -100,6 +108,34 @@ export const useSearchCouponsCursor = (
       couponAPI.fetchSearchCursor({
         query: params?.query ?? "",
         limit: params?.limit,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Filter and/or search coupons with cursor pagination (infinite scroll).
+ * Supports: isActive, startDate, expireDate, maxUsageLimit. When filters are applied, search runs within filtered data.
+ */
+export const useFilterCouponsCursor = (
+  params?: {
+    query?: string | null;
+    isActive?: boolean;
+    startDate?: string;
+    expireDate?: string;
+    maxUsageLimit?: number;
+    limit?: number;
+  },
+  enabled = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: couponKeys.filterCursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      couponAPI.fetchFilterCursor({
+        ...params,
         cursor: typeof pageParam === "string" ? pageParam : undefined,
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,

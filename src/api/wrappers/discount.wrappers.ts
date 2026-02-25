@@ -17,6 +17,13 @@ export const discountKeys = {
   detail: (id: string) => [...discountKeys.details(), id] as const,
   search: (params?: any) => [...discountKeys.all, "search", params] as const,
   cursor: (params?: any) => [...discountKeys.all, "cursor", params] as const,
+  filterCursor: (params?: {
+    query?: string | null;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+  }) => [...discountKeys.all, "filter-cursor", params] as const,
   availableProducts: (params?: any) =>
     [...discountKeys.all, "available-products", params] as const,
   availableProductsCursor: (id: string, params?: { limit?: number }) =>
@@ -151,6 +158,33 @@ export const useSearchDiscountsCursor = (
       discountAPI.fetchSearchCursor({
         query: params?.query ?? "",
         limit: params?.limit,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Filter and/or search discounts with cursor pagination (infinite scroll).
+ * Supports: status, startDate, endDate. When filters are applied, search runs within filtered data.
+ */
+export const useFilterDiscountsCursor = (
+  params?: {
+    query?: string | null;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+  },
+  enabled = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: discountKeys.filterCursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      discountAPI.fetchFilterCursor({
+        ...params,
         cursor: typeof pageParam === "string" ? pageParam : undefined,
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,

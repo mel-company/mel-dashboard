@@ -18,6 +18,28 @@ export const orderAPI = {
   },
 
   /**
+   * Filter orders with cursor pagination (infinite scroll)
+   */
+  fetchFilterCursor: async (params?: {
+    query?: string;
+    status?: string;
+    period?: "today" | "7days" | "month" | "year";
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/order/filter-cursor", {
+      params: {
+        ...(params?.query && { query: params.query }),
+        ...(params?.status && { status: params.status }),
+        ...(params?.period && { period: params.period }),
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit != null && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
    * Search orders with cursor pagination (infinite scroll)
    */
   fetchSearchCursor: async (params?: {

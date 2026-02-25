@@ -21,11 +21,10 @@ import {
   FileText,
   X,
   Loader2,
+  Filter,
 } from "lucide-react";
-import {
-  useFetchOrdersCursor,
-  useSearchOrdersCursor,
-} from "@/api/wrappers/order.wrappers";
+import { useFilterOrdersCursor } from "@/api/wrappers/order.wrappers";
+import OrderFilterDialog, { type OrderFilterValues } from "./OrderFilterDialog";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import OrdersSkeleton from "./OrdersSkeleton";
@@ -46,54 +45,35 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 const Orders = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<OrderFilterValues>({
+    status: undefined,
+    period: undefined,
+  });
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
-  const isSearching = debouncedQuery.length > 0;
 
   const {
-    data: cursorData,
-    fetchNextPage: fetchNextCursor,
-    hasNextPage: hasNextCursor,
-    isFetchingNextPage: isFetchingNextCursor,
-    isLoading: isCursorLoading,
-    error: cursorError,
-    refetch: refetchCursor,
-    isFetching: isCursorFetching,
-  } = useFetchOrdersCursor({ limit: CURSOR_LIMIT }, !isSearching);
+    data: filterData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFilterOrdersCursor({
+    query: debouncedQuery || undefined,
+    status: filters.status,
+    period: filters.period,
+    limit: CURSOR_LIMIT,
+  });
 
-  const {
-    data: searchData,
-    fetchNextPage: fetchNextSearch,
-    hasNextPage: hasNextSearch,
-    isFetchingNextPage: isFetchingNextSearch,
-    isLoading: isSearchLoading,
-    error: searchError,
-    refetch: refetchSearch,
-    isFetching: isSearchFetching,
-  } = useSearchOrdersCursor(
-    { query: debouncedQuery, limit: CURSOR_LIMIT },
-    isSearching
-  );
+  const orders: any[] = filterData?.pages.flatMap((p) => p.data) ?? [];
+  const hasData = filterData !== undefined;
 
-  const flatOrders = cursorData?.pages.flatMap((p) => p.data) ?? [];
-  const flatSearchOrders = searchData?.pages.flatMap((p) => p.data) ?? [];
-
-  const orders: any[] = isSearching ? flatSearchOrders : flatOrders;
-  const hasData = isSearching
-    ? searchData !== undefined
-    : cursorData !== undefined;
-
-  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
-  const isFetchingNextPage = isSearching
-    ? isFetchingNextSearch
-    : isFetchingNextCursor;
-  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
-
-  const error = isSearching ? searchError : cursorError;
-  const refetch = isSearching ? refetchSearch : refetchCursor;
-  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
-  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+  const hasActiveFilters = !!filters.status || !!filters.period;
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -109,7 +89,7 @@ const Orders = () => {
       (entries) => {
         if (entries[0]?.isIntersecting) handleLoadMore();
       },
-      { rootMargin: "200px", threshold: 0.1 }
+      { rootMargin: "200px", threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -155,35 +135,51 @@ const Orders = () => {
 
   return (
     <div className="space-y-6">
-      {/* Search and Add Order Section */}
+      {/* Search and Filter Section */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-full sm:max-w-md">
-          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="ابحث عن طلب..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pl10 pr-10"
-            dir="rtl"
-          />
-          {/* {searchQuery ? (
-            <button
-              type="button"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setSearchQuery("")}
-              aria-label="مسح البحث"
+        <div className="flex flex-1 max-w-full sm:max-w-md gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="ابحث عن طلب..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-right pl-10 pr-10"
+              dir="rtl"
+            />
+          </div>
+          <Button
+            variant={hasActiveFilters ? "default" : "secondary"}
+            size="icon"
+            onClick={() => setIsFilterDialogOpen(true)}
+            title="تصفية"
+          >
+            <Filter className="size-4" />
+          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setFilters({ status: undefined, period: undefined })
+              }
+              className="gap-1"
             >
               <X className="size-4" />
-            </button>
-          ) : null} */}
+              مسح التصفية
+            </Button>
+          )}
         </div>
-        {/* <Button className="gap-2 w-full sm:w-auto" onClick={() => {}}>
-          <Plus className="size-4" />
-          <span className="hidden sm:inline">إضافة طلب</span>
-          <span className="sm:hidden">إضافة</span>
-        </Button> */}
       </div>
+
+      <OrderFilterDialog
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        values={filters}
+        onApply={setFilters}
+        onClear={() => setFilters({ status: undefined, period: undefined })}
+      />
 
       {isLoading && !hasData ? (
         <OrdersSkeleton showHeader={false} rows={6} />
@@ -195,18 +191,25 @@ const Orders = () => {
         />
       ) : orders.length === 0 ? (
         <EmptyPage
-          title={searchQuery.trim() ? "لا توجد نتائج" : "لا توجد طلبات"}
+          title={
+            searchQuery.trim() || hasActiveFilters
+              ? "لا توجد نتائج"
+              : "لا توجد طلبات"
+          }
           description={
-            searchQuery.trim()
-              ? "لم يتم العثور على طلبات تطابق البحث. جرّب كلمات أخرى."
+            searchQuery.trim() || hasActiveFilters
+              ? "لم يتم العثور على طلبات تطابق البحث أو التصفية. جرّب تغيير المعايير."
               : "لم يتم العثور على طلبات."
           }
           icon={<Package className="size-7 text-muted-foreground" />}
           primaryAction={
-            searchQuery.trim()
+            searchQuery.trim() || hasActiveFilters
               ? {
-                  label: "مسح البحث",
-                  onClick: () => setSearchQuery(""),
+                  label: "مسح البحث والتصفية",
+                  onClick: () => {
+                    setSearchQuery("");
+                    setFilters({ status: undefined, period: undefined });
+                  },
                   icon: <X className="size-4" />,
                   variant: "secondary",
                 }
@@ -238,7 +241,7 @@ const Orders = () => {
                     order._count?.products ?? order.products?.length ?? 0;
                   const productTitles = (order.products ?? [])
                     .map(
-                      (p: any) => p.variant?.product?.title ?? p.product?.title
+                      (p: any) => p.variant?.product?.title ?? p.product?.title,
                     )
                     .filter(Boolean);
 

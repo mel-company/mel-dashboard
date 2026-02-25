@@ -5,11 +5,11 @@ import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Tag, Calendar, X, Loader2 } from "lucide-react";
-import {
-  useFetchDiscountsCursor,
-  useSearchDiscountsCursor,
-} from "@/api/wrappers/discount.wrappers";
+import { Search, Plus, Tag, Calendar, X, Loader2, Filter } from "lucide-react";
+import { useFilterDiscountsCursor } from "@/api/wrappers/discount.wrappers";
+import DiscountFilterDialog, {
+  type DiscountFilterValues,
+} from "./DiscountFilterDialog";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import DiscountsSkeleton from "./DiscountsSkeleton";
@@ -29,56 +29,38 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 
 const Discounts = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<DiscountFilterValues>({
+    status: undefined,
+    startDate: "",
+    endDate: "",
+  });
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
-  const isSearching = debouncedQuery.length > 0;
 
   const {
-    data: cursorData,
-    fetchNextPage: fetchNextCursor,
-    hasNextPage: hasNextCursor,
-    isFetchingNextPage: isFetchingNextCursor,
-    isLoading: isCursorLoading,
-    error: cursorError,
-    refetch: refetchCursor,
-    isFetching: isCursorFetching,
-  } = useFetchDiscountsCursor({ limit: CURSOR_LIMIT }, !isSearching);
+    data: filterData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFilterDiscountsCursor({
+    query: debouncedQuery || undefined,
+    status: filters.status,
+    startDate: filters.startDate || undefined,
+    endDate: filters.endDate || undefined,
+    limit: CURSOR_LIMIT,
+  });
 
-  const {
-    data: searchData,
-    fetchNextPage: fetchNextSearch,
-    hasNextPage: hasNextSearch,
-    isFetchingNextPage: isFetchingNextSearch,
-    isLoading: isSearchLoading,
-    error: searchError,
-    refetch: refetchSearch,
-    isFetching: isSearchFetching,
-  } = useSearchDiscountsCursor(
-    { query: debouncedQuery, limit: CURSOR_LIMIT },
-    isSearching
-  );
+  const discounts: any[] = filterData?.pages.flatMap((p) => p.data) ?? [];
+  const baseUrl = filterData?.pages?.[0]?.baseUrl ?? "";
 
-  const flatDiscounts = cursorData?.pages.flatMap((p) => p.data) ?? [];
-  const flatSearchDiscounts = searchData?.pages.flatMap((p) => p.data) ?? [];
-
-  const discounts: any[] = isSearching ? flatSearchDiscounts : flatDiscounts;
-
-  const baseUrl = cursorData?.pages?.[0]?.baseUrl ?? "";
-  const searchBaseUrl = searchData?.pages?.[0]?.baseUrl ?? "";
-  // @ts-ignore
-  const imageBaseUrl = isSearching ? searchBaseUrl : baseUrl;
-
-  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
-  const isFetchingNextPage = isSearching
-    ? isFetchingNextSearch
-    : isFetchingNextCursor;
-  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
-
-  const error = isSearching ? searchError : cursorError;
-  const refetch = isSearching ? refetchSearch : refetchCursor;
-  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
-  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+  const hasActiveFilters =
+    !!filters.status || !!filters.startDate || !!filters.endDate;
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -94,7 +76,7 @@ const Discounts = () => {
       (entries) => {
         if (entries[0]?.isIntersecting) handleLoadMore();
       },
-      { rootMargin: "200px", threshold: 0.1 }
+      { rootMargin: "200px", threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -140,16 +122,44 @@ const Discounts = () => {
     <div className="space-y-6">
       {/* Search and Add Discount Section */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-full sm:max-w-md">
-          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="ابحث عن خصم..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10"
-            dir="rtl"
-          />
+        <div className="flex flex-1 max-w-full sm:max-w-xl gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="ابحث عن خصم..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-right pr-10"
+              dir="rtl"
+            />
+          </div>
+          <Button
+            variant={hasActiveFilters ? "default" : "secondary"}
+            size="icon"
+            className="shrink-0"
+            onClick={() => setIsFilterDialogOpen(true)}
+            title="تصفية"
+          >
+            <Filter className="size-4" />
+          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              onClick={() =>
+                setFilters({
+                  status: undefined,
+                  startDate: "",
+                  endDate: "",
+                })
+              }
+              title="مسح التصفية"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
         </div>
         <Link to="/discounts/add">
           <Button className="gap-2 w-full sm:w-auto">
@@ -160,7 +170,10 @@ const Discounts = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        data-base-url={baseUrl}
+      >
         {isLoading && !discounts.length ? (
           <div className="col-span-full">
             <DiscountsSkeleton count={6} showHeader={false} />
@@ -176,18 +189,29 @@ const Discounts = () => {
         ) : discounts.length === 0 ? (
           <div className="col-span-full">
             <EmptyPage
-              title={searchQuery.trim() ? "لا توجد نتائج" : "لا توجد خصومات"}
+              title={
+                debouncedQuery || hasActiveFilters
+                  ? "لا توجد نتائج"
+                  : "لا توجد خصومات"
+              }
               description={
-                searchQuery.trim()
-                  ? "لم يتم العثور على خصومات تطابق البحث. جرّب كلمات أخرى."
+                debouncedQuery || hasActiveFilters
+                  ? "لم يتم العثور على خصومات تطابق البحث أو التصفية. جرّب تغيير المعايير."
                   : "ابدأ بإضافة خصم جديد لعرضه هنا."
               }
               icon={<Tag className="size-7 text-muted-foreground" />}
               primaryAction={
-                searchQuery.trim()
+                debouncedQuery || hasActiveFilters
                   ? {
-                      label: "مسح البحث",
-                      onClick: () => setSearchQuery(""),
+                      label: "مسح البحث والتصفية",
+                      onClick: () => {
+                        setSearchQuery("");
+                        setFilters({
+                          status: undefined,
+                          startDate: "",
+                          endDate: "",
+                        });
+                      },
                       icon: <X className="size-4" />,
                       variant: "outline",
                     }
@@ -210,7 +234,7 @@ const Discounts = () => {
                       <div className="relative h-32 flex items-center justify-center w-full overflow-hidden rounded-lg bg-linear-to-br from-primary/20 to-primary/5">
                         {discount.image ? (
                           <img
-                            src={`${imageBaseUrl}/${discount.image}`}
+                            src={`${baseUrl}/${discount.image}`}
                             alt={discount.name}
                             className="h-full w-full object-cover"
                           />
@@ -294,6 +318,20 @@ const Discounts = () => {
           </>
         )}
       </div>
+
+      <DiscountFilterDialog
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        values={filters}
+        onApply={setFilters}
+        onClear={() =>
+          setFilters({
+            status: undefined,
+            startDate: "",
+            endDate: "",
+          })
+        }
+      />
     </div>
   );
 };

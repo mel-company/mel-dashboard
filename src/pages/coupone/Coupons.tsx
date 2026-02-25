@@ -18,11 +18,12 @@ import {
   Calendar,
   Users,
   Loader2,
+  Filter,
 } from "lucide-react";
-import {
-  useFetchCouponsCursor,
-  useSearchCouponsCursor,
-} from "@/api/wrappers/coupon.wrappers";
+import { useFilterCouponsCursor } from "@/api/wrappers/coupon.wrappers";
+import CouponFilterDialog, {
+  type CouponFilterValues,
+} from "./CouponFilterDialog";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 
@@ -41,52 +42,43 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 
 const Coupons = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<CouponFilterValues>({
+    isActive: undefined,
+    startDate: "",
+    expireDate: "",
+    maxUsageLimit: undefined,
+  });
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
-  const isSearching = debouncedQuery.length > 0;
 
   const {
-    data: cursorData,
-    fetchNextPage: fetchNextCursor,
-    hasNextPage: hasNextCursor,
-    isFetchingNextPage: isFetchingNextCursor,
-    isLoading: isCursorLoading,
-    error: cursorError,
-    refetch: refetchCursor,
-    isFetching: isCursorFetching,
-  } = useFetchCouponsCursor({ limit: CURSOR_LIMIT }, !isSearching);
+    data: filterData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFilterCouponsCursor({
+    query: debouncedQuery || undefined,
+    isActive: filters.isActive,
+    startDate: filters.startDate || undefined,
+    expireDate: filters.expireDate || undefined,
+    maxUsageLimit: filters.maxUsageLimit,
+    limit: CURSOR_LIMIT,
+  });
 
-  const {
-    data: searchData,
-    fetchNextPage: fetchNextSearch,
-    hasNextPage: hasNextSearch,
-    isFetchingNextPage: isFetchingNextSearch,
-    isLoading: isSearchLoading,
-    error: searchError,
-    refetch: refetchSearch,
-    isFetching: isSearchFetching,
-  } = useSearchCouponsCursor(
-    { query: debouncedQuery, limit: CURSOR_LIMIT },
-    isSearching
-  );
+  const coupons: any[] = filterData?.pages.flatMap((p) => p.data) ?? [];
 
-  const flatCoupons = cursorData?.pages.flatMap((p) => p.data) ?? [];
-  const flatSearchCoupons = searchData?.pages.flatMap((p) => p.data) ?? [];
-
-  const coupons: any[] = isSearching ? flatSearchCoupons : flatCoupons;
-
-  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
-  const isFetchingNextPage = isSearching
-    ? isFetchingNextSearch
-    : isFetchingNextCursor;
-  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
-
-  const error = isSearching ? searchError : cursorError;
-  const refetch = isSearching ? refetchSearch : refetchCursor;
-  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
-  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+  const hasActiveFilters =
+    filters.isActive !== undefined ||
+    !!filters.startDate ||
+    !!filters.expireDate ||
+    (filters.maxUsageLimit !== undefined && filters.maxUsageLimit !== null);
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -102,7 +94,7 @@ const Coupons = () => {
       (entries) => {
         if (entries[0]?.isIntersecting) handleLoadMore();
       },
-      { rootMargin: "200px", threshold: 0.1 }
+      { rootMargin: "200px", threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -153,16 +145,45 @@ const Coupons = () => {
     <div className="space-y-6">
       {/* Search and Add Coupon Section */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-full sm:max-w-md">
-          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="ابحث عن كوبون..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10"
-            dir="rtl"
-          />
+        <div className="flex flex-1 max-w-full sm:max-w-xl gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="ابحث عن كوبون..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-right pr-10"
+              dir="rtl"
+            />
+          </div>
+          <Button
+            variant={hasActiveFilters ? "default" : "secondary"}
+            size="icon"
+            className="shrink-0"
+            onClick={() => setIsFilterDialogOpen(true)}
+            title="تصفية"
+          >
+            <Filter className="size-4" />
+          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              onClick={() =>
+                setFilters({
+                  isActive: undefined,
+                  startDate: "",
+                  expireDate: "",
+                  maxUsageLimit: undefined,
+                })
+              }
+              title="مسح التصفية"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
         </div>
         <Button
           className="gap-2 w-full sm:w-auto"
@@ -203,18 +224,30 @@ const Coupons = () => {
         ) : coupons.length === 0 ? (
           <div className="col-span-full">
             <EmptyPage
-              title={searchQuery.trim() ? "لا توجد نتائج" : "لا توجد كوبونات"}
+              title={
+                debouncedQuery || hasActiveFilters
+                  ? "لا توجد نتائج"
+                  : "لا توجد كوبونات"
+              }
               description={
-                searchQuery.trim()
-                  ? "لم يتم العثور على كوبونات تطابق البحث. جرّب كلمات أخرى."
+                debouncedQuery || hasActiveFilters
+                  ? "لم يتم العثور على كوبونات تطابق البحث أو التصفية. جرّب تغيير المعايير."
                   : "ابدأ بإضافة كوبون جديد لعرضه هنا."
               }
               icon={<Ticket className="size-7 text-muted-foreground" />}
               primaryAction={
-                searchQuery.trim()
+                debouncedQuery || hasActiveFilters
                   ? {
-                      label: "مسح البحث",
-                      onClick: () => setSearchQuery(""),
+                      label: "مسح البحث والتصفية",
+                      onClick: () => {
+                        setSearchQuery("");
+                        setFilters({
+                          isActive: undefined,
+                          startDate: "",
+                          expireDate: "",
+                          maxUsageLimit: undefined,
+                        });
+                      },
                       icon: <X className="size-4" />,
                       variant: "secondary",
                     }
@@ -252,17 +285,17 @@ const Coupons = () => {
                           !coupon.isActive || isExpired(coupon)
                             ? "secondary"
                             : isNotStarted(coupon)
-                            ? "outline"
-                            : "default"
+                              ? "outline"
+                              : "default"
                         }
                       >
                         {!coupon.isActive
                           ? "غير مفعل"
                           : isExpired(coupon)
-                          ? "منتهي"
-                          : isNotStarted(coupon)
-                          ? "لم يبدأ"
-                          : "نشط"}
+                            ? "منتهي"
+                            : isNotStarted(coupon)
+                              ? "لم يبدأ"
+                              : "نشط"}
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -346,6 +379,21 @@ const Coupons = () => {
           </>
         )}
       </div>
+
+      <CouponFilterDialog
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        values={filters}
+        onApply={setFilters}
+        onClear={() =>
+          setFilters({
+            isActive: undefined,
+            startDate: "",
+            expireDate: "",
+            maxUsageLimit: undefined,
+          })
+        }
+      />
     </div>
   );
 };

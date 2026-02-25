@@ -114,6 +114,35 @@ export const discountAPI = {
   },
 
   /**
+   * Filter and/or search discounts with cursor pagination.
+   * Supports: status, startDate, endDate. When filters are applied, search runs within filtered data.
+   */
+  fetchFilterCursor: async (params?: {
+    query?: string | null;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/discount/filter-cursor",
+      {
+        params: {
+          ...(params?.query != null &&
+            params.query !== "" && { query: params.query }),
+          ...(params?.status && { status: params.status }),
+          ...(params?.startDate && { startDate: params.startDate }),
+          ...(params?.endDate && { endDate: params.endDate }),
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
+  /**
    * Search for discounts with optional filtering and pagination
    */
   search: async (params?: any): Promise<any> => {

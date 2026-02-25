@@ -17,6 +17,8 @@ export const orderKeys = {
   search: (params?: any) => [...orderKeys.all, "search", params] as const,
   searchCursor: (params?: any) =>
     [...orderKeys.all, "search-cursor", params] as const,
+  filterCursor: (params?: any) =>
+    [...orderKeys.all, "filter-cursor", params] as const,
   details: () => [...orderKeys.all, "detail"] as const,
   detail: (id: string) => [...orderKeys.details(), id] as const,
   logs: () => [...orderKeys.all, "logs"] as const,
@@ -46,6 +48,31 @@ export const useFetchOrdersCursor = (
     enabled,
     queryFn: ({ pageParam }) =>
       orderAPI.fetchAllCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Filter orders with cursor pagination (infinite scroll)
+ */
+export const useFilterOrdersCursor = (
+  params?: {
+    query?: string;
+    status?: string;
+    period?: "today" | "7days" | "month" | "year";
+    limit?: number;
+  },
+  enabled: boolean = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: orderKeys.filterCursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      orderAPI.fetchFilterCursor({
         ...params,
         cursor: typeof pageParam === "string" ? pageParam : undefined,
       }),
@@ -95,6 +122,9 @@ export const useUpdateDeliveryAddress = (id: string) => {
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
+      });
     },
   });
 };
@@ -136,6 +166,9 @@ export const useCheckoutOrder = () => {
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
+      });
     },
   });
 };
@@ -157,6 +190,9 @@ export const useCreateOrder = () => {
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
+      });
     },
   });
 };
@@ -177,6 +213,9 @@ export const useUpdateOrder = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
       });
       // Update the specific order cache
       queryClient.setQueryData(orderKeys.detail(data.id), data);
@@ -200,6 +239,9 @@ export const useDeleteOrder = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
       });
       // Remove the deleted order from cache
       queryClient.removeQueries({ queryKey: orderKeys.detail(deletedId) });
@@ -233,6 +275,9 @@ export const useUpdateOrderProduct = () => {
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
+      });
     },
   });
 };
@@ -258,6 +303,9 @@ export const useAddProductsToOrder = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
       });
       // Invalidate order logs
       queryClient.invalidateQueries({
@@ -289,6 +337,9 @@ export const useRemoveOrderProduct = () => {
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(variables.orderId),
@@ -317,6 +368,9 @@ export const useUpdateStatusToPending = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
       });
       // Invalidate order logs
       queryClient.invalidateQueries({
@@ -347,6 +401,9 @@ export const useUpdateStatusToProcessing = () => {
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(id),
@@ -375,6 +432,9 @@ export const useUpdateStatusToShipped = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
       });
       // Invalidate order logs
       queryClient.invalidateQueries({
@@ -405,6 +465,9 @@ export const useUpdateStatusToDelivered = () => {
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
+      });
       // Invalidate order logs
       queryClient.invalidateQueries({
         queryKey: orderKeys.logsByOrder(id),
@@ -433,6 +496,9 @@ export const useUpdateStatusToCancelled = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "search-cursor"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...orderKeys.all, "filter-cursor"],
       });
       // Invalidate order logs
       queryClient.invalidateQueries({
