@@ -81,9 +81,10 @@ export const categoryAPI = {
 
   /**
    * Create a new category
+   * Accepts FormData with: name, description, enabled, image (file, optional)
    */
-  create: async (category: any): Promise<any> => {
-    const { data } = await axiosInstance.post<any>("/category", category);
+  create: async (formData: FormData): Promise<any> => {
+    const { data } = await axiosInstance.post<any>("/category", formData);
     return data;
   },
 

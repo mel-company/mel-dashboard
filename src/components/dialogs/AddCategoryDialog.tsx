@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,8 +8,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Save, X } from "lucide-react";
+import { Save, X, Upload, Loader2 } from "lucide-react";
 import { useCreateCategory } from "@/api/wrappers/category.wrappers";
 import { toast } from "sonner";
 
@@ -21,46 +22,74 @@ type Props = {
 const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState("");
   const [enabled, setEnabled] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: createCategory, isPending } = useCreateCategory();
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("الرجاء اختيار ملف صورة");
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("حجم الملف يجب أن يكون أقل من 2MB");
+        return;
+      }
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const categoryData = {
-      name,
-      description,
-      image: image || "/images/categories/default.jpg",
-      enabled,
-    };
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("description", description);
+    formData.append("enabled", enabled.toString());
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
 
-    createCategory(categoryData, {
+    createCategory(formData, {
       onSuccess: () => {
         toast.success("تم إضافة الفئة بنجاح");
-        // Reset form
         setName("");
         setDescription("");
-        setImage("");
         setEnabled(true);
-        // Close dialog
+        handleRemoveImage();
         onOpenChange(false);
       },
       onError: (error: any) => {
         toast.error(
-          error?.response?.data?.message || "فشل في إضافة الفئة. حاول مرة أخرى."
+          error?.response?.data?.message ||
+            "فشل في إضافة الفئة. حاول مرة أخرى.",
         );
       },
     });
   };
 
   const handleCancel = () => {
-    // Reset form
     setName("");
     setDescription("");
-    setImage("");
     setEnabled(true);
+    handleRemoveImage();
     onOpenChange(false);
   };
 
@@ -81,16 +110,16 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
               htmlFor="category-name"
               className="text-sm font-medium text-right block"
             >
-              اسم الفئة
+              اسم الفئة *
             </label>
-            <input
+            <Input
               id="category-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="أدخل اسم الفئة"
               required
-              className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
+              className="text-right"
             />
           </div>
 
@@ -100,35 +129,74 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
               htmlFor="category-description"
               className="text-sm font-medium text-right block"
             >
-              الوصف
+              الوصف *
             </label>
-            <textarea
+            <Input
               id="category-description"
+              type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="أدخل وصف الفئة"
               required
-              rows={3}
-              className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50 resize-none"
+              className="text-right"
             />
           </div>
 
-          {/* Image URL */}
+          {/* Image File Upload */}
           <div className="space-y-2">
-            <label
-              htmlFor="category-image"
-              className="text-sm font-medium text-right block"
-            >
-              رابط الصورة (اختياري)
+            <label className="text-sm font-medium text-right block">
+              صورة الفئة (اختياري)
             </label>
-            <input
-              id="category-image"
-              type="url"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
-            />
+            <div className="flex gap-4 items-start">
+              <div className="w-24 h-24 flex items-center justify-center bg-muted rounded-lg overflow-hidden shrink-0">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    لا توجد صورة
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 space-y-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                  id="category-image"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <Upload className="size-4" />
+                    {imageFile ? "تغيير الصورة" : "اختر صورة"}
+                  </Button>
+                  {imageFile && (
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={handleRemoveImage}
+                    >
+                      إزالة
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  PNG, JPG حتى 2MB
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Enabled Switch */}
@@ -149,6 +217,7 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
           <DialogFooter className="gap-2">
             <Button
               type="button"
+              variant="secondary"
               onClick={handleCancel}
               className="gap-2"
               disabled={isPending}
@@ -157,7 +226,11 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
               إلغاء
             </Button>
             <Button type="submit" className="gap-2" disabled={isPending}>
-              <Save className="size-4" />
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
               {isPending ? "جاري الحفظ..." : "حفظ الفئة"}
             </Button>
           </DialogFooter>

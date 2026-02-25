@@ -109,11 +109,12 @@ export const useUpdateGroup = () => {
 
   return useMutation<any, Error, { id: string; data: any }>({
     mutationFn: ({ id, data }) => groupAPI.update(id, data),
-    onSuccess: (data) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: groupKeys.all });
-      if (data?.id) {
-        queryClient.setQueryData(groupKeys.detail(data.id), data);
-      }
+      queryClient.invalidateQueries({
+        queryKey: groupKeys.detail(variables.id),
+        refetchType: "active",
+      });
     },
   });
 };

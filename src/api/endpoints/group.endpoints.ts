@@ -64,19 +64,24 @@ export const groupAPI = {
 
   /**
    * Create a new group
+   * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
-  create: async (group: any): Promise<any> => {
-    const { data } = await axiosInstance.post<any>("/category-group", group);
+  create: async (formData: FormData): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/category-group",
+      formData
+    );
     return data;
   },
 
   /**
    * Update an existing group
+   * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
-  update: async (id: string, group: any): Promise<any> => {
+  update: async (id: string, formData: FormData): Promise<any> => {
     const { data } = await axiosInstance.put<any>(
       `/category-group/${id}`,
-      group
+      formData
     );
     return data;
   },

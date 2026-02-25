@@ -111,9 +111,10 @@ export const productAPI = {
 
   /**
    * Create a new product
+   * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
-  create: async (product: any): Promise<any> => {
-    const { data } = await axiosInstance.post<any>("/product", product);
+  create: async (formData: FormData): Promise<any> => {
+    const { data } = await axiosInstance.post<any>("/product", formData);
     return data;
   },
 

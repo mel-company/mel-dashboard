@@ -38,6 +38,7 @@ import ErrorPage from "../../miscellaneous/ErrorPage";
 import NotFoundPage from "../../miscellaneous/NotFoundPage";
 import CategoryGroupsSkeleton from "./CategoryGroupsSkeleton";
 import AddCategoryToGroupDialog from "./AddCategoryToGroupDialog";
+import EditGroupDialog from "./EditGroupDialog";
 import { toast } from "sonner";
 
 const CategoryGroupDetails = () => {
@@ -45,6 +46,7 @@ const CategoryGroupDetails = () => {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [removingCategory, setRemovingCategory] = useState<{
     id: string;
     name: string;
@@ -363,11 +365,13 @@ const CategoryGroupDetails = () => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button asChild className="w-full gap-2" variant="default">
-                <Link to={`/category-group/${id}/edit`}>
-                  <Edit className="size-4" />
-                  تعديل المجموعة
-                </Link>
+              <Button
+                onClick={() => setIsEditDialogOpen(true)}
+                className="w-full gap-2"
+                variant="default"
+              >
+                <Edit className="size-4" />
+                تعديل المجموعة
               </Button>
               <Button
                 onClick={() => setIsDeleteDialogOpen(true)}
@@ -430,6 +434,15 @@ const CategoryGroupDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Group Dialog */}
+      <EditGroupDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        group={group}
+        imageBaseUrl={baseUrl}
+        onSuccess={() => refetch()}
+      />
 
       {/* Add Category Dialog */}
       {id && (

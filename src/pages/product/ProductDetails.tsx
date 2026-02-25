@@ -62,12 +62,12 @@ const ProductDetails = () => {
   const [isAddPropertyDialogOpen, setIsAddPropertyDialogOpen] = useState(false);
   const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
   const [editingPropertyId, setEditingPropertyId] = useState<string | null>(
-    null
+    null,
   );
   const [isAddVariantDialogOpen, setIsAddVariantDialogOpen] = useState(false);
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
   const [deletingVariantId, setDeletingVariantId] = useState<string | null>(
-    null
+    null,
   );
   const [removingCategory, setRemovingCategory] = useState<{
     id: string;
@@ -77,12 +77,12 @@ const ProductDetails = () => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
-    id ?? ""
+    id ?? "",
   );
 
   const { data: variantsData, refetch: refetchVariants } = useFetchVariants(
     { productId: id ?? "" },
-    !!id
+    !!id,
   );
 
   const { mutate: deleteVariant, isPending: isDeletingVariant } =
@@ -100,7 +100,7 @@ const ProductDetails = () => {
       },
       onError: (error: any) => {
         toast.error(
-          error?.response?.data?.message || "فشل في حذف المنتج. حاول مرة أخرى."
+          error?.response?.data?.message || "فشل في حذف المنتج. حاول مرة أخرى.",
         );
       },
     });
@@ -736,7 +736,7 @@ const ProductDetails = () => {
                   onError: (error: any) => {
                     toast.error(
                       error?.response?.data?.message ||
-                        "فشل في حذف المتغير. حاول مرة أخرى."
+                        "فشل في حذف المتغير. حاول مرة أخرى.",
                     );
                   },
                 });

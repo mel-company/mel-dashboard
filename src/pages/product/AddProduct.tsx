@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, ArrowLeft, Check, Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  Save,
+  ArrowLeft,
+  Check,
+  Loader2,
+  Plus,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useFetchCategories } from "@/api/wrappers/category.wrappers";
 import { useCreateProduct } from "@/api/wrappers/product.wrappers";
 import { productAPI } from "@/api/endpoints/product.endpoints";
@@ -20,8 +28,9 @@ const AddProduct = ({}: Props) => {
 
   const { data: categories, isLoading } = useFetchCategories();
 
-
-  const [image, setImage] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [rate, setRate] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [properties, setProperties] = useState<
@@ -47,11 +56,38 @@ const AddProduct = ({}: Props) => {
 
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("الرجاء اختيار ملف صورة");
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("حجم الملف يجب أن يكون أقل من 2MB");
+        return;
+      }
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) =>
       prev.includes(categoryId)
         ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
+        : [...prev, categoryId],
     );
   };
 
@@ -66,10 +102,10 @@ const AddProduct = ({}: Props) => {
   const updateProperty = (
     index: number,
     field: "name" | "value",
-    value: string
+    value: string,
   ) => {
     setProperties((prev) =>
-      prev.map((prop, i) => (i === index ? { ...prop, [field]: value } : prop))
+      prev.map((prop, i) => (i === index ? { ...prop, [field]: value } : prop)),
     );
   };
 
@@ -87,7 +123,7 @@ const AddProduct = ({}: Props) => {
 
   const updateOptionName = (index: number, name: string) => {
     setOptions((prev) =>
-      prev.map((opt, i) => (i === index ? { ...opt, name } : opt))
+      prev.map((opt, i) => (i === index ? { ...opt, name } : opt)),
     );
   };
 
@@ -96,8 +132,8 @@ const AddProduct = ({}: Props) => {
       prev.map((opt, i) =>
         i === optionIndex
           ? { ...opt, values: [...opt.values, { value: "", label: "" }] }
-          : opt
-      )
+          : opt,
+      ),
     );
   };
 
@@ -109,8 +145,8 @@ const AddProduct = ({}: Props) => {
               ...opt,
               values: opt.values.filter((_, vi) => vi !== valueIndex),
             }
-          : opt
-      )
+          : opt,
+      ),
     );
   };
 
@@ -118,7 +154,7 @@ const AddProduct = ({}: Props) => {
     optionIndex: number,
     valueIndex: number,
     field: "value" | "label",
-    newValue: string
+    newValue: string,
   ) => {
     setOptions((prev) =>
       prev.map((opt, i) =>
@@ -126,11 +162,11 @@ const AddProduct = ({}: Props) => {
           ? {
               ...opt,
               values: opt.values.map((val, vi) =>
-                vi === valueIndex ? { ...val, [field]: newValue } : val
+                vi === valueIndex ? { ...val, [field]: newValue } : val,
               ),
             }
-          : opt
-      )
+          : opt,
+      ),
     );
   };
 
@@ -156,26 +192,26 @@ const AddProduct = ({}: Props) => {
   const updateVariant = (
     index: number,
     field: "sku" | "qr_code" | "price" | "stock" | "image",
-    value: string
+    value: string,
   ) => {
     setVariants((prev) =>
       prev.map((variant, i) =>
-        i === index ? { ...variant, [field]: value } : variant
-      )
+        i === index ? { ...variant, [field]: value } : variant,
+      ),
     );
   };
 
   const toggleVariantOptionValue = (
     variantIndex: number,
     optionName: string,
-    value: string
+    value: string,
   ) => {
     setVariants((prev) =>
       prev.map((variant, i) => {
         if (i !== variantIndex) return variant;
 
         const existingIndex = variant.selectedOptionValues.findIndex(
-          (ov) => ov.optionName === optionName && ov.value === value
+          (ov) => ov.optionName === optionName && ov.value === value,
         );
 
         if (existingIndex >= 0) {
@@ -183,20 +219,20 @@ const AddProduct = ({}: Props) => {
           return {
             ...variant,
             selectedOptionValues: variant.selectedOptionValues.filter(
-              (_, idx) => idx !== existingIndex
+              (_, idx) => idx !== existingIndex,
             ),
           };
         } else {
           // Remove any existing value for this option and add new one
           const filtered = variant.selectedOptionValues.filter(
-            (ov) => ov.optionName !== optionName
+            (ov) => ov.optionName !== optionName,
           );
           return {
             ...variant,
             selectedOptionValues: [...filtered, { optionName, value }],
           };
         }
-      })
+      }),
     );
   };
 
@@ -219,14 +255,14 @@ const AddProduct = ({}: Props) => {
       return;
     }
 
-    if (!image.trim()) {
-      toast.error("الرجاء إدخال رابط صورة المنتج");
+    if (!imageFile) {
+      toast.error("الرجاء اختيار صورة للمنتج");
       return;
     }
 
     // Filter out empty properties
     const validProperties = properties.filter(
-      (prop) => prop.name.trim() && prop.value.trim()
+      (prop) => prop.name.trim() && prop.value.trim(),
     );
 
     // Filter and validate options
@@ -243,41 +279,47 @@ const AddProduct = ({}: Props) => {
       }))
       .filter((opt) => opt.values.length > 0);
 
-    const productData = {
-      title: title.trim(),
-      description: description.trim(),
-      price: parseFloat(price),
-      cost_to_produce: costToProduct ? parseFloat(costToProduct) : undefined,
-      image: image.trim(),
-      rate: rate ? parseFloat(rate) : undefined,
-      enabled: true,
-      categoryIds:
-        selectedCategories.length > 0 ? selectedCategories : undefined,
-      properties:
-        validProperties.length > 0
-          ? validProperties.map((prop) => ({
-              name: prop.name.trim(),
-              value: prop.value.trim(),
-            }))
-          : undefined,
-      options: validOptions.length > 0 ? validOptions : undefined,
-    };
+    const formData = new FormData();
+    formData.append("title", title.trim());
+    formData.append("description", description.trim());
+    formData.append("price", price);
+    formData.append("enabled", "true");
+    if (costToProduct) formData.append("cost_to_produce", costToProduct);
+    if (rate) formData.append("rate", rate);
+    if (imageFile) formData.append("image", imageFile);
+    if (selectedCategories.length > 0) {
+      formData.append("categoryIds", JSON.stringify(selectedCategories));
+    }
+    if (validProperties.length > 0) {
+      formData.append(
+        "properties",
+        JSON.stringify(
+          validProperties.map((prop) => ({
+            name: prop.name.trim(),
+            value: prop.value.trim(),
+          })),
+        ),
+      );
+    }
+    if (validOptions.length > 0) {
+      formData.append("options", JSON.stringify(validOptions));
+    }
 
-    createProduct(productData, {
+    createProduct(formData, {
       onSuccess: async (createdProduct: any) => {
         // If there are variants to create, create them after product is created
         const validVariants = variants.filter(
           (v) =>
             v.sku.trim() &&
             v.qr_code.trim() &&
-            v.selectedOptionValues.length > 0
+            v.selectedOptionValues.length > 0,
         );
 
         if (validVariants.length > 0 && createdProduct?.id) {
           // Fetch the created product to get option value IDs
           try {
             const productWithOptions = await productAPI.fetchOne(
-              createdProduct.id
+              createdProduct.id,
             );
 
             // Create variants one by one
@@ -288,11 +330,11 @@ const AddProduct = ({}: Props) => {
 
               variant.selectedOptionValues.forEach((selected) => {
                 const option = productWithOptions.options?.find(
-                  (opt: any) => opt.name === selected.optionName
+                  (opt: any) => opt.name === selected.optionName,
                 );
                 if (option) {
                   const optionValue = option.values?.find(
-                    (val: any) => val.value === selected.value
+                    (val: any) => val.value === selected.value,
                   );
                   if (optionValue) {
                     optionValueIds.push(optionValue.id);
@@ -323,7 +365,7 @@ const AddProduct = ({}: Props) => {
               toast.warning(
                 `تم إضافة المنتج ولكن فشل في إضافة ${
                   validVariants.length - successCount
-                } من المتغيرات`
+                } من المتغيرات`,
               );
             }
           } catch (error: any) {
@@ -339,7 +381,7 @@ const AddProduct = ({}: Props) => {
       onError: (error: any) => {
         toast.error(
           error?.response?.data?.message ||
-            "فشل في إضافة المنتج. حاول مرة أخرى."
+            "فشل في إضافة المنتج. حاول مرة أخرى.",
         );
       },
     });
@@ -353,23 +395,61 @@ const AddProduct = ({}: Props) => {
         </div>
         <Card className="gap-2">
           <CardContent className="spacey-4">
-            {/* Image URL */}
+            {/* Image File Upload */}
             <div className="space-y-2">
-              <label
-                htmlFor="image"
-                className="text-sm font-medium text-right block"
-              >
-                رابط صورة المنتج
+              <label className="text-sm font-medium text-right block">
+                صورة المنتج *
               </label>
-              <input
-                id="image"
-                type="url"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                required
-                className="w-full text-right rounded-md border border-input bgbackground py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
-              />
+              <div className="flex gap-4 items-start">
+                <div className="w-24 h-24 flex items-center justify-center bg-muted rounded-lg overflow-hidden shrink-0">
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      لا توجد صورة
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="product-image"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="gap-2"
+                    >
+                      <Upload className="size-4" />
+                      {imageFile ? "تغيير الصورة" : "اختر صورة"}
+                    </Button>
+                    {imageFile && (
+                      <Button
+                        type="button"
+                        variant="default"
+                        size="sm"
+                        onClick={handleRemoveImage}
+                      >
+                        إزالة
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    PNG, JPG حتى 2MB
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Title */}
@@ -444,7 +524,7 @@ const AddProduct = ({}: Props) => {
                   htmlFor="costToProduct"
                   className="text-sm font-medium text-right block"
                 >
-                  تكلفة الإنتاج
+                  تكلفة الإنتاج (اختياري)
                 </label>
                 <div className="relative">
                   <input
@@ -453,7 +533,6 @@ const AddProduct = ({}: Props) => {
                     value={costToProduct}
                     onChange={(e) => setCostToProduct(e.target.value)}
                     placeholder="0.00"
-                    required
                     min="0"
                     step="0.01"
                     className="w-full text-right rounded-md border border-input bgbackground py-2.5 pl-12 pr-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
@@ -470,7 +549,7 @@ const AddProduct = ({}: Props) => {
                   htmlFor="rate"
                   className="text-sm font-medium text-right block"
                 >
-                  التقييم (من 5)
+                  التقييم (من 5) (اختياري)
                 </label>
                 <input
                   id="rate"
@@ -478,7 +557,6 @@ const AddProduct = ({}: Props) => {
                   value={rate}
                   onChange={(e) => setRate(e.target.value)}
                   placeholder="0.0"
-                  required
                   min="0"
                   max="5"
                   step="0.1"
@@ -490,7 +568,7 @@ const AddProduct = ({}: Props) => {
         </Card>
 
         <div className="bg-secondary p-4 rounded-lg">
-          <p className="text-lg font-bold">الخصائص</p>
+          <p className="text-lg font-bold">الخصائص (اختياري)</p>
           <p className="text-sm text-muted-foreground mt-1">
             قم بإضافة خصائص للمنتج (مثل: المادة، العلامة التجارية، الجنس، إلخ)
           </p>
@@ -585,7 +663,7 @@ const AddProduct = ({}: Props) => {
 
         {/* Options Section */}
         <div className="bg-secondary p-4 rounded-lg">
-          <p className="text-lg font-bold">خيارات المنتج</p>
+          <p className="text-lg font-bold">خيارات المنتج (اختياري)</p>
           <p className="text-sm text-muted-foreground mt-1">
             قم بإضافة خيارات للمنتج (مثل: اللون، الحجم، المادة، إلخ)
           </p>
@@ -704,7 +782,7 @@ const AddProduct = ({}: Props) => {
                                         optionIndex,
                                         valueIndex,
                                         "label",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     placeholder="سيتم استخدام القيمة إذا تركت فارغاً"
@@ -728,7 +806,7 @@ const AddProduct = ({}: Props) => {
                                         optionIndex,
                                         valueIndex,
                                         "value",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     placeholder="مثال: أحمر، كبير"
@@ -772,7 +850,7 @@ const AddProduct = ({}: Props) => {
 
         {/* Variants Section */}
         <div className="bg-secondary p-4 rounded-lg">
-          <p className="text-lg font-bold">متغيرات المنتج</p>
+          <p className="text-lg font-bold">متغيرات المنتج (اختياري)</p>
           <p className="text-sm text-muted-foreground mt-1">
             قم بإضافة متغيرات للمنتج (يتطلب إضافة خيارات أولاً)
           </p>
@@ -821,7 +899,7 @@ const AddProduct = ({}: Props) => {
                       const validOptions = options.filter(
                         (opt) =>
                           opt.name.trim() &&
-                          opt.values.some((v) => v.value.trim())
+                          opt.values.some((v) => v.value.trim()),
                       );
 
                       return (
@@ -855,7 +933,7 @@ const AddProduct = ({}: Props) => {
                               {validOptions.map((option) => {
                                 const selectedValue =
                                   variant.selectedOptionValues.find(
-                                    (ov) => ov.optionName === option.name
+                                    (ov) => ov.optionName === option.name,
                                   )?.value;
 
                                 return (
@@ -877,7 +955,7 @@ const AddProduct = ({}: Props) => {
                                                 toggleVariantOptionValue(
                                                   variantIndex,
                                                   option.name,
-                                                  val.value
+                                                  val.value,
                                                 )
                                               }
                                               className={`px-3 py-1.5 text-xs rounded-md border transition-all ${
@@ -915,7 +993,7 @@ const AddProduct = ({}: Props) => {
                                   updateVariant(
                                     variantIndex,
                                     "sku",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 placeholder="SKU-001"
@@ -940,7 +1018,7 @@ const AddProduct = ({}: Props) => {
                                   updateVariant(
                                     variantIndex,
                                     "qr_code",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 placeholder="QR-001"
@@ -966,7 +1044,7 @@ const AddProduct = ({}: Props) => {
                                     updateVariant(
                                       variantIndex,
                                       "price",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   placeholder="0.00"
@@ -996,7 +1074,7 @@ const AddProduct = ({}: Props) => {
                                   updateVariant(
                                     variantIndex,
                                     "stock",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 placeholder="0"
@@ -1021,7 +1099,7 @@ const AddProduct = ({}: Props) => {
                                   updateVariant(
                                     variantIndex,
                                     "image",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 placeholder="https://example.com/image.jpg"
@@ -1050,7 +1128,7 @@ const AddProduct = ({}: Props) => {
 
         {/* Categories Section */}
         <div className="bg-secondary p-4 rounded-lg">
-          <p className="text-lg font-bold">الفئات</p>
+          <p className="text-lg font-bold">الفئات (اختياري)</p>
           <p className="text-sm text-muted-foreground mt-1">
             اختر فئة واحدة أو أكثر للمنتج
           </p>
