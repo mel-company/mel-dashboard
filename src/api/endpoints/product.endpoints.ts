@@ -102,6 +102,31 @@ export const productAPI = {
   },
 
   /**
+   * Filter and/or search products with cursor pagination.
+   * Supports: categoryIds, enabled. When filters are applied, search runs within filtered data.
+   */
+  fetchFilterCursor: async (params?: {
+    query?: string | null;
+    categoryIds?: string[];
+    enabled?: boolean;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/product/filter-cursor", {
+      params: {
+        ...(params?.query != null &&
+          params.query !== "" && { query: params.query }),
+        ...(params?.categoryIds &&
+          params.categoryIds.length > 0 && { categoryIds: params.categoryIds }),
+        ...(params?.enabled !== undefined && { enabled: params.enabled }),
+        ...(params?.cursor && { cursor: params.cursor }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+    return data;
+  },
+
+  /**
    * Get a single product by ID
    */
   fetchOne: async (id: string): Promise<any> => {

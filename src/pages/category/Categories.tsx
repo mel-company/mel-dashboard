@@ -10,12 +10,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Folder, CheckCircle2, X, Loader2 } from "lucide-react";
-import AddCategoryDialog from "@/components/dialogs/AddCategoryDialog";
 import {
-  useFetchCategoriesCursor,
-  useSearchCategoriesCursor,
-} from "@/api/wrappers/category.wrappers";
+  Search,
+  Plus,
+  Folder,
+  CheckCircle2,
+  X,
+  Loader2,
+  Filter,
+} from "lucide-react";
+import AddCategoryDialog from "@/components/dialogs/AddCategoryDialog";
+import CategoryFilterDialog, {
+  type CategoryFilterValues,
+} from "./CategoryFilterDialog";
+import { useFilterCategoriesCursor } from "@/api/wrappers/category.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import CategoriesSkeleton from "./CategoriesSkeleton";
@@ -45,57 +53,41 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 const Categories = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<CategoryFilterValues>({
+    groupIds: [],
+    hasDiscount: undefined,
+    enabled: undefined,
+  });
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
-  const isSearching = debouncedQuery.length > 0;
 
   const {
-    data: cursorData,
-    fetchNextPage: fetchNextCursor,
-    hasNextPage: hasNextCursor,
-    isFetchingNextPage: isFetchingNextCursor,
-    isLoading: isCursorLoading,
-    error: cursorError,
-    refetch: refetchCursor,
-    isFetching: isCursorFetching,
-  } = useFetchCategoriesCursor({ limit: CURSOR_LIMIT }, !isSearching);
+    data: filterData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFilterCategoriesCursor({
+    query: debouncedQuery || undefined,
+    groupIds: filters.groupIds.length > 0 ? filters.groupIds : undefined,
+    hasDiscount: filters.hasDiscount,
+    enabled: filters.enabled,
+    limit: CURSOR_LIMIT,
+  });
 
-  const {
-    data: searchData,
-    fetchNextPage: fetchNextSearch,
-    hasNextPage: hasNextSearch,
-    isFetchingNextPage: isFetchingNextSearch,
-    isLoading: isSearchLoading,
-    error: searchError,
-    refetch: refetchSearch,
-    isFetching: isSearchFetching,
-  } = useSearchCategoriesCursor(
-    { query: debouncedQuery, limit: CURSOR_LIMIT },
-    isSearching,
-  );
+  const categories: CategoryListItem[] =
+    filterData?.pages.flatMap((p) => p.data) ?? [];
+  const imageBaseUrl = filterData?.pages?.[0]?.baseUrl ?? "";
 
-  const flatCategories = cursorData?.pages.flatMap((p) => p.data) ?? [];
-  const flatSearchCategories = searchData?.pages.flatMap((p) => p.data) ?? [];
-
-  const categories: CategoryListItem[] = isSearching
-    ? flatSearchCategories
-    : flatCategories;
-
-  const baseUrl = cursorData?.pages?.[0]?.baseUrl ?? "";
-  const searchBaseUrl = searchData?.pages?.[0]?.baseUrl ?? "";
-  const imageBaseUrl = isSearching ? searchBaseUrl : baseUrl;
-
-  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
-  const isFetchingNextPage = isSearching
-    ? isFetchingNextSearch
-    : isFetchingNextCursor;
-  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
-
-  const error = isSearching ? searchError : cursorError;
-  const refetch = isSearching ? refetchSearch : refetchCursor;
-  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
-  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+  const hasActiveFilters =
+    filters.groupIds.length > 0 ||
+    filters.hasDiscount !== undefined ||
+    filters.enabled !== undefined;
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -120,16 +112,44 @@ const Categories = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-full sm:max-w-md">
-          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="ابحث عن فئة..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10"
-            dir="rtl"
-          />
+        <div className="flex flex-1 max-w-full sm:max-w-xl gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="ابحث عن فئة..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-right pr-10"
+              dir="rtl"
+            />
+          </div>
+          <Button
+            variant={hasActiveFilters ? "default" : "secondary"}
+            size="icon"
+            className="shrink-0"
+            onClick={() => setIsFilterDialogOpen(true)}
+            title="تصفية"
+          >
+            <Filter className="size-4" />
+          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              onClick={() =>
+                setFilters({
+                  groupIds: [],
+                  hasDiscount: undefined,
+                  enabled: undefined,
+                })
+              }
+              title="مسح التصفية"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Link className="gap-2 w-full sm:w-auto" to="/category-group">
@@ -164,20 +184,31 @@ const Categories = () => {
         ) : categories.length === 0 ? (
           <div className="col-span-full">
             <EmptyPage
-              title={searchQuery.trim() ? "لا توجد نتائج" : "لا توجد فئات"}
+              title={
+                debouncedQuery || hasActiveFilters
+                  ? "لا توجد نتائج"
+                  : "لا توجد فئات"
+              }
               description={
-                searchQuery.trim()
-                  ? "لم يتم العثور على فئات تطابق البحث. جرّب كلمات أخرى."
+                debouncedQuery || hasActiveFilters
+                  ? "لم يتم العثور على فئات تطابق البحث أو التصفية. جرّب تغيير المعايير."
                   : "ابدأ بإضافة فئة جديدة لعرضها هنا."
               }
               icon={<Folder className="size-7 text-muted-foreground" />}
               primaryAction={
-                searchQuery.trim()
+                debouncedQuery || hasActiveFilters
                   ? {
-                      label: "مسح البحث",
-                      onClick: () => setSearchQuery(""),
+                      label: "مسح البحث والتصفية",
+                      onClick: () => {
+                        setSearchQuery("");
+                        setFilters({
+                          groupIds: [],
+                          hasDiscount: undefined,
+                          enabled: undefined,
+                        });
+                      },
                       icon: <X className="size-4" />,
-                      variant: "outline",
+                      variant: "default",
                     }
                   : {
                       label: "إضافة فئة",
@@ -278,6 +309,19 @@ const Categories = () => {
       </div>
 
       <AddCategoryDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <CategoryFilterDialog
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        values={filters}
+        onApply={setFilters}
+        onClear={() =>
+          setFilters({
+            groupIds: [],
+            hasDiscount: undefined,
+            enabled: undefined,
+          })
+        }
+      />
     </div>
   );
 };

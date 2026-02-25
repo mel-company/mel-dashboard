@@ -44,6 +44,38 @@ export const categoryAPI = {
   },
 
   /**
+   * Filter and/or search categories with cursor pagination.
+   * Supports: groupIds, hasDiscount, enabled. When filters are applied, search runs within filtered data.
+   */
+  fetchFilterCursor: async (params?: {
+    query?: string | null;
+    groupIds?: string[];
+    hasDiscount?: boolean;
+    enabled?: boolean;
+    cursor?: string | null;
+    limit?: number;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>(
+      "/category/filter-cursor",
+      {
+        params: {
+          ...(params?.query != null &&
+            params.query !== "" && { query: params.query }),
+          ...(params?.groupIds &&
+            params.groupIds.length > 0 && { groupIds: params.groupIds }),
+          ...(params?.hasDiscount !== undefined && {
+            hasDiscount: params.hasDiscount,
+          }),
+          ...(params?.enabled !== undefined && { enabled: params.enabled }),
+          ...(params?.cursor && { cursor: params.cursor }),
+          ...(params?.limit && { limit: params.limit }),
+        },
+      }
+    );
+    return data;
+  },
+
+  /**
    * Get all categories by store domain with optional filtering and pagination
    */
   fetchAllByStoreDomain: async (domain: string): Promise<any> => {

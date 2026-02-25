@@ -17,6 +17,13 @@ export const categoryKeys = {
   detail: (id: string) => [...categoryKeys.details(), id] as const,
   search: (params?: any) => [...categoryKeys.all, "search", params] as const,
   cursor: (params?: any) => [...categoryKeys.all, "cursor", params] as const,
+  filterCursor: (params?: {
+    query?: string | null;
+    groupIds?: string[];
+    hasDiscount?: boolean;
+    enabled?: boolean;
+    limit?: number;
+  }) => [...categoryKeys.all, "filter-cursor", params] as const,
   available: (params?: any) =>
     [...categoryKeys.all, "available", params] as const,
   availableCursor: (params?: {
@@ -92,6 +99,34 @@ export const useSearchCategoriesCursor = (
       categoryAPI.fetchSearchCursor({
         query: params?.query ?? "",
         limit: params?.limit,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Filter and/or search categories with cursor pagination (infinite scroll).
+ * Supports: groupIds, hasDiscount, enabled. When filters are applied, search runs within filtered data.
+ * Can be used like search-cursor (with query) or for filtering only (no query).
+ */
+export const useFilterCategoriesCursor = (
+  params?: {
+    query?: string | null;
+    groupIds?: string[];
+    hasDiscount?: boolean;
+    enabled?: boolean;
+    limit?: number;
+  },
+  enabled = true
+) => {
+  return useInfiniteQuery<any>({
+    queryKey: categoryKeys.filterCursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      categoryAPI.fetchFilterCursor({
+        ...params,
         cursor: typeof pageParam === "string" ? pageParam : undefined,
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,

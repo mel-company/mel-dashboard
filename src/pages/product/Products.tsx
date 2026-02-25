@@ -10,11 +10,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Star, ShoppingCart, Search, Plus, X, Loader2 } from "lucide-react";
 import {
-  useFetchProductsCursor,
-  useFetchProductsSearchCursor,
-} from "@/api/wrappers/product.wrappers";
+  Star,
+  ShoppingCart,
+  Search,
+  Plus,
+  X,
+  Loader2,
+  Filter,
+} from "lucide-react";
+import { useFilterProductsCursor } from "@/api/wrappers/product.wrappers";
+import ProductFilterDialog, {
+  type ProductFilterValues,
+} from "./ProductFilterDialog";
 import type { ProductListItem } from "@/api/types/product";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import ProductsSkeleton from "./ProductsSkeleton";
@@ -35,58 +43,39 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<ProductFilterValues>({
+    categoryIds: [],
+    enabled: undefined,
+  });
   const navigate = useNavigate();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
-  const isSearching = debouncedQuery.length > 0;
 
   const {
-    data: cursorData,
-    fetchNextPage: fetchNextCursor,
-    hasNextPage: hasNextCursor,
-    isFetchingNextPage: isFetchingNextCursor,
-    isLoading: isCursorLoading,
-    error: cursorError,
-    refetch: refetchCursor,
-    isFetching: isCursorFetching,
-  } = useFetchProductsCursor({ limit: CURSOR_LIMIT }, !isSearching);
+    data: filterData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useFilterProductsCursor({
+    query: debouncedQuery || undefined,
+    categoryIds:
+      filters.categoryIds.length > 0 ? filters.categoryIds : undefined,
+    enabled: filters.enabled,
+    limit: CURSOR_LIMIT,
+  });
 
-  const {
-    data: searchData,
-    fetchNextPage: fetchNextSearch,
-    hasNextPage: hasNextSearch,
-    isFetchingNextPage: isFetchingNextSearch,
-    isLoading: isSearchLoading,
-    error: searchError,
-    refetch: refetchSearch,
-    isFetching: isSearchFetching,
-  } = useFetchProductsSearchCursor(
-    { query: debouncedQuery, limit: CURSOR_LIMIT },
-    isSearching
-  );
+  const products: ProductListItem[] =
+    filterData?.pages.flatMap((p) => p.data) ?? [];
+  const imageBaseUrl = filterData?.pages?.[0]?.baseUrl ?? "";
 
-  const flatProducts = cursorData?.pages.flatMap((p) => p.data) ?? [];
-  const flatSearchProducts = searchData?.pages.flatMap((p) => p.data) ?? [];
-
-  const products: ProductListItem[] = isSearching
-    ? flatSearchProducts
-    : flatProducts;
-
-  const baseUrl = cursorData?.pages?.[0]?.baseUrl ?? "";
-  const searchBaseUrl = searchData?.pages?.[0]?.baseUrl ?? "";
-  const imageBaseUrl = isSearching ? searchBaseUrl : baseUrl;
-
-  const hasNextPage = isSearching ? hasNextSearch : hasNextCursor;
-  const isFetchingNextPage = isSearching
-    ? isFetchingNextSearch
-    : isFetchingNextCursor;
-  const fetchNextPage = isSearching ? fetchNextSearch : fetchNextCursor;
-
-  const error = isSearching ? searchError : cursorError;
-  const refetch = isSearching ? refetchSearch : refetchCursor;
-  const isFetching = isSearching ? isSearchFetching : isCursorFetching;
-  const isLoading = isSearching ? isSearchLoading : isCursorLoading;
+  const hasActiveFilters =
+    filters.categoryIds.length > 0 || filters.enabled !== undefined;
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -102,7 +91,7 @@ const Products = () => {
       (entries) => {
         if (entries[0]?.isIntersecting) handleLoadMore();
       },
-      { rootMargin: "200px", threshold: 0.1 }
+      { rootMargin: "200px", threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -111,16 +100,43 @@ const Products = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-full sm:max-w-md">
-          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="ابحث عن منتج..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-right pr-10"
-            dir="rtl"
-          />
+        <div className="flex flex-1 max-w-full sm:max-w-xl gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="ابحث عن منتج..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-right pr-10"
+              dir="rtl"
+            />
+          </div>
+          <Button
+            variant={hasActiveFilters ? "default" : "secondary"}
+            size="icon"
+            className="shrink-0"
+            onClick={() => setIsFilterDialogOpen(true)}
+            title="تصفية"
+          >
+            <Filter className="size-4" />
+          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              onClick={() =>
+                setFilters({
+                  categoryIds: [],
+                  enabled: undefined,
+                })
+              }
+              title="مسح التصفية"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
         </div>
         <Button
           className="gap-2 w-full sm:w-auto"
@@ -148,18 +164,28 @@ const Products = () => {
         ) : products.length === 0 ? (
           <div className="col-span-full">
             <EmptyPage
-              title={searchQuery.trim() ? "لا توجد نتائج" : "لا توجد منتجات"}
+              title={
+                debouncedQuery || hasActiveFilters
+                  ? "لا توجد نتائج"
+                  : "لا توجد منتجات"
+              }
               description={
-                searchQuery.trim()
-                  ? "لم يتم العثور على منتجات تطابق البحث. جرّب كلمات أخرى."
+                debouncedQuery || hasActiveFilters
+                  ? "لم يتم العثور على منتجات تطابق البحث أو التصفية. جرّب تغيير المعايير."
                   : "ابدأ بإضافة منتج جديد لعرضه هنا."
               }
               icon={<ShoppingCart className="size-7 text-muted-foreground" />}
               primaryAction={
-                searchQuery.trim()
+                debouncedQuery || hasActiveFilters
                   ? {
-                      label: "مسح البحث",
-                      onClick: () => setSearchQuery(""),
+                      label: "مسح البحث والتصفية",
+                      onClick: () => {
+                        setSearchQuery("");
+                        setFilters({
+                          categoryIds: [],
+                          enabled: undefined,
+                        });
+                      },
                       icon: <X className="size-4" />,
                       variant: "secondary",
                     }
@@ -270,6 +296,19 @@ const Products = () => {
           </>
         )}
       </div>
+
+      <ProductFilterDialog
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        values={filters}
+        onApply={setFilters}
+        onClear={() =>
+          setFilters({
+            categoryIds: [],
+            enabled: undefined,
+          })
+        }
+      />
     </div>
   );
 };

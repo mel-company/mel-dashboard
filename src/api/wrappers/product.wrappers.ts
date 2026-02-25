@@ -14,6 +14,12 @@ export const productKeys = {
   lists: () => [...productKeys.all, "list"] as const,
   list: (params?: any) => [...productKeys.lists(), params] as const,
   cursor: (params?: any) => [...productKeys.all, "cursor", params] as const,
+  filterCursor: (params?: {
+    query?: string | null;
+    categoryIds?: string[];
+    enabled?: boolean;
+    limit?: number;
+  }) => [...productKeys.all, "filter-cursor", params] as const,
   byStoreDomainCursor: (domain: string, params?: { categoryId?: string; limit?: number }) =>
     [...productKeys.all, "by-store-domain-cursor", domain, params] as const,
   details: () => [...productKeys.all, "detail"] as const,
@@ -125,6 +131,32 @@ export const useFetchProductsSearchCursor = (
       productAPI.fetchSearchCursor({
         ...params,
         cursor: pageParam ?? undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null | undefined,
+  });
+};
+
+/**
+ * Filter and/or search products with cursor pagination (infinite scroll).
+ * Supports: categoryIds, enabled. When filters are applied, search runs within filtered data.
+ */
+export const useFilterProductsCursor = (
+  params?: {
+    query?: string | null;
+    categoryIds?: string[];
+    enabled?: boolean;
+    limit?: number;
+  },
+  enabled = true
+) => {
+  return useInfiniteQuery({
+    queryKey: productKeys.filterCursor(params),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      productAPI.fetchFilterCursor({
+        ...params,
+        cursor: typeof pageParam === "string" ? pageParam : undefined,
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as string | null | undefined,
