@@ -22,6 +22,15 @@ export const useLogin = () => {
 };
 
 /**
+ * Resend OTP
+ */
+export const useResendOtp = () => {
+  return useMutation<any, Error, any>({
+    mutationFn: (params: any) => authAPI.resendOtp(params),
+  });
+};
+
+/**
  * Verify Bridge
  */
 export const useConsumeBridge = () => {

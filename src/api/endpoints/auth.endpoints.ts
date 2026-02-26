@@ -14,6 +14,21 @@ export const authAPI = {
 
     return data;
   },
+
+  resendOtp: async (params?: any): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/store-user-auth/resend-otp",
+      {
+        phone: params?.phone,
+        store: {
+          name: params?.store?.name,
+          domain: params?.store?.domain,
+        },
+      },
+    );
+    return data;
+  },
+
   devLogin: async (params?: any): Promise<any> => {
     const { data } = await axiosInstance.post<any>(
       "/local-idp/login",

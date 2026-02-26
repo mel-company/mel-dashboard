@@ -16,12 +16,12 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { useVerify } from "@/api/wrappers/auth.wrappers";
+import { useResendOtp, useVerify } from "@/api/wrappers/auth.wrappers";
 import { parse } from "tldts";
 
 const OTP = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const phone = searchParams.get("phone") ?? "";
   const store = searchParams.get("store") ?? "";
   const v_code = searchParams.get("code") ?? "";
@@ -31,6 +31,7 @@ const OTP = () => {
   const [cooldown, setCooldown] = useState(0);
 
   const { mutate: verify, isPending: isVerifyingPending } = useVerify();
+  const { mutate: resendOtp, isPending: isResendingOtp } = useResendOtp();
 
   const parsed = parse(window.location.hostname);
   const subdomain = parsed.subdomain;
@@ -84,7 +85,7 @@ const OTP = () => {
             toast.error("فشل تحقق الرمز. يرجى المحاولة مرة أخرى");
           },
           onSettled: () => setIsVerifying(false),
-        }
+        },
       );
     } finally {
       setIsVerifying(false);
@@ -92,9 +93,34 @@ const OTP = () => {
   };
 
   const handleResend = () => {
-    if (cooldown > 0) return;
-    setCooldown(30);
-    toast.success("تمت إعادة إرسال رمز التحقق");
+    if (cooldown > 0 || !phone || !store) return;
+    resendOtp(
+      {
+        phone,
+        store: { name: store, domain: store },
+      },
+      {
+        onSuccess: (data) => {
+          setCooldown(30);
+          toast.success("تمت إعادة إرسال رمز التحقق");
+          if (v_code && data?.codeOnlyOnDev != null) {
+            const newCode = String(data.codeOnlyOnDev);
+            // setCode(newCode);
+            setSearchParams(
+              (prev) => {
+                const next = new URLSearchParams(prev);
+                next.set("code", newCode);
+                return next;
+              },
+              { replace: true },
+            );
+          }
+        },
+        onError: () => {
+          toast.error("فشل إعادة إرسال الرمز. يرجى المحاولة مرة أخرى");
+        },
+      },
+    );
   };
 
   return (
@@ -126,6 +152,7 @@ const OTP = () => {
                 value={code}
                 onChange={(v) => setCode(v.replace(/\D/g, ""))}
                 inputMode="numeric"
+                autoComplete="off"
                 autoFocus
                 aria-label="رمز التحقق"
               >
@@ -151,11 +178,13 @@ const OTP = () => {
                 type="button"
                 variant="secondary"
                 onClick={handleResend}
-                disabled={cooldown > 0}
+                disabled={cooldown > 0 || isResendingOtp || !phone || !store}
               >
-                {cooldown > 0
-                  ? `إعادة الإرسال خلال ${cooldown}s`
-                  : "إعادة إرسال"}
+                {isResendingOtp
+                  ? "جاري الإرسال..."
+                  : cooldown > 0
+                    ? `إعادة الإرسال خلال ${cooldown}s`
+                    : "إعادة إرسال"}
               </Button>
               <Button
                 type="button"
