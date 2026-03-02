@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
 import { useValidateUserToEditor } from "@/api/wrappers/auth.wrappers";
 import { toast } from "sonner";
 
