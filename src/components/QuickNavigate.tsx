@@ -17,6 +17,7 @@ import {
   Bell,
   MessageCircle,
   Ticket,
+  Layout,
 } from "lucide-react";
 import {
   Dialog,
@@ -139,6 +140,12 @@ const baseApps: AppItem[] = [
         icon: Store,
       },
       {
+        label: "الموقع",
+        enLabel: "Website",
+        path: "/settings/website",
+        icon: Layout,
+      },
+      {
         label: "الدفع",
         enLabel: "Payment",
         path: "/settings/payment-methods",
@@ -195,7 +202,7 @@ const baseApps: AppItem[] = [
     description: "إدارة الدعم",
   },
   {
-    label: "POS",
+    label: "نقطة البيع",
     enLabel: "POS",
     path: "/pos",
     icon: Keyboard,
@@ -496,7 +503,7 @@ const QuickNavigate = () => {
                             e.preventDefault();
                             const next = Math.min(
                               idx + 1,
-                              filteredApps.length - 1
+                              filteredApps.length - 1,
                             );
                             setActiveIndex(next);
                             resultRefs.current[next]?.focus();
@@ -517,13 +524,13 @@ const QuickNavigate = () => {
                         className={cn(
                           "w-full flex items-center gap-3 p-3 text-right transition-colors",
                           isActive ? "bg-accent" : "hover:bg-accent",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
                         )}
                       >
                         <div
                           className={cn(
                             "shrink-0 rounded-md bg-linear-to-br p-2 text-white",
-                            app.gradient
+                            app.gradient,
                           )}
                         >
                           <Icon className="size-4" />

@@ -30,6 +30,11 @@ const settingsItems = [
     icon: Store,
   },
   {
+    label: "الموقع",
+    path: "/settings/website",
+    icon: Store,
+  },
+  {
     label: "الدفع",
     path: "/settings/payment-methods",
     icon: CreditCard,
@@ -98,7 +103,7 @@ const SettingsLayout = () => {
     const policiesPath = "/settings/policies";
     if (isOnPolicyPage) {
       setExpandedItems((prev) =>
-        prev.includes(policiesPath) ? prev : [...prev, policiesPath]
+        prev.includes(policiesPath) ? prev : [...prev, policiesPath],
       );
     }
   }, [location.pathname]);
@@ -116,7 +121,7 @@ const SettingsLayout = () => {
     setExpandedItems((prev) =>
       prev.includes(itemPath)
         ? prev.filter((path) => path !== itemPath)
-        : [...prev, itemPath]
+        : [...prev, itemPath],
     );
   };
 
@@ -147,7 +152,7 @@ const SettingsLayout = () => {
           // Check if any sub-item is active
           const isSubItemActive = hasSubItems
             ? item.subItems?.some(
-                (subItem) => location.pathname === subItem.path
+                (subItem) => location.pathname === subItem.path,
               )
             : false;
 
@@ -166,7 +171,7 @@ const SettingsLayout = () => {
                     "flex items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors w-full",
                     isSubItemActive || isExpanded
                       ? ""
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -193,7 +198,7 @@ const SettingsLayout = () => {
                             "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                             isSubActive
                               ? "bg-primary/80 text-primary-foreground shadow-sm"
-                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                           )}
                         >
                           <SubIcon className="size-3.5 shrink-0" />
@@ -216,7 +221,7 @@ const SettingsLayout = () => {
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
               )}
             >
               <Icon className="size-4 shrink-0" />
@@ -259,7 +264,7 @@ const SettingsLayout = () => {
       <aside
         className={cn(
           "fixed top-0 right-0 h-full w-64 bg-background border-l border-border z-50 transform transition-transform duration-300 ease-in-out lg:hidden shadow-xl",
-          isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          isMobileMenuOpen ? "translate-x-0" : "translate-x-full",
         )}
       >
         <div className="p-6 h-full overflow-y-auto">

@@ -43,6 +43,7 @@ const Layout = () => {
       "payment-methods": "طرق الدفع",
       delivery: "التوصيل",
       "terms-and-conditions": "الشروط والأحكام",
+      website: "الموقع",
       edit: "تعديل",
       plans: "الاشتراكات",
       payment: "الدفع",

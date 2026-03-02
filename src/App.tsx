@@ -66,6 +66,7 @@ import OpenTicket from "./pages/support/OpenTicket";
 import Shortcuts from "./pages/settings/Shortcuts";
 import DevStoreLogin from "./pages/auth/DevStoreLogin";
 import DevOTP from "./pages/auth/DEVOTP";
+import WebsiteSettings from "./pages/settings/WebsiteSettings";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -181,6 +182,7 @@ function App() {
             <Route path="/settings" element={<SettingsLayout />}>
               <Route index path="general" element={<GeneralSettings />} />
               <Route index path="editor" element={<Editor />} />
+              <Route index path="website" element={<WebsiteSettings />} />
               {/* <Route path="general" element={<GeneralSettings />} /> */}
               <Route path="store" element={<DetailsSettings />} />
               <Route path="domain" element={<DomainSettings />} />
