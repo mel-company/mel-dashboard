@@ -22,6 +22,15 @@ export const useLogin = () => {
 };
 
 /**
+ * Validate User to Editor
+ */
+export const useValidateUserToEditor = () => {
+  return useMutation<any, Error, any>({
+    mutationFn: () => authAPI.validateUserToEditor(),
+  });
+};
+
+/**
  * Resend OTP
  */
 export const useResendOtp = () => {

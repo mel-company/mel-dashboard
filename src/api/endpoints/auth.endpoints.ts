@@ -15,6 +15,13 @@ export const authAPI = {
     return data;
   },
 
+  validateUserToEditor: async (): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/store-user-auth/validate-to-editor",
+    );
+    return data;
+  },
+
   resendOtp: async (params?: any): Promise<any> => {
     const { data } = await axiosInstance.post<any>(
       "/store-user-auth/resend-otp",

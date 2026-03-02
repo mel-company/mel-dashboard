@@ -126,11 +126,11 @@ const baseApps: AppItem[] = [
     description: "إعدادات النظام",
   },
   {
-    label: "POS",
+    label: "نقطة البيع",
     path: "/pos",
     icon: Keyboard,
     gradient: "from-pink-500 to-pink-600",
-    description: "dev mode",
+    description: "إدارة البيع",
   },
   // {
   //   label: "المحاسبة",
@@ -230,7 +230,7 @@ const AppsGrid = () => {
   const filteredApps = allApps.filter(
     (app) =>
       app.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      app.description?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -256,8 +256,8 @@ const AppsGrid = () => {
                   iconSize === "small"
                     ? "صغير - اضغط للتغيير"
                     : iconSize === "medium"
-                    ? "متوسط - اضغط للتغيير"
-                    : "كبير - اضغط للتغيير"
+                      ? "متوسط - اضغط للتغيير"
+                      : "كبير - اضغط للتغيير"
                 }
               >
                 {iconSize === "small" ? (
@@ -275,8 +275,8 @@ const AppsGrid = () => {
                   {iconSize === "small"
                     ? "صغير"
                     : iconSize === "medium"
-                    ? "متوسط"
-                    : "كبير"}
+                      ? "متوسط"
+                      : "كبير"}
                 </span>
               </button>
               {/* Search Bar */}
@@ -341,7 +341,7 @@ const AppsGrid = () => {
                       "shadow-md",
                       "group-hover:shadow-lg group-hover:scale-110",
                       "transition-all duration-200",
-                      isLocked && "opacity-60"
+                      isLocked && "opacity-60",
                     )}
                   >
                     {app.emojiIcon ? (
@@ -350,8 +350,8 @@ const AppsGrid = () => {
                           iconSize === "small"
                             ? "text-2xl"
                             : iconSize === "medium"
-                            ? "text-3xl"
-                            : "text-4xl"
+                              ? "text-3xl"
+                              : "text-4xl"
                         }
                       >
                         {app.emojiIcon}
@@ -369,13 +369,13 @@ const AppsGrid = () => {
                         iconSize === "small"
                           ? "text-xs"
                           : iconSize === "medium"
-                          ? "text-sm"
-                          : "text-base",
+                            ? "text-sm"
+                            : "text-base",
                         isActive && !isLocked
                           ? "text-primary"
                           : isLocked
-                          ? "text-muted-foreground"
-                          : "text-foreground group-hover:text-primary"
+                            ? "text-muted-foreground"
+                            : "text-foreground group-hover:text-primary",
                       )}
                     >
                       {app.label}
@@ -386,8 +386,8 @@ const AppsGrid = () => {
                           iconSize === "small"
                             ? "text-xs"
                             : iconSize === "medium"
-                            ? "text-xs"
-                            : "text-sm"
+                              ? "text-xs"
+                              : "text-sm"
                         } ${
                           isLocked
                             ? "text-muted-foreground"
@@ -411,13 +411,13 @@ const AppsGrid = () => {
                       iconSize === "large"
                         ? "p-8"
                         : iconSize === "medium"
-                        ? "p-6"
-                        : "p-4",
+                          ? "p-6"
+                          : "p-4",
                       "rounded-xl transition-all duration-200",
                       "bg-card border border-border",
                       "hover:shadow-lg hover:shadow-primary/10",
                       "hover:-translate-y-1",
-                      "cursor-pointer"
+                      "cursor-pointer",
                     )}
                   >
                     {AppContent}
@@ -434,13 +434,13 @@ const AppsGrid = () => {
                     iconSize === "large"
                       ? "p-8"
                       : iconSize === "medium"
-                      ? "p-6"
-                      : "p-4",
+                        ? "p-6"
+                        : "p-4",
                     "rounded-xl transition-all duration-200",
                     "bg-card border border-border",
                     "hover:shadow-lg hover:shadow-primary/10",
                     "hover:-translate-y-1",
-                    isActive && "ring-2 ring-primary shadow-md border-primary"
+                    isActive && "ring-2 ring-primary shadow-md border-primary",
                   )}
                 >
                   {AppContent}

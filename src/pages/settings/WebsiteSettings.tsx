@@ -19,7 +19,6 @@ import {
   Layout,
   Plus,
   Eye,
-  Pencil,
   Trash2,
   Search,
   Sparkles,
@@ -30,6 +29,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { useValidateUserToEditor } from "@/api/wrappers/auth.wrappers";
+import { toast } from "sonner";
 
 // Mock data types
 interface WebsiteTemplate {
@@ -161,6 +162,21 @@ const WebsiteSettings = ({}: Props) => {
 
   const isInLibrary = (id: string) => library.some((t) => t.id === id);
 
+  const { mutate: validateUserToEditor } = useValidateUserToEditor();
+
+  const handleValidateUserToEditor = () => {
+    validateUserToEditor(undefined, {
+      onSuccess: (data) => {
+        console.log("data", data);
+        toast.success("تم التحقق من المستخدم");
+      },
+      onError: (error) => {
+        console.log("error", error);
+        toast.error("حدث خطأ أثناء التحقق من المستخدم");
+      },
+    });
+  };
+
   return (
     <div className="space-y-6 min-h-screen pb-6">
       <div className="flex items-center justify-between">
@@ -171,12 +187,12 @@ const WebsiteSettings = ({}: Props) => {
           </p>
         </div>
         <div>
-          <Link to="#">
-            <Button variant={"default"}>
-              <ExternalLink size={10} />
-              زيارة الموقع
-            </Button>
-          </Link>
+          {/* <Link to="#"> */}
+          <Button onClick={handleValidateUserToEditor} variant={"default"}>
+            <ExternalLink size={10} />
+            زيارة الموقع
+          </Button>
+          {/* </Link> */}
         </div>
       </div>
 

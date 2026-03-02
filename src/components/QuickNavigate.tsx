@@ -207,7 +207,7 @@ const baseApps: AppItem[] = [
     path: "/pos",
     icon: Keyboard,
     gradient: "from-orange-500 to-orange-600",
-    description: "dev mode",
+    description: "إدارة البيع",
   },
   // {
   //   label: "المحاسبة",

@@ -148,7 +148,7 @@ const POS = ({}: Props) => {
     couponCode: "",
   });
 
-  const storeDomain = "fashion";
+  const storeDomain = "azyaa";
   const productsScrollRef = useRef<HTMLDivElement>(null);
   const productsLoadMoreRef = useRef<HTMLDivElement>(null);
 
