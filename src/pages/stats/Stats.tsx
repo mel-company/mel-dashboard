@@ -7,10 +7,8 @@ import {
   Users,
   BarChart3,
   Activity,
-  FileText,
   Download,
   Calendar,
-  ShoppingBag,
   RefreshCcw,
 } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
