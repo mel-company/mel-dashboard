@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Save,
   ArrowLeft,
@@ -10,8 +11,9 @@ import {
   Plus,
   Trash2,
   Upload,
+  Search,
 } from "lucide-react";
-import { useFetchCategories } from "@/api/wrappers/category.wrappers";
+import { useFilterCategoriesCursor } from "@/api/wrappers/category.wrappers";
 import { useCreateProduct } from "@/api/wrappers/product.wrappers";
 import { productAPI } from "@/api/endpoints/product.endpoints";
 import { variantAPI } from "@/api/endpoints/variant.endpionts";
@@ -20,13 +22,44 @@ import { toast } from "sonner";
 
 type Props = {};
 
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+
+  return debouncedValue;
+}
+
+const CURSOR_LIMIT = 20;
+
 const AddProduct = ({}: Props) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [costToProduct, setCostToProduct] = useState("");
+  const [categorySearchQuery, setCategorySearchQuery] = useState("");
+  const loadMoreCategoriesRef = useRef<HTMLDivElement>(null);
 
-  const { data: categories, isLoading } = useFetchCategories();
+  const debouncedCategoryQuery = useDebouncedValue(
+    categorySearchQuery.trim(),
+    350,
+  );
+
+  const {
+    data: filterCategoriesData,
+    fetchNextPage: fetchNextCategoriesPage,
+    hasNextPage: hasNextCategoriesPage,
+    isFetchingNextPage: isFetchingNextCategoriesPage,
+    isLoading: isCategoriesLoading,
+  } = useFilterCategoriesCursor({
+    query: debouncedCategoryQuery || undefined,
+    limit: CURSOR_LIMIT,
+  });
+
+  const categories = filterCategoriesData?.pages.flatMap((p) => p.data) ?? [];
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -90,6 +123,30 @@ const AddProduct = ({}: Props) => {
         : [...prev, categoryId],
     );
   };
+
+  const handleLoadMoreCategories = useCallback(() => {
+    if (hasNextCategoriesPage && !isFetchingNextCategoriesPage) {
+      fetchNextCategoriesPage();
+    }
+  }, [
+    hasNextCategoriesPage,
+    isFetchingNextCategoriesPage,
+    fetchNextCategoriesPage,
+  ]);
+
+  useEffect(() => {
+    if (!hasNextCategoriesPage || isFetchingNextCategoriesPage) return;
+    const el = loadMoreCategoriesRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMoreCategories();
+      },
+      { rootMargin: "200px", threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleLoadMoreCategories, hasNextCategoriesPage, isFetchingNextCategoriesPage]);
 
   const addProperty = () => {
     setProperties((prev) => [...prev, { name: "", value: "" }]);
@@ -1135,7 +1192,18 @@ const AddProduct = ({}: Props) => {
         </div>
         <Card>
           <CardContent className="space-y-4">
-            {isLoading ? (
+            <div className="relative max-w-md">
+              <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="ابحث عن فئة..."
+                value={categorySearchQuery}
+                onChange={(e) => setCategorySearchQuery(e.target.value)}
+                className="w-full text-right pr-10"
+                dir="rtl"
+              />
+            </div>
+            {isCategoriesLoading && categories.length === 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {Array.from({ length: 6 }).map((_, idx) => (
                   <div
@@ -1153,50 +1221,84 @@ const AddProduct = ({}: Props) => {
                   </div>
                 ))}
               </div>
-            ) : categories && categories.length === 0 ? (
+            ) : categories.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                لا توجد فئات متاحة
+                {debouncedCategoryQuery
+                  ? "لا توجد نتائج للبحث"
+                  : "لا توجد فئات متاحة"}
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {categories?.data?.map((category: any) => {
-                  const isSelected = selectedCategories.includes(category.id);
-                  return (
-                    <div
-                      key={category.id}
-                      // type="button"
-                      onClick={() => toggleCategory(category.id)}
-                      className={`relative p-4 bg-card rounded-lg border-2 border-border text-right transition-all hover:shadow-md ${
-                        isSelected
-                          ? "border-primary bg-primary/5"
-                          : "border-input bg-card hover:border-ring"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-sm mb-1">
-                            {category.name}
-                          </h3>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {category.description}
-                          </p>
-                        </div>
-                        <div
-                          className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                            isSelected
-                              ? "bg-primary border-primary"
-                              : "border-input"
-                          }`}
-                        >
-                          {isSelected && (
-                            <Check className="size-3 text-primary-foreground" />
-                          )}
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {categories.map((category: any) => {
+                    const isSelected = selectedCategories.includes(category.id);
+                    return (
+                      <div
+                        key={category.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => toggleCategory(category.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggleCategory(category.id);
+                          }
+                        }}
+                        className={`relative p-4 bg-card rounded-lg border-2 border-border text-right transition-all hover:shadow-md cursor-pointer ${
+                          isSelected
+                            ? "border-primary bg-primary/5"
+                            : "border-input bg-card hover:border-ring"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-sm mb-1">
+                              {category.name}
+                            </h3>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {category.description}
+                            </p>
+                          </div>
+                          <div
+                            className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                              isSelected
+                                ? "bg-primary border-primary"
+                                : "border-input"
+                            }`}
+                          >
+                            {isSelected && (
+                              <Check className="size-3 text-primary-foreground" />
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+                <div
+                  ref={loadMoreCategoriesRef}
+                  className="flex justify-center py-4"
+                >
+                  {hasNextCategoriesPage && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="gap-2"
+                      onClick={() => fetchNextCategoriesPage()}
+                      disabled={isFetchingNextCategoriesPage}
+                    >
+                      {isFetchingNextCategoriesPage ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" />
+                          جاري التحميل...
+                        </>
+                      ) : (
+                        "تحميل المزيد"
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </>
             )}
             {selectedCategories.length > 0 && (
               <div className="mt-4 pt-4 border-t">

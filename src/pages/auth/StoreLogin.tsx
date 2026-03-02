@@ -156,6 +156,7 @@ const StoreLogin = () => {
 
   const parsed = parse(window.location.hostname);
   const subdomain = parsed.subdomain;
+  const isAzyaaHost = window.location.hostname === "azyaa.mel.iq";
 
   const { data: stores, isLoading: isLoadingStores } = useFetchDevStores();
 
@@ -181,7 +182,10 @@ const StoreLogin = () => {
       setSelectedStoreId("eba098bb-4686-4adb-ba2f-22a92f0507b4");
       setPhone("+9647717504243");
     }
-  }, [subdomain, stores?.data]);
+    if (isAzyaaHost) {
+      setPhone("+9647717504243");
+    }
+  }, [subdomain, isAzyaaHost, stores?.data]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,6 +244,10 @@ const StoreLogin = () => {
                 url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
                   parsed.subdomain === "fashion" ? "fashion" : null
                 }&code=${data?.codeOnlyOnDev}`;
+              } else if (isAzyaaHost) {
+                url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
+                  subdomain || "azyaa"
+                }&code=${data?.codeOnlyOnDev}`;
               } else {
                 url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
                   selectedStore?.domain
@@ -247,7 +255,11 @@ const StoreLogin = () => {
               }
             } else {
               url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                subdomain === "fashion" ? "fashion" : selectedStore?.domain
+                subdomain === "fashion"
+                  ? "fashion"
+                  : isAzyaaHost
+                    ? subdomain || "azyaa"
+                    : selectedStore?.domain
               }&code=${data?.codeOnlyOnDev}`;
             }
 

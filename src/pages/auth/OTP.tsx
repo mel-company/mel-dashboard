@@ -35,6 +35,7 @@ const OTP = () => {
 
   const parsed = parse(window.location.hostname);
   const subdomain = parsed.subdomain;
+  const isAzyaaHost = window.location.hostname === "azyaa.mel.iq";
 
   const maskedPhone = useMemo(() => {
     const digits = phone.replace(/\D/g, "");
@@ -52,10 +53,10 @@ const OTP = () => {
   }, [cooldown]);
 
   useEffect(() => {
-    if (subdomain === "fashion" && v_code) {
+    if ((subdomain === "fashion" || isAzyaaHost) && v_code) {
       setCode(v_code.toString());
     }
-  }, [subdomain, v_code]);
+  }, [subdomain, isAzyaaHost, v_code]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,9 +104,9 @@ const OTP = () => {
         onSuccess: (data) => {
           setCooldown(30);
           toast.success("تمت إعادة إرسال رمز التحقق");
-          if (v_code && data?.codeOnlyOnDev != null) {
+          if ((v_code || isAzyaaHost) && data?.codeOnlyOnDev != null) {
             const newCode = String(data.codeOnlyOnDev);
-            // setCode(newCode);
+            setCode(newCode);
             setSearchParams(
               (prev) => {
                 const next = new URLSearchParams(prev);
