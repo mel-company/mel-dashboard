@@ -178,7 +178,7 @@ const StoreLogin = () => {
       return;
     }
 
-    if (subdomain === "fashion") {
+    if (subdomain === "azyaa") {
       setSelectedStoreId("eba098bb-4686-4adb-ba2f-22a92f0507b4");
       setPhone("+9647717504243");
     }
@@ -232,17 +232,23 @@ const StoreLogin = () => {
         {
           phone: normalized,
           store: {
-            name: parsed.subdomain === "fashion" ? "fashion" : selectedStore?.name ?? null,
-            domain: parsed.subdomain === "fashion" ? "fashion" : selectedStore?.domain ?? null,
+            name:
+              parsed.subdomain === "azyaa"
+                ? "azyaa"
+                : (selectedStore?.name ?? null),
+            domain:
+              parsed.subdomain === "azyaa"
+                ? "azyaa"
+                : (selectedStore?.domain ?? null),
           },
         },
         {
           onSuccess: (data) => {
             let url = "";
             if (isProduction) {
-              if (subdomain === "fashion") {
+              if (subdomain === "azyaa") {
                 url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                  parsed.subdomain === "fashion" ? "fashion" : null
+                  parsed.subdomain === "azyaa" ? "azyaa" : null
                 }&code=${data?.codeOnlyOnDev}`;
               } else if (isAzyaaHost) {
                 url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
@@ -255,8 +261,8 @@ const StoreLogin = () => {
               }
             } else {
               url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                subdomain === "fashion"
-                  ? "fashion"
+                subdomain === "azyaa"
+                  ? "azyaa"
                   : isAzyaaHost
                     ? subdomain || "azyaa"
                     : selectedStore?.domain
@@ -271,18 +277,18 @@ const StoreLogin = () => {
             //   {
             //     state: {
             //       v_code:
-            //         subdomain === "fashion" ? data?.codeOnlyOnDev : undefined,
+            //         subdomain === "azyaa" ? data?.codeOnlyOnDev : undefined,
             //     },
             //   }
             // );
 
             // let url =
-            //   subdomain === "fashion"
+            //   subdomain === "azyaa"
             //     ? `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //         parsed.subdomain === "fashion" ? "fashion" : null
+            //         parsed.subdomain === "azyaa" ? "azyaa" : null
             //       }&code=${data?.codeOnlyOnDev}`
             //     : `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //         parsed.subdomain === "fashion" ? "fashion" : null
+            //         parsed.subdomain === "azyaa" ? "azyaa" : null
             //       }`;
 
             // navigate(url);
@@ -295,7 +301,7 @@ const StoreLogin = () => {
             //   {
             //     state: {
             //       v_code:
-            //         subdomain === "fashion" ? data?.codeOnlyOnDev : undefined,
+            //         subdomain === "azyaa" ? data?.codeOnlyOnDev : undefined,
             //     },
             //   }
             // );
