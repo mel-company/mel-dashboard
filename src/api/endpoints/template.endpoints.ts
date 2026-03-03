@@ -1,12 +1,6 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
 export const templateAPI = {
-  // @ts-ignore
-  getTemplates: async (params?: any): Promise<any> => {
-    const { data } = await axiosInstance.get<any>("/template");
-    return data;
-  },
-
   /**
    * Search templates with cursor pagination (infinite scroll).
    * Search by name or description. Query is optional - when empty, returns all templates.
