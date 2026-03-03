@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Eye, Layout, Loader2, Plus, Search } from "lucide-react";
 import { useSearchTemplatesCursor } from "@/api/wrappers/template.wrappers";
+import TemplatePurchaseDialog from "./TemplatePurchaseDialog";
 
 const TEMPLATE_LIMIT = 12;
 const GRADIENT_PRESETS = [
@@ -97,7 +98,21 @@ const TemplateGalleryDialog = ({
   onPreview,
 }: TemplateGalleryDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
+  const [templateToPurchase, setTemplateToPurchase] =
+    useState<WebsiteTemplate | null>(null);
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
+
+  const handleAddClick = (template: WebsiteTemplate) => {
+    setTemplateToPurchase(template);
+    setPurchaseDialogOpen(true);
+  };
+
+  const handlePurchaseSuccess = (template: WebsiteTemplate) => {
+    onAddToLibrary(template);
+    setTemplateToPurchase(null);
+    setPurchaseDialogOpen(false);
+  };
 
   const {
     data,
@@ -164,7 +179,6 @@ const TemplateGalleryDialog = ({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
               {templates.map((template) => {
-                console.log("template: ", template);
                 const added = isInLibrary(template.id);
                 return (
                   <Card
@@ -220,7 +234,7 @@ const TemplateGalleryDialog = ({
                           variant={added ? "secondary" : "default"}
                           size="sm"
                           className="flex-1"
-                          onClick={() => onAddToLibrary(template)}
+                          onClick={() => handleAddClick(template)}
                           disabled={added}
                         >
                           <Plus className="size-3.5 ml-1" />
@@ -251,6 +265,13 @@ const TemplateGalleryDialog = ({
           )}
         </div>
       </DialogContent>
+
+      <TemplatePurchaseDialog
+        open={purchaseDialogOpen}
+        onOpenChange={setPurchaseDialogOpen}
+        template={templateToPurchase}
+        onSuccess={handlePurchaseSuccess}
+      />
     </Dialog>
   );
 };
