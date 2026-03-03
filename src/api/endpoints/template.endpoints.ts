@@ -1,6 +1,7 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
 export const templateAPI = {
+  // @ts-ignore
   getTemplates: async (params?: any): Promise<any> => {
     const { data } = await axiosInstance.get<any>("/template");
     return data;
