@@ -1,4 +1,7 @@
-import { useFetchStoreSubscription } from "@/api/wrappers/subscription.wrapper";
+import {
+  useFetchStoreSubscription,
+  useCancelSubscription,
+} from "@/api/wrappers/subscription.wrapper";
 import {
   Card,
   CardContent,
@@ -16,21 +19,40 @@ import {
   CheckCircle2,
   XCircle,
   Pause,
-  Play,
   RefreshCw,
   Trash2,
   CreditCard,
   Settings,
   Pencil,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Props = {};
 
 const SubscriptionSettings = ({}: Props) => {
   const navigate = useNavigate();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const {
     data: subscription,
@@ -39,6 +61,7 @@ const SubscriptionSettings = ({}: Props) => {
     refetch,
     isFetching,
   } = useFetchStoreSubscription();
+  const cancelSubscription = useCancelSubscription();
 
   // Format date
   const formatDate = (dateString: string | undefined) => {
@@ -152,6 +175,17 @@ const SubscriptionSettings = ({}: Props) => {
   const plan = subscription.plan;
   const isActive = subscription.status === "ACTIVE";
   const isPaused = subscription.status === "PAUSED";
+  const canCancel =
+    subscription.status === "ACTIVE" || subscription.status === "PAUSED";
+
+  const handleConfirmCancel = () => {
+    cancelSubscription.mutate(undefined, {
+      onSuccess: () => {
+        setCancelDialogOpen(false);
+        refetch();
+      },
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -363,7 +397,7 @@ const SubscriptionSettings = ({}: Props) => {
               <CardTitle className="text-right">الإجراءات</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              {isPaused ? (
+              {/* {isPaused ? (
                 <Button className="w-full gap-2" variant="default">
                   <Play className="size-4" />
                   استئناف الاشتراك
@@ -373,7 +407,7 @@ const SubscriptionSettings = ({}: Props) => {
                   <Pause className="size-4" />
                   إيقاف الاشتراك
                 </Button>
-              )}
+              )} */}
               <Button className="w-full gap-2" variant="default">
                 <RefreshCw className="size-4" />
                 تجديد الاشتراك
@@ -386,7 +420,12 @@ const SubscriptionSettings = ({}: Props) => {
                 <Pencil className="size-4" />
                 تغيير الخطة
               </Button>
-              <Button className="w-full gap-2" variant="destructive">
+              <Button
+                onClick={() => setCancelDialogOpen(true)}
+                className="w-full gap-2"
+                variant="destructive"
+                disabled={!canCancel}
+              >
                 <Trash2 className="size-4" />
                 إلغاء الاشتراك
               </Button>
@@ -394,6 +433,39 @@ const SubscriptionSettings = ({}: Props) => {
           </Card>
         </div>
       </div>
+
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="text-right">
+          <DialogHeader>
+            <DialogTitle className="text-right">إلغاء الاشتراك</DialogTitle>
+            <DialogDescription className="text-right">
+              هل أنت متأكد من رغبتك في إلغاء اشتراكك؟ سيتم إيقاف الوصول إلى
+              الخدمات في نهاية فترة الاشتراك الحالية.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-start gap-2 sm:flex-row">
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmCancel();
+              }}
+              // className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
+              disabled={cancelSubscription.isPending}
+            >
+              {cancelSubscription.isPending
+                ? "جاري الإلغاء..."
+                : "تأكيد الإلغاء"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setCancelDialogOpen(false)}
+            >
+              تراجع
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

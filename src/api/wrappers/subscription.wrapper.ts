@@ -96,7 +96,9 @@ export const useDeleteSubscription = () => {
       // Invalidate and refetch subscriptions list
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.lists() });
       // Remove the deleted subscription from cache
-      queryClient.removeQueries({ queryKey: subscriptionKeys.detail(deletedId) });
+      queryClient.removeQueries({
+        queryKey: subscriptionKeys.detail(deletedId),
+      });
     },
   });
 };
@@ -141,8 +143,8 @@ export const useResumeSubscription = () => {
 export const useCancelSubscription = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<any, Error, string>({
-    mutationFn: (id: string) => subscriptionAPI.cancel(id),
+  return useMutation<any, Error, void>({
+    mutationFn: () => subscriptionAPI.cancel(),
     onSuccess: (data) => {
       // Invalidate and refetch subscriptions list
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.lists() });
@@ -159,7 +161,8 @@ export const useRenewSubscription = () => {
   const queryClient = useQueryClient();
 
   return useMutation<any, Error, { id: string; durationMonths?: number }>({
-    mutationFn: ({ id, durationMonths }) => subscriptionAPI.renew(id, durationMonths),
+    mutationFn: ({ id, durationMonths }) =>
+      subscriptionAPI.renew(id, durationMonths),
     onSuccess: (data) => {
       // Invalidate and refetch subscriptions list
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.lists() });
