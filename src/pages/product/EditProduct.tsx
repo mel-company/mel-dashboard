@@ -19,7 +19,7 @@ const EditProduct = ({}: Props) => {
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? "",
-    !!id
+    !!id,
   );
 
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
@@ -103,9 +103,9 @@ const EditProduct = ({}: Props) => {
     }
 
     // Add category IDs if any - send as repeated fields (standard FormData array format)
-    selectedCategories.forEach((categoryId) => {
-      formData.append("categoryIds", categoryId);
-    });
+    // selectedCategories.forEach((categoryId) => {
+    //   formData.append("categoryIds", categoryId);
+    // });
 
     updateProduct(
       { id, data: formData },
@@ -117,7 +117,7 @@ const EditProduct = ({}: Props) => {
         onError: (error: any) => {
           toast.error(error?.response?.data?.message || "فشل تحديث المنتج");
         },
-      }
+      },
     );
   };
 

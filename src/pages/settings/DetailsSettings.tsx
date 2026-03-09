@@ -84,7 +84,7 @@ const DetailsSettings = ({}: Props) => {
   }, [storeDetails]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -106,13 +106,13 @@ const DetailsSettings = ({}: Props) => {
       try {
         const sanitizedPhone = sanitizePhoneNumber(
           formData.businessPhone,
-          "+964"
+          "+964",
         );
         updateData.phone = sanitizedPhone;
       } catch (error: any) {
         toast.error(
           error?.message ||
-            "رقم الهاتف غير صحيح. يجب أن يبدأ بـ 7 ويتكون من 10 أرقام"
+            "رقم الهاتف غير صحيح. يجب أن يبدأ بـ 7 ويتكون من 10 أرقام",
         );
         return;
       }
@@ -129,7 +129,7 @@ const DetailsSettings = ({}: Props) => {
       onError: (error: any) => {
         toast.error(
           error?.response?.data?.message ||
-            "حدث خطأ أثناء حفظ الإعدادات. يرجى المحاولة مرة أخرى"
+            "حدث خطأ أثناء حفظ الإعدادات. يرجى المحاولة مرة أخرى",
         );
       },
     });
@@ -157,7 +157,7 @@ const DetailsSettings = ({}: Props) => {
               <button
                 type="button"
                 onClick={() => setLogoDialogOpen(true)}
-                className="relative group cursor-pointer"
+                className="relative group cursor-pointer min-w-20 min-h-20 bg-muted rounded-lg flex items-center justify-center"
               >
                 {storeDetails?.logo ? (
                   <img
@@ -169,7 +169,7 @@ const DetailsSettings = ({}: Props) => {
                     }}
                   />
                 ) : (
-                  <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center transition-opacity group-hover:opacity-80">
+                  <div className="min-w-20 min-h-20 bg-muted rounded-lg flex items-center justify-center transition-opacity group-hover:opacity-80">
                     <Store className="size-8 text-muted-foreground" />
                   </div>
                 )}
