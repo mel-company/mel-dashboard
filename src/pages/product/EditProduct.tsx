@@ -30,6 +30,7 @@ const EditProduct = ({}: Props) => {
   const [costToProduct, setCostToProduct] = useState("");
   const [image, setImage] = useState("");
   const [rate, setRate] = useState("");
+  // @ts-ignore
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
