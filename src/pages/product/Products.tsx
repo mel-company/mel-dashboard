@@ -76,6 +76,7 @@ const Products = () => {
   const imageBaseUrl = filterData?.pages?.[0]?.baseUrl ?? "";
   const publicUrl = import.meta.env.VITE_PUBLIC_URL ?? "";
 
+
   // Some API cursor responses return `baseUrl: ""` while `image` is relative,
   // but the product details endpoint returns full URLs.
   // Normalize to a working image URL for both cases.
