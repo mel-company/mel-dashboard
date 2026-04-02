@@ -114,7 +114,7 @@ type Category = {
 
 type Props = {};
 
-const POS = ({}: Props) => {
+const POS = ({ }: Props) => {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("orderId");
 
@@ -274,13 +274,13 @@ const POS = ({}: Props) => {
   const filteredProducts = isSearchMode
     ? products
     : products.filter((product) => {
-        if (!searchQuery.trim()) return true;
-        const q = searchQuery.toLowerCase();
-        return (
-          product.title?.toLowerCase().includes(q) ||
-          product.description?.toLowerCase().includes(q)
-        );
-      });
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        product.title?.toLowerCase().includes(q) ||
+        product.description?.toLowerCase().includes(q)
+      );
+    });
 
   // Find matching variant based on selected options using API
   const findMatchingVariant = useCallback(
@@ -334,7 +334,7 @@ const POS = ({}: Props) => {
         console.error("Error finding variant:", error);
         toast.error(
           error?.response?.data?.message ||
-            "فشل في العثور على المتغير. حاول مرة أخرى.",
+          "فشل في العثور على المتغير. حاول مرة أخرى.",
         );
         setFoundVariant(null);
         return null;
@@ -593,7 +593,7 @@ const POS = ({}: Props) => {
           onError: (error: any) => {
             toast.error(
               error?.response?.data?.message ||
-                "فشل في إضافة المنتجات إلى الطلب. حاول مرة أخرى.",
+              "فشل في إضافة المنتجات إلى الطلب. حاول مرة أخرى.",
             );
           },
         },
@@ -659,7 +659,7 @@ const POS = ({}: Props) => {
       onError: (error: any) => {
         toast.error(
           error?.response?.data?.message ||
-            "فشل في إنشاء الطلب. حاول مرة أخرى.",
+          "فشل في إنشاء الطلب. حاول مرة أخرى.",
         );
       },
     });
@@ -705,22 +705,22 @@ const POS = ({}: Props) => {
               </Badge>
               {isLoadingCategories
                 ? Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-8 w-24 rounded-full" />
-                  ))
+                  <Skeleton key={i} className="h-8 w-24 rounded-full" />
+                ))
                 : categories.map((category) => (
-                    <Badge
-                      key={category?.id}
-                      variant={
-                        selectedCategoryId === category.id
-                          ? "default"
-                          : "secondary"
-                      }
-                      className="cursor-pointer px-4 py-2 text-sm"
-                      onClick={() => setSelectedCategoryId(category?.id)}
-                    >
-                      {getCategoryName(category)}
-                    </Badge>
-                  ))}
+                  <Badge
+                    key={category?.id}
+                    variant={
+                      selectedCategoryId === category.id
+                        ? "default"
+                        : "secondary"
+                    }
+                    className="cursor-pointer px-4 py-2 text-sm"
+                    onClick={() => setSelectedCategoryId(category?.id)}
+                  >
+                    {getCategoryName(category)}
+                  </Badge>
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -863,9 +863,8 @@ const POS = ({}: Props) => {
                   const image = item.variant?.image ?? item.product.image;
                   return (
                     <div
-                      key={`${item.product.id}-${
-                        item.variant?.id ?? "default"
-                      }-${index}`}
+                      key={`${item.product.id}-${item.variant?.id ?? "default"
+                        }-${index}`}
                       className="border rounded-lg p-4 space-y-3"
                     >
                       <div className="flex items-start gap-3">
@@ -979,7 +978,7 @@ const POS = ({}: Props) => {
                   if (orderId) {
                     // If orderId exists, directly add products without showing dialog
                     handleCheckout({
-                      preventDefault: () => {},
+                      preventDefault: () => { },
                     } as React.FormEvent);
                   } else {
                     // Otherwise, show checkout dialog for new order
@@ -1095,7 +1094,7 @@ const POS = ({}: Props) => {
             </Button>
             <Button
               onClick={handleConfirmAddToCart}
-              //  disabled={!canAddToCart()}
+            //  disabled={!canAddToCart()}
             >
               إضافة للسلة
             </Button>
@@ -1364,13 +1363,12 @@ const POS = ({}: Props) => {
               />
               {showCouponValidation && (
                 <div
-                  className={`flex items-center gap-2 text-sm ${
-                    couponValid
+                  className={`flex items-center gap-2 text-sm ${couponValid
                       ? "text-green-600"
                       : couponValidateError || couponValidation?.valid === false
                         ? "text-destructive"
                         : "text-muted-foreground"
-                  }`}
+                    }`}
                 >
                   {isValidatingCoupon ? (
                     <>

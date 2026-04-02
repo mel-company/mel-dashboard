@@ -57,6 +57,17 @@ const AddProductToCategoryDialog = ({
   const products = data?.pages?.flatMap((p) => p.data ?? []) ?? [];
   const baseUrl = data?.pages?.[0]?.baseUrl ?? "";
 
+  // Some API responses return full URLs, others return relative paths.
+  // Avoid prefixing `baseUrl/` twice by detecting http(s) links.
+  const getImageUrl = (image?: string | null) => {
+    if (!image) return undefined;
+    if (image.startsWith("http://") || image.startsWith("https://")) {
+      return image;
+    }
+    if (!baseUrl) return image;
+    return `${baseUrl}/${image}`;
+  };
+
   // Infinite scroll: load more when sentinel enters viewport
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const loadMoreCallback = useCallback(() => {
@@ -190,7 +201,7 @@ const AddProductToCategoryDialog = ({
                     <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                       {product.image ? (
                         <img
-                          src={`${baseUrl}/${product.image}`}
+                          src={getImageUrl(product.image)}
                           alt={product.title}
                           className="w-full h-full object-cover"
                         />

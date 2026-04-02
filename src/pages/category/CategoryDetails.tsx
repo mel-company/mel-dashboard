@@ -67,6 +67,17 @@ const CategoryDetails = () => {
 
   const baseUrl = category?.baseUrl ?? "";
 
+  // Some API responses return full URLs, others return relative paths.
+  // Avoid prefixing `baseUrl/` twice by detecting http(s) links.
+  const getImageUrl = (image?: string | null) => {
+    if (!image) return undefined;
+    if (image.startsWith("http://") || image.startsWith("https://")) {
+      return image;
+    }
+    if (!baseUrl) return image;
+    return `${baseUrl}/${image}`;
+  };
+
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
   const handleDelete = () => {
@@ -238,7 +249,7 @@ const CategoryDetails = () => {
                           <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                             {product.product.image ? (
                               <img
-                                src={`${baseUrl}/${product.product.image}`}
+                                src={getImageUrl(product.product.image)}
                                 alt={product.product.title}
                                 className="w-full h-full object-cover"
                               />

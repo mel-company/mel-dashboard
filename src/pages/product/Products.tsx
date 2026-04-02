@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -73,6 +74,25 @@ const Products = () => {
   const products: ProductListItem[] =
     filterData?.pages.flatMap((p) => p.data) ?? [];
   const imageBaseUrl = filterData?.pages?.[0]?.baseUrl ?? "";
+  const publicUrl = import.meta.env.VITE_PUBLIC_URL ?? "";
+
+  // Some API cursor responses return `baseUrl: ""` while `image` is relative,
+  // but the product details endpoint returns full URLs.
+  // Normalize to a working image URL for both cases.
+  const getImageUrl = (image?: string | null) => {
+    if (!image) return undefined;
+    if (image.startsWith("http://") || image.startsWith("https://")) {
+      return image;
+    }
+
+    const base =
+      (imageBaseUrl && imageBaseUrl.trim()) || publicUrl.trim() || "";
+    if (!base) return image; // last resort: try as-is
+
+    const baseNormalized = base.replace(/\/+$/, "");
+    const imageNormalized = image.replace(/^\/+/, "");
+    return `${baseNormalized}/${imageNormalized}`;
+  };
 
   const hasActiveFilters =
     filters.categoryIds.length > 0 || filters.enabled !== undefined;
@@ -178,22 +198,22 @@ const Products = () => {
               primaryAction={
                 debouncedQuery || hasActiveFilters
                   ? {
-                      label: "مسح البحث والتصفية",
-                      onClick: () => {
-                        setSearchQuery("");
-                        setFilters({
-                          categoryIds: [],
-                          enabled: undefined,
-                        });
-                      },
-                      icon: <X className="size-4" />,
-                      variant: "secondary",
-                    }
+                    label: "مسح البحث والتصفية",
+                    onClick: () => {
+                      setSearchQuery("");
+                      setFilters({
+                        categoryIds: [],
+                        enabled: undefined,
+                      });
+                    },
+                    icon: <X className="size-4" />,
+                    variant: "secondary",
+                  }
                   : {
-                      label: "إضافة منتج",
-                      onClick: () => navigate("/products/add"),
-                      icon: <Plus className="size-4" />,
-                    }
+                    label: "إضافة منتج",
+                    onClick: () => navigate("/products/add"),
+                    icon: <Plus className="size-4" />,
+                  }
               }
             />
           </div>
@@ -206,7 +226,7 @@ const Products = () => {
                     <div className="relative h-40 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
                       {product.image ? (
                         <img
-                          src={`${imageBaseUrl}/${product.image}`}
+                          src={getImageUrl(product.image)}
                           alt={product.title}
                           className="h-full w-full object-contain transition-transform"
                         />
