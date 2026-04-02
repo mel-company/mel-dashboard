@@ -20,13 +20,12 @@ import {
   Plus,
   Eye,
   Trash2,
-  Search,
   Sparkles,
   CheckCircle,
   Circle,
   ExternalLink,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import TemplateGalleryDialog from "./TemplateGalleryDialog";
 import { cn } from "@/lib/utils";
 import { useValidateUserToEditor } from "@/api/wrappers/auth.wrappers";
 import { toast } from "sonner";
@@ -79,47 +78,6 @@ const libraryTemplates: WebsiteTemplate[] = [
   },
 ];
 
-// All available templates (marketplace - some in library, some not)
-const marketplaceTemplates: WebsiteTemplate[] = [
-  ...libraryTemplates,
-  {
-    id: "t4",
-    name: "المتجر الحيوي",
-    description: "ألوان زاهية وتصميم جذاب للشباب",
-    thumbnail: "",
-    gradient: "from-emerald-500 to-teal-600",
-    isFree: true,
-    inLibrary: false,
-  },
-  {
-    id: "t5",
-    name: "المتجر الاحترافي",
-    description: "تصميم احترافي مع إحصائيات وعروض مميزة",
-    thumbnail: "",
-    gradient: "from-indigo-500 to-violet-600",
-    isFree: false,
-    priceIqd: 35000,
-    inLibrary: false,
-  },
-  {
-    id: "t6",
-    name: "المتجر الريادي",
-    description: "تصميم مبتكر مع تأثيرات بصرية حديثة",
-    thumbnail: "",
-    gradient: "from-cyan-500 to-blue-600",
-    isFree: false,
-    priceIqd: 45000,
-    inLibrary: false,
-  },
-];
-
-const formatIqd = (amount: number) => {
-  return new Intl.NumberFormat("ar-IQ", {
-    style: "decimal",
-    minimumFractionDigits: 0,
-  }).format(amount);
-};
-
 type Props = {};
 
 const WebsiteSettings = ({}: Props) => {
@@ -127,15 +85,7 @@ const WebsiteSettings = ({}: Props) => {
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(
     null,
   );
-  const [searchQuery, setSearchQuery] = useState("");
   const [library, setLibrary] = useState<WebsiteTemplate[]>(libraryTemplates);
-
-  const filteredMarketplace = marketplaceTemplates.filter((t) => {
-    const matchesSearch =
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
 
   const handleAddToLibrary = (template: WebsiteTemplate) => {
     if (!library.some((t) => t.id === template.id)) {
@@ -158,8 +108,6 @@ const WebsiteSettings = ({}: Props) => {
       })),
     );
   };
-
-  const isInLibrary = (id: string) => library.some((t) => t.id === id);
 
   const { mutate: validateUserToEditor } = useValidateUserToEditor();
 
@@ -317,100 +265,13 @@ const WebsiteSettings = ({}: Props) => {
         </CardContent>
       </Card>
 
-      {/* Add Templates Dialog */}
-      <Dialog open={addTemplatesOpen} onOpenChange={setAddTemplatesOpen}>
-        <DialogContent className="sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-right">
-              إضافة قوالب للمكتبة
-            </DialogTitle>
-            <DialogDescription className="text-right">
-              تصفح القوالب المتاحة وأضف ما يناسبك. بعض القوالب مجانية وبعضها
-              مدفوع.
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="ابحث عن قالب..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
-              dir="rtl"
-            />
-          </div>
-
-          {/* Templates Grid */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar -mx-1 px-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
-              {filteredMarketplace.map((template) => {
-                const added = isInLibrary(template.id);
-                return (
-                  <Card
-                    key={template.id}
-                    className={cn(
-                      "overflow-hidden transition-all",
-                      "hover:shadow-md border-border",
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "h-28 w-full bg-linear-to-br flex items-center justify-center",
-                        template.gradient,
-                      )}
-                    >
-                      <Layout className="size-10 text-white/80" />
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <h4 className="font-semibold text-sm">
-                          {template.name}
-                        </h4>
-                        {template.isFree ? (
-                          <Badge variant="secondary" className="text-xs">
-                            مجاني
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">
-                            {formatIqd(template.priceIqd!)} د.ع
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                        {template.description}
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => setPreviewTemplateId(template.id)}
-                        >
-                          <Eye className="size-3.5 ml-1" />
-                          معاينة
-                        </Button>
-                        <Button
-                          variant={added ? "secondary" : "default"}
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleAddToLibrary(template)}
-                          disabled={added}
-                        >
-                          <Plus className="size-3.5 ml-1" />
-                          {added ? "مضاف" : "إضافة"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TemplateGalleryDialog
+        open={addTemplatesOpen}
+        onOpenChange={setAddTemplatesOpen}
+        library={library}
+        onAddToLibrary={handleAddToLibrary}
+        onPreview={setPreviewTemplateId}
+      />
 
       {/* Preview Dialog (placeholder - design only) */}
       <Dialog
