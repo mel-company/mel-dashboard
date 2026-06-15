@@ -7,11 +7,10 @@ const parsed = parse(window.location.hostname);
 
 // const subdomain = getSubdomain(window.location.hostname);
 
-// In dev, always use proxy (same-origin) to avoid CORS with subdomains (fashion.localhost, tech.localhost)
-// const baseURL = import.meta.env.DEV
-//   ? "/api/v1"
-//   : import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
-const baseURL = "/api/v1";
+// In dev, use Vite proxy (/api/v1 → api.mel.iq) to avoid CORS
+const baseURL = import.meta.env.DEV
+  ? "/api/v1"
+  : import.meta.env.VITE_API_BASE_URL || "https://api.mel.iq/api/v1";
 
 const axiosInstance = axios.create({
   baseURL,

@@ -14,8 +14,9 @@ export default defineConfig({
   server: {
     proxy: {
       "/api/v1": {
-        target: "http://localhost:3000",
+        target: "https://api.mel.iq",
         changeOrigin: true,
+        secure: true,
       },
     },
   },
