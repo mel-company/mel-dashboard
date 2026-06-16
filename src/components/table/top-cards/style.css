@@ -25,11 +25,11 @@
 }
 
 .value {
-    @apply text-2xl font-black;
+    @apply text-2xl font-black flex items-end gap-1;
 }
 
 .growth {
-    @apply text-base text-green-500 flex items-center gap-0.5;
+    @apply text-base text-teal-500 flex items-center gap-0.5 font-normal;
 }
 
 
