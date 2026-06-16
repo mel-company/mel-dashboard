@@ -1,0 +1,54 @@
+@reference "../../../index.css";
+
+.card {
+    @apply relative rounded-2xl flex items-center gap-4 p-4;
+}
+
+.base-card {
+    @apply bg-white/70 border-4 border-white;
+}
+
+.orange-card {
+    @apply bg-linear-to-tr from-[#FF0808] to-[#FF6F08] text-white;
+}
+
+.yellow-card {
+    @apply bg-linear-to-tr from-[#F58300] to-[#EE9D41] text-white;
+}
+
+.primary-card {
+    @apply bg-linear-to-tr from-[#00BFFF] to-[#B657FF] text-white;
+}
+
+.title {
+    @apply text-base font-bold;
+}
+
+.value {
+    @apply text-2xl font-black;
+}
+
+.growth {
+    @apply text-base text-green-500 flex items-center gap-0.5;
+}
+
+
+.accent-card {
+    @apply bg-purple-50 text-purple-600
+}
+
+.warning-card {
+    @apply bg-amber-50 text-amber-600
+}
+
+.danger-card {
+    @apply bg-rose-50 text-rose-600
+}
+
+.success-card {
+    @apply bg-green-50 text-green-600
+}
+
+.default-card {
+    @apply bg-cyan-50 text-cyan-600
+}

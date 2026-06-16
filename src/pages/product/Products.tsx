@@ -59,6 +59,8 @@ import ProductsSkeleton from "./ProductsSkeleton";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { BaseCard, FeaturedCard } from "@/components/table/top-cards";
+import { PackageIcon, RemoteControlBulkRounded } from "@hugeicons-pro/core-bulk-rounded";
 
 const CURSOR_LIMIT = 10;
 
@@ -168,6 +170,10 @@ const Products = () => {
   const publicUrl = import.meta.env.VITE_PUBLIC_URL ?? "";
 
   const getImageUrl = (image?: string | null) => {
+    const defaultImage = "https://imgs.search.brave.com/kkLO9GerXj9XfoUWeX5bKPjdeLdnQpzFoh-TOFjz1rA/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMzYv/MDQ5LzExNC9zbWFs/bC9haS1nZW5lcmF0/ZWQtaXNvbGF0ZWQt/Y2hhcmdlci1jdXRv/dXQtb2JqZWN0LW9u/LXRyYW5zcGFyZW50/LWJhY2tncm91bmQt/ZmlsZS1wbmcucG5n"
+    return defaultImage;
+
+    console.log("image: ", image);
     if (!image) return undefined;
     if (image.startsWith("http://") || image.startsWith("https://")) {
       return image;
@@ -646,19 +652,19 @@ const Products = () => {
           primaryAction={
             debouncedQuery || hasActiveFilters
               ? {
-                  label: "مسح البحث والتصفية",
-                  onClick: () => {
-                    setSearchQuery("");
-                    setFilters({ categoryIds: [], enabled: undefined });
-                  },
-                  icon: <X className="size-4" />,
-                  variant: "secondary",
-                }
+                label: "مسح البحث والتصفية",
+                onClick: () => {
+                  setSearchQuery("");
+                  setFilters({ categoryIds: [], enabled: undefined });
+                },
+                icon: <X className="size-4" />,
+                variant: "secondary",
+              }
               : {
-                  label: "إضافة منتج",
-                  onClick: () => navigate("/products/add"),
-                  icon: <Plus className="size-4" />,
-                }
+                label: "إضافة منتج",
+                onClick: () => navigate("/products/add"),
+                icon: <Plus className="size-4" />,
+              }
           }
         />
       ) : viewMode === "table" ? (

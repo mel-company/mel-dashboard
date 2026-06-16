@@ -47,9 +47,10 @@ export const useFetchProducts = (
   });
 };
 
-/**
+/*
  * Fetch all products with cursor pagination (infinite scroll)
  */
+
 export const useFetchProductsCursor = (
   params?: {
     limit?: number;
@@ -143,6 +144,7 @@ export const useFetchProductsSearchCursor = (
  * Filter and/or search products with cursor pagination (infinite scroll).
  * Supports: categoryIds, enabled. When filters are applied, search runs within filtered data.
  */
+
 export const useFilterProductsCursor = (
   params?: {
     query?: string | null;
@@ -183,10 +185,10 @@ function normalizeProductStats(data: any): ProductStatsSummary {
   return {
     totalValue: Number(
       data?.totalValue ??
-        data?.totalProductsValue ??
-        data?.totalPrice ??
-        data?.productsTotalPrice ??
-        0,
+      data?.totalProductsValue ??
+      data?.totalPrice ??
+      data?.productsTotalPrice ??
+      0,
     ),
     totalProducts: Number(
       data?.totalProducts ?? data?.products ?? data?.productsCount ?? 0,
