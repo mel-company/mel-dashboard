@@ -39,8 +39,159 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: "Graphik Arabic";
+  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Thin.otf") format("opentype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Graphik Arabic";
+  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic ExtraLight.otf") format("opentype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Graphik Arabic";
+  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Graphik Arabic";
+  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Graphik Arabic";
+  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Graphik Arabic";
+  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic SemiBold.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Graphik Arabic";
+  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Graphik Arabic";
+  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Super.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Graphik Arabic";
+  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Setar XS";
+  src: url("/fonts/Setar XS/SetarXSTrial-Hairline.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Setar XS";
+  src: url("/fonts/Setar XS/SetarXSTrial-Thin.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Setar XS";
+  src: url("/fonts/Setar XS/SetarXSTrial-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Setar XS";
+  src: url("/fonts/Setar XS/SetarXSTrial-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Setar XS";
+  src: url("/fonts/Setar XS/SetarXSTrial-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Setar XS";
+  src: url("/fonts/Setar XS/SetarXSTrial-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Setar XS";
+  src: url("/fonts/Setar XS/SetarXSTrial-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Setar XS";
+  src: url("/fonts/Setar XS/SetarXSTrial-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Setar XS";
+  src: url("/fonts/Setar XS/SetarXSTrial-Heavy.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 * {
   font-family: var(--font-family);
+}
+
+p,
+span,
+div,
+body {
+  font-family: var(--font-family-body);
 }
 
 html {
@@ -94,6 +245,7 @@ html {
 }
 
 @custom-variant dark (&:is(.dark *));
+
 :root {
   font-family: cairo, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -105,10 +257,11 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --font-family: "ABC Diatype Arabic", "Cairo", sans-serif;
-  --font-family-arabic: "ABC Diatype Arabic", "Cairo", sans-serif;
+  --font-family: "Graphik Arabic", "ABC Diatype Arabic", "Cairo", sans-serif;
+  --font-family-arabic: "Graphik Arabic", "ABC Diatype Arabic", "Cairo", sans-serif;
+  --font-family-body: "Setar XS", "Graphik Arabic", "ABC Diatype Arabic", "Cairo", sans-serif;
   /* --font-family-english: "Inter", system-ui, -apple-system, BlinkMacSystemFont, */
-  --font-family-english:  system-ui, -apple-system, BlinkMacSystemFont,
+  --font-family-english: system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -230,6 +383,7 @@ html {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
