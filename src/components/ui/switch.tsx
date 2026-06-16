@@ -5,14 +5,14 @@ import { cn } from "@/lib/utils";
 
 interface SwitchProps
   extends React.ComponentProps<typeof SwitchPrimitive.Root> {
-  activeText?: string;
-  disabledText?: string;
+  activeLabel?: string;
+  disabledLabel?: string;
 }
 
 function Switch({
   className,
-  activeText,
-  disabledText,
+  activeLabel,
+  disabledLabel,
   checked,
   ...props
 }: SwitchProps) {
@@ -46,9 +46,9 @@ function Switch({
     </SwitchPrimitive.Root>
   );
 
-  if (!activeText && !disabledText) return switchNode;
+  if (!activeLabel && !disabledLabel) return switchNode;
 
-  const labelText = checked ? activeText : disabledText;
+  const labelText = checked ? activeLabel : disabledLabel;
 
   return (
     <label
