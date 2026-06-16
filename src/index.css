@@ -3,6 +3,22 @@
 /* @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"); */
 
 @font-face {
+  font-family: "ABC Diatype Arabic";
+  src: url("./assets/fonts/ABCDiatypeArabic-Regular-Trial.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ABC Diatype Arabic";
+  src: url("./assets/fonts/ABCDiatypeArabic-Bold-Trial.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Cairo";
   src: url("./assets/fonts/Cairo-Regular.ttf") format("truetype");
   font-weight: 400;
@@ -89,8 +105,8 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --font-family: "Cairo", sans-serif;
-  --font-family-arabic: "Cairo", sans-serif;
+  --font-family: "ABC Diatype Arabic", "Cairo", sans-serif;
+  --font-family-arabic: "ABC Diatype Arabic", "Cairo", sans-serif;
   /* --font-family-english: "Inter", system-ui, -apple-system, BlinkMacSystemFont, */
   --font-family-english:  system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -171,6 +187,8 @@ html {
   /* Custom Colors */
   --color-cyan: var(--cyan);
   --color-dark-blue: var(--dark-blue);
+
+  --font-diatype: "ABC Diatype Arabic", "Cairo", sans-serif;
 }
 
 .dark {
@@ -214,6 +232,23 @@ html {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .page-title {
+    font-family: var(--font-diatype);
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 100%;
+    letter-spacing: 0;
+    text-align: right;
+  }
+
+  .total-value-card {
+    border-radius: 2.5rem;
+    background: linear-gradient(90deg, #00aeef 0%, #9139c4 100%);
+    box-shadow: 0 8px 24px rgb(145 57 196 / 25%);
   }
 }
 

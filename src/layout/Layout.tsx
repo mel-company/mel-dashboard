@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AppsGrid from "@/components/AppsGrid";
 import QuickNavigate from "@/components/QuickNavigate";
+import AppSidebar from "@/components/AppSidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,15 +12,15 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import TopBar from "@/components/TopBar";
+import { cn } from "@/lib/utils";
 
 const Layout = () => {
   const location = useLocation();
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Show apps grid if on home page
   const isHomePage = location.pathname === "/";
   const shouldShowApps = isHomePage;
+  const hideSidebar = location.pathname === "/pos";
 
   const breadcrumbItems = useMemo(() => {
     const labels: Record<string, string> = {
@@ -33,7 +34,6 @@ const Layout = () => {
       profile: "الملف الشخصي",
       settings: "الإعدادات",
       "app-store": "متجر التطبيقات",
-      // accounting: "المحاسبة",
       stats: "إحصائيات المتجر",
       add: "إضافة",
       new: "إضافة",
@@ -71,36 +71,27 @@ const Layout = () => {
       "category-group": "تفاصيل المجموعة",
     };
 
-    const path = location.pathname;
-    const segments = path.split("/").filter(Boolean);
-
+    const segments = location.pathname.split("/").filter(Boolean);
     const items: { href: string; label: string; current: boolean }[] = [];
-
-    // ثم كل جزء من المسار بشكل تراكمي
     let currentPath = "";
+
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`;
       const isLast = index === segments.length - 1;
-
       const key = segment.toLowerCase();
       let mapped = labels[key];
 
-      // لو الجزء الحالي شكله UUID (معايير UUID v4 أو v1)، نستخدم اسم تفصيلي حسب الجزء السابق
       const looksLikeUuid =
         /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(
           segment,
         );
       if (!mapped && looksLikeUuid && index > 0) {
-        const parentKey = segments[index - 1].toLowerCase();
-        mapped = detailLabels[parentKey];
+        mapped = detailLabels[segments[index - 1].toLowerCase()];
       }
-
-      // لو ماكو ترجمة معروفة ولا هو ID معروف، نعرض النص نفسه بعد decode
-      const label = mapped ?? decodeURIComponent(segment);
 
       items.push({
         href: currentPath,
-        label,
+        label: mapped ?? decodeURIComponent(segment),
         current: isLast,
       });
     });
@@ -108,79 +99,77 @@ const Layout = () => {
     return items;
   }, [location.pathname]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setIsNotificationOpen(false);
-      }
-    };
-
-    if (isNotificationOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isNotificationOpen]);
-
   return (
-    <div className="flex flex-col hscreen wscreen overflow-hidden bg-background">
-      <TopBar />
-      <QuickNavigate />
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f4f7fb] dark:bg-background">
+      {/* Mobile sidebar overlay */}
+      {!hideSidebar && mobileSidebarOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          aria-label="إغلاق القائمة"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
 
-      {/* Content Area */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden w-full custom-scrollbar hide-scrollbar mt-2 rounded-lg">
-        {/* Global Breadcrumb - top, aligned to the right */}
-        {location.pathname !== "/pos" && location.pathname && (
-          <div
-            className={`${
-              location.pathname.includes("settings")
-                ? "pr-16 pl-4 sm:pr-20 sm:pl-6 lg:pr-8 lg:pl-8"
-                : "pr-4 pl-4 sm:pr-6 sm:pl-6 lg:pr-8 lg:pl-8"
-            } pt-2`}
-          >
-            <Breadcrumb className="justify-start">
-              <BreadcrumbList>
-                {breadcrumbItems.map((item, index) => (
-                  <BreadcrumbItem key={item.href + item.label}>
-                    {index > 0 && <BreadcrumbSeparator />}
-                    {item.current ? (
-                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink href={item.href}>
-                        {item.label}
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                ))}
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        )}
+      {!hideSidebar && (
+        <AppSidebar
+          className={cn(
+            "fixed inset-y-0 right-0 z-50 lg:relative lg:z-auto",
+            mobileSidebarOpen ? "flex" : "hidden lg:flex",
+          )}
+          onNavigate={() => setMobileSidebarOpen(false)}
+        />
+      )}
 
-        {shouldShowApps ? (
-          <div className="h-full w-full p-4 sm:p-6 lg:p-8">
-            <AppsGrid />
-          </div>
-        ) : (
-          <main>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <TopBar onMenuClick={() => setMobileSidebarOpen(true)} hideSidebar={hideSidebar} />
+        <QuickNavigate />
+
+        <main className="custom-scrollbar flex-1 overflow-x-hidden overflow-y-auto">
+          {!hideSidebar && location.pathname && (
             <div
-              className={`hfull w-full ${
-                location.pathname === "/pos" ? "pb-0" : "p-4 sm:p-6 lg:p-8 "
-              }`}
+              className={cn(
+                "px-4 pt-2 sm:px-6 lg:px-8",
+                location.pathname.includes("settings") && "lg:pr-8",
+              )}
+            >
+              <Breadcrumb className="justify-start">
+                <BreadcrumbList>
+                  {breadcrumbItems.map((item, index) => (
+                    <BreadcrumbItem key={item.href + item.label}>
+                      {index > 0 && <BreadcrumbSeparator />}
+                      {item.current ? (
+                        <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink href={item.href}>
+                          {item.label}
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  ))}
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          )}
+
+          {shouldShowApps ? (
+            <div className="h-full w-full p-4 sm:p-6 lg:p-8">
+              <AppsGrid />
+            </div>
+          ) : (
+            <div
+              className={cn(
+                "w-full",
+                hideSidebar ? "p-0" : "p-4 sm:p-6 lg:p-8",
+              )}
             >
               <Outlet />
-              <footer className="h-full w-full justify-center items-center bg-red-50 " />
             </div>
-          </main>
-        )}
-      </main>
+          )}
+        </main>
+      </div>
     </div>
   );
 };
+
 export default Layout;

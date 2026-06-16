@@ -229,6 +229,14 @@ export const productAPI = {
   },
 
   /**
+   * Get product summary stats for dashboard cards
+   */
+  getStats: async (): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/product/stats");
+    return data;
+  },
+
+  /**
    * Delete a product (soft delete)
    */
   delete: async (id: string): Promise<any> => {

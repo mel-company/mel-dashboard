@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "./ui/button";
 import {
   ArrowLeft,
@@ -7,6 +7,7 @@ import {
   Clock,
   Grid3x3,
   LogOut,
+  Menu,
   User,
 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
@@ -34,10 +35,14 @@ import {
   useUpdateNotificationReadStatus,
 } from "@/api/wrappers/notification.wrappers";
 
-type Props = {};
+type Props = {
+  onMenuClick?: () => void;
+  hideSidebar?: boolean;
+};
 
-const TopBar = ({}: Props) => {
+const TopBar = ({ onMenuClick, hideSidebar }: Props) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -107,13 +112,24 @@ const TopBar = ({}: Props) => {
       <header className="grid grid-cols-3 py-3  border-b border-border bg-background px-4 sm:px-6 shadow-sm">
         {/* Left Side - Apps Button */}
         <div className="flex justify-start items-center gap-3">
+          {!hideSidebar && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={onMenuClick}
+              aria-label="فتح القائمة"
+            >
+              <Menu className="size-5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate("/")}
             className={cn(
-              "flex items-center gap-2",
-              shouldShowApps && "bg-accent"
+              "hidden items-center gap-2 lg:flex",
+              shouldShowApps && "bg-accent",
             )}
           >
             <Grid3x3 className="w-4 h-4" />

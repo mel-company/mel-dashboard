@@ -21,6 +21,7 @@ export const productKeys = {
     enabled?: boolean;
     limit?: number;
   }) => [...productKeys.all, "filter-cursor", params] as const,
+  stats: () => [...productKeys.all, "stats"] as const,
   byStoreDomainCursor: (domain: string, params?: { categoryId?: string; limit?: number }) =>
     [...productKeys.all, "by-store-domain-cursor", domain, params] as const,
   details: () => [...productKeys.all, "detail"] as const,
@@ -161,6 +162,54 @@ export const useFilterProductsCursor = (
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as string | null | undefined,
+  });
+};
+
+export type ProductStatsSummary = {
+  totalValue: number;
+  totalProducts: number;
+  newProducts: number;
+  lowStock: number;
+  outOfStock: number;
+  trends?: {
+    totalProducts?: number;
+    newProducts?: number;
+    lowStock?: number;
+    outOfStock?: number;
+  };
+};
+
+function normalizeProductStats(data: any): ProductStatsSummary {
+  return {
+    totalValue: Number(
+      data?.totalValue ??
+        data?.totalProductsValue ??
+        data?.totalPrice ??
+        data?.productsTotalPrice ??
+        0,
+    ),
+    totalProducts: Number(
+      data?.totalProducts ?? data?.products ?? data?.productsCount ?? 0,
+    ),
+    newProducts: Number(
+      data?.newProducts ?? data?.newAdditions ?? data?.newProductsCount ?? 0,
+    ),
+    lowStock: Number(
+      data?.lowStock ?? data?.nearOutOfStock ?? data?.almostOutOfStock ?? 0,
+    ),
+    outOfStock: Number(data?.outOfStock ?? data?.outOfStockCount ?? 0),
+    trends: data?.trends,
+  };
+}
+
+/** Product dashboard summary (GET /product/stats) */
+export const useFetchProductStats = (enabled = true) => {
+  return useQuery({
+    queryKey: productKeys.stats(),
+    queryFn: async () =>
+      normalizeProductStats(await productAPI.getStats()),
+    enabled,
+    staleTime: 60_000,
   });
 };
 
