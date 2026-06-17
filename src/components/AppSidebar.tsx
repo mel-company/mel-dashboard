@@ -6,6 +6,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import { useMe } from "@/api/wrappers/auth.wrappers";
 import melLogo from "@/assets/imgs/logo/mel-logo.svg";
@@ -31,7 +32,7 @@ function NavLink({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
-  const Icon = item.icon;
+  const icon = active ? item.icon.active : item.icon.normal;
 
   return (
     <Link
@@ -39,19 +40,16 @@ function NavLink({
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors",
+        "flex items-center gap-2 rounded-lg px-3 py-2.5 transition-colors",
         active
-          ? "bg-[#00b7ff] text-white shadow-sm"
-          : "text-[#475569] hover:bg-muted/60 dark:text-muted-foreground",
+          ? "bg-sky-500 text-white shadow-sm"
+          : "text-sky-900 hover:bg-muted/60 dark:text-muted-foreground",
         collapsed && "justify-center px-2",
       )}
     >
-      <Icon
-        className={cn("size-5 shrink-0", active ? "text-white" : "text-current")}
-        strokeWidth={1.75}
-      />
+      <HugeiconsIcon icon={icon} className="size-6.5 shrink-0" />
       {!collapsed && (
-        <span className="flex-1 text-right text-sm font-medium">{item.label}</span>
+        <span className="flex-1 text-right text-base font-medium">{item.label}</span>
       )}
     </Link>
   );
@@ -110,11 +108,11 @@ const AppSidebar = ({ className, onNavigate }: AppSidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-2 custom-scrollbar">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-2 custom-scrollbar">
         {sidebarSections.map((section) => (
           <div key={section.title}>
             {!collapsed && (
-              <p className="mb-1.5 px-2 text-right text-[11px] font-medium text-muted-foreground/80">
+              <p className="mb-1.5 px-2 text-right text-sm text-slate-500/80 dark:text-slate-400 font-normal">
                 {section.title}
               </p>
             )}

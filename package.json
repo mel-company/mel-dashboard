@@ -12,6 +12,7 @@
   "dependencies": {
     "@hugeicons-pro/core-bulk-rounded": "^4.2.0",
     "@hugeicons-pro/core-duotone-rounded": "^4.2.0",
+    "@hugeicons-pro/core-solid-rounded": "^4.2.0",
     "@hugeicons-pro/core-stroke-rounded": "^4.2.0",
     "@hugeicons-pro/core-stroke-standard": "^4.2.0",
     "@hugeicons-pro/core-twotone-rounded": "^4.2.0",
