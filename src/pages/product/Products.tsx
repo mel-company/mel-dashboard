@@ -62,6 +62,8 @@ import { toast } from "sonner";
 import { BaseCard, FeaturedCard } from "@/components/table/top-cards";
 import { PackageIcon, RemoteControlBulkRounded } from "@hugeicons-pro/core-bulk-rounded";
 import Pagination from "@/components/table/pagination";
+import SwitchTab from "@/components/table/switch-tab";
+import { GridViewIcon, LayoutTable01Icon } from "@hugeicons-pro/core-stroke-standard";
 
 const CURSOR_LIMIT = 10;
 
@@ -295,7 +297,7 @@ const Products = () => {
 
   const renderProductTable = () => (
     <Card className="overflow-hidden py-0">
-      <Pagination totalPages={10} activePage={1} viewCount={10} onPageChange={() => { }} onViewCountChange={() => { }} />
+
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40 hover:bg-muted/40">
