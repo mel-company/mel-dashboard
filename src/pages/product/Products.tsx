@@ -64,6 +64,8 @@ import { PackageIcon, RemoteControlBulkRounded } from "@hugeicons-pro/core-bulk-
 import Pagination from "@/components/table/pagination";
 import SwitchTab from "@/components/table/switch-tab";
 import { GridViewIcon, LayoutTable01Icon } from "@hugeicons-pro/core-stroke-standard";
+import { Searchbar } from "@/components/table/header/searchbar";
+import PageTableHeader from "@/components/table/header";
 
 const CURSOR_LIMIT = 10;
 
@@ -297,7 +299,6 @@ const Products = () => {
 
   const renderProductTable = () => (
     <Card className="overflow-hidden py-0">
-
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40 hover:bg-muted/40">
