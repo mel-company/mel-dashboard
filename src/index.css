@@ -4,7 +4,23 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("./assets/fonts/ABCDiatypeArabic-Regular-Trial.otf") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-THIN-TRIAL.OTF") format("opentype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ABC Diatype Arabic";
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-LIGHT-TRIAL.OTF") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ABC Diatype Arabic";
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-REGULAR-TRIAL.OTF") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -12,104 +28,44 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("./assets/fonts/ABCDiatypeArabic-Bold-Trial.otf") format("opentype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Cairo";
-  src: url("./assets/fonts/Cairo-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Cairo";
-  src: url("./assets/fonts/Cairo-Medium.ttf") format("truetype");
-  font-weight: 600;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Cairo";
-  src: url("./assets/fonts/Cairo-Bold.ttf") format("truetype");
-  font-weight: 800;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Graphik Arabic";
-  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Thin.otf") format("opentype");
-  font-weight: 100;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Graphik Arabic";
-  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic ExtraLight.otf") format("opentype");
-  font-weight: 200;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Graphik Arabic";
-  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Light.otf") format("opentype");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Graphik Arabic";
-  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Graphik Arabic";
-  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Medium.otf") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-MEDIUM-TRIAL.OTF") format("opentype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Graphik Arabic";
-  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic SemiBold.otf") format("opentype");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Graphik Arabic";
-  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Bold.otf") format("opentype");
+  font-family: "ABC Diatype Arabic";
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-BOLD-TRIAL.OTF") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Graphik Arabic";
-  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Super.otf") format("opentype");
+  font-family: "ABC Diatype Arabic";
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-HEAVY-TRIAL.OTF") format("opentype");
   font-weight: 800;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Graphik Arabic";
-  src: url("/fonts/Graphik-Arabic-Font/Graphik Arabic Black.otf") format("opentype");
+  font-family: "ABC Diatype Arabic";
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-BLACK-TRIAL.OTF") format("opentype");
   font-weight: 900;
   font-style: normal;
   font-display: swap;
 }
+
+@font-face {
+  font-family: "ABC Diatype Arabic";
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-ULTRA-TRIAL.OTF") format("opentype");
+  font-weight: 950;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 @font-face {
   font-family: "Setar XS";
@@ -194,6 +150,16 @@ body {
   font-family: var(--font-family-body);
 }
 
+table,
+thead,
+tbody,
+tfoot,
+tr,
+th,
+td {
+  font-family: var(--font-family-table);
+}
+
 html {
   scroll-behavior: smooth;
   direction: rtl;
@@ -247,7 +213,7 @@ html {
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  font-family: cairo, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "ABC Diatype Arabic", system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -257,15 +223,16 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --font-family: "Graphik Arabic", "ABC Diatype Arabic", "Cairo", sans-serif;
-  --font-family-arabic: "Graphik Arabic", "ABC Diatype Arabic", "Cairo", sans-serif;
-  --font-family-body: "Setar XS", "Graphik Arabic", "ABC Diatype Arabic", "Cairo", sans-serif;
+  --font-family: "ABC Diatype Arabic", sans-serif;
+  --font-family-arabic: "ABC Diatype Arabic", sans-serif;
+  --font-family-body: "ABC Diatype Arabic", sans-serif;
+  --font-family-table: "Setar XS", "ABC Diatype Arabic", sans-serif;
   /* --font-family-english: "Inter", system-ui, -apple-system, BlinkMacSystemFont, */
   --font-family-english: system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --foreground: oklch(14.479% 0.00002 271.152);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -341,7 +308,7 @@ html {
   --color-cyan: var(--cyan);
   --color-dark-blue: var(--dark-blue);
 
-  --font-diatype: "ABC Diatype Arabic", "Cairo", sans-serif;
+  --font-diatype: "ABC Diatype Arabic", sans-serif;
 }
 
 .dark {

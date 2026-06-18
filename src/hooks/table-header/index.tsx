@@ -1,70 +1,61 @@
-import type { PageType } from '@/types/pages';
 import { useEffect, useRef, useState } from 'react'
 
-const useTableHeader = ({ page }: { page: PageType }) => {
-    const [loading, setLoading] = useState(false);
-    const [search, setSearchValue] = useState('');
-    const [filter, setFilter] = useState('');
-    const [data, setData] = useState(
-        {
-            records: 0,
-            pages: 0,
-            current: 1,
-        }
-    )
+export interface UseTableHeaderParams {
+    onSearchChange?: (search: string) => void;
+    onFilterChange?: (filters: Record<string, any>) => void;
+    initialSearch?: string;
+    initialFilters?: Record<string, any>;
+}
 
-    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+export interface UseTableHeaderReturn {
+    search: string;
+    setSearchValue: (value: string) => void;
+    filters: Record<string, any>;
+    setFilters: (filters: Record<string, any>) => void;
+    loading: boolean;
+    debouncedSearch: string;
+}
+
+const useTableHeader = ({
+    onSearchChange,
+    onFilterChange,
+    initialSearch = '',
+    initialFilters = {},
+}: UseTableHeaderParams): UseTableHeaderReturn => {
+    const [search, setSearchValue] = useState(initialSearch);
+    const [filters, setFilters] = useState<Record<string, any>>(initialFilters);
+    const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current)
+            clearTimeout(timeoutRef.current);
         }
 
-        timeoutRef.current = setTimeout(async () => {
-            setLoading(true)
-            const result = await handleSearch({ page, search, filter })
-            if (result) setData(result)
-            setLoading(false)
-        }, 300)
+        timeoutRef.current = setTimeout(() => {
+            setDebouncedSearch(search);
+            onSearchChange?.(search);
+        }, 300);
 
         return () => {
             if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current)
+                clearTimeout(timeoutRef.current);
             }
-        }
-    }, [search, filter, page])
+        };
+    }, [search, onSearchChange]);
 
+    useEffect(() => {
+        onFilterChange?.(filters);
+    }, [filters, onFilterChange]);
 
     return {
         search,
         setSearchValue,
-        filter,
-        setFilter,
-        data,
-        loading,
-    }
-}
+        filters,
+        setFilters,
+        loading: false,
+        debouncedSearch,
+    };
+};
 
-export default useTableHeader
-
-const queryEndpoints: Record<PageType, string> = {
-    coupons: "/coupons",
-    products: "/products",
-}
-
-
-const handleSearch = async ({ page, search, filter }: { page: PageType; search: string; filter: string }) => {
-    const base_url = import.meta.env.VITE_API_URL;
-    const endpoint = queryEndpoints[page];
-    const path = `${endpoint}?query=${search}&filter=${filter}`;
-
-    try {
-        const response = await fetch(`${base_url}${path}`)
-        const data = await response.json()
-        return data
-    }
-    catch (error) {
-        console.error(error)
-        return null
-    }
-}
+export default useTableHeader;

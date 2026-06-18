@@ -59,13 +59,8 @@ import ProductsSkeleton from "./ProductsSkeleton";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { BaseCard, FeaturedCard } from "@/components/table/top-cards";
-import { PackageIcon, RemoteControlBulkRounded } from "@hugeicons-pro/core-bulk-rounded";
-import Pagination from "@/components/table/pagination";
-import SwitchTab from "@/components/table/switch-tab";
-import { GridViewIcon, LayoutTable01Icon } from "@hugeicons-pro/core-stroke-standard";
-import { Searchbar } from "@/components/table/header/searchbar";
-import PageTableHeader from "@/components/table/header";
+
+import { getImageUrl } from "@/utils/image-url";
 
 const CURSOR_LIMIT = 10;
 
@@ -171,27 +166,6 @@ const Products = () => {
 
   const products: ProductListItem[] =
     filterData?.pages.flatMap((p) => p.data) ?? [];
-  const imageBaseUrl = filterData?.pages?.[0]?.baseUrl ?? "";
-  const publicUrl = import.meta.env.VITE_PUBLIC_URL ?? "";
-
-  const getImageUrl = (image?: string | null) => {
-    const defaultImage = "https://imgs.search.brave.com/kkLO9GerXj9XfoUWeX5bKPjdeLdnQpzFoh-TOFjz1rA/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wMzYv/MDQ5LzExNC9zbWFs/bC9haS1nZW5lcmF0/ZWQtaXNvbGF0ZWQt/Y2hhcmdlci1jdXRv/dXQtb2JqZWN0LW9u/LXRyYW5zcGFyZW50/LWJhY2tncm91bmQt/ZmlsZS1wbmcucG5n"
-    return defaultImage;
-
-    console.log("image: ", image);
-    if (!image) return undefined;
-    if (image.startsWith("http://") || image.startsWith("https://")) {
-      return image;
-    }
-
-    const base =
-      (imageBaseUrl && imageBaseUrl.trim()) || publicUrl.trim() || "";
-    if (!base) return image;
-
-    const baseNormalized = base.replace(/\/+$/, "");
-    const imageNormalized = image.replace(/^\/+/, "");
-    return `${baseNormalized}/${imageNormalized}`;
-  };
 
   const hasActiveFilters =
     filters.categoryIds.length > 0 || filters.enabled !== undefined;
@@ -298,10 +272,10 @@ const Products = () => {
   const tdClass = "whitespace-normal px-4 py-3.5 text-right align-middle";
 
   const renderProductTable = () => (
-    <Card className="overflow-hidden py-0">
+    <Card className="overflow-hidden py-0  shadow-none">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/40 hover:bg-muted/40">
+          <TableRow className="bg-slate-50 dark:bg-slate-950">
             <TableHead className={cn(thClass, "w-14")}>#</TableHead>
             <TableHead className={cn(thClass, "w-16")}>الصورة</TableHead>
             <TableHead className={cn(thClass, "min-w-[220px]")}>معلومات المنتج</TableHead>
@@ -319,7 +293,7 @@ const Products = () => {
             return (
               <TableRow
                 key={product.id}
-                className="cursor-pointer hover:bg-muted/30"
+                className="cursor-pointer"
                 onClick={() => navigate(`/products/${product.id}`)}
               >
                 <TableCell className={cn(tdClass, "text-muted-foreground")}>

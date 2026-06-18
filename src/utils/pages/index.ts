@@ -2,6 +2,7 @@ import { type IconSvgElement } from '@hugeicons/react';
 
 import {
     Home12Icon as Home12IconNormal,
+    Package02Icon as Package02IconNormal,
     GridViewIcon as GridViewIconNormal,
     Coupon02Icon as Coupon02IconNormal,
     CustomerSupportIcon as CustomerSupportIconNormal,
@@ -14,6 +15,7 @@ import {
 
 import {
     Home12Icon as Home12IconActive,
+    Package02Icon as Package02IconActive,
     GridViewIcon as GridViewIconActive,
     Coupon02Icon as Coupon02IconActive,
     CustomerSupportIcon as CustomerSupportIconActive,
@@ -25,7 +27,7 @@ import {
 } from '@hugeicons-pro/core-solid-rounded';
 
 
-type PageType = {
+export type PageType = {
     label: string;
     slug: string;
     apiEndpoint: string;
@@ -47,9 +49,18 @@ export const pages: PageType[] = [{
     },
 },
 {
+    label: "المنتجات",
+    slug: "/products",
+    apiEndpoint: "product/filter-cursor",
+    group: "إدارة المتجر",
+    icon: {
+        normal: Package02IconNormal,
+        active: Package02IconActive
+    },
+}, {
     label: "الفئات",
     slug: "/categories",
-    apiEndpoint: "",
+    apiEndpoint: "categories",
     group: "إدارة المتجر",
     icon: {
         normal: GridViewIconNormal,
@@ -59,7 +70,7 @@ export const pages: PageType[] = [{
 {
     label: "الخصومات والكوبونات",
     slug: "/discounts",
-    apiEndpoint: "",
+    apiEndpoint: "discounts",
     group: "إدارة المتجر",
     icon: {
         normal: Coupon02IconNormal,
@@ -69,7 +80,7 @@ export const pages: PageType[] = [{
 {
     label: "الدعم",
     slug: "/tickets",
-    apiEndpoint: "",
+    apiEndpoint: "tickets",
     group: "الحركة والمبيعات",
     icon: {
         normal: CustomerSupportIconNormal,
@@ -79,7 +90,7 @@ export const pages: PageType[] = [{
 {
     label: "الطلبات",
     slug: "/orders",
-    apiEndpoint: "",
+    apiEndpoint: "orders",
     group: "الحركة والمبيعات",
     icon: {
         normal: ShippingLoadingIconNormal,
@@ -89,7 +100,7 @@ export const pages: PageType[] = [{
 {
     label: "نقطة البيع",
     slug: "/pos",
-    apiEndpoint: "",
+    apiEndpoint: "pos",
     group: "الحركة والمبيعات",
     icon: {
         normal: ShoppingBasket03IconNormal,
@@ -99,7 +110,7 @@ export const pages: PageType[] = [{
 {
     label: "العملاء",
     slug: "/customers",
-    apiEndpoint: "",
+    apiEndpoint: "customers",
     group: "الحركة والمبيعات",
     icon: {
         normal: UserGroup03IconNormal,
@@ -109,7 +120,7 @@ export const pages: PageType[] = [{
 {
     label: "الموظفين",
     slug: "/employees",
-    apiEndpoint: "",
+    apiEndpoint: "employees",
     group: "ادارة",
     icon: {
         normal: UserMultiple03IconNormal,
@@ -119,7 +130,7 @@ export const pages: PageType[] = [{
 {
     label: "الاعدادات",
     slug: "/settings/general",
-    apiEndpoint: "",
+    apiEndpoint: "settings",
     group: "ادارة",
     icon: {
         normal: Settings01IconNormal,

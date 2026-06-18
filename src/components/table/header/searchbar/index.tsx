@@ -9,7 +9,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Search01Icon } from "@hugeicons-pro/core-stroke-standard"
 import { Spinner } from "@/components/ui/spinner"
 
-export function Searchbar({ loading }: { loading?: boolean }) {
+export function Searchbar({ value, onChange, loading }: { value?: string; onChange?: (value: string) => void; loading?: boolean }) {
     return (
         <Field className="max-w-xs bg-white dark:bg-slate-950 rounded-xl">
             <InputGroup className="px-1.5 py-5.5">
@@ -19,7 +19,13 @@ export function Searchbar({ loading }: { loading?: boolean }) {
                 {loading && <InputGroupAddon align="inline-end" className="text-slate-400 dark:text-slate-600">
                     <Spinner />
                 </InputGroupAddon>}
-                <InputGroupInput className="ps-0.5 font-medium placeholder:font-normal" id="input-group-url" placeholder="ابحث عن المنتجات" />
+                <InputGroupInput
+                    className="ps-0.5 font-medium placeholder:font-normal"
+                    id="input-group-url"
+                    placeholder="ابحث عن المنتجات"
+                    value={value}
+                    onChange={(e) => onChange?.(e.target.value)}
+                />
             </InputGroup>
         </Field>
     )

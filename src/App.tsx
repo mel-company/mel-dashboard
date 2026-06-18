@@ -5,7 +5,7 @@ import { Toaster } from "./components/ui/sonner";
 import { useAuth } from "./contexts/AuthContext";
 import Home from "./pages/home/Home";
 import Stats from "./pages/stats/Stats";
-import Products from "./pages/product/Products";
+import Products from "./new-pages/products";
 import Orders from "./pages/order/Orders";
 import ProductDetails from "./pages/product/ProductDetails";
 import Customers from "./pages/customer/Customers";

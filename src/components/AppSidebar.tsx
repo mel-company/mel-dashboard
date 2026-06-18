@@ -6,10 +6,12 @@ import {
   PanelRightClose,
   PanelRightOpen,
 } from "lucide-react";
+
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import { useMe } from "@/api/wrappers/auth.wrappers";
 import melLogo from "@/assets/imgs/logo/mel-logo.svg";
+
 import {
   sidebarSections,
   isNavItemActive,
@@ -95,7 +97,7 @@ const AppSidebar = ({ className, onNavigate }: AppSidebarProps) => {
                   متجر إلكتروني
                 </p>
               </div>
-              <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-500 p-1.5">
+              <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-orange-400 to-orange-500 p-1.5">
                 <img
                   src={melLogo}
                   alt=""
@@ -149,7 +151,7 @@ const AppSidebar = ({ className, onNavigate }: AppSidebarProps) => {
               الاشتراك الاحترافي
             </span>
             <ChevronDown className="size-4 shrink-0 text-white/70" />
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5733ea] to-[#00b7ff] shadow-[0_0_12px_rgba(0,183,255,0.45)]">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#5733ea] to-[#00b7ff] shadow-[0_0_12px_rgba(0,183,255,0.45)]">
               <Crown className="size-4 text-white" strokeWidth={1.75} />
             </div>
           </button>
