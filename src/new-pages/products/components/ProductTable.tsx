@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
 import {
   TableCell,
   TableHead,
@@ -9,18 +8,15 @@ import {
   Table,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Package, Eye, Pencil, Trash2, Star } from "lucide-react";
+import { Package, Eye, Pencil, Trash2, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getImageUrl } from "@/utils/image-url";
 import type { ProductListItem } from "@/api/types/product";
+import Rating from "@/components/table/rating";
+import Badge from "@/components/table/badge";
+import Pagination from "@/components/table/pagination";
 
-const CATEGORY_STYLES = [
-  "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
-  "bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300",
-  "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
-  "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
-  "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-];
+
 
 function formatPrice(value: number) {
   return `${value.toLocaleString("ar-IQ")} د.ع`;
@@ -51,14 +47,6 @@ function getCategoryId(c: any, idx: number): string {
   return c?.category?.id ?? c?.id ?? String(idx);
 }
 
-function categoryStyle(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return CATEGORY_STYLES[Math.abs(hash) % CATEGORY_STYLES.length];
-}
-
 function costMargin(price: number, cost: number) {
   if (!cost || cost <= 0) return null;
   return ((price - cost) / cost) * 100;
@@ -67,16 +55,12 @@ function costMargin(price: number, cost: number) {
 function renderStatus(enabled: boolean) {
   if (enabled) {
     return (
-      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
-        متاح
-      </span>
+
+      <Badge color={enabled ? "success" : "default"}>
+        {enabled ? "متاح" : "مخفي"}
+      </Badge>
     );
   }
-  return (
-    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-      مخفي
-    </span>
-  );
 }
 
 function renderCategories(product: ProductListItem) {
@@ -87,15 +71,12 @@ function renderCategories(product: ProductListItem) {
   return (
     <div className="flex max-w-[180px] flex-wrap gap-1.5">
       {cats.slice(0, 3).map((c) => (
-        <span
+        <Badge
           key={c.id}
-          className={cn(
-            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
-            categoryStyle(c.name),
-          )}
+          color="purple"
         >
           {c.name}
-        </span>
+        </Badge>
       ))}
       {cats.length > 3 && (
         <span className="text-xs text-muted-foreground">+{cats.length - 3}</span>
@@ -114,10 +95,11 @@ const ProductTable = ({ products, onDelete }: ProductTableProps) => {
   const thClass = "h-11 px-4 text-right font-semibold text-muted-foreground";
   const tdClass = "whitespace-normal px-4 py-3.5 text-right align-middle";
 
+
   return (
-    <Card className="overflow-hidden py-0 shadow-none">
+    <div className="overflow-hidden shadow-none p-6 bg-white w-full rounded-3xl">
       <Table>
-        <TableHeader>
+        <TableHeader >
           <TableRow className="bg-slate-50 dark:bg-slate-950">
             <TableHead className={cn(thClass, "w-14")}>#</TableHead>
             <TableHead className={cn(thClass, "w-16")}>الصورة</TableHead>
@@ -187,16 +169,15 @@ const ProductTable = ({ products, onDelete }: ProductTableProps) => {
                 <TableCell className={tdClass}>
                   {typeof product.rate === "number" ? (
                     <div className="flex items-center justify-end gap-1">
-                      <Star className="size-3.5 shrink-0 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm tabular-nums">
-                        {product.rate.toFixed(1)}
-                      </span>
+                      <Rating count={product.rate} />
                     </div>
                   ) : (
                     "—"
                   )}
                 </TableCell>
-                <TableCell className={tdClass}>{renderStatus(product.enabled)}</TableCell>
+                <TableCell className={tdClass}>
+                  {renderStatus(product.enabled)}
+                </TableCell>
                 <TableCell className={tdClass}>
                   <div
                     className="flex items-center justify-end gap-0.5"
@@ -236,7 +217,8 @@ const ProductTable = ({ products, onDelete }: ProductTableProps) => {
           })}
         </TableBody>
       </Table>
-    </Card>
+      <Pagination totalPages={10} />
+    </div>
   );
 };
 

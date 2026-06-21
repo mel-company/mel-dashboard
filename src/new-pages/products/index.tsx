@@ -10,7 +10,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Package, ShoppingCart, X, Loader2 } from "lucide-react";
+import { Plus, ShoppingCart, X, Loader2 } from "lucide-react";
 import ProductFilterDialog from "@/pages/product/ProductFilterDialog";
 import ProductStatsCards from "@/pages/product/ProductStatsCards";
 import ErrorPage from "@/pages/miscellaneous/ErrorPage";
@@ -56,7 +56,11 @@ const ProductsPage = () => {
                 hasActiveFilters={actions.hasActiveFilters}
                 activeFilterCount={actions.activeFilterCount}
             >
-                <SwitchTab />
+                <SwitchTab
+                    selected={actions.viewMode}
+                    onChange={actions.handleViewModeChange as any}
+                />
+                .
             </PageTableHeader>
 
             {/* Content */}

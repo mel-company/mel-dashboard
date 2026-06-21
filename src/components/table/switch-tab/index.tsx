@@ -21,16 +21,16 @@ const defaultOptions = [
     },
     {
         label: "بطاقات",
-        value: "grid",
+        value: "cards",
         icon: LayoutBottomIcon
     }
 ]
 const SwitchTab = ({
     options = defaultOptions,
     onChange,
-    selected = defaultOptions[0]?.value
+    selected
 }: Props) => {
-    const [selectedOption, setSelectedOption] = useState(selected);
+    const [selectedOption, setSelectedOption] = useState(selected || options[0]?.value);
     const toggle = (value: string) => {
         setSelectedOption(value)
         onChange(value)
@@ -41,7 +41,7 @@ const SwitchTab = ({
                 <button
                     key={option.value}
                     onClick={() => toggle(option.value)}
-                    className={classNames("py-1.5 px-2.5 rounded-lg flex items-center gap-1 text-sm", {
+                    className={classNames("transition-colors cursor-pointer duration-75 py-1.5 px-2.5 rounded-lg flex items-center gap-1 text-sm", {
                         "bg-sky-700 text-sky-50": option.value === selectedOption,
                         "text-slate-600 dark:text-slate-300": option.value !== selectedOption,
                     })}
