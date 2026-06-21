@@ -60,7 +60,7 @@ export const pages: PageType[] = [{
 }, {
     label: "الفئات",
     slug: "/categories",
-    apiEndpoint: "categories",
+    apiEndpoint: "category/filter-cursor",
     group: "إدارة المتجر",
     icon: {
         normal: GridViewIconNormal,
@@ -70,7 +70,7 @@ export const pages: PageType[] = [{
 {
     label: "الخصومات والكوبونات",
     slug: "/discounts",
-    apiEndpoint: "discounts",
+    apiEndpoint: "discount/filter-cursor",
     group: "إدارة المتجر",
     icon: {
         normal: Coupon02IconNormal,
@@ -80,7 +80,7 @@ export const pages: PageType[] = [{
 {
     label: "الدعم",
     slug: "/tickets",
-    apiEndpoint: "tickets",
+    apiEndpoint: "support-ticket/store/filter-cursor",
     group: "الحركة والمبيعات",
     icon: {
         normal: CustomerSupportIconNormal,
@@ -90,7 +90,7 @@ export const pages: PageType[] = [{
 {
     label: "الطلبات",
     slug: "/orders",
-    apiEndpoint: "orders",
+    apiEndpoint: "order/filter-cursor",
     group: "الحركة والمبيعات",
     icon: {
         normal: ShippingLoadingIconNormal,
@@ -110,7 +110,7 @@ export const pages: PageType[] = [{
 {
     label: "العملاء",
     slug: "/customers",
-    apiEndpoint: "customers",
+    apiEndpoint: "customer/cursor",
     group: "الحركة والمبيعات",
     icon: {
         normal: UserGroup03IconNormal,
@@ -120,7 +120,7 @@ export const pages: PageType[] = [{
 {
     label: "الموظفين",
     slug: "/employees",
-    apiEndpoint: "employees",
+    apiEndpoint: "employee",
     group: "ادارة",
     icon: {
         normal: UserMultiple03IconNormal,

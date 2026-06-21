@@ -20,6 +20,8 @@ import ProductTable from "./components/ProductTable";
 import ProductCards from "./components/ProductCards";
 import PageTableHeader from "@/components/table/header";
 import { useProductsPage } from "@/hooks/use-products-page";
+import TitleBar from "@/components/table/title-bar";
+import SwitchTab from "@/components/table/switch-tab";
 
 const ProductsPage = () => {
     const navigate = useNavigate();
@@ -30,43 +32,18 @@ const ProductsPage = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="space-y-2">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2.5">
-                        <Package
-                            className="size-7 shrink-0 text-[#2563eb] dark:text-[#60a5fa]"
-                            strokeWidth={1.75}
-                        />
-                        <h1 className="page-title text-[#1e3a8a] dark:text-[#93c5fd]">
-                            المنتجات
-                        </h1>
-                    </div>
-                    <Button
-                        className="h-11 shrink-0 gap-2.5 rounded-full bg-[#00b7ff] px-5 text-white shadow-sm hover:bg-[#00a3e6]"
-                        onClick={() => navigate("/products/add")}
-                    >
-                        <span className="flex size-7 items-center justify-center rounded-full bg-white/25">
-                            <Plus className="size-4" strokeWidth={2.5} />
-                        </span>
-                        إضافة منتج جديد
-                    </Button>
-                </div>
-                <p className="text-sm leading-relaxed">
-                    <span className="text-[#64748b] dark:text-muted-foreground">
-                        تمتلك{" "}
+            <TitleBar>
+                <Button
+                    className="h-11 shrink-0 gap-2.5 rounded-full bg-[#00b7ff] px-5 text-white shadow-sm hover:bg-[#00a3e6]"
+                    onClick={() => navigate("/products/add")}
+                >
+                    <span className="flex size-7 items-center justify-center rounded-full bg-white/25">
+                        <Plus className="size-4" strokeWidth={2.5} />
                     </span>
-                    <span className="font-semibold text-[#00b7ff]">
-                        {actions?.newProductsCount} حركة جديدة
-                    </span>
-                    <span className="text-[#64748b] dark:text-muted-foreground">
-                        {" "}
-                        في قائمة{" "}
-                    </span>
-                    <span className="text-[#64748b] underline decoration-[#94a3b8]/60 underline-offset-[3px] dark:text-muted-foreground">
-                        المنتجات
-                    </span>
-                </p>
-            </div>
+                    إضافة منتج جديد
+                </Button>
+            </TitleBar>
+
 
             <ProductStatsCards />
 
@@ -78,11 +55,9 @@ const ProductsPage = () => {
                 onFilterClick={() => actions.setIsFilterDialogOpen(true)}
                 hasActiveFilters={actions.hasActiveFilters}
                 activeFilterCount={actions.activeFilterCount}
-                viewMode={actions.viewMode}
-                onViewModeChange={actions?.handleViewModeChange}
-                onClearFilters={actions?.handleClearFilters}
-                filterTags={actions?.filterTags}
-            />
+            >
+                <SwitchTab />
+            </PageTableHeader>
 
             {/* Content */}
             {actions?.isLoading && actions?.products.length === 0 ? (

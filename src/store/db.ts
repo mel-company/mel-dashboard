@@ -18,6 +18,9 @@ export class AppDatabase extends Dexie {
     this.version(1).stores({
       pageDataCache: 'endpoint, queryKey, timestamp',
     });
+    this.version(2).stores({
+      pageDataCache: 'endpoint, queryKey, timestamp, [endpoint+queryKey]',
+    });
   }
 }
 

@@ -1,29 +1,49 @@
+import { LayoutBottomIcon, LayoutTable01Icon } from "@hugeicons-pro/core-duotone-rounded";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import classNames from "classnames";
+import { useState } from "react";
 
 type Props = {
     selected: string;
-    options: {
+    options?: {
         label: string
         value: string
         icon: IconSvgElement
     }[];
     onChange: (value: string) => void
 }
+
+const defaultOptions = [
+    {
+        label: "جدول",
+        value: "table",
+        icon: LayoutTable01Icon
+    },
+    {
+        label: "بطاقات",
+        value: "grid",
+        icon: LayoutBottomIcon
+    }
+]
 const SwitchTab = ({
-    options,
+    options = defaultOptions,
     onChange,
-    selected
+    selected = defaultOptions[0]?.value
 }: Props) => {
+    const [selectedOption, setSelectedOption] = useState(selected);
+    const toggle = (value: string) => {
+        setSelectedOption(value)
+        onChange(value)
+    }
     return (
         <div className="flex items-center justify-center p-2 rounded-xl bg-white dark:bg-slate-950 self-center">
             {options?.map((option) => (
                 <button
                     key={option.value}
-                    onClick={() => onChange(option.value)}
+                    onClick={() => toggle(option.value)}
                     className={classNames("py-1.5 px-2.5 rounded-lg flex items-center gap-1 text-sm", {
-                        "bg-sky-700 text-sky-50": option.value === selected,
-                        "text-slate-600 dark:text-slate-300": option.value !== selected,
+                        "bg-sky-700 text-sky-50": option.value === selectedOption,
+                        "text-slate-600 dark:text-slate-300": option.value !== selectedOption,
                     })}
                 >
                     {option.icon && <HugeiconsIcon size={20} icon={option.icon} />}

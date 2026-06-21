@@ -1,6 +1,6 @@
 import { Searchbar } from './searchbar'
-import { Button } from "@/components/ui/button"
-import { X, LayoutGrid, Table as TableIcon } from "lucide-react"
+import { FilterHorizontalIcon } from '@hugeicons-pro/core-twotone-rounded';
+import { HugeiconsIcon } from '@hugeicons/react';
 
 interface PageTableHeaderProps {
     title?: string;
@@ -9,10 +9,6 @@ interface PageTableHeaderProps {
     onFilterClick?: () => void;
     hasActiveFilters?: boolean;
     activeFilterCount?: number;
-    viewMode?: "table" | "cards";
-    onViewModeChange?: (mode: "table" | "cards") => void;
-    onClearFilters?: () => void;
-    filterTags?: any[];
     children?: React.ReactNode;
 }
 
@@ -23,10 +19,6 @@ const PageTableHeader = ({
     onFilterClick,
     hasActiveFilters = false,
     activeFilterCount = 0,
-    viewMode = "table",
-    onViewModeChange,
-    onClearFilters,
-    filterTags = [],
     children
 }: PageTableHeaderProps) => {
     return (
@@ -37,61 +29,24 @@ const PageTableHeader = ({
                     value={searchQuery}
                     onChange={onSearchChange}
                 />
-                <Button
-                    variant="outline"
+                <button
                     onClick={onFilterClick}
-                    className={hasActiveFilters ? "bg-blue-50 border-blue-200" : ""}
+                    className="flex items-center gap-2 px-3 py-2 rounded-md bg-white text-sky-800"
                 >
-                    {hasActiveFilters && <span className="ml-2 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">{activeFilterCount}</span>}
+                    <HugeiconsIcon icon={FilterHorizontalIcon} size={20} />
                     فلاتر
-                </Button>
-                {onViewModeChange && (
-                    <div className="flex items-center border rounded-md">
-                        <Button
-                            variant={viewMode === "table" ? "secondary" : "ghost"}
-                            size="sm"
-                            className="rounded-r-md rounded-l-none h-8"
-                            onClick={() => onViewModeChange("table")}
-                        >
-                            <TableIcon className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant={viewMode === "cards" ? "secondary" : "ghost"}
-                            size="sm"
-                            className="rounded-l-md rounded-r-none h-8"
-                            onClick={() => onViewModeChange("cards")}
-                        >
-                            <LayoutGrid className="h-4 w-4" />
-                        </Button>
-                    </div>
-                )}
-                {hasActiveFilters && onClearFilters && (
-                    <Button variant="ghost" size="sm" onClick={onClearFilters}>
-                        <X className="h-4 w-4 ml-2" />
-                        مسح الفلاتر
-                    </Button>
-                )}
-                {children && <div className='h-7 w-px bg-slate-200' />}
+                    {hasActiveFilters &&
+                        <span
+                            className="ml-2 bg-blue-100 aspect-square text-blue-700 text-xs w-5 h-5 p-0.5 rounded-full">
+                            {activeFilterCount}
+                        </span>
+                    }
+                </button>
+
+                {children && <div className='h-6 w-px bg-slate-200' />}
                 {children}
             </div>
-            {filterTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                    {filterTags.map((tag) => (
-                        <div
-                            key={tag.id}
-                            className="flex items-center gap-1 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-md text-sm"
-                        >
-                            {tag.label}
-                            <button
-                                onClick={tag.onRemove}
-                                className="hover:text-blue-900 dark:hover:text-blue-100"
-                            >
-                                <X className="h-3 w-3" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
+
         </header>
     )
 }

@@ -122,35 +122,11 @@ const Layout = () => {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <TopBar onMenuClick={() => setMobileSidebarOpen(true)} hideSidebar={hideSidebar} />
-        <QuickNavigate />
+        {/* <TopBar onMenuClick={() => setMobileSidebarOpen(true)} hideSidebar={hideSidebar} /> */}
+        {/* <QuickNavigate /> */}
 
         <main className="custom-scrollbar flex-1 overflow-x-hidden overflow-y-auto">
-          {!hideSidebar && location.pathname && (
-            <div
-              className={cn(
-                "px-4 pt-2 sm:px-6 lg:px-8",
-                location.pathname.includes("settings") && "lg:pr-8",
-              )}
-            >
-              <Breadcrumb className="justify-start">
-                <BreadcrumbList>
-                  {breadcrumbItems.map((item, index) => (
-                    <BreadcrumbItem key={item.href + item.label}>
-                      {index > 0 && <BreadcrumbSeparator />}
-                      {item.current ? (
-                        <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink href={item.href}>
-                          {item.label}
-                        </BreadcrumbLink>
-                      )}
-                    </BreadcrumbItem>
-                  ))}
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-          )}
+
 
           {shouldShowApps ? (
             <div className="h-full w-full p-4 sm:p-6 lg:p-8">

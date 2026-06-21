@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { PageType } from '@/utils/pages';
-import { getCachedData, setCachedData } from '@/store/db';
+import axiosInstance from '@/utils/AxiosInstance';
 
 export interface UseTableDataParams {
   page: PageType;
@@ -42,17 +42,10 @@ function normalizeFilters(filters: Record<string, any>): Record<string, any> {
 }
 
 /**
- * Generates a unique query key string for caching
- */
-function generateQueryKey(endpoint: string, query: string, limit: number, filters: Record<string, any>): string {
-  return JSON.stringify({ endpoint, query, limit, ...filters });
-}
-
-/**
  * Unified data fetching hook for table/list pages
  * Handles search, filters, and cursor-based pagination
  * Automatically normalizes filters based on page context
- * Uses IndexedDB cache with cache-first strategy
+ * Uses React Query cache (same as old page wrappers)
  */
 export function useTableData<T = any>({
   page,
@@ -87,9 +80,8 @@ export function useTableData<T = any>({
 
   // Build query key
   const queryKey = [page.apiEndpoint, 'list', { query: debouncedSearch, limit, ...normalizedFilters }];
-  const queryKeyString = generateQueryKey(page.apiEndpoint, debouncedSearch, limit, normalizedFilters);
 
-  // Fetch data using React Query infinite query with cache-first strategy
+  // Fetch data using React Query infinite query (same pattern as old page wrappers)
   const {
     data,
     isLoading,
@@ -104,42 +96,14 @@ export function useTableData<T = any>({
     queryFn: async ({ pageParam }) => {
       const endpoint = page.apiEndpoint;
 
-      // Check cache first (unless force refetch)
-      if (!forceRefetch && !pageParam) {
-        const cached = await getCachedData(endpoint, queryKeyString);
-        if (cached) {
-          return cached.data;
-        }
-      }
-
-      // Fetch from API
-      const baseUrl = import.meta.env.VITE_API_URL;
-      const params = new URLSearchParams({
+      const params: Record<string, any> = {
         ...(pageParam && { cursor: pageParam }),
         ...(debouncedSearch && { query: debouncedSearch }),
-        ...(limit && { limit: String(limit) }),
-        ...Object.entries(normalizedFilters).reduce((acc, [key, value]) => {
-          if (Array.isArray(value)) {
-            value.forEach((v) => acc.append(key, String(v)));
-          } else {
-            acc.set(key, String(value));
-          }
-          return acc;
-        }, new URLSearchParams()),
-      });
+        ...(limit && { limit }),
+        ...normalizedFilters,
+      };
 
-      const response = await fetch(`${baseUrl}/${endpoint}?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${page.label}`);
-      }
-      const result = response.json();
-
-      // Cache the result for first page
-      if (!pageParam) {
-        result.then((data: any) => {
-          setCachedData(endpoint, queryKeyString, data, data.total, data.nextCursor);
-        });
-      }
+      const { data: result } = await axiosInstance.get(`/${endpoint}`, { params });
 
       return result;
     },

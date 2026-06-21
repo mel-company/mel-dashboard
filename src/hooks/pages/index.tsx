@@ -6,7 +6,7 @@ export const usePage = () => {
 
     const location = useLocation();
     const pathname = location.pathname
-    const currentPage = pages?.find(page => pathname.includes(page.slug))
+    const currentPage = pages?.find(page => page.slug && pathname.includes(page.slug))
 
 
     return {
