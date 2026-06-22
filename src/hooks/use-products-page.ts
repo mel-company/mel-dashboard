@@ -7,7 +7,6 @@ import type { ProductFilterValues } from "@/pages/product/ProductFilterDialog";
 const CURSOR_LIMIT = 10;
 
 export function useProductsPage() {
-  // Use the flexible dashboard page hook
   const actions = useDashboardPage<ProductListItem, ProductFilterValues>({
     limit: CURSOR_LIMIT,
     initialFilters: {
@@ -20,7 +19,6 @@ export function useProductsPage() {
     statsHook: useFetchProductStats,
   });
 
-  // Fetch categories for filter tags
   const { data: categoriesData } = useFetchCategories(
     undefined,
     actions.hasActiveFilters || actions.isFilterDialogOpen,
