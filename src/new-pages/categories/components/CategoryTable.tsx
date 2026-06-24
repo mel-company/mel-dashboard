@@ -16,7 +16,6 @@ import {
   Package,
   Edit,
   Eye,
-  MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Pagination from "@/components/table/pagination";
@@ -60,10 +59,10 @@ const CategoryTable = ({ categories, imageBaseUrl }: CategoryTableProps) => {
           </TableHeader>
           <TableBody>
             {paginatedCategories.map((category: any) => (
-              <CategoryTableRow 
-                key={category.id} 
-                category={category} 
-                imageBaseUrl={imageBaseUrl} 
+              <CategoryTableRow
+                key={category.id}
+                category={category}
+                imageBaseUrl={imageBaseUrl}
               />
             ))}
           </TableBody>

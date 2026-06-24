@@ -5,13 +5,15 @@ import { Plus } from "lucide-react";
 import AddCategoryDialog from "@/components/dialogs/AddCategoryDialog";
 import CategoryFilterDialog from "@/pages/category/CategoryFilterDialog";
 import { BaseCard } from "@/components/table/top-cards";
-import CategoriesContent from "./components/CategoriesContent";
 import PageTableHeader from "@/components/table/header";
 import { useCategoriesPage } from "@/hooks/use-categories-page";
 import TitleBar from "@/components/table/title-bar";
 import SwitchTab from "@/components/table/switch-tab";
 import CategorieGroups from "@/pages/category/category-group/CategorieGroups";
-import { Folder01Icon, TrendingUpDownIcon, Package01Icon, StarIcon } from "@hugeicons-pro/core-stroke-standard";
+import { TrendingUpDownIcon, Package01Icon, StarIcon } from "@hugeicons-pro/core-stroke-standard";
+import CategoriesContent from "./components/CategoriesContent";
+import { Layers01Icon, ShapeCollectionIcon } from "@hugeicons-pro/core-duotone-rounded";
+import { Fire03Icon } from "@hugeicons-pro/core-bulk-rounded";
 
 const CategoriesPage = () => {
     const actions = useCategoriesPage();
@@ -29,12 +31,12 @@ const CategoriesPage = () => {
                             {
                                 label: "الفئات",
                                 value: "categories",
-                                icon: Folder01Icon
+                                icon: ShapeCollectionIcon
                             },
                             {
-                                label: "عرض المجموعات",
+                                label: "المجموعات",
                                 value: "groups",
-                                icon: Folder01Icon
+                                icon: Layers01Icon
                             }
                         ]}
                     />
@@ -59,28 +61,32 @@ const CategoriesPage = () => {
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <BaseCard
-                            icon={Folder01Icon}
+                            icon={Fire03Icon}
                             title="إجمالي الفئات"
                             value={actions.stats?.totalCategories?.toString() || "0"}
-                            color="default"
+                            color="warning"
+                            growth={12.6}
                         />
                         <BaseCard
                             icon={TrendingUpDownIcon}
                             title="فئات نشطة"
                             value={actions.stats?.activeCategories?.toString() || "0"}
                             color="success"
+                            growth={8.2}
                         />
                         <BaseCard
                             icon={Package01Icon}
                             title="إجمالي المنتجات"
                             value={actions.stats?.totalProducts?.toString() || "0"}
                             color="accent"
+                            growth={3.7}
                         />
                         <BaseCard
                             icon={StarIcon}
                             title="فئات مميزة"
                             value={actions.stats?.featuredCategories?.toString() || "0"}
                             color="warning"
+                            growth={5.3}
                         />
                     </div>
 
