@@ -20,7 +20,8 @@ const Layout = () => {
 
   const isHomePage = location.pathname === "/";
   const shouldShowApps = isHomePage;
-  const hideSidebar = location.pathname === "/pos";
+  const hideSidebar = false; // Never hide sidebar completely
+  const isPosPage = location.pathname === "/pos";
 
   const breadcrumbItems = useMemo(() => {
     const labels: Record<string, string> = {
@@ -118,6 +119,7 @@ const Layout = () => {
             mobileSidebarOpen ? "flex" : "hidden lg:flex",
           )}
           onNavigate={() => setMobileSidebarOpen(false)}
+          {...(isPosPage && { collapsed: true })}
         />
       )}
 

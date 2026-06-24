@@ -11,23 +11,21 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
-  Search,
   Package,
   User,
   MapPin,
   Calendar,
   FileText,
-  X,
   Loader2,
-  Filter,
+  X,
 } from "lucide-react";
 import { useFilterOrdersCursor } from "@/api/wrappers/order.wrappers";
 import OrderFilterDialog, { type OrderFilterValues } from "./OrderFilterDialog";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import OrdersSkeleton from "./OrdersSkeleton";
+import PageTableHeader from "@/components/table/header";
 
 const CURSOR_LIMIT = 20;
 
@@ -50,6 +48,10 @@ const Orders = () => {
     status: undefined,
     period: undefined,
   });
+
+  // Calculate active filter count
+  const hasActiveFilters = filters.status !== undefined || filters.period !== undefined;
+  const activeFilterCount = (filters.status !== undefined ? 1 : 0) + (filters.period !== undefined ? 1 : 0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebouncedValue(searchQuery.trim(), 350);
@@ -72,8 +74,6 @@ const Orders = () => {
 
   const orders: any[] = filterData?.pages.flatMap((p) => p.data) ?? [];
   const hasData = filterData !== undefined;
-
-  const hasActiveFilters = !!filters.status || !!filters.period;
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -135,43 +135,15 @@ const Orders = () => {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filter Section */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="flex flex-1 max-w-full sm:max-w-md gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="ابحث عن طلب..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-right pl-10 pr-10"
-              dir="rtl"
-            />
-          </div>
-          <Button
-            variant={hasActiveFilters ? "default" : "secondary"}
-            size="icon"
-            onClick={() => setIsFilterDialogOpen(true)}
-            title="تصفية"
-          >
-            <Filter className="size-4" />
-          </Button>
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setFilters({ status: undefined, period: undefined })
-              }
-              className="gap-1"
-            >
-              <X className="size-4" />
-              مسح التصفية
-            </Button>
-          )}
-        </div>
-      </div>
+      {/* Header */}
+      <PageTableHeader
+        title="الطلبات"
+        searchQuery={searchQuery}
+        onSearchChange={(value) => setSearchQuery(value)}
+        onFilterClick={() => setIsFilterDialogOpen(true)}
+        hasActiveFilters={hasActiveFilters}
+        activeFilterCount={activeFilterCount}
+      />
 
       <OrderFilterDialog
         open={isFilterDialogOpen}
@@ -205,14 +177,14 @@ const Orders = () => {
           primaryAction={
             searchQuery.trim() || hasActiveFilters
               ? {
-                  label: "مسح البحث والتصفية",
-                  onClick: () => {
-                    setSearchQuery("");
-                    setFilters({ status: undefined, period: undefined });
-                  },
-                  icon: <X className="size-4" />,
-                  variant: "secondary",
-                }
+                label: "مسح البحث والتصفية",
+                onClick: () => {
+                  setSearchQuery("");
+                  setFilters({ status: undefined, period: undefined });
+                },
+                icon: <X className="size-4" />,
+                variant: "secondary",
+              }
               : undefined
           }
         />

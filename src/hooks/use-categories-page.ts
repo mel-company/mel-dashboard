@@ -1,11 +1,9 @@
 import { useMemo } from "react";
 import { useDashboardPage } from "@/hooks/use-dashboard-page";
-import { useDeleteProduct, useFetchProductStats } from "@/api/wrappers/product.wrappers";
 import { useFetchCategories } from "@/api/wrappers/category.wrappers";
-import type { ProductListItem } from "@/api/types/product";
-import type { ProductFilterValues } from "@/pages/product/ProductFilterDialog";
+import type { CategoryFilterValues } from "@/pages/category/CategoryFilterDialog";
 
-const CURSOR_LIMIT = 10;
+const CURSOR_LIMIT = 20;
 
 // Helper function to normalize categories data
 function normalizeCategoriesData(categoriesData: any): Array<{ id: string; name: string }> {
@@ -23,20 +21,29 @@ function normalizeCategoriesData(categoriesData: any): Array<{ id: string; name:
 }
 
 // Helper function to build filter tags
-function buildFilterTags(filters: ProductFilterValues, categoryMap: Map<string, string>, setFilters: (filters: ProductFilterValues) => void) {
+function buildFilterTags(filters: CategoryFilterValues, groupMap: Map<string, string>, setFilters: (filters: CategoryFilterValues) => void) {
   const tags = [];
 
-  // Category filter tags
-  filters.categoryIds.forEach((id) => {
+  // Group filter tags
+  filters.groupIds.forEach((id) => {
     tags.push({
       id,
-      label: categoryMap.get(id) ?? "فئة",
+      label: groupMap.get(id) ?? "مجموعة",
       onRemove: () => {
-        const newCategoryIds = filters.categoryIds.filter((c: string) => c !== id);
-        setFilters({ ...filters, categoryIds: newCategoryIds });
+        const newGroupIds = filters.groupIds.filter((g: string) => g !== id);
+        setFilters({ ...filters, groupIds: newGroupIds });
       },
     });
   });
+
+  // Has discount filter tag
+  if (filters.hasDiscount !== undefined) {
+    tags.push({
+      id: "hasDiscount",
+      label: filters.hasDiscount ? "يوجد خصم" : "لا يوجد خصم",
+      onRemove: () => setFilters({ ...filters, hasDiscount: undefined }),
+    });
+  }
 
   // Enabled filter tag
   if (filters.enabled !== undefined) {
@@ -51,21 +58,20 @@ function buildFilterTags(filters: ProductFilterValues, categoryMap: Map<string, 
 }
 
 // Helper function to calculate active filter count
-function getActiveFilterCount(filters: ProductFilterValues): number {
-  return filters.categoryIds.length + (filters.enabled !== undefined ? 1 : 0);
+function getActiveFilterCount(filters: CategoryFilterValues): number {
+  return filters.groupIds.length + (filters.hasDiscount !== undefined ? 1 : 0) + (filters.enabled !== undefined ? 1 : 0);
 }
 
-export function useProductsPage() {
-  const actions = useDashboardPage<ProductListItem, ProductFilterValues>({
+export function useCategoriesPage() {
+  const actions = useDashboardPage<any, CategoryFilterValues>({
     limit: CURSOR_LIMIT,
     initialFilters: {
-      categoryIds: [],
+      groupIds: [],
+      hasDiscount: undefined,
       enabled: undefined,
     },
     enableViewMode: true,
-    enableDelete: true,
-    deleteMutation: useDeleteProduct,
-    statsHook: useFetchProductStats,
+    enableDelete: false,
   });
 
   const { data: categoriesData } = useFetchCategories(
@@ -82,7 +88,6 @@ export function useProductsPage() {
   }, [categoriesData]);
 
   // Build filter tags
-  // Memoize filter tags
   const filterTags = useMemo(() => {
     return buildFilterTags(actions.filters, categoryMap, actions.setFilters);
   }, [actions.filters, categoryMap, actions.setFilters]);
@@ -92,13 +97,14 @@ export function useProductsPage() {
     return getActiveFilterCount(actions.filters);
   }, [actions.filters]);
 
-  const newProductsCount = actions.stats?.newProducts ?? 0;
+  // Extract image base URL from categories data
+  const imageBaseUrl = categoriesData?.pages?.[0]?.baseUrl ?? "";
 
   return {
     ...actions,
     filterTags,
     activeFilterCount,
-    newProductsCount,
-    products: actions?.data || [],
+    categories: actions?.data || [],
+    imageBaseUrl,
   };
 }

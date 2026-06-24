@@ -21,6 +21,7 @@ import {
 type AppSidebarProps = {
   className?: string;
   onNavigate?: () => void;
+  collapsed?: boolean;
 };
 
 function NavLink({
@@ -57,11 +58,14 @@ function NavLink({
   );
 }
 
-const AppSidebar = ({ className, onNavigate }: AppSidebarProps) => {
+const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: AppSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: me } = useMe();
-  const [collapsed, setCollapsed] = useState(false);
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+
+  // Use external collapsed state if provided, otherwise use internal state
+  const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
 
   return (
     <aside
@@ -73,18 +77,21 @@ const AppSidebar = ({ className, onNavigate }: AppSidebarProps) => {
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 p-4 pb-2">
-        <button
-          type="button"
-          onClick={() => setCollapsed((v) => !v)}
-          className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground transition-colors hover:bg-muted/60"
-          aria-label={collapsed ? "توسيع القائمة" : "طي القائمة"}
-        >
-          {collapsed ? (
-            <PanelRightOpen className="size-4" />
-          ) : (
-            <PanelRightClose className="size-4" />
-          )}
-        </button>
+        {/* Show toggle button only when not externally controlled (not collapsed) */}
+        {externalCollapsed !== true && (
+          <button
+            type="button"
+            onClick={() => setInternalCollapsed((v: boolean) => !v)}
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground transition-colors hover:bg-muted/60"
+            aria-label={collapsed ? "توسيع القائمة" : "طي القائمة"}
+          >
+            {collapsed ? (
+              <PanelRightOpen className="size-4" />
+            ) : (
+              <PanelRightClose className="size-4" />
+            )}
+          </button>
+        )}
 
         {!collapsed && (
           <div className="min-w-0 flex-1 text-right">

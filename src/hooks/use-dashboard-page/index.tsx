@@ -1,8 +1,56 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { usePage } from "@/hooks/pages";
 import { useTableData, useInfiniteScroll } from "@/hooks/use-table-data";
 import useTableHeader from "@/hooks/table-header";
 import { usePageStore } from "@/store/use-page-store";
+
+// Helper hook for view mode management
+function useViewModeManager(apiEndpoint: string | undefined, enableViewMode: boolean) {
+  const storageKey = `${apiEndpoint}ViewMode`;
+  const saved = enableViewMode ? localStorage.getItem(storageKey) : null;
+  const [viewMode, setViewMode] = useState<"table" | "cards">(saved === "cards" ? "cards" : "table");
+
+  const handleViewModeChange = useCallback((newMode: "table" | "cards") => {
+    setViewMode(newMode);
+    if (enableViewMode && apiEndpoint) {
+      localStorage.setItem(storageKey, newMode);
+    }
+  }, [enableViewMode, apiEndpoint, storageKey]);
+
+  return { viewMode, handleViewModeChange };
+}
+
+// Helper hook for delete functionality
+function useDeleteManager(deleteMutation: any, enableDelete: boolean, refetch: () => void) {
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = useCallback(() => {
+    if (enableDelete && deleteMutation && deleteId) {
+      const { mutate } = deleteMutation();
+      setIsDeleting(true);
+      mutate(deleteId, {
+        onSuccess: () => {
+          setDeleteId(null);
+          setIsDeleting(false);
+          refetch();
+        },
+        onError: () => {
+          setIsDeleting(false);
+        },
+      });
+    }
+  }, [enableDelete, deleteMutation, deleteId, refetch]);
+
+  return { deleteId, setDeleteId, isDeleting, handleDelete };
+}
+
+// Helper hook for optional stats
+function useOptionalStats(statsHook: any) {
+  if (!statsHook) return undefined;
+  const { data: statsData } = statsHook();
+  return statsData;
+}
 
 export interface DashboardPageOptions<TFilters = Record<string, any>> {
   /** Custom limit for pagination */
@@ -31,6 +79,8 @@ export interface DashboardPageReturn<TData = any, TFilters = Record<string, any>
   // Search
   search: string;
   setSearchValue: (value: string) => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
 
   // Filters
   filters: TFilters;
@@ -38,11 +88,11 @@ export interface DashboardPageReturn<TData = any, TFilters = Record<string, any>
   hasActiveFilters: boolean;
   handleClearFilters: () => void;
 
-  // View Mode (always returned, but only functional when enabled)
+  // View Mode (only included when enabled)
   viewMode: "table" | "cards";
   handleViewModeChange: (mode: "table" | "cards") => void;
 
-  // Delete (always returned, but only functional when enabled)
+  // Delete (only included when enabled)
   deleteId: string | null;
   setDeleteId: (id: string | null) => void;
   isDeleting: boolean;
@@ -102,16 +152,8 @@ export function useDashboardPage<TData = any, TFilters = Record<string, any>>(
     initialFilters: filters as Record<string, any>,
   });
 
-  // Data fetching with cache support
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    error,
-    refetch,
-    fetchNextPage,
-  } = useTableData<TData>({
+  // Core data fetching
+  const tableData = useTableData<TData>({
     page: currentPage!,
     search: debouncedSearch,
     filters: filters as any,
@@ -119,48 +161,20 @@ export function useDashboardPage<TData = any, TFilters = Record<string, any>>(
     forceRefetch: shouldRefetch,
   });
 
-  const loadMoreRef = useInfiniteScroll({
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
+  const infiniteScroll = useInfiniteScroll({
+    hasNextPage: tableData.hasNextPage,
+    isFetchingNextPage: tableData.isFetchingNextPage,
+    fetchNextPage: tableData.fetchNextPage,
   });
 
-  // View mode
-  const saved = localStorage.getItem(`${currentPage?.apiEndpoint}ViewMode`);
-  const [viewMode, setViewMode] = useState<"table" | "cards">(saved === "cards" ? "cards" : "table");
-  const handleViewModeChange = (newMode: "table" | "cards") => {
-    setViewMode(newMode);
-    if (enableViewMode) {
-      localStorage.setItem(`${currentPage?.apiEndpoint}ViewMode`, newMode);
-    }
-  };
+  // View mode management
+  const viewModeManager = useViewModeManager(currentPage?.apiEndpoint, enableViewMode);
 
   // Delete functionality
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const handleDelete = () => {
-    if (enableDelete && deleteMutation && deleteId) {
-      const { mutate, isPending } = deleteMutation();
-      setIsDeleting(true);
-      mutate(deleteId, {
-        onSuccess: () => {
-          setDeleteId(null);
-          setIsDeleting(false);
-          refetch();
-        },
-        onError: () => {
-          setIsDeleting(false);
-        },
-      });
-    }
-  };
+  const deleteManager = useDeleteManager(deleteMutation, enableDelete, tableData.refetch);
 
-  // Optional: Stats
-  let stats;
-  if (statsHook) {
-    const { data: statsData } = statsHook();
-    stats = statsData;
-  }
+  // Stats
+  const stats = useOptionalStats(statsHook);
 
   return {
     // UI State
@@ -168,12 +182,14 @@ export function useDashboardPage<TData = any, TFilters = Record<string, any>>(
     setIsFilterDialogOpen,
 
     // Data
-    data,
+    data: tableData.data,
     stats,
 
     // Search
     search,
     setSearchValue,
+    searchQuery: search,
+    onSearchChange: setSearchValue,
 
     // Filters
     filters,
@@ -181,24 +197,36 @@ export function useDashboardPage<TData = any, TFilters = Record<string, any>>(
     hasActiveFilters,
     handleClearFilters,
 
-    // View Mode
-    viewMode,
-    handleViewModeChange,
+    // View Mode functionality (always included when enabled)
+    ...(enableViewMode ? {
+      viewMode: viewModeManager.viewMode,
+      handleViewModeChange: viewModeManager.handleViewModeChange,
+    } : {
+      viewMode: "table" as const,
+      handleViewModeChange: () => { },
+    }),
 
-    // Delete
-    deleteId,
-    setDeleteId,
-    isDeleting,
-    handleDelete,
+    // Delete functionality (always included when enabled)
+    ...(enableDelete ? {
+      deleteId: deleteManager.deleteId,
+      setDeleteId: deleteManager.setDeleteId,
+      isDeleting: deleteManager.isDeleting,
+      handleDelete: deleteManager.handleDelete,
+    } : {
+      deleteId: null,
+      setDeleteId: () => { },
+      isDeleting: false,
+      handleDelete: () => { },
+    }),
 
     // Loading States
-    isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    error,
-    refetch,
-    fetchNextPage,
-    loadMoreRef,
+    isLoading: tableData.isLoading,
+    isFetchingNextPage: tableData.isFetchingNextPage,
+    hasNextPage: tableData.hasNextPage,
+    error: tableData.error,
+    refetch: tableData.refetch,
+    fetchNextPage: tableData.fetchNextPage,
+    loadMoreRef: infiniteScroll,
 
     // Cache Management
     invalidateCache,

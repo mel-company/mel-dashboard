@@ -6,25 +6,25 @@ import { useAuth } from "./contexts/AuthContext";
 import Home from "./pages/home/Home";
 import Stats from "./pages/stats/Stats";
 import Products from "./new-pages/products";
-import Orders from "./pages/order/Orders";
+import Orders from "./new-pages/orders";
 import ProductDetails from "./pages/product/ProductDetails";
-import Customers from "./pages/customer/Customers";
+import Customers from "./new-pages/customers";
 import CustomerDetails from "./pages/customer/CustomerDetails";
 import OrderDetails from "./pages/order/OrderDetails";
 import OrderInvoicePreview from "./pages/order/OrderInvoicePreview";
-import Employees from "./pages/employee/Employees";
+import Employees from "./new-pages/employees";
 import EmployeeDetails from "./pages/employee/EmployeeDetails";
 import AddProduct from "./pages/product/AddProduct";
-import Categories from "./pages/category/Categories";
+import Categories from "./new-pages/categories";
 import CategoryDetails from "./pages/category/CategoryDetails";
 import AddCategory from "./pages/category/AddCategory";
 import AddEmployee from "./pages/employee/AddEmployee";
 import AddCustomer from "./pages/customer/AddCustomer";
 import AddOrder from "./pages/order/AddOrder";
-import Discounts from "./pages/discount/Discounts";
+import Discounts from "./new-pages/discounts";
 import DiscountDetails from "./pages/discount/DiscountDetails";
 import AddDiscount from "./pages/discount/AddDiscount";
-import Notifications from "./pages/notification/Notifications";
+import Notifications from "./new-pages/notifications";
 import NotificationDetails from "./pages/notification/NotificationDetails";
 import UserProfile from "./pages/profile/UserProfile";
 // import Settings from "./pages/settings/Settings";
@@ -60,7 +60,7 @@ import Coupons from "./pages/coupone/Coupons";
 import CouponDetails from "./pages/coupone/CouponDetails";
 import EditCoupon from "./pages/coupone/EditCoupon";
 import AddCoupon from "./pages/coupone/AddCoupon";
-import Tickets from "./pages/support/Tickets";
+import Tickets from "./new-pages/tickets";
 import TicketDetails from "./pages/support/TicketDetails";
 import OpenTicket from "./pages/support/OpenTicket";
 import Shortcuts from "./pages/settings/Shortcuts";
@@ -98,6 +98,12 @@ function Bridge() {
   return <div>Bridge</div>;
 }
 
+interface RouteConfig {
+  path: string;
+  element?: React.ReactElement;
+  children?: RouteConfig[];
+}
+
 function App() {
   // @ts-ignore
   const {
@@ -117,6 +123,179 @@ function App() {
     }
   }, [refreshData]);
 
+  const mainRoutes: RouteConfig[] = [
+    { path: "/", element: <Home /> },
+    { path: "/stats", element: <Stats /> },
+    { path: "/plans", element: <Plans /> },
+    { path: "/app-store", element: <AppStore /> },
+    { path: "/accounting", element: <Accounting /> },
+    { path: "/pos", element: <POS /> },
+    {
+      path: "/products",
+      children: [
+        { path: "", element: <Products /> },
+        {
+          path: ":id",
+          children: [
+            { path: "", element: <ProductDetails /> },
+            { path: "edit", element: <EditProduct /> },
+          ],
+        },
+        { path: "add", element: <AddProduct /> },
+      ],
+    },
+    {
+      path: "/tickets",
+      children: [
+        { path: "", element: <Tickets /> },
+        {
+          path: ":id",
+          children: [{ path: "", element: <TicketDetails /> }],
+        },
+        { path: "new", element: <OpenTicket /> },
+      ],
+    },
+    {
+      path: "/customers",
+      children: [
+        { path: "", element: <Customers /> },
+        { path: ":id", element: <CustomerDetails /> },
+        { path: "add", element: <AddCustomer /> },
+      ],
+    },
+    {
+      path: "/orders",
+      children: [
+        { path: "", element: <Orders /> },
+        { path: ":id", element: <OrderDetails /> },
+        { path: "add", element: <AddOrder /> },
+      ],
+    },
+    {
+      path: "/employees",
+      children: [
+        { path: "", element: <Employees /> },
+        { path: ":id", element: <EmployeeDetails /> },
+        { path: "add", element: <AddEmployee /> },
+      ],
+    },
+    {
+      path: "/notifications",
+      children: [
+        { path: "", element: <Notifications /> },
+        { path: ":id", element: <NotificationDetails /> },
+      ],
+    },
+    {
+      path: "/profile",
+      children: [{ path: "", element: <UserProfile /> }],
+    },
+    {
+      path: "/categories",
+      children: [
+        { path: "", element: <Categories /> },
+        {
+          path: ":id",
+          children: [
+            { path: "", element: <CategoryDetails /> },
+            { path: "edit", element: <EditCategory /> },
+          ],
+        },
+        { path: "add", element: <AddCategory /> },
+      ],
+    },
+    {
+      path: "/category-group",
+      children: [
+        { path: "", element: <CategorieGroups /> },
+        {
+          path: ":id",
+          children: [
+            { path: "", element: <CategoryGroupDetails /> },
+            { path: "edit", element: <EditCategoryGroup /> },
+          ],
+        },
+      ],
+    },
+    {
+      path: "/discounts",
+      children: [
+        { path: "", element: <Discounts /> },
+        {
+          path: ":id",
+          children: [
+            { path: "", element: <DiscountDetails /> },
+            { path: "edit", element: <EditDiscount /> },
+          ],
+        },
+        { path: "add", element: <AddDiscount /> },
+      ],
+    },
+    {
+      path: "/coupons",
+      children: [
+        { path: "", element: <Coupons /> },
+        {
+          path: ":id",
+          children: [
+            { path: "", element: <CouponDetails /> },
+            { path: "edit", element: <EditCoupon /> },
+          ],
+        },
+        { path: "add", element: <AddCoupon /> },
+      ],
+    },
+  ];
+
+  const settingsRoutes: RouteConfig[] = [
+    { path: "general", element: <GeneralSettings /> },
+    { path: "editor", element: <Editor /> },
+    { path: "website", element: <WebsiteSettings /> },
+    { path: "store", element: <DetailsSettings /> },
+    { path: "domain", element: <DomainSettings /> },
+    { path: "payment-methods", element: <PaymentMethodsSettings /> },
+    { path: "delivery", element: <DeliverySettings /> },
+    {
+      path: "policies",
+      children: [
+        {
+          path: "terms-and-conditions",
+          element: <TermsAndConditionsSettings />,
+        },
+        { path: "privacy-policy", element: <PrivacyPolicySettings /> },
+        { path: "refund-policy", element: <RefundPolicySettings /> },
+      ],
+    },
+    { path: "subscription", element: <SubscriptionSettings /> },
+    { path: "shortcuts", element: <Shortcuts /> },
+  ];
+
+  const publicRoutes: RouteConfig[] = [
+    { path: "/login", element: <StoreLogin /> },
+    { path: "/dev-login", element: <DevStoreLogin /> },
+    { path: "/dev-otp", element: <DevOTP /> },
+    { path: "/otp", element: <OTP /> },
+  ];
+
+  const renderRoute = (route: RouteConfig, index: number) => {
+    if (route.children) {
+      return (
+        <Route key={index} path={route.path}>
+          {route.children.map((child, childIndex) =>
+            renderRoute(child, childIndex)
+          )}
+        </Route>
+      );
+    }
+    return (
+      <Route
+        key={index}
+        path={route.path}
+        element={route.element}
+      />
+    );
+  };
+
   return (
     <>
       <Toaster />
@@ -124,237 +303,22 @@ function App() {
         <Route path="/bridge" element={<Bridge />} />
         <Route element={<PrivateRoute />}>
           <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/stats" element={<Stats />} />
+            {mainRoutes.map((route, index) => renderRoute(route, index))}
 
-            {/* products routes */}
-            <Route path="/products">
-              <Route index element={<Products />} />
-              <Route path=":id">
-                <Route index element={<ProductDetails />} />
-                <Route path="edit" element={<EditProduct />} />
-              </Route>
-              <Route path="add" element={<AddProduct />} />
-            </Route>
-
-            {/* support tickets routes */}
-            <Route path="/tickets">
-              <Route index element={<Tickets />} />
-              <Route path=":id">
-                <Route index element={<TicketDetails />} />
-              </Route>
-              <Route path="new" element={<OpenTicket />} />
-            </Route>
-
-            {/* customers routes */}
-            <Route path="/customers">
-              <Route index element={<Customers />} />
-              <Route path=":id" element={<CustomerDetails />} />
-              <Route path="add" element={<AddCustomer />} />
-            </Route>
-
-            {/* orders routes */}
-            <Route path="/orders">
-              <Route index element={<Orders />} />
-              <Route path=":id" element={<OrderDetails />} />
-              <Route path="add" element={<AddOrder />} />
-            </Route>
-
-            {/* employees routes */}
-            <Route path="/employees">
-              <Route index element={<Employees />} />
-              <Route path=":id" element={<EmployeeDetails />} />
-              <Route path="add" element={<AddEmployee />} />
-            </Route>
-
-            {/* notifications routes */}
-            <Route path="/notifications">
-              <Route index element={<Notifications />} />
-              <Route path=":id" element={<NotificationDetails />} />
-            </Route>
-
-            {/* profile routes */}
-            <Route path="/profile">
-              <Route index element={<UserProfile />} />
-            </Route>
-
-            {/* settings routes */}
             <Route path="/settings" element={<SettingsLayout />}>
-              <Route index path="general" element={<GeneralSettings />} />
-              <Route index path="editor" element={<Editor />} />
-              <Route index path="website" element={<WebsiteSettings />} />
-              {/* <Route path="general" element={<GeneralSettings />} /> */}
-              <Route path="store" element={<DetailsSettings />} />
-              <Route path="domain" element={<DomainSettings />} />
-              <Route
-                path="payment-methods"
-                element={<PaymentMethodsSettings />}
-              />
-              <Route path="delivery" element={<DeliverySettings />} />
-              <Route path="policies">
-                <Route
-                  index
-                  path="terms-and-conditions"
-                  element={<TermsAndConditionsSettings />}
-                />
-                <Route
-                  path="privacy-policy"
-                  element={<PrivacyPolicySettings />}
-                />
-                <Route
-                  path="refund-policy"
-                  element={<RefundPolicySettings />}
-                />
-              </Route>
-              <Route path="subscription" element={<SubscriptionSettings />} />
-              <Route path="shortcuts" element={<Shortcuts />} />
+              {settingsRoutes.map((route, index) => renderRoute(route, index))}
             </Route>
 
-            <Route path="/plans" element={<Plans />} />
             <Route path="/payment/:planId" element={<Payment />} />
-
-            {/* category routes */}
-            <Route path="/categories">
-              <Route index element={<Categories />} />
-              <Route path=":id">
-                <Route index element={<CategoryDetails />} />
-                <Route path="edit" element={<EditCategory />} />
-              </Route>
-              <Route path="add" element={<AddCategory />} />
-            </Route>
-
-            {/* Category groups routes */}
-            <Route path="/category-group">
-              <Route index element={<CategorieGroups />} />
-              <Route path=":id">
-                <Route index element={<CategoryGroupDetails />} />
-                <Route path="edit" element={<EditCategoryGroup />} />
-              </Route>
-            </Route>
-
-            {/* Discounts routes */}
-            <Route path="/discounts">
-              <Route index element={<Discounts />} />
-              <Route path=":id">
-                <Route index element={<DiscountDetails />} />
-                <Route path="edit" element={<EditDiscount />} />
-              </Route>
-              <Route path="add" element={<AddDiscount />} />
-            </Route>
-
-            {/* Coupons routes */}
-            <Route path="/coupons">
-              <Route index element={<Coupons />} />
-              <Route path=":id">
-                <Route index element={<CouponDetails />} />
-                <Route path="edit" element={<EditCoupon />} />
-              </Route>
-              <Route path="add" element={<AddCoupon />} />
-            </Route>
-
-            {/* App Store route */}
-            <Route path="/app-store" element={<AppStore />} />
-
-            {/* Accounting route */}
-            <Route path="/accounting" element={<Accounting />} />
-
-            {/* POS route */}
-            <Route path="/pos" element={<POS />} />
           </Route>
-          {/* Order invoice preview popup - no Layout */}
           <Route
             path="/order-invoice-preview"
             element={<OrderInvoicePreview />}
           />
         </Route>
-        {/* Public routes */}
-        <Route path="/login" element={<StoreLogin />} />
-        <Route path="/dev-login" element={<DevStoreLogin />} />
-        <Route path="/dev-otp" element={<DevOTP />} />
-        {/* <Route path="/store-login" element={<StoreLogin />} /> */}
-        <Route path="/otp" element={<OTP />} />
 
-        {/* Protected routes - Dashboard with Layout */}
-        {/* <Route
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/" element={<Home />} />
-          <Route path="/stats" element={<Stats />} />
+        {publicRoutes.map((route, index) => renderRoute(route, index))}
 
-          <Route path="/products">
-            <Route index element={<Products />} />
-            <Route path=":id" element={<ProductDetails />} />
-            <Route path="add" element={<AddProduct />} />
-          </Route>
-
-          <Route path="/customers">
-            <Route index element={<Customers />} />
-            <Route path=":id" element={<CustomerDetails />} />
-            <Route path="add" element={<AddCustomer />} />
-          </Route>
-
-          <Route path="/orders">
-            <Route index element={<Orders />} />
-            <Route path=":id" element={<OrderDetails />} />
-            <Route path="add" element={<AddOrder />} />
-          </Route>
-
-          <Route path="/employees">
-            <Route index element={<Employees />} />
-            <Route path=":id" element={<EmployeeDetails />} />
-            <Route path="add" element={<AddEmployee />} />
-          </Route>
-
-          <Route path="/notifications">
-            <Route index element={<Notifications />} />
-            <Route path=":id" element={<NotificationDetails />} />
-          </Route>
-
-          <Route path="/profile">
-            <Route index element={<UserProfile />} />
-          </Route>
-
-          <Route path="/settings" element={<SettingsLayout />}>
-            <Route
-              index
-              element={<Navigate to="/settings/general" replace />}
-            />
-            <Route path="general" element={<GeneralSettings />} />
-            <Route path="store" element={<DetailsSettings />} />
-            <Route path="domain" element={<DomainSettings />} />
-            <Route
-              path="payment-methods"
-              element={<PaymentMethodsSettings />}
-            />
-            <Route path="delivery" element={<DeliverySettings />} />
-            <Route
-              path="terms-and-conditions"
-              element={<TermsAndConditionsSettings />}
-            />
-          </Route>
-
-          <Route path="/categories">
-            <Route index element={<Categories />} />
-            <Route path=":id" element={<CategoryDetails />} />
-            <Route path="add" element={<AddCategory />} />
-          </Route>
-
-          <Route path="/discounts">
-            <Route index element={<Discounts />} />
-            <Route path=":id" element={<DiscountDetails />} />
-            <Route path="add" element={<AddDiscount />} />
-          </Route>
-
-          <Route path="/app-store" element={<AppStore />} />
-
-          <Route path="/accounting" element={<Accounting />} />
-        </Route> */}
-
-        {/* Root redirect */}
         <Route path="*" element={<RootRedirect />} />
       </Routes>
     </>
