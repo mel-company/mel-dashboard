@@ -1,12 +1,18 @@
-import * as React from "react";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 
 import { cn } from "@/lib/utils";
 
-interface SwitchProps
-  extends React.ComponentProps<typeof SwitchPrimitive.Root> {
+interface SwitchProps {
+  checked?: boolean;
+  defaultChecked?: boolean;
+  disabled?: boolean;
+  required?: boolean;
+  name?: string;
+  value?: string | number | readonly string[];
+  className?: string;
   activeLabel?: string;
   disabledLabel?: string;
+  onToggle?: (checked: boolean) => void;
 }
 
 function Switch({
@@ -14,7 +20,12 @@ function Switch({
   activeLabel,
   disabledLabel,
   checked,
-  ...props
+  defaultChecked,
+  disabled,
+  required,
+  name,
+  value,
+  onToggle,
 }: SwitchProps) {
   const switchNode = (
     <SwitchPrimitive.Root
@@ -25,7 +36,12 @@ function Switch({
         className
       )}
       checked={checked}
-      {...props}
+      defaultChecked={defaultChecked}
+      disabled={disabled}
+      required={required}
+      name={name}
+      value={value}
+      onCheckedChange={onToggle}
     >
       {/* Checked indicator: vertical bar */}
       <span

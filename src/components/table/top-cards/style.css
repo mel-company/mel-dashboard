@@ -34,7 +34,7 @@
 
 
 .accent-card {
-    @apply bg-purple-50 text-purple-500
+    @apply bg-violet-50 text-violet-500
 }
 
 .warning-card {

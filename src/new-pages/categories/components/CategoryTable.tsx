@@ -7,25 +7,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Folder,
-  CheckCircle2,
-  Package,
   Edit,
   Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Pagination from "@/components/table/pagination";
+import { getImageUrl } from "@/utils/image-url";
+import { Switch } from "@/components/ui/switch";
+
+import axiosInstance from "@/utils/AxiosInstance";
 
 interface CategoryTableProps {
   categories: any[];
-  imageBaseUrl: string;
+  refetch: () => void;
 }
 
-const CategoryTable = ({ categories, imageBaseUrl }: CategoryTableProps) => {
+const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
   const [activePage, setActivePage] = useState(1);
   const [viewCount, setViewCount] = useState(10);
 
@@ -50,11 +51,14 @@ const CategoryTable = ({ categories, imageBaseUrl }: CategoryTableProps) => {
         <Table>
           <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableHead className="text-right font-semibold text-gray-700">اسم الفئة</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">الوصف</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">عدد المنتجات</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700"></TableHead>
+              <TableHead className="text-right font-semibold text-gray-700">الصورة</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700">معلومات الفئات</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700">المعرف</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700">الكمية</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700">نوع الفئة</TableHead>
               <TableHead className="text-right font-semibold text-gray-700">الحالة</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">الإجراءات</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700">العمليات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -62,7 +66,7 @@ const CategoryTable = ({ categories, imageBaseUrl }: CategoryTableProps) => {
               <CategoryTableRow
                 key={category.id}
                 category={category}
-                imageBaseUrl={imageBaseUrl}
+                refetch={refetch}
               />
             ))}
           </TableBody>
@@ -81,70 +85,64 @@ const CategoryTable = ({ categories, imageBaseUrl }: CategoryTableProps) => {
   );
 };
 
-const CategoryTableRow = ({ category, imageBaseUrl }: { category: any; imageBaseUrl: string }) => {
+const CategoryTableRow = ({ category, refetch }: { category: any; refetch: () => void; }) => {
+
+  const [data, setData] = useState(category)
+
+  const handleUpdate = async () => {
+    setData({ ...data, enabled: !data.enabled })
+    await axiosInstance.put(`${import.meta.env.VITE_PUBLIC_URL}/category/${category.id}`, {
+      enabled: !category.enabled
+    })
+    refetch()
+  }
   return (
     <TableRow className={cn(
       "hover:bg-gray-50 cursor-pointer transition-all duration-200",
       "border-b border-gray-100"
     )}>
       <TableCell>
-        <div className="flex items-center gap-3">
-          {category.image ? (
+        <div className="w-8 text-center">
+          <span>1</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="bg-slate-100 h-10 w-10 aspect-square rounded-lg">
+          {data.image ? (
             <img
-              src={`${imageBaseUrl}/${category.image}`}
-              alt={category.name}
+              src={getImageUrl(data.image)}
+              alt={data.name}
               className="w-12 h-12 object-cover rounded-lg"
-              onError={(e) => {
-                const target = e.currentTarget;
-                target.src = `https://via.placeholder.com/48x48/cccccc/666666?text=${encodeURIComponent(
-                  category.name,
-                )}`;
-                target.onerror = null;
-              }}
+
             />
           ) : (
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-lg flex items-center justify-center">
-              <Folder className="size-6 text-white" />
-            </div>
+            <Folder className="size-6 text-slate-600" />
           )}
-          <div>
-            <div className="font-medium text-gray-900">{category.name}</div>
-            <div className="text-sm text-gray-500">#{String(category.id).slice(0, 8)}</div>
-          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div>
+          <div className="font-medium text-gray-900">{data.name}</div>
+          <div className="text-sm text-gray-500">{data.description || "لا يوجد وصف"}</div>
         </div>
       </TableCell>
       <TableCell>
         <div className="text-sm text-gray-600 max-w-xs">
-          {category.description || "لا يوجد وصف"}
+          #{String(data.id).slice(0, 8)}
         </div>
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
-          <Package className="size-4 text-blue-500" />
-          <span className="font-medium text-gray-700">
-            {category._count?.products ?? 0}
-          </span>
+          {data._count?.products ?? 0}
         </div>
       </TableCell>
       <TableCell>
-        <Badge
-          variant="default"
-          className={cn(
-            "border font-medium flex items-center gap-1 px-3 py-1",
-            category.enabled
-              ? "bg-green-100 text-green-800 border-green-200"
-              : "bg-red-100 text-red-800 border-red-200"
-          )}
-        >
-          {category.enabled ? (
-            <>
-              <CheckCircle2 className="size-3" />
-              مفعّل
-            </>
-          ) : (
-            "معطّل"
-          )}
-        </Badge>
+        <div className="flex items-center gap-2">
+          رئيسي
+        </div>
+      </TableCell>
+      <TableCell>
+        <Switch onToggle={handleUpdate} checked={data.enabled} activeLabel="مُفعل" disabledLabel="مُعطّل" />
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">

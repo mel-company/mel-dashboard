@@ -23,6 +23,7 @@ import ErrorPage from "@/pages/miscellaneous/ErrorPage";
 import CategoriesSkeleton from "@/pages/category/CategoriesSkeleton";
 import EmptyPage from "@/pages/miscellaneous/EmptyPage";
 import CategoryTable from "./CategoryTable";
+import { getImageUrl } from "@/utils/image-url";
 
 interface CategoriesContentProps {
     actions: any;
@@ -44,18 +45,18 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
     return actions.viewMode === "table" ? (
         <CategoryTable
             categories={actions.categories}
-            imageBaseUrl={actions.imageBaseUrl}
+            refetch={actions.refetch}
         />
     ) : (
         <div className="space-y-6">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
+            <div className="bg-linear-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">مكتبة الفئات</h3>
                 <p className="text-sm text-gray-600">تصفح وإدارة جميع فئات المنتجات في متجرك</p>
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {actions.categories.map((category: any) => (
-                    <CategoryCard key={category.id} category={category} imageBaseUrl={actions.imageBaseUrl} />
+                    <CategoryCard key={category.id} category={category} />
                 ))}
                 <div
                     ref={actions.loadMoreRef}
@@ -86,7 +87,7 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
 
 export default CategoriesContent;
 
-const CategoryCard = ({ category, imageBaseUrl }: { category: any; imageBaseUrl: string }) => {
+const CategoryCard = ({ category }: { category: any; }) => {
     return (
         <Link key={category.id} to={`/categories/${category.id}`}>
             <Card className={cn(
@@ -95,10 +96,10 @@ const CategoryCard = ({ category, imageBaseUrl }: { category: any; imageBaseUrl:
                 "hover:scale-105 hover:border-blue-200"
             )}>
                 <CardHeader className="pb-4">
-                    <div className="relative h-48 flex items-center justify-center w-full overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100">
+                    <div className="relative h-48 flex items-center justify-center w-full overflow-hidden bg-linear-to-br from-blue-50 to-indigo-100">
                         {category.image ? (
                             <img
-                                src={`${imageBaseUrl}/${category.image}`}
+                                src={getImageUrl(category?.image)}
                                 alt={category.name}
                                 className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
                                 onError={(e) => {
@@ -110,7 +111,7 @@ const CategoryCard = ({ category, imageBaseUrl }: { category: any; imageBaseUrl:
                                 }}
                             />
                         ) : (
-                            <div className="w-20 h-20 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-center">
+                            <div className="w-20 h-20 bg-linear-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-center">
                                 <Folder className="size-10 text-white" />
                             </div>
                         )}
