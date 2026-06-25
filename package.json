@@ -36,6 +36,7 @@
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "dexie": "^4.4.4",
+    "framer-motion": "^12.42.0",
     "grapesjs": "^0.22.14",
     "grapesjs-preset-webpage": "^1.0.3",
     "input-otp": "^1.4.2",

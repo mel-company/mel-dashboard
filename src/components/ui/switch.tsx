@@ -32,7 +32,7 @@ function Switch({
       dir="ltr"
       data-slot="switch"
       className={cn(
-        "group relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full border-0 transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-[#00C9A7] data-[state=unchecked]:bg-amber-950/5 dark:data-[state=unchecked]:bg-amber-300/10 sm:h-9 sm:w-18",
+        "group relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full border-0 transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-[#00C9A7] data-[state=unchecked]:bg-amber-950/5 dark:data-[state=unchecked]:bg-amber-300/10 sm:h-8 sm:w-18",
         className
       )}
       checked={checked}
@@ -56,7 +56,7 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          "pointer-events-none block h-5 w-7 rounded-full bg-white/80 shadow-md transition-transform duration-200 ease-in-out data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1 sm:h-7 sm:w-10 sm:data-[state=checked]:translate-x-[1.65rem]"
+          "pointer-events-none block h-5 w-7 rounded-full bg-white/80 shadow-md transition-transform duration-200 ease-in-out data-[state=checked]:translate-x-6 data-[state=unchecked]:translate-x-1 sm:h-6.5 sm:w-10 sm:data-[state=checked]:translate-x-[1.75rem]"
         )}
       />
     </SwitchPrimitive.Root>
@@ -69,13 +69,13 @@ function Switch({
   return (
     <label
       className={cn("inline-flex cursor-pointer items-center p-1 rounded-full", {
-        "bg-green-500/10 text-green-600 dark:text-green-400": checked,
+        "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400": checked,
         "bg-amber-500/10 text-amber-600 dark:text-amber-400": !checked,
       })}
     >
       {switchNode}
       {labelText && (
-        <span className="text-sm font-medium px-2 min-w-14 sm:text-lg sm:min-w-16">{labelText}</span>
+        <span className="text-sm select-none font-medium px-2 min-w-14 sm:text-base sm:min-w-15">{labelText}</span>
       )}
     </label>
   );

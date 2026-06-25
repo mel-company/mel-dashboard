@@ -20,6 +20,9 @@ import { getImageUrl } from "@/utils/image-url";
 import { Switch } from "@/components/ui/switch";
 
 import axiosInstance from "@/utils/AxiosInstance";
+import ActionBtnList from "@/components/table/action-btn-list";
+import { useNavigate } from "react-router-dom";
+import DeleteProductModal from "@/components/modal/product/delete";
 
 interface CategoryTableProps {
   categories: any[];
@@ -29,6 +32,7 @@ interface CategoryTableProps {
 const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
   const [activePage, setActivePage] = useState(1);
   const [viewCount, setViewCount] = useState(10);
+  const [deleteModalCategory, setDeleteModalCategory] = useState<any>(null);
 
   const totalPages = Math.ceil(categories.length / viewCount) || 1;
 
@@ -39,6 +43,11 @@ const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
   const handleViewCountChange = (count: number) => {
     setViewCount(count);
     setActivePage(1);
+  };
+
+  const handleDeleteModal = (category: any) => {
+    console.log('handleDeleteModal called with:', category);
+    setDeleteModalCategory(category);
   };
 
   const startIndex = (activePage - 1) * viewCount;
@@ -67,6 +76,7 @@ const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
                 key={category.id}
                 category={category}
                 refetch={refetch}
+                onDeleteModal={handleDeleteModal}
               />
             ))}
           </TableBody>
@@ -81,13 +91,27 @@ const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
           onViewCountChange={handleViewCountChange}
         />
       </div>
+      {deleteModalCategory && (
+        <>
+          {console.log('Rendering modal for category:', deleteModalCategory)}
+          <DeleteProductModal
+            open={!!deleteModalCategory}
+            onOpenChange={(open) => !open && setDeleteModalCategory(null)}
+          />
+        </>
+      )}
     </Card>
   );
 };
 
-const CategoryTableRow = ({ category, refetch }: { category: any; refetch: () => void; }) => {
+const CategoryTableRow = ({ category, refetch, onDeleteModal }: {
+  category: any;
+  refetch: () => void;
+  onDeleteModal: (category: any) => void;
+}) => {
 
   const [data, setData] = useState(category)
+  const navigate = useNavigate()
 
   const handleUpdate = async () => {
     setData({ ...data, enabled: !data.enabled })
@@ -96,6 +120,7 @@ const CategoryTableRow = ({ category, refetch }: { category: any; refetch: () =>
     })
     refetch()
   }
+
   return (
     <TableRow className={cn(
       "hover:bg-gray-50 cursor-pointer transition-all duration-200",
@@ -145,24 +170,11 @@ const CategoryTableRow = ({ category, refetch }: { category: any; refetch: () =>
         <Switch onToggle={handleUpdate} checked={data.enabled} activeLabel="مُفعل" disabledLabel="مُعطّل" />
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
-          >
-            <Eye className="size-4" />
-            عرض
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
-          >
-            <Edit className="size-4" />
-            تعديل
-          </Button>
-        </div>
+        <ActionBtnList
+          onDelete={() => onDeleteModal(category)}
+          onEdit={() => navigate(`/categories/${category.id}/edit`)}
+          onView={() => navigate(`/categories/${category.id}`)}
+        />
       </TableCell>
     </TableRow>
   );
