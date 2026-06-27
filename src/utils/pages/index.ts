@@ -129,7 +129,7 @@ export const pages: PageType[] = [{
 },
 {
     label: "الاعدادات",
-    slug: "/settings/general",
+    slug: "/settings",
     apiEndpoint: "settings",
     group: "ادارة",
     icon: {

@@ -146,7 +146,7 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
           <button
             type="button"
             onClick={() => {
-              navigate("/settings/subscription");
+              navigate("/settings/store");
               onNavigate?.();
             }}
             className="flex w-full items-center gap-2 rounded-2xl bg-[#0f172a] px-3 py-3 text-white transition-opacity hover:opacity-95"

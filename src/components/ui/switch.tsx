@@ -13,6 +13,8 @@ interface SwitchProps {
   activeLabel?: string;
   disabledLabel?: string;
   onToggle?: (checked: boolean) => void;
+  /** @deprecated Use onToggle — kept for compatibility */
+  onCheckedChange?: (checked: boolean) => void;
 }
 
 function Switch({
@@ -26,7 +28,9 @@ function Switch({
   name,
   value,
   onToggle,
+  onCheckedChange,
 }: SwitchProps) {
+  const handleChange = onToggle ?? onCheckedChange;
   const switchNode = (
     <SwitchPrimitive.Root
       dir="ltr"
@@ -41,7 +45,7 @@ function Switch({
       required={required}
       name={name}
       value={value}
-      onCheckedChange={onToggle}
+      onCheckedChange={handleChange}
     >
       {/* Checked indicator: vertical bar */}
       <span

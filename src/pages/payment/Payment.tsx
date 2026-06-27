@@ -149,7 +149,7 @@ const Payment = ({}: Props) => {
   const handleSuccessDialogOpenChange = (open: boolean) => {
     setSuccessDialogOpen(open);
     if (!open) {
-      navigate("/settings/subscription");
+      navigate("/settings/store");
     }
   };
 
@@ -176,7 +176,7 @@ const Payment = ({}: Props) => {
 
   const handleContinue = () => {
     setSuccessDialogOpen(false);
-    navigate("/settings/subscription");
+    navigate("/settings/store");
   };
 
   if (isLoading) {

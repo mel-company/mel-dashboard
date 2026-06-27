@@ -139,42 +139,6 @@ const baseApps: AppItem[] = [
         path: "/settings/store",
         icon: Store,
       },
-      {
-        label: "الموقع",
-        enLabel: "Website",
-        path: "/settings/website",
-        icon: Layout,
-      },
-      {
-        label: "الدفع",
-        enLabel: "Payment",
-        path: "/settings/payment-methods",
-        icon: CreditCard,
-      },
-      {
-        label: "التوصيل",
-        enLabel: "Delivery",
-        path: "/settings/delivery",
-        icon: Truck,
-      },
-      {
-        label: "النطاق",
-        enLabel: "Domain",
-        path: "/settings/domain",
-        icon: Globe,
-      },
-      {
-        label: "الشروط والأحكام",
-        enLabel: "Terms and Conditions",
-        path: "/settings/policies/terms-and-conditions",
-        icon: FileText,
-      },
-      {
-        label: "اختصارات",
-        enLabel: "Shortcuts",
-        path: "/settings/shortcuts",
-        icon: Keyboard,
-      },
     ],
   },
   {
@@ -385,7 +349,6 @@ const QuickNavigate = () => {
     };
 
     const handleCtrlShortcuts = () => {
-      if (location.pathname === "/settings/shortcuts") return;
       setOpen(false);
       setOpenShortcutsDialog((v) => !v);
     };
@@ -426,7 +389,7 @@ const QuickNavigate = () => {
 
   const openShortcutsPage = () => {
     setOpenShortcutsDialog(false);
-    navigate("/settings/shortcuts");
+    navigate("/settings/general");
   };
 
   return (

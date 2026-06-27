@@ -23,12 +23,7 @@ import AddDiscount from "../pages/discount/AddDiscount";
 import Notifications from "../new-pages/notifications";
 import NotificationDetails from "../pages/notification/NotificationDetails";
 import UserProfile from "../pages/profile/UserProfile";
-import GeneralSettings from "../pages/settings/GeneralSettings";
-import DetailsSettings from "../pages/settings/DetailsSettings";
-import DomainSettings from "../pages/settings/DomainSettings";
-import PaymentMethodsSettings from "../pages/settings/PaymentMethodsSettings";
-import DeliverySettings from "../pages/settings/DeliverySettings";
-import TermsAndConditionsSettings from "../pages/settings/TermsAndConditionsSettings";
+import SettingsPage from "../new-pages/settings";
 import OTP from "../pages/auth/OTP";
 import AppStore from "../pages/app-store/AppStore";
 import Accounting from "../pages/accounting/Accounting";
@@ -39,12 +34,8 @@ import EditDiscount from "../pages/discount/EditDiscount";
 import CategorieGroups from "../pages/category/category-group/CategorieGroups";
 import CategoryGroupDetails from "../pages/category/category-group/CategoryGroupDetails";
 import EditCategoryGroup from "../pages/category/category-group/EditCategoryGroup";
-import SubscriptionSettings from "../pages/settings/SubscriptionSettings";
 import Plans from "../pages/plan/Plans";
 import POS from "../pages/pos/POS";
-import PrivacyPolicySettings from "../pages/settings/PrivacyPolicySettings";
-import RefundPolicySettings from "../pages/settings/RefundPolicySettings";
-import Editor from "../pages/settings/Editor";
 import Coupons from "../pages/coupone/Coupons";
 import CouponDetails from "../pages/coupone/CouponDetails";
 import EditCoupon from "../pages/coupone/EditCoupon";
@@ -52,10 +43,8 @@ import AddCoupon from "../pages/coupone/AddCoupon";
 import Tickets from "../new-pages/tickets";
 import TicketDetails from "../pages/support/TicketDetails";
 import OpenTicket from "../pages/support/OpenTicket";
-import Shortcuts from "../pages/settings/Shortcuts";
 import DevStoreLogin from "../pages/auth/DevStoreLogin";
 import DevOTP from "../pages/auth/DEVOTP";
-import WebsiteSettings from "../pages/settings/WebsiteSettings";
 
 export interface RouteConfig {
     path: string;
@@ -188,26 +177,8 @@ export const mainRoutes: RouteConfig[] = [
 ];
 
 export const settingsRoutes: RouteConfig[] = [
-    { path: "general", element: <GeneralSettings /> },
-    { path: "editor", element: <Editor /> },
-    { path: "website", element: <WebsiteSettings /> },
-    { path: "store", element: <DetailsSettings /> },
-    { path: "domain", element: <DomainSettings /> },
-    { path: "payment-methods", element: <PaymentMethodsSettings /> },
-    { path: "delivery", element: <DeliverySettings /> },
-    {
-        path: "policies",
-        children: [
-            {
-                path: "terms-and-conditions",
-                element: <TermsAndConditionsSettings />,
-            },
-            { path: "privacy-policy", element: <PrivacyPolicySettings /> },
-            { path: "refund-policy", element: <RefundPolicySettings /> },
-        ],
-    },
-    { path: "subscription", element: <SubscriptionSettings /> },
-    { path: "shortcuts", element: <Shortcuts /> },
+    { path: "general", element: <SettingsPage /> },
+    { path: "store", element: <SettingsPage /> },
 ];
 
 export const publicRoutes: RouteConfig[] = [

@@ -93,26 +93,6 @@ const Sidebar = ({ onClose }: SidebarProps) => {
             path: "/settings/store",
             icon: Store,
           },
-          {
-            label: "النطاق",
-            path: "/settings/domain",
-            icon: Globe,
-          },
-          {
-            label: "الدفع",
-            path: "/settings/payment-methods",
-            icon: Truck,
-          },
-          {
-            label: "التوصيل",
-            path: "/settings/delivery",
-            icon: Truck,
-          },
-          {
-            label: "الشروط والأحكام",
-            path: "/settings/terms-and-conditions",
-            icon: FileText,
-          },
         ],
         icon: Settings,
       },
