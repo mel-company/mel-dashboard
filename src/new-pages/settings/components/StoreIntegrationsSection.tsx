@@ -80,8 +80,8 @@ const StoreIntegrationsSection = () => {
     ? `${domainDetails.domain}.mel.iq`
     : "azyaa.mel.iq";
 
-  const deliveryCompanyName =
-    storeDetails?.deliveryCompany?.name ?? "لم يتم التحديد";
+  const deliveryCompany = storeDetails?.deliveryCompany;
+  const deliveryCompanyName = deliveryCompany?.name ?? "لم يتم التحديد";
 
   return (
     <>
@@ -130,13 +130,20 @@ const StoreIntegrationsSection = () => {
         <SettingsCard title="أعدادات مزودين خدمات التوصيل">
           <button
             type="button"
-            className="flex w-full items-center justify-between rounded-2xl bg-slate-100 px-4 py-3 text-right"
+            className="flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-100 px-4 py-3 text-right"
             onClick={() => setDeliveryDialogOpen(true)}
           >
             <ChevronDown className="size-4 shrink-0 text-slate-400" />
-            <div className="flex items-center gap-2">
-              <span className="text-sm">{deliveryCompanyName}</span>
-              <Truck className="size-4 text-slate-500" />
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex min-w-0 flex-col items-end gap-0.5">
+                <span className="text-sm font-medium">{deliveryCompanyName}</span>
+                {deliveryCompany?.description && (
+                  <span className="line-clamp-1 text-[11px] leading-snug text-slate-500">
+                    {deliveryCompany.description}
+                  </span>
+                )}
+              </div>
+              <Truck className="size-4 shrink-0 text-slate-500" />
             </div>
           </button>
         </SettingsCard>

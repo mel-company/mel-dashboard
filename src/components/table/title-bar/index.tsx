@@ -28,7 +28,7 @@ const TitleBar = ({
           <HugeiconsIcon icon={currentPage?.icon?.normal} />
           <h1 className="font-bold text-2xl">{currentPage?.label}</h1>
         </div>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+        <p className="text-xs text-muted-foreground/80">{subtitle}</p>
       </div>
       {children}
     </div>

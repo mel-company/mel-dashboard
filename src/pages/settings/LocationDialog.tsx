@@ -226,7 +226,7 @@ const LocationDialog = ({
             )}
           </div>
 
-          <div className="relative h-64 overflow-hidden rounded-2xl border">
+          <div className="relative h-80 overflow-hidden rounded-2xl border sm:h-96">
             {open && (
               <MapContainer
                 center={[draftLat, draftLng]}

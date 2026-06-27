@@ -58,7 +58,7 @@ const StorePlanSummaryCard = () => {
           {plan?.name ?? "—"}
         </p>
         {plan?.description && (
-          <p className="mt-2 text-sm leading-relaxed text-white/90">
+          <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-white/80">
             {plan.description}
           </p>
         )}

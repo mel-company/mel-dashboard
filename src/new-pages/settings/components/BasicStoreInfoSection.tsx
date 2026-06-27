@@ -14,7 +14,6 @@ import LogoDialog from "@/pages/settings/LogoDialog";
 import LocationDialog from "@/pages/settings/LocationDialog";
 
 const compactInputClass = "h-10";
-const compactTextareaClass = "min-h-0";
 
 type Props = Pick<
   ReturnType<typeof useSettingsPage>,
@@ -104,7 +103,7 @@ const BasicStoreInfoSection = ({
         <SettingsField
           label="وصف المتجر"
           htmlFor="storeDescription"
-          className="flex min-h-0 flex-1 flex-col"
+          className="shrink-0"
         >
           <SettingsTextarea
             id="storeDescription"
@@ -112,7 +111,7 @@ const BasicStoreInfoSection = ({
             value={storeForm.storeDescription}
             onChange={handleStoreInputChange}
             rows={2}
-            className={`${compactTextareaClass} min-h-0 flex-1`}
+            className="min-h-[52px] max-h-[52px] resize-none text-xs leading-snug"
           />
         </SettingsField>
 
@@ -158,7 +157,7 @@ const BasicStoreInfoSection = ({
             <>
               <SettingsLabel>موقع المتجر</SettingsLabel>
               <div
-                className="relative h-16 cursor-pointer overflow-hidden rounded-xl bg-slate-100"
+                className="relative h-44 cursor-pointer overflow-hidden rounded-xl bg-slate-100 sm:h-48"
                 role="button"
                 tabIndex={0}
                 onClick={openLocationDialog}
@@ -174,14 +173,14 @@ const BasicStoreInfoSection = ({
                   className="pointer-events-none absolute inset-0 size-full border-0"
                   src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapBbox}&layer=mapnik&marker=${mapLat}%2C${mapLng}`}
                 />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <MapPin className="size-6 text-red-500 drop-shadow" />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <MapPin className="size-8 text-red-500 drop-shadow" />
                 </div>
                 <Button
                   type="button"
                   variant="secondary"
                   size="sm"
-                  className="absolute bottom-1.5 left-1.5 z-10 h-7 rounded-lg bg-sky-100 px-2 text-[10px] text-sky-600 hover:bg-sky-200"
+                  className="absolute bottom-2 left-2 z-10 rounded-lg bg-sky-100 px-3 text-xs text-sky-600 hover:bg-sky-200"
                   onClick={(e) => {
                     e.stopPropagation();
                     openLocationDialog();

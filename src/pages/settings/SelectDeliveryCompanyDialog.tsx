@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,13 @@ import { toast } from "sonner";
 import { useFetchDeliveryCompanies } from "@/api/wrappers/delivery-company.wrappers";
 import { useUpdateDeliveryCompany } from "@/api/wrappers/settings.wrappers";
 
+type DeliveryCompany = {
+  id: string;
+  name?: string;
+  description?: string;
+  code?: string;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,7 +45,6 @@ const SelectDeliveryCompanyDialog = ({
     string | undefined
   >(currentDeliveryCompanyId);
 
-  // Update selected value when currentDeliveryCompanyId changes
   useEffect(() => {
     setSelectedDeliveryCompanyId(currentDeliveryCompanyId);
   }, [currentDeliveryCompanyId, open]);
@@ -49,15 +55,20 @@ const SelectDeliveryCompanyDialog = ({
   const { mutate: updateDeliveryCompany, isPending } =
     useUpdateDeliveryCompany();
 
+  const companies = (deliveryCompanies ?? []) as DeliveryCompany[];
+
+  const selectedCompany = useMemo(
+    () => companies.find((c) => c.id === selectedDeliveryCompanyId),
+    [companies, selectedDeliveryCompanyId],
+  );
+
   const handleSubmit = () => {
     if (!selectedDeliveryCompanyId) {
       toast.error("يرجى اختيار شركة التوصيل");
       return;
     }
 
-    // Check if the selected delivery company is the same as the current one
     if (selectedDeliveryCompanyId === currentDeliveryCompanyId) {
-      // No change, just close the dialog
       onOpenChange(false);
       return;
     }
@@ -68,10 +79,10 @@ const SelectDeliveryCompanyDialog = ({
         onOpenChange(false);
         onSuccess?.();
       },
-      onError: (error: any) => {
+      onError: (error: { response?: { data?: { message?: string } } }) => {
         toast.error(
           error?.response?.data?.message ||
-            "فشل في تحديث شركة التوصيل. حاول مرة أخرى."
+            "فشل في تحديث شركة التوصيل. حاول مرة أخرى.",
         );
       },
     });
@@ -81,12 +92,12 @@ const SelectDeliveryCompanyDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="text-right sm:max-w-md">
         <DialogHeader className="text-right">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="mb-2 flex items-center gap-3">
             <Truck className="size-6 text-primary" />
             <DialogTitle>اختر شركة التوصيل</DialogTitle>
           </div>
-          <DialogDescription className="text-right">
-            اختر شركة التوصيل التي تريد استخدامها للمتجر
+          <DialogDescription className="text-right text-xs">
+            اختر شركة الشحن التي تريد ربطها بمتجرك
           </DialogDescription>
         </DialogHeader>
 
@@ -100,8 +111,8 @@ const SelectDeliveryCompanyDialog = ({
               onValueChange={setSelectedDeliveryCompanyId}
               disabled={isLoadingDeliveryCompanies || isPending}
             >
-              <SelectTrigger id="deliveryCompany" className="w-full text-right">
-                <div className="flex items-center gap-2 flex-1">
+              <SelectTrigger id="deliveryCompany" className="h-auto w-full py-2.5 text-right">
+                <div className="flex flex-1 items-center gap-2">
                   <SelectValue placeholder="اختر شركة التوصيل" />
                   {isLoadingDeliveryCompanies && (
                     <Loader2 className="size-4 animate-spin text-muted-foreground" />
@@ -113,19 +124,42 @@ const SelectDeliveryCompanyDialog = ({
                   <div className="flex items-center justify-center p-4">
                     <Loader2 className="size-4 animate-spin" />
                   </div>
-                ) : deliveryCompanies && deliveryCompanies.length > 0 ? (
-                  deliveryCompanies.map((company: any) => (
+                ) : companies.length > 0 ? (
+                  companies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
-                      {company.name || "بدون اسم"}
+                      <div className="flex flex-col gap-0.5 py-0.5 text-right">
+                        <span className="text-sm font-medium">
+                          {company.name || "بدون اسم"}
+                        </span>
+                        {company.description && (
+                          <span className="text-[11px] leading-snug text-muted-foreground">
+                            {company.description}
+                          </span>
+                        )}
+                      </div>
                     </SelectItem>
                   ))
                 ) : (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
+                  <div className="p-4 text-center text-xs text-muted-foreground">
                     لا توجد شركات توصيل متاحة
                   </div>
                 )}
               </SelectContent>
             </Select>
+
+            {selectedCompany?.description && (
+              <p className="text-[11px] leading-snug text-slate-500">
+                {selectedCompany.description}
+              </p>
+            )}
+
+            {selectedCompany?.code === "prime" && (
+              <p className="rounded-xl bg-sky-50 px-3 py-2 text-[11px] leading-snug text-sky-700">
+                Prime (برايم) — بعد الحفظ يمكنك إكمال ربط التاجر عبر إعدادات
+                Prime.
+              </p>
+            )}
+
             {!selectedDeliveryCompanyId && (
               <p className="text-xs text-destructive">
                 يرجى اختيار شركة التوصيل

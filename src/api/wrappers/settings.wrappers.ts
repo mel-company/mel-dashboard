@@ -183,6 +183,7 @@ export const useUpdateDeliveryCompany = () => {
       }
       // Invalidate current settings
       queryClient.invalidateQueries({ queryKey: ["settings", "current"] });
+      queryClient.invalidateQueries({ queryKey: ["stores"] });
     },
   });
 };
