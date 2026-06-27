@@ -6,6 +6,7 @@ interface PageTableHeaderProps {
     title?: string;
     searchQuery?: string;
     onSearchChange?: (value: string) => void;
+    searchPlaceholder?: string;
     onFilterClick?: () => void;
     hasActiveFilters?: boolean;
     activeFilterCount?: number;
@@ -16,6 +17,7 @@ const PageTableHeader = ({
     title = "المنتجات",
     searchQuery = "",
     onSearchChange,
+    searchPlaceholder,
     onFilterClick,
     hasActiveFilters = false,
     activeFilterCount = 0,
@@ -28,6 +30,7 @@ const PageTableHeader = ({
                 <Searchbar
                     value={searchQuery}
                     onChange={onSearchChange}
+                    placeholder={searchPlaceholder}
                 />
                 <button
                     onClick={onFilterClick}
