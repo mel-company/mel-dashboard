@@ -31,6 +31,7 @@ export type PageType = {
     label: string;
     slug: string;
     apiEndpoint: string;
+    searchApiEndpoint?: string;
     group: string;
     icon: {
         normal: IconSvgElement;
@@ -81,6 +82,7 @@ export const pages: PageType[] = [{
     label: "الدعم",
     slug: "/tickets",
     apiEndpoint: "support-ticket/store/filter-cursor",
+    searchApiEndpoint: "support-ticket/store/search-cursor",
     group: "الحركة والمبيعات",
     icon: {
         normal: CustomerSupportIconNormal,

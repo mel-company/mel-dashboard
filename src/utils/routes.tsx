@@ -41,8 +41,8 @@ import CouponDetails from "../pages/coupone/CouponDetails";
 import EditCoupon from "../pages/coupone/EditCoupon";
 import AddCoupon from "../pages/coupone/AddCoupon";
 import Tickets from "../new-pages/tickets";
-import TicketDetails from "../pages/support/TicketDetails";
-import OpenTicket from "../pages/support/OpenTicket";
+import TicketDetails from "../new-pages/tickets/details";
+import CreateTicket from "../new-pages/tickets/create";
 import DevStoreLogin from "../pages/auth/DevStoreLogin";
 import DevOTP from "../pages/auth/DEVOTP";
 
@@ -81,7 +81,7 @@ export const mainRoutes: RouteConfig[] = [
                 path: ":id",
                 children: [{ path: "", element: <TicketDetails /> }],
             },
-            { path: "new", element: <OpenTicket /> },
+            { path: "new", element: <CreateTicket /> },
         ],
     },
     {

@@ -1,21 +1,75 @@
-import { MessageSquare, Lock } from "lucide-react";
+import { FileText, Loader2, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import ErrorPage from "@/pages/miscellaneous/ErrorPage";
+import EmptyPage from "@/pages/miscellaneous/EmptyPage";
+import TicketTable from "./TicketTable";
+import type { useTicketsPage } from "@/hooks/use-tickets-page";
 
-interface TicketsContentProps {
-    actions: any;
-    navigate: (path: string) => void;
-}
+type TicketsContentProps = {
+  actions: ReturnType<typeof useTicketsPage>;
+};
 
-const TicketsContent = ({ actions, navigate }: TicketsContentProps) => {
-    // Show coming soon message since tickets functionality is not fully implemented
+const TicketsContent = ({ actions }: TicketsContentProps) => {
+  if (actions.isLoading && actions.tickets.length === 0) {
     return (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-            <MessageSquare className="size-16 text-muted-foreground mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">قريباً</h2>
-            <p className="text-muted-foreground mb-4">
-                نظام تذاكر الدعم قيد التطوير وسيكون متاحاً قريباً. شكراً لصبرك!
-            </p>
-        </div>
+      <div className="space-y-3 rounded-3xl bg-white p-6">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
     );
+  }
+
+  if (actions.error && actions.tickets.length === 0) {
+    return (
+      <ErrorPage
+        error={actions.error}
+        onRetry={() => actions.refetch()}
+        isRetrying={false}
+      />
+    );
+  }
+
+  if (actions.tickets.length === 0) {
+    const hasQuery =
+      actions.search.trim() || actions.hasActiveFilters;
+
+    return (
+      <EmptyPage
+        title={hasQuery ? "لا توجد نتائج" : "لا توجد تذاكر"}
+        description={
+          hasQuery
+            ? "لم يتم العثور على تذاكر تطابق البحث أو التصفية"
+            : "ليس لديك تذاكر دعم حالياً. يمكنك فتح تذكرة جديدة للتواصل مع فريق الدعم"
+        }
+        icon={<FileText className="size-7 text-muted-foreground" />}
+        primaryAction={
+          hasQuery
+            ? {
+                label: "مسح البحث والتصفية",
+                onClick: () => {
+                  actions.setSearchValue("");
+                  actions.handleClearFilters();
+                },
+                icon: <X className="size-4" />,
+                variant: "outline" as const,
+              }
+            : undefined
+        }
+      />
+    );
+  }
+
+  return (
+    <>
+      <TicketTable tickets={actions.tickets} />
+      <div ref={actions.loadMoreRef} className="flex justify-center py-4">
+        {actions.hasNextPage && actions.isFetchingNextPage && (
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        )}
+      </div>
+    </>
+  );
 };
 
 export default TicketsContent;

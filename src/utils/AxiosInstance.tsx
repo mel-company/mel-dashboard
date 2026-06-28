@@ -31,9 +31,13 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // If the data is FormData, remove Content-Type header to let browser/axios set it automatically with boundary
+    // Axios 1.x uses AxiosHeaders — delete() is required so multipart boundary is set correctly
     if (config.data instanceof FormData) {
-      delete config.headers["Content-Type"];
+      if (typeof config.headers.delete === "function") {
+        config.headers.delete("Content-Type");
+      } else {
+        delete config.headers["Content-Type"];
+      }
     }
 
     return config;

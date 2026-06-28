@@ -1,42 +1,108 @@
 import axiosInstance from "@/utils/AxiosInstance";
+import { appendTicketFiles } from "@/api/utils/ticket-files";
+import type {
+  CreateStoreSupportTicketInput,
+  CreateStoreSupportTicketResult,
+  CursorPage,
+  SendTicketMessageInput,
+  SupportTicketDetail,
+  SupportTicketListItem,
+  TicketMessage,
+} from "@/api/types/ticket";
 
-/** Create ticket payload (system or store) */
-export interface CreateSupportTicketDto {
-  title: string;
-  description: string;
+/** @deprecated use CreateStoreSupportTicketInput */
+export type CreateStoreSupportTicketDto = CreateStoreSupportTicketInput;
+
+export type CreateSupportTicketDto = CreateStoreSupportTicketInput & {
   priority?: string;
-  type?: string;
-  department?: string;
   assignedToId?: string;
   storeId?: string;
-}
+};
 
-/** Create ticket payload for store user only (no priority, assignedToId, storeId) */
-export interface CreateStoreSupportTicketDto {
-  title: string;
-  description: string;
-  type?: string;
-  department?: string;
-}
-
-/** Assign ticket payload (system only) */
-export interface AssignTicketDto {
+export type AssignTicketDto = {
   assignedToId: string;
+};
+
+export type ResolveTicketDto = {
+  resolvedNote: string;
+};
+
+function buildCreateTicketFormData(
+  fields: Omit<CreateStoreSupportTicketInput, "files">,
+  files: File[],
+): FormData {
+  const formData = new FormData();
+  formData.append("title", fields.title);
+  formData.append("description", fields.description);
+  if (fields.type) formData.append("type", fields.type);
+  if (fields.department) formData.append("department", fields.department);
+  appendTicketFiles(formData, files);
+  return formData;
 }
 
-/** Resolve ticket payload (system only) */
-export interface ResolveTicketDto {
-  resolvedNote: string;
+function isAxiosStatus(err: unknown, status: number): boolean {
+  return (err as { response?: { status?: number } })?.response?.status === status;
 }
 
 export const ticketAPI = {
   // ─── Store user endpoints ─────────────────────────────────────────────────
 
-  /** Create a support ticket (store user) */
-  createStore: async (body: CreateStoreSupportTicketDto): Promise<any> => {
-    const { data } = await axiosInstance.post<any>(
+  /**
+   * Create a support ticket (store user).
+   * With files: tries multipart create first, then JSON + separate upload.
+   * If the attachment route is missing (404), the ticket is still returned.
+   */
+  createStore: async (
+    body: CreateStoreSupportTicketInput,
+  ): Promise<CreateStoreSupportTicketResult> => {
+    const { files, ...fields } = body;
+
+    if (files?.length) {
+      try {
+        const { data } = await axiosInstance.post<SupportTicketDetail>(
+          "/support-ticket/store",
+          buildCreateTicketFormData(fields, files),
+        );
+        return data;
+      } catch (err) {
+        if (!isAxiosStatus(err, 400)) throw err;
+      }
+    }
+
+    const { data } = await axiosInstance.post<SupportTicketDetail>(
       "/support-ticket/store",
-      body
+      fields,
+    );
+
+    if (!files?.length) {
+      return data;
+    }
+
+    try {
+      const formData = new FormData();
+      appendTicketFiles(formData, files);
+
+      const { data: withAttachments } = await axiosInstance.post<SupportTicketDetail>(
+        `/support-ticket/store/${data.id}/attachments`,
+        formData,
+      );
+      return withAttachments;
+    } catch {
+      return { ...data, attachmentsFailed: true };
+    }
+  },
+
+  /** Add attachments to an existing ticket */
+  addStoreAttachments: async (
+    ticketId: string,
+    files: File[],
+  ): Promise<SupportTicketDetail> => {
+    const formData = new FormData();
+    appendTicketFiles(formData, files);
+
+    const { data } = await axiosInstance.post<SupportTicketDetail>(
+      `/support-ticket/store/${ticketId}/attachments`,
+      formData,
     );
     return data;
   },
@@ -84,9 +150,10 @@ export const ticketAPI = {
     department?: string;
     cursor?: string | null;
     limit?: number;
-  }): Promise<any> => {
-    const { data } = await axiosInstance.get<any>(
-      "/support-ticket/store/filter-cursor",
+  }): Promise<CursorPage<SupportTicketListItem>> => {
+    const { data } = await axiosInstance.get<
+      CursorPage<SupportTicketListItem>
+    >("/support-ticket/store/filter-cursor",
       {
         params: {
           ...(params?.query && { query: params.query }),
@@ -171,29 +238,59 @@ export const ticketAPI = {
     return data;
   },
 
-  /** Send a reply message on a ticket (store user). Body: { ticketId, message }. */
-  sendMessageStore: async (body: {
-    ticketId: string;
-    message: string;
-  }): Promise<any> => {
-    const { data } = await axiosInstance.post<any>("/message/send", body);
+  /** Send a reply message on a ticket. Uses multipart when files are included. */
+  sendMessageStore: async (
+    body: SendTicketMessageInput,
+  ): Promise<TicketMessage> => {
+    const { files, ticketId, message } = body;
+
+    if (files?.length) {
+      const formData = new FormData();
+      formData.append("ticketId", String(ticketId));
+      if (message?.trim()) formData.append("message", message.trim());
+      appendTicketFiles(formData, files);
+
+      const { data } = await axiosInstance.post<TicketMessage>(
+        "/message/send",
+        formData,
+      );
+      return data;
+    }
+
+    const { data } = await axiosInstance.post<TicketMessage>("/message/send", {
+      ticketId,
+      message: message ?? "",
+    });
     return data;
   },
 
-  /** Get messages for a ticket with cursor pagination (5 per page). */
+  /** Get all messages for a ticket (store user) */
+  fetchMessagesStore: async (ticketId: string): Promise<TicketMessage[]> => {
+    const { data } = await axiosInstance.get<TicketMessage[]>(
+      `/message/store/${ticketId}/messages`,
+    );
+    return data;
+  },
+
+  /** Get messages for a ticket with cursor pagination */
   fetchMessagesStoreCursor: async (
     ticketId: string,
-    params?: { cursor?: string | null; limit?: number }
-  ): Promise<any> => {
-    const { data } = await axiosInstance.get<any>(
+    params?: { cursor?: string | null; limit?: number },
+  ): Promise<CursorPage<TicketMessage>> => {
+    const { data } = await axiosInstance.get<CursorPage<TicketMessage>>(
       `/message/store/${ticketId}/messages/cursor`,
       {
         params: {
           ...(params?.cursor && { cursor: params.cursor }),
           ...(params?.limit != null && { limit: params.limit }),
         },
-      }
+      },
     );
     return data;
+  },
+
+  /** Delete a message */
+  deleteMessage: async (id: string): Promise<void> => {
+    await axiosInstance.delete(`/message/${id}`);
   },
 };

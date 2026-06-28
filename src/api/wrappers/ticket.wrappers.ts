@@ -5,7 +5,7 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { ticketAPI } from "../endpoints/ticket.endpoints";
-import type { CreateStoreSupportTicketDto } from "../endpoints/ticket.endpoints";
+import type { CreateStoreSupportTicketInput, CreateStoreSupportTicketResult, SendTicketMessageInput } from "@/api/types/ticket";
 
 /** Params for fetch-all (pagination). status: "all" = no filter; omitted = backend default "open". */
 export interface FetchTicketsStoreParams {
@@ -144,7 +144,7 @@ export const useFetchTicketStore = (id: string, enabled: boolean = true) => {
 /** Create a support ticket (store user) */
 export const useCreateTicketStore = () => {
   const queryClient = useQueryClient();
-  return useMutation<any, Error, CreateStoreSupportTicketDto>({
+  return useMutation<CreateStoreSupportTicketResult, Error, CreateStoreSupportTicketInput>({
     mutationFn: (body) => ticketAPI.createStore(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.store.lists() });
@@ -199,7 +199,7 @@ export const useDeleteTicketStore = () => {
 /** Send a message on a ticket (store user) */
 export const useSendMessageStore = () => {
   const queryClient = useQueryClient();
-  return useMutation<any, Error, { ticketId: string; message: string }>({
+  return useMutation<any, Error, SendTicketMessageInput>({
     mutationFn: (body) => ticketAPI.sendMessageStore(body),
     onSuccess: (_, { ticketId }) => {
       queryClient.invalidateQueries({
@@ -207,6 +207,48 @@ export const useSendMessageStore = () => {
       });
       queryClient.invalidateQueries({
         queryKey: ticketKeys.store.messages(ticketId),
+      });
+    },
+  });
+};
+
+/** Add attachments to an existing ticket */
+export const useAddTicketAttachmentsStore = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, { ticketId: string; files: File[] }>({
+    mutationFn: ({ ticketId, files }) =>
+      ticketAPI.addStoreAttachments(ticketId, files),
+    onSuccess: (_, { ticketId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ticketKeys.store.detail(ticketId),
+      });
+    },
+  });
+};
+
+/** Fetch all messages for a ticket (store user) */
+export const useFetchMessagesStore = (
+  ticketId: string,
+  enabled: boolean = true,
+) => {
+  return useQuery({
+    queryKey: ticketKeys.store.messages(ticketId, { all: true }),
+    queryFn: () => ticketAPI.fetchMessagesStore(ticketId),
+    enabled: enabled && !!ticketId,
+  });
+};
+
+/** Delete a message */
+export const useDeleteMessageStore = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, { id: string; ticketId: string }>({
+    mutationFn: ({ id }) => ticketAPI.deleteMessage(id),
+    onSuccess: (_, { ticketId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ticketKeys.store.messages(ticketId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ticketKeys.store.detail(ticketId),
       });
     },
   });
