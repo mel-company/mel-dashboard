@@ -1,5 +1,16 @@
-export function DeleteProductModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
+import type { ProductListItem } from "@/api/types/product";
+import axiosInstance from "@/utils/AxiosInstance";
+
+export function DeleteProductModal({ product, open, onOpenChange }: { product: ProductListItem; open: boolean, onOpenChange: (open: boolean) => void }) {
     console.log('DeleteProductModal called with open:', open);
+
+    const handleDelete = async () => {
+
+        const res = await axiosInstance.delete(
+            `/product/${product.id}`
+        )
+        console.log(res)
+    }
 
     if (!open) return null
 
@@ -20,7 +31,7 @@ export function DeleteProductModal({ open, onOpenChange }: { open: boolean, onOp
                     </button>
                     <button
                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                        onClick={() => onOpenChange(false)}
+                        onClick={handleDelete}
                     >
                         Delete
                     </button>
