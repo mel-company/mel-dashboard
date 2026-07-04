@@ -35,7 +35,7 @@ import CategorieGroups from "../pages/category/category-group/CategorieGroups";
 import CategoryGroupDetails from "../pages/category/category-group/CategoryGroupDetails";
 import EditCategoryGroup from "../pages/category/category-group/EditCategoryGroup";
 import Plans from "../pages/plan/Plans";
-import POS from "../pages/pos/POS";
+import POS from "../new-pages/pos";
 import Coupons from "../pages/coupone/Coupons";
 import CouponDetails from "../pages/coupone/CouponDetails";
 import EditCoupon from "../pages/coupone/EditCoupon";

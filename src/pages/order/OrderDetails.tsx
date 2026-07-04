@@ -58,10 +58,12 @@ import RemoveOrderProduct from "./RemoveOrderProduct";
 import UseCouponDialog from "./UseCouponDialog";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "./OrderInvoicePreview";
 import { toast } from "sonner";
+import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isPhysicalStore } = usePhysicalStoreEnabled();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditAddressDialogOpen, setIsEditAddressDialogOpen] = useState(false);
   const [isEditVariantDialogOpen, setIsEditVariantDialogOpen] = useState(false);
@@ -574,7 +576,7 @@ const OrderDetails = () => {
                   <ShoppingCart className="size-5" />
                   المنتجات في الطلب
                 </CardTitle>
-                {canModifyOrder && (
+                {canModifyOrder && isPhysicalStore && (
                   <Button
                     variant="secondary"
                     className="gap-2"

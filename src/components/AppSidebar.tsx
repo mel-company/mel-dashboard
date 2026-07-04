@@ -13,10 +13,11 @@ import { useMe } from "@/api/wrappers/auth.wrappers";
 import melLogo from "@/assets/imgs/logo/mel-logo.svg";
 
 import {
-  sidebarSections,
+  getSidebarSections,
   isNavItemActive,
   type SidebarNavItem,
 } from "@/config/sidebar-navigation";
+import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
 
 type AppSidebarProps = {
   className?: string;
@@ -62,6 +63,8 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
   const location = useLocation();
   const navigate = useNavigate();
   const { data: me } = useMe();
+  const { isPhysicalStore } = usePhysicalStoreEnabled();
+  const sidebarSections = getSidebarSections(isPhysicalStore);
   const [internalCollapsed, setInternalCollapsed] = useState(false);
 
   // Use external collapsed state if provided, otherwise use internal state

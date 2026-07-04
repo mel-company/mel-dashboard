@@ -33,6 +33,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
 
 interface AppItem {
   label: string;
@@ -49,6 +50,7 @@ interface AppItem {
     path: string;
     icon: React.ComponentType<{ className?: string }>;
   }[];
+  requiresPhysicalStore?: boolean;
 }
 
 type SearchableItem = {
@@ -171,7 +173,8 @@ const baseApps: AppItem[] = [
     path: "/pos",
     icon: Keyboard,
     gradient: "from-orange-500 to-orange-600",
-    description: "إدارة البيع",
+    description: "البيع من المتجر الفعلي",
+    requiresPhysicalStore: true,
   },
   // {
   //   label: "المحاسبة",
@@ -242,6 +245,7 @@ const QuickNavigate = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const { isPhysicalStore } = usePhysicalStoreEnabled();
 
   const filteredApps = useMemo((): SearchableItem[] => {
     const q = query.trim().toLowerCase();
@@ -252,6 +256,7 @@ const QuickNavigate = () => {
       (enLabel?.toLowerCase().includes(q) ?? false);
 
     for (const app of baseApps) {
+      if (app.requiresPhysicalStore && !isPhysicalStore) continue;
       const hasSubItems = app.subItems && app.subItems.length > 0;
       const appMatches =
         !q ||
@@ -299,7 +304,7 @@ const QuickNavigate = () => {
     }
 
     return items;
-  }, [query]);
+  }, [query, isPhysicalStore]);
 
   useEffect(() => {
     // When results change, keep first result "active" so Enter can navigate immediately.

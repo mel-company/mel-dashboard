@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { settingsAPI } from "../endpoints/settings.endpoints";
+import { storeKeys } from "./store.wrappers";
 
 /**
  * Query key factory for settings
@@ -249,11 +250,18 @@ export const useUpdateStoreDetails = () => {
   return useMutation<any, Error, any>({
     mutationFn: (storeDetails: any) =>
       settingsAPI.updateStoreDetails(storeDetails),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ["store", "details", "auth"] });
       queryClient.invalidateQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.setQueryData(storeKeys.details(), (old: unknown) => ({
+        ...(typeof old === "object" && old !== null ? old : {}),
+        ...variables,
+        ...data,
+      }));
+      queryClient.invalidateQueries({ queryKey: storeKeys.details() });
+      queryClient.invalidateQueries({ queryKey: storeKeys.all });
       if (data?.storeId) {
         queryClient.setQueryData(settingsKeys.byStore(data.storeId), data);
       }
@@ -351,7 +359,8 @@ export const useUpdateStoreLogo = () => {
         });
       }
       // Invalidate store details queries to get updated logo
-      queryClient.invalidateQueries({ queryKey: ["store", "details"] });
+      queryClient.invalidateQueries({ queryKey: storeKeys.details() });
+      queryClient.invalidateQueries({ queryKey: storeKeys.all });
     },
   });
 };
@@ -376,7 +385,7 @@ export const useDeleteStoreLogo = () => {
         });
       }
       // Invalidate store details queries to get updated logo (null)
-      queryClient.invalidateQueries({ queryKey: ["store", "details"] });
+      queryClient.invalidateQueries({ queryKey: storeKeys.details() });
     },
   });
 };

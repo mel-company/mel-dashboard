@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { useApps } from "@/contexts/AppsContext";
+import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ interface AppItem {
   badge?: string;
   emojiIcon?: string;
   locked?: boolean;
+  requiresPhysicalStore?: boolean;
 }
 
 // Base apps - always shown
@@ -130,7 +132,8 @@ const baseApps: AppItem[] = [
     path: "/pos",
     icon: Keyboard,
     gradient: "from-pink-500 to-pink-600",
-    description: "إدارة البيع",
+    description: "البيع من المتجر الفعلي",
+    requiresPhysicalStore: true,
   },
   // {
   //   label: "المحاسبة",
@@ -182,6 +185,7 @@ const AppsGrid = () => {
   });
   const [comingSoonDialogOpen, setComingSoonDialogOpen] = useState(false);
   const { getAllInstalledApps } = useApps();
+  const { isPhysicalStore } = usePhysicalStoreEnabled();
 
   // Toggle icon size between small, medium, and large
   const toggleIconSize = () => {
@@ -224,8 +228,10 @@ const AppsGrid = () => {
 
   // Combine base apps with installed apps
   const allApps = useMemo(() => {
-    return [...baseApps, ...installedAppsItems];
-  }, [installedAppsItems]);
+    return [...baseApps, ...installedAppsItems].filter(
+      (app) => !app.requiresPhysicalStore || isPhysicalStore,
+    );
+  }, [installedAppsItems, isPhysicalStore]);
 
   const filteredApps = allApps.filter(
     (app) =>

@@ -142,7 +142,12 @@ const BasicStoreInfoSection = ({
 
         <div className="shrink-0 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <SettingsLabel>متجر فعلي</SettingsLabel>
+            <div>
+              <SettingsLabel>متجر فعلي</SettingsLabel>
+              <p className="mt-1 text-xs text-muted-foreground">
+                عند التفعيل يظهر موقع المتجر على الخريطة وتُفعَّل نقطة البيع (POS)
+              </p>
+            </div>
             <Switch
               checked={storeForm.isPhysicalStore}
               activeLabel="مفعل"

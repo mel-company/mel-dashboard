@@ -35,6 +35,7 @@ export type PageType = {
     apiEndpoint: string;
     searchApiEndpoint?: string;
     group: string;
+    requiresPhysicalStore?: boolean;
     icon: {
         normal: IconSvgElement;
         active: IconSvgElement;
@@ -117,6 +118,7 @@ export const pages: PageType[] = [{
     label: "نقطة البيع",
     slug: "/pos",
     apiEndpoint: "pos",
+    requiresPhysicalStore: true,
     group: "الحركة والمبيعات",
     icon: {
         normal: ShoppingBasket03IconNormal,

@@ -138,7 +138,7 @@ const Layout = () => {
             <div
               className={cn(
                 "w-full",
-                hideSidebar ? "p-0" : "p-4 sm:p-6 lg:p-8",
+                hideSidebar ? "p-0" : isPosPage ? "p-4 lg:p-5" : "p-4 sm:p-6 lg:p-8",
               )}
             >
               <Outlet />
