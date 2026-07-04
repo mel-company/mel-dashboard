@@ -40,7 +40,14 @@ const ProductTable = ({ products, onDelete }: ProductTableProps) => {
       <Table>
         <ProductTableHeader />
         <TableBody>
-          {paginatedProducts.map((product, index) => <ProductRow key={index} product={product} onDelete={onDelete} />)}
+          {paginatedProducts.map((product, index) => (
+            <ProductRow
+              key={product.id}
+              product={product}
+              rowIndex={startIndex + index}
+              onDelete={onDelete}
+            />
+          ))}
         </TableBody>
       </Table>
       <Pagination

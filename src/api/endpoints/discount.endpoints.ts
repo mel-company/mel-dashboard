@@ -1,4 +1,69 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axiosInstance from "@/utils/AxiosInstance";
+
+const DISCOUNT_CREATE_FIELDS = [
+  "name",
+  "description",
+  "discount_percentage",
+  "discount_start_date",
+  "discount_end_date",
+  "discount_status",
+  "productIds",
+  "categoryIds",
+] as const;
+
+function isAxiosStatus(err: unknown, status: number): boolean {
+  return (err as { response?: { status?: number } })?.response?.status === status;
+}
+
+function sanitizeIdList(ids?: unknown[] | null): string[] {
+  if (!Array.isArray(ids)) return [];
+  return ids.filter(
+    (id): id is string => typeof id === "string" && id.length > 0,
+  );
+}
+
+function formDataToJsonBody(formData: FormData): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
+  for (const key of DISCOUNT_CREATE_FIELDS) {
+    const value = formData.get(key);
+    if (value == null || value === "") continue;
+
+    if (key === "discount_percentage") {
+      const num = Number(value);
+      if (Number.isFinite(num)) body[key] = num;
+      continue;
+    }
+
+    if (key === "productIds" || key === "categoryIds") {
+      try {
+        body[key] = JSON.parse(String(value));
+      } catch {
+        body[key] = value;
+      }
+      continue;
+    }
+
+    body[key] = value;
+  }
+  const storeId = formData.get("storeId");
+  if (typeof storeId === "string") body.storeId = storeId;
+  return body;
+}
+
+export type CreateDiscountPayload = {
+  storeId: string;
+  name: string;
+  description: string;
+  discount_percentage: number;
+  discount_start_date: string;
+  discount_end_date: string;
+  discount_status: string;
+  image: string;
+  imageFile?: File;
+  productIds?: string[];
+  categoryIds?: string[];
+};
 
 export const discountAPI = {
   /**
@@ -166,18 +231,88 @@ export const discountAPI = {
   },
 
   /**
-   * Create a new discount
+   * Create a new discount.
+   * JSON payload must use numeric discount_percentage. Optional imageFile is uploaded after create.
    */
-  create: async (discount: any): Promise<any> => {
-    const { data } = await axiosInstance.post<any>("/discount", discount);
-    return data;
+  create: async (
+    discount: FormData | CreateDiscountPayload | Record<string, unknown>,
+  ): Promise<any> => {
+    if (!(discount instanceof FormData)) {
+      const { imageFile, ...jsonBody } = discount as CreateDiscountPayload;
+      const { data: created } = await axiosInstance.post<any>("/discount", jsonBody);
+
+      if (imageFile instanceof File) {
+        const imageFormData = new FormData();
+        imageFormData.append("image", imageFile);
+        await axiosInstance.put<any>(
+          `/discount/${created.id}/image`,
+          imageFormData,
+        );
+      }
+
+      return created;
+    }
+
+    try {
+      const { data } = await axiosInstance.post<any>("/discount", discount);
+      return data;
+    } catch (err) {
+      if (!isAxiosStatus(err, 400)) throw err;
+
+      const imageFile = discount.get("image");
+      const tempImageUrl = discount.get("tempImageUrl");
+      const storeId = discount.get("storeId");
+
+      if (
+        !(imageFile instanceof File) ||
+        typeof storeId !== "string" ||
+        typeof tempImageUrl !== "string" ||
+        !tempImageUrl
+      ) {
+        throw err;
+      }
+
+      const { data: created } = await axiosInstance.post<any>("/discount", {
+        ...formDataToJsonBody(discount),
+        storeId,
+        image: tempImageUrl,
+      });
+
+      const imageFormData = new FormData();
+      imageFormData.append("image", imageFile);
+      await axiosInstance.put<any>(
+        `/discount/${created.id}/image`,
+        imageFormData,
+      );
+
+      return created;
+    }
   },
 
   /**
    * Update an existing discount
    */
-  update: async (id: string, discount: any): Promise<any> => {
-    const { data } = await axiosInstance.put<any>(`/discount/${id}`, discount);
+  update: async (id: string, discount: Record<string, unknown>): Promise<any> => {
+    const payload = { ...discount };
+
+    if ("productIds" in payload) {
+      const productIds = sanitizeIdList(payload.productIds as unknown[]);
+      if (productIds.length > 0) payload.productIds = productIds;
+      else delete payload.productIds;
+    }
+
+    if ("categoryIds" in payload) {
+      const categoryIds = sanitizeIdList(payload.categoryIds as unknown[]);
+      if (categoryIds.length > 0) payload.categoryIds = categoryIds;
+      else delete payload.categoryIds;
+    }
+
+    if (typeof payload.discount_percentage === "string") {
+      const num = Number(payload.discount_percentage);
+      if (Number.isFinite(num)) payload.discount_percentage = num;
+    }
+
+    const { data } = await axiosInstance.put<any>(`/discount/${id}`, payload);
     return data;
   },
 

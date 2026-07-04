@@ -10,7 +10,8 @@ import {
     ShoppingBasket03Icon as ShoppingBasket03IconNormal,
     UserGroup03Icon as UserGroup03IconNormal,
     UserMultiple03Icon as UserMultiple03IconNormal,
-    Settings01Icon as Settings01IconNormal
+    Settings01Icon as Settings01IconNormal,
+    Notification01Icon as Notification01IconNormal,
 } from '@hugeicons-pro/core-stroke-rounded';
 
 import {
@@ -23,7 +24,8 @@ import {
     ShoppingBasket03Icon as ShoppingBasket03IconActive,
     UserGroup03Icon as UserGroup03IconActive,
     UserMultiple03Icon as UserMultiple03IconActive,
-    Settings01Icon as Settings01IconActive
+    Settings01Icon as Settings01IconActive,
+    Notification01Icon as Notification01IconActive,
 } from '@hugeicons-pro/core-solid-rounded';
 
 
@@ -50,6 +52,17 @@ export const pages: PageType[] = [{
     },
 },
 {
+    label: "الاشعارات",
+    slug: "/notifications",
+    apiEndpoint: "notification/cursor",
+    searchApiEndpoint: "notification/search-cursor",
+    group: "معلومات النظام",
+    icon: {
+        normal: Notification01IconNormal,
+        active: Notification01IconActive
+    },
+},
+{
     label: "المنتجات",
     slug: "/products",
     apiEndpoint: "product/filter-cursor",
@@ -72,6 +85,7 @@ export const pages: PageType[] = [{
     label: "الخصومات والكوبونات",
     slug: "/discounts",
     apiEndpoint: "discount/filter-cursor",
+    searchApiEndpoint: "discount/search-cursor",
     group: "إدارة المتجر",
     icon: {
         normal: Coupon02IconNormal,

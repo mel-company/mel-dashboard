@@ -36,10 +36,10 @@ export const BaseCard = ({ icon, title, value, growth, color = "default" }: { ic
                 <p className="title">{title}</p>
                 <p className="value">{value}
                     {growth &&
-                        <p className="growth">
+                        <span className="growth">
                             <HugeiconsIcon icon={ArrowUpRight03Icon} size={16} />
                             <span>{growth}%</span>
-                        </p>
+                        </span>
                     }
                 </p>
             </div>

@@ -1,7 +1,7 @@
 import { LayoutBottomIcon, LayoutTable01Icon } from "@hugeicons-pro/core-duotone-rounded";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import classNames from "classnames";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
     selected: string;
@@ -31,6 +31,10 @@ const SwitchTab = ({
     selected
 }: Props) => {
     const [selectedOption, setSelectedOption] = useState(selected || options[0]?.value);
+
+    useEffect(() => {
+        setSelectedOption(selected || options[0]?.value);
+    }, [selected, options]);
     const toggle = (value: string) => {
         setSelectedOption(value)
         onChange(value)

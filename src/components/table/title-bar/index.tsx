@@ -14,6 +14,8 @@ const TitleBar = ({
 
   const defaultDescriptions: Record<string, string> = {
     "/settings": "يمكنك تعديل تفاصيل وإعدادات المتجر المخصص لك",
+    "/discounts": "تمتلك حركات جديدة في قائمة الخصومات والكوبونات",
+    "/notifications": "تمتلك إشعارات جديدة في قائمة الإشعارات",
   };
 
   const subtitle =

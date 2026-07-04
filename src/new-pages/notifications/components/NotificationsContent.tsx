@@ -1,21 +1,79 @@
-import { Bell, Lock } from "lucide-react";
+import { Bell } from "lucide-react";
+import NotificationTable from "./NotificationTable";
+import NotificationsSkeleton from "@/pages/notification/NotificationsSkeleton";
+import ErrorPage from "@/pages/miscellaneous/ErrorPage";
+import EmptyPage from "@/pages/miscellaneous/EmptyPage";
+import type { useNotificationsPage } from "@/hooks/use-notifications-page";
 
-interface NotificationsContentProps {
-    actions: any;
-    navigate: (path: string) => void;
-}
+type NotificationsContentProps = {
+  actions: ReturnType<typeof useNotificationsPage>;
+};
 
-const NotificationsContent = ({ actions, navigate }: NotificationsContentProps) => {
-    // Show coming soon message since notifications functionality is not fully implemented
+const NotificationsContent = ({ actions }: NotificationsContentProps) => {
+  const {
+    notifications,
+    isLoading,
+    error,
+    refetch,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    handleRowClick,
+    searchQuery,
+    onSearchChange,
+  } = actions;
+
+  if (isLoading && !notifications.length) {
     return (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Bell className="size-16 text-muted-foreground mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">قريباً</h2>
-            <p className="text-muted-foreground mb-4">
-                نظام الإشعارات قيد التطوير وسيكون متاحاً قريباً. شكراً لصبرك!
-            </p>
-        </div>
+      <div className="rounded-3xl bg-white p-6">
+        <NotificationsSkeleton count={8} showHeader={false} />
+      </div>
     );
+  }
+
+  if (error && !notifications.length) {
+    return (
+      <ErrorPage
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetchingNextPage}
+      />
+    );
+  }
+
+  if (!notifications.length) {
+    return (
+      <div className="rounded-3xl bg-white p-6">
+        <EmptyPage
+          icon={<Bell className="size-7 text-muted-foreground" />}
+          title={searchQuery.trim() ? "لا توجد نتائج" : "لا يوجد إشعارات"}
+          description={
+            searchQuery.trim()
+              ? "لم يتم العثور على إشعارات تطابق البحث"
+              : "ستظهر الإشعارات الجديدة هنا تلقائياً"
+          }
+          primaryAction={
+            searchQuery.trim()
+              ? {
+                  label: "مسح البحث",
+                  onClick: () => onSearchChange(""),
+                }
+              : undefined
+          }
+        />
+      </div>
+    );
+  }
+
+  return (
+    <NotificationTable
+      notifications={notifications}
+      hasNextPage={hasNextPage}
+      isFetchingNextPage={isFetchingNextPage}
+      fetchNextPage={fetchNextPage}
+      onRowClick={handleRowClick}
+    />
+  );
 };
 
 export default NotificationsContent;

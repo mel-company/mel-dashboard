@@ -189,6 +189,7 @@ export const useFilterDiscountsCursor = (
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as string | null | undefined,
+    refetchOnMount: "always",
   });
 };
 

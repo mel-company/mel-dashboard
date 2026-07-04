@@ -83,6 +83,7 @@ const AddCoupon = ({}: Props) => {
     const couponData: any = {
       code: code.trim(),
       description: description.trim() || undefined,
+      type: "PERCENTAGE",
       value: Number(value),
       appliesTo: "ALL", // Set automatically by API
       isActive,

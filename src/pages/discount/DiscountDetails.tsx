@@ -46,6 +46,10 @@ import RemoveProductFromDiscountDialog from "./RemoveProductFromDiscountDialog";
 import RemoveCategoryFromDiscountDialog from "./RemoveCategoryFromDiscountDialog";
 import DiscountImageDialog from "./DiscountImageDialog";
 import { toast } from "sonner";
+import {
+  extractDiscountCategoryIds,
+  extractDiscountProductIds,
+} from "@/new-pages/discounts/utils";
 
 const DiscountDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -591,7 +595,7 @@ const DiscountDetails = () => {
         open={isAddProductDialogOpen}
         onOpenChange={setIsAddProductDialogOpen}
         discountId={id || ""}
-        existingProductIds={discount.products?.map((p: any) => p.id) || []}
+        existingProductIds={extractDiscountProductIds(discount.products)}
         onSuccess={() => {
           refetch();
         }}
@@ -602,7 +606,7 @@ const DiscountDetails = () => {
         open={isAddCategoryDialogOpen}
         onOpenChange={setIsAddCategoryDialogOpen}
         discountId={id || ""}
-        existingCategoryIds={discount.categories?.map((c: any) => c.id) || []}
+        existingCategoryIds={extractDiscountCategoryIds(discount.categories)}
         onSuccess={() => {
           refetch();
         }}

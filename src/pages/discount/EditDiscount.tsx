@@ -13,6 +13,11 @@ import {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import { toast } from "sonner";
 import type { ProductListItem } from "@/api/types/product";
+import {
+  extractDiscountCategoryIds,
+  extractDiscountProductIds,
+  sanitizeIdList,
+} from "@/new-pages/discounts/utils";
 
 type Props = {};
 
@@ -61,9 +66,9 @@ const EditDiscount = ({}: Props) => {
         setEndDate(formatDateForInput(end));
       }
 
-      // Pre-select products and categories
-      const productIds = data.products?.map((p: any) => p.id) ?? [];
-      const categoryIds = data.categories?.map((c: any) => c.id) ?? [];
+      // Pre-select products and categories (junction rows nest product/category)
+      const productIds = extractDiscountProductIds(data.products);
+      const categoryIds = extractDiscountCategoryIds(data.categories);
 
       setSelectedProducts(productIds);
       setSelectedCategories(categoryIds);
@@ -154,26 +159,7 @@ const EditDiscount = ({}: Props) => {
       return;
     }
 
-    // Validate that at least one product or category is selected
-    if (
-      selectionMode !== "both" &&
-      selectedProducts.length === 0 &&
-      selectedCategories.length === 0
-    ) {
-      toast.error("يجب اختيار منتج واحد على الأقل أو فئة واحدة على الأقل");
-      return;
-    }
-
-    if (
-      selectionMode === "both" &&
-      selectedProducts.length === 0 &&
-      selectedCategories.length === 0
-    ) {
-      toast.error("يجب اختيار منتج واحد على الأقل أو فئة واحدة على الأقل");
-      return;
-    }
-
-    const discountData: any = {
+    const discountData: Record<string, unknown> = {
       name,
       description,
       discount_percentage: parseFloat(discountPercentage),
@@ -182,18 +168,19 @@ const EditDiscount = ({}: Props) => {
       discount_status: status,
     };
 
-    // Always send productIds and categoryIds (empty arrays if not selected)
-    if (selectionMode === "products" || selectionMode === "both") {
-      discountData.productIds = selectedProducts;
-    } else {
-      discountData.productIds = [];
-    }
+    const productIds = sanitizeIdList(
+      selectionMode === "products" || selectionMode === "both"
+        ? selectedProducts
+        : [],
+    );
+    const categoryIds = sanitizeIdList(
+      selectionMode === "categories" || selectionMode === "both"
+        ? selectedCategories
+        : [],
+    );
 
-    if (selectionMode === "categories" || selectionMode === "both") {
-      discountData.categoryIds = selectedCategories;
-    } else {
-      discountData.categoryIds = [];
-    }
+    if (productIds.length > 0) discountData.productIds = productIds;
+    if (categoryIds.length > 0) discountData.categoryIds = categoryIds;
 
     updateDiscount(
       { id, data: discountData },

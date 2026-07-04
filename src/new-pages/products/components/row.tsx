@@ -38,7 +38,15 @@ function renderCategories(product: ProductListItem) {
 }
 
 
-const ProductRow = ({ product, onDelete, key }: { product: ProductListItem; onDelete: (id: string) => void; key: number }) => {
+const ProductRow = ({
+    product,
+    onDelete,
+    rowIndex,
+}: {
+    product: ProductListItem;
+    onDelete: (id: string) => void;
+    rowIndex: number;
+}) => {
     const navigate = useNavigate();
     const tdClass = "whitespace-normal px-4 py-3.5 text-right align-middle";
     const margin = costMargin(product.price, product.cost_to_produce);
@@ -46,12 +54,11 @@ const ProductRow = ({ product, onDelete, key }: { product: ProductListItem; onDe
 
     return (
         <TableRow
-            key={product.id}
             className="cursor-pointer"
             onClick={() => navigate(`/products/${product.id}`)}
         >
             <TableCell className={cn(tdClass, "text-muted-foreground")}>
-                {String(key + 1).padStart(2, "0")}
+                {String(rowIndex + 1).padStart(2, "0")}
             </TableCell>
             <TableCell className={tdClass}>
                 <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/30">
