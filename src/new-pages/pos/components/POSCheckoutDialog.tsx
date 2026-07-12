@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,16 +9,32 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, MapPin, XCircle } from "lucide-react";
+import { getDisplayName } from "../utils";
 
 export type POSCheckoutForm = {
   name: string;
   email: string;
   phone: string;
+  stateId: string;
+  regionId: string;
+  nearest_point: string;
   note: string;
   paymentMethodId: string;
   couponCode: string;
+};
+
+type PaymentMethodOption = {
+  id: string;
+  name: string;
 };
 
 type POSCheckoutDialogProps = {
@@ -34,6 +50,12 @@ type POSCheckoutDialogProps = {
   isValidatingCoupon: boolean;
   couponValid: boolean;
   couponValidationMessage?: string;
+  paymentMethods: PaymentMethodOption[];
+  isLoadingPaymentMethods?: boolean;
+  states?: any[];
+  regions?: any[];
+  isLoadingStates?: boolean;
+  isLoadingRegions?: boolean;
 };
 
 const POSCheckoutDialog = ({
@@ -49,10 +71,16 @@ const POSCheckoutDialog = ({
   isValidatingCoupon,
   couponValid,
   couponValidationMessage,
+  paymentMethods,
+  isLoadingPaymentMethods,
+  states,
+  regions,
+  isLoadingStates,
+  isLoadingRegions,
 }: POSCheckoutDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-4xl max-h-[80vh] max-w-3xl overflow-y-auto rounded-3xl text-right">
+      <DialogContent className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-3xl text-right">
         <DialogHeader className="text-right">
           <DialogTitle className="text-right">إتمام الطلب</DialogTitle>
           <DialogDescription className="text-right">
@@ -65,11 +93,11 @@ const POSCheckoutDialog = ({
             <h3 className="text-lg font-semibold">معلومات العميل</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">
+                <Label htmlFor="pos-name">
                   الاسم <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="name"
+                  id="pos-name"
                   value={form.name}
                   onChange={(e) => onFormChange({ name: e.target.value })}
                   placeholder="اسم العميل"
@@ -77,11 +105,11 @@ const POSCheckoutDialog = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">
+                <Label htmlFor="pos-phone">
                   الهاتف <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="phone"
+                  id="pos-phone"
                   value={form.phone}
                   onChange={(e) => onFormChange({ phone: e.target.value })}
                   placeholder="9641234567890"
@@ -89,11 +117,11 @@ const POSCheckoutDialog = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">
+                <Label htmlFor="pos-email">
                   البريد الإلكتروني <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="email"
+                  id="pos-email"
                   type="email"
                   value={form.email}
                   onChange={(e) => onFormChange({ email: e.target.value })}
@@ -102,25 +130,110 @@ const POSCheckoutDialog = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="paymentMethodId">
+                <Label htmlFor="pos-payment">
                   طريقة الدفع <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id="paymentMethodId"
+                <Select
                   value={form.paymentMethodId}
-                  onChange={(e) =>
-                    onFormChange({ paymentMethodId: e.target.value })
+                  onValueChange={(value) =>
+                    onFormChange({ paymentMethodId: value })
                   }
-                  placeholder="معرف طريقة الدفع"
-                  required
-                />
+                  disabled={isLoadingPaymentMethods || isCheckingOut}
+                >
+                  <SelectTrigger id="pos-payment" className="w-full text-right">
+                    <SelectValue placeholder="اختر طريقة الدفع" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentMethods.length > 0 ? (
+                      paymentMethods.map((method) => (
+                        <SelectItem key={method.id} value={method.id}>
+                          {method.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        لا توجد طرق دفع مفعّلة — فعّلها من الإعدادات
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+          </div>
 
+          <Separator />
+
+          <div className="space-y-4">
+            <h3 className="flex items-center gap-2 text-lg font-semibold">
+              <MapPin className="size-5" />
+              عنوان التوصيل
+            </h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="pos-state">
+                  المحافظة <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={form.stateId}
+                  onValueChange={(value) =>
+                    onFormChange({ stateId: value, regionId: "" })
+                  }
+                  disabled={isLoadingStates || isCheckingOut}
+                >
+                  <SelectTrigger id="pos-state" className="w-full text-right">
+                    <SelectValue placeholder="اختر المحافظة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {states?.map((state: any) => (
+                      <SelectItem key={state.id} value={state.id}>
+                        {getDisplayName(state.name?.arabic ?? state.name)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pos-region">
+                  المنطقة <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={form.regionId}
+                  onValueChange={(value) => onFormChange({ regionId: value })}
+                  disabled={
+                    isLoadingRegions || !form.stateId || isCheckingOut
+                  }
+                >
+                  <SelectTrigger id="pos-region" className="w-full text-right">
+                    <SelectValue placeholder="اختر المنطقة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {regions?.map((region: any) => (
+                      <SelectItem key={region.id} value={region.id}>
+                        {getDisplayName(region.name?.arabic ?? region.name)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="note">ملاحظات (اختياري)</Label>
+              <Label htmlFor="pos-nearest">
+                أقرب نقطة <span className="text-destructive">*</span>
+              </Label>
               <Input
-                id="note"
+                id="pos-nearest"
+                value={form.nearest_point}
+                onChange={(e) =>
+                  onFormChange({ nearest_point: e.target.value })
+                }
+                placeholder="عنوان مفصل أو استلام من المتجر"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pos-note">ملاحظات (اختياري)</Label>
+              <Input
+                id="pos-note"
                 value={form.note}
                 onChange={(e) => onFormChange({ note: e.target.value })}
                 placeholder="ملاحظات إضافية للطلب"
@@ -198,7 +311,7 @@ const POSCheckoutDialog = ({
             </Button>
             <Button
               type="submit"
-              disabled={isCheckingOut}
+              disabled={isCheckingOut || !form.paymentMethodId}
               className="rounded-full bg-sky-500 hover:bg-sky-600"
             >
               {isCheckingOut ? (

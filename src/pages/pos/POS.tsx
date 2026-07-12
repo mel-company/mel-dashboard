@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   useFilterProductsCursor,
@@ -12,6 +12,12 @@ import {
   useAddProductsToOrder,
 } from "@/api/wrappers/order.wrappers";
 import { useValidateCoupon } from "@/api/wrappers/coupon.wrappers";
+import { useFetchStates } from "@/api/wrappers/state.wrappers";
+import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
+import {
+  useFetchStorePaymentMethods,
+} from "@/api/wrappers/settings.wrappers";
+import { useFetchPaymentProviders } from "@/api/wrappers/payment.wrappers";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -122,12 +128,16 @@ const POS = ({ }: Props) => {
     name: "",
     email: "",
     phone: "",
+    stateId: "",
+    regionId: "",
+    nearest_point: "",
     note: "",
     paymentMethodId: "",
     couponCode: "",
   });
 
   const { isPhysicalStore, isLoading: isLoadingStore } = usePhysicalStoreEnabled();
+  const canAccessPos = isPhysicalStore || !!orderId;
 
   const { data: domainDetails } = useFindDomainDetails();
   const { data: storeDetails } = useFetchStoreDetails();
@@ -156,11 +166,38 @@ const POS = ({ }: Props) => {
     {
       query: debouncedSearch || undefined,
       categoryIds: selectedCategoryId ? [selectedCategoryId] : undefined,
-      enabled: true,
       limit: 24,
     },
-    true,
+    canAccessPos && !isLoadingStore,
   );
+
+  const { data: paymentProviders } = useFetchPaymentProviders(canAccessPos);
+  const { data: storePaymentMethods, isLoading: isLoadingPaymentMethods } =
+    useFetchStorePaymentMethods(isCheckoutDialogOpen);
+  const { data: states, isLoading: isLoadingStates } = useFetchStates(
+    undefined,
+    isCheckoutDialogOpen,
+  );
+  const { data: regions, isLoading: isLoadingRegions } = useFetchRegionsByState(
+    checkoutForm.stateId,
+    isCheckoutDialogOpen && !!checkoutForm.stateId,
+  );
+
+  const paymentMethods = useMemo(() => {
+    if (!paymentProviders) return [];
+    const allMethods = paymentProviders.flatMap(
+      (provider: { methods?: { id: string; name: string }[] }) =>
+        provider.methods ?? [],
+    );
+    const enabledIds = new Set(
+      (storePaymentMethods as { paymentMethodId: string; isEnabled: boolean }[] | undefined)
+        ?.filter((item) => item.isEnabled)
+        .map((item) => item.paymentMethodId) ?? [],
+    );
+
+    if (enabledIds.size === 0) return allMethods;
+    return allMethods.filter((method) => enabledIds.has(method.id));
+  }, [paymentProviders, storePaymentMethods]);
 
   const productBaseUrl = productsCursorData?.pages?.[0]?.baseUrl ?? "";
   const categoriesBaseUrl = categoriesData?.baseUrl ?? "";
@@ -205,6 +242,20 @@ const POS = ({ }: Props) => {
     useCheckoutOrder();
   const { mutate: addProductsToOrder, isPending: isAddingProducts } =
     useAddProductsToOrder();
+
+  useEffect(() => {
+    if (!isCheckoutDialogOpen) return;
+
+    setCheckoutForm((prev) => ({
+      ...prev,
+      nearest_point:
+        prev.nearest_point ||
+        storeDetails?.location ||
+        "استلام من المتجر",
+      paymentMethodId:
+        prev.paymentMethodId || paymentMethods[0]?.id || "",
+    }));
+  }, [isCheckoutDialogOpen, storeDetails?.location, paymentMethods]);
 
   // Variant finding hook
   const { mutateAsync: findVariantByOptions } = useFindVariantByOptions();
@@ -528,6 +579,9 @@ const POS = ({ }: Props) => {
       !checkoutForm.name ||
       !checkoutForm.email ||
       !checkoutForm.phone ||
+      !checkoutForm.stateId ||
+      !checkoutForm.regionId ||
+      !checkoutForm.nearest_point ||
       !checkoutForm.paymentMethodId
     ) {
       toast.error("يرجى ملء جميع الحقول المطلوبة");
@@ -539,6 +593,9 @@ const POS = ({ }: Props) => {
       name: checkoutForm.name,
       email: checkoutForm.email,
       phone: checkoutForm.phone,
+      stateId: checkoutForm.stateId,
+      regionId: checkoutForm.regionId,
+      nearest_point: checkoutForm.nearest_point,
       note: checkoutForm.note || undefined,
       paymentMethodId: checkoutForm.paymentMethodId,
       ...(checkoutForm.couponCode?.trim() && {
@@ -556,6 +613,9 @@ const POS = ({ }: Props) => {
           name: "",
           email: "",
           phone: "",
+          stateId: "",
+          regionId: "",
+          nearest_point: "",
           note: "",
           paymentMethodId: "",
           couponCode: "",
@@ -579,6 +639,14 @@ const POS = ({ }: Props) => {
 
   if (!isLoadingStore && !isPhysicalStore && !orderId) {
     return <POSDisabledView />;
+  }
+
+  if (isLoadingStore && !orderId) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-sky-500" />
+      </div>
+    );
   }
 
   return (
@@ -750,6 +818,12 @@ const POS = ({ }: Props) => {
         isValidatingCoupon={isValidatingCoupon}
         couponValid={couponValid}
         couponValidationMessage={couponValidationMessage}
+        paymentMethods={paymentMethods}
+        isLoadingPaymentMethods={isLoadingPaymentMethods}
+        states={states}
+        regions={regions}
+        isLoadingStates={isLoadingStates}
+        isLoadingRegions={isLoadingRegions}
       />
     </div>
   );
