@@ -7,13 +7,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  Folder,
-  Edit,
-  Eye,
-} from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Pagination from "@/components/table/pagination";
 import { getImageUrl } from "@/utils/image-url";
@@ -22,7 +26,8 @@ import { Switch } from "@/components/ui/switch";
 import axiosInstance from "@/utils/AxiosInstance";
 import ActionBtnList from "@/components/table/action-btn-list";
 import { useNavigate } from "react-router-dom";
-import DeleteProductModal from "@/components/modal/product/delete";
+import { useDeleteCategory } from "@/api/wrappers/category.wrappers";
+import { toast } from "sonner";
 
 interface CategoryTableProps {
   categories: any[];
@@ -33,6 +38,7 @@ const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
   const [activePage, setActivePage] = useState(1);
   const [viewCount, setViewCount] = useState(10);
   const [deleteModalCategory, setDeleteModalCategory] = useState<any>(null);
+  const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
   const totalPages = Math.ceil(categories.length / viewCount) || 1;
 
@@ -46,8 +52,19 @@ const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
   };
 
   const handleDeleteModal = (category: any) => {
-    console.log('handleDeleteModal called with:', category);
     setDeleteModalCategory(category);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteModalCategory?.id) return;
+    deleteCategory(deleteModalCategory.id, {
+      onSuccess: () => {
+        toast.success("تم حذف الفئة بنجاح");
+        setDeleteModalCategory(null);
+        refetch();
+      },
+      onError: () => toast.error("فشل حذف الفئة"),
+    });
   };
 
   const startIndex = (activePage - 1) * viewCount;
@@ -91,15 +108,38 @@ const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
           onViewCountChange={handleViewCountChange}
         />
       </div>
-      {deleteModalCategory && (
-        <>
-          {console.log('Rendering modal for category:', deleteModalCategory)}
-          <DeleteProductModal
-            open={!!deleteModalCategory}
-            onOpenChange={(open) => !open && setDeleteModalCategory(null)}
-          />
-        </>
-      )}
+      <Dialog
+        open={!!deleteModalCategory}
+        onOpenChange={(open) => !open && setDeleteModalCategory(null)}
+      >
+        <DialogContent className="text-right sm:max-w-md">
+          <DialogHeader className="text-right">
+            <DialogTitle>حذف الفئة</DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف &quot;{deleteModalCategory?.name}&quot;؟ لا يمكن
+              التراجع عن هذا الإجراء.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setDeleteModalCategory(null)}
+              disabled={isDeleting}
+            >
+              إلغاء
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "جاري الحذف..." : "حذف"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

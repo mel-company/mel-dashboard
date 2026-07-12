@@ -10,7 +10,6 @@ import { useCategoriesPage } from "@/hooks/use-categories-page";
 import TitleBar from "@/components/table/title-bar";
 import SwitchTab from "@/components/table/switch-tab";
 import CategorieGroups from "@/pages/category/category-group/CategorieGroups";
-import { TrendingUpDownIcon, Package01Icon, StarIcon } from "@hugeicons-pro/core-stroke-standard";
 import CategoriesContent from "./components/CategoriesContent";
 import { Layers01Icon, ShapeCollectionIcon } from "@hugeicons-pro/core-duotone-rounded";
 import { Fire03Icon, GitBranchIcon, GitCommitVerticalIcon, Trolley02Icon } from "@hugeicons-pro/core-bulk-rounded";

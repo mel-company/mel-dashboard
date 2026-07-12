@@ -5,7 +5,7 @@ interface EmployeesContentProps {
     navigate: (path: string) => void;
 }
 
-const EmployeesContent = ({ actions, navigate }: EmployeesContentProps) => {
+const EmployeesContent = (_props: EmployeesContentProps) => {
     // Show coming soon message since the original employees page shows coming soon
     return (
         <div className="flex flex-col items-center justify-center py-12 text-center">

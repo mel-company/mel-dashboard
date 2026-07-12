@@ -79,9 +79,12 @@ const SelectDeliveryCompanyDialog = ({
         onOpenChange(false);
         onSuccess?.();
       },
-      onError: (error: { response?: { data?: { message?: string } } }) => {
+      onError: (error: Error) => {
+        const apiError = error as Error & {
+          response?: { data?: { message?: string } };
+        };
         toast.error(
-          error?.response?.data?.message ||
+          apiError.response?.data?.message ||
             "فشل في تحديث شركة التوصيل. حاول مرة أخرى.",
         );
       },

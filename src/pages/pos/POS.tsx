@@ -183,10 +183,12 @@ const POS = ({ }: Props) => {
     isCheckoutDialogOpen && !!checkoutForm.stateId,
   );
 
+  type PaymentMethodOption = { id: string; name: string };
+
   const paymentMethods = useMemo(() => {
-    if (!paymentProviders) return [];
+    if (!paymentProviders) return [] as PaymentMethodOption[];
     const allMethods = paymentProviders.flatMap(
-      (provider: { methods?: { id: string; name: string }[] }) =>
+      (provider: { methods?: PaymentMethodOption[] }) =>
         provider.methods ?? [],
     );
     const enabledIds = new Set(
@@ -196,7 +198,9 @@ const POS = ({ }: Props) => {
     );
 
     if (enabledIds.size === 0) return allMethods;
-    return allMethods.filter((method) => enabledIds.has(method.id));
+    return allMethods.filter((method: PaymentMethodOption) =>
+      enabledIds.has(method.id),
+    );
   }, [paymentProviders, storePaymentMethods]);
 
   const productBaseUrl = productsCursorData?.pages?.[0]?.baseUrl ?? "";
@@ -513,10 +517,11 @@ const POS = ({ }: Props) => {
     couponValidation?.message ??
     (couponValidateError as any)?.response?.data?.message ??
     (couponValidateError as Error)?.message;
-  const showCouponValidation =
+  const showCouponValidation = Boolean(
     isCheckoutDialogOpen &&
-    debouncedCouponCode.length >= 2 &&
-    (isValidatingCoupon || couponValidation || couponValidateError);
+      debouncedCouponCode.length >= 2 &&
+      (isValidatingCoupon || couponValidation || couponValidateError),
+  );
 
   // Reset region when state changes - removed (POS in-store sale, no delivery address)
 

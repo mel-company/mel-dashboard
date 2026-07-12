@@ -8,10 +8,6 @@ import { BaseCard, FeaturedCard } from "@/components/table/top-cards";
 import { BoxIcon, Money04Icon, PackageDeliveredIcon, PackageOpenIcon, PackageProcessIcon } from "@hugeicons-pro/core-bulk-rounded";
 import { Money04Icon as Money04IconStroked } from "@hugeicons-pro/core-stroke-rounded";
 
-function formatPrice(value: number) {
-  return `${value.toLocaleString("ar-IQ")} د.ع`;
-}
-
 
 
 function mergeWithStoreFallback(
@@ -30,7 +26,7 @@ function mergeWithStoreFallback(
 }
 
 const ProductStatsCards = () => {
-  const { data, isLoading, isError } = useFetchProductStats();
+  const { data, isError } = useFetchProductStats();
   const { data: storeStats } = useFetchStoreStats();
 
 

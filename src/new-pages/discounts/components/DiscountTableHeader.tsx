@@ -1,4 +1,4 @@
-import { TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const DiscountTableHeader = () => (
   <TableHeader>

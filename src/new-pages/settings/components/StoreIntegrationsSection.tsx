@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronDown, Truck } from "lucide-react";
@@ -38,11 +37,12 @@ const StoreIntegrationsSection = () => {
     }
   }, [currentSettings]);
 
+  type PaymentMethodOption = { id: string; name: string };
+
   const paymentMethods = useMemo(() => {
-    if (!paymentProviders) return [];
+    if (!paymentProviders) return [] as PaymentMethodOption[];
     return paymentProviders.flatMap(
-      (p: { methods?: { id: string; name: string }[] }) =>
-        (p.methods ?? []).map((m) => m),
+      (p: { methods?: PaymentMethodOption[] }) => p.methods ?? [],
     );
   }, [paymentProviders]);
 

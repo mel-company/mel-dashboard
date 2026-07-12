@@ -3,6 +3,7 @@ import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { cn } from "@/lib/utils";
 
 interface SwitchProps {
+  id?: string;
   checked?: boolean;
   defaultChecked?: boolean;
   disabled?: boolean;
@@ -19,6 +20,7 @@ interface SwitchProps {
 
 function Switch({
   className,
+  id,
   activeLabel,
   disabledLabel,
   checked,
@@ -33,6 +35,7 @@ function Switch({
   const handleChange = onToggle ?? onCheckedChange;
   const switchNode = (
     <SwitchPrimitive.Root
+      id={id}
       dir="ltr"
       data-slot="switch"
       className={cn(
