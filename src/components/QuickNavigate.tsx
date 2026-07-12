@@ -10,14 +10,9 @@ import {
   BarChart2,
   Keyboard,
   Store,
-  Globe,
-  CreditCard,
-  Truck,
-  FileText,
   Bell,
   MessageCircle,
   Ticket,
-  Layout,
 } from "lucide-react";
 import {
   Dialog,

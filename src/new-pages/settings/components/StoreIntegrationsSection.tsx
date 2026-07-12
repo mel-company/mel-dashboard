@@ -17,6 +17,8 @@ import { useFetchPaymentProviders } from "@/api/wrappers/payment.wrappers";
 import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyDialog";
 import DomainSettings from "@/pages/settings/DomainSettings";
 
+type PaymentMethodOption = { id: string; name: string };
+
 const StoreIntegrationsSection = () => {
   const { data: domainDetails } = useFindDomainDetails();
   const { data: storeDetails } = useFetchStoreDetails();
@@ -36,8 +38,6 @@ const StoreIntegrationsSection = () => {
       setCashOnDelivery(currentSettings.cash_on_delivery ?? false);
     }
   }, [currentSettings]);
-
-  type PaymentMethodOption = { id: string; name: string };
 
   const paymentMethods = useMemo(() => {
     if (!paymentProviders) return [] as PaymentMethodOption[];
@@ -111,7 +111,7 @@ const StoreIntegrationsSection = () => {
                 disabled={updatePaymentMethodsMutation.isPending}
               />
             </div>
-            {paymentMethods.map((method) => (
+            {paymentMethods.map((method: PaymentMethodOption) => (
               <div
                 key={method.id}
                 className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2.5"

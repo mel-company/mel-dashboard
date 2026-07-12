@@ -11,6 +11,13 @@ import {
 import { PRODUCT_STATUS } from "@/utils/constants";
 import { sanitizePhoneNumber } from "@/utils/helpers";
 
+function getApiErrorMessage(error: Error, fallback: string) {
+  const apiError = error as Error & {
+    response?: { data?: { message?: string } };
+  };
+  return apiError.response?.data?.message || fallback;
+}
+
 export type SettingsTab = "general" | "store";
 
 export interface StoreFormData {
@@ -234,19 +241,17 @@ export function useSettingsPage() {
               );
               toast.success("تم حفظ الإعدادات بنجاح");
             },
-            onError: (error: { response?: { data?: { message?: string } } }) => {
+            onError: (error: Error) => {
               toast.error(
-                error?.response?.data?.message ||
-                  "حدث خطأ أثناء حفظ إعدادات المتجر",
+                getApiErrorMessage(error, "حدث خطأ أثناء حفظ إعدادات المتجر"),
               );
             },
           },
         );
       },
-      onError: (error: { response?: { data?: { message?: string } } }) => {
+      onError: (error: Error) => {
         toast.error(
-          error?.response?.data?.message ||
-            "حدث خطأ أثناء حفظ معلومات المتجر",
+          getApiErrorMessage(error, "حدث خطأ أثناء حفظ معلومات المتجر"),
         );
       },
     });
