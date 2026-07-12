@@ -9,8 +9,10 @@ import NotFoundPage from "./pages/miscellaneous/NotFoundPage";
 import OrderInvoicePreview from "./pages/order/OrderInvoicePreview";
 import SettingsLayout from "./layout/SettingsLayout";
 import Payment from "./pages/payment/Payment";
-import { useConsumeBridge, useRefresh } from "./api/wrappers/auth.wrappers";
+import { useConsumeBridge } from "./api/wrappers/auth.wrappers";
+import { markAuthSession } from "./utils/auth-session";
 import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -19,6 +21,7 @@ function RootRedirect() {
 
 function Bridge() {
   const { mutate: consumeBridge } = useConsumeBridge();
+  const queryClient = useQueryClient();
 
   const token = new URLSearchParams(window.location.search).get("token");
 
@@ -27,8 +30,8 @@ function Bridge() {
       consumeBridge(
         { token },
         {
-          onSuccess: (data: any) => {
-            console.log("data", data);
+          onSuccess: () => {
+            markAuthSession(queryClient);
             window.location.href = "/";
           },
           onError: (error) => {
@@ -44,28 +47,6 @@ function Bridge() {
 
 
 function App() {
-  // @ts-ignore
-  const {
-    // @ts-ignore
-    data: refreshData,
-    // @ts-ignore
-    isLoading: isRefreshing,
-    // @ts-ignore
-    error: refreshError,
-    // @ts-ignore
-    refetch: refreshRefetch,
-  } = useRefresh();
-
-  useEffect(() => {
-    if (refreshData) {
-      refreshRefetch();
-    }
-  }, [refreshData]);
-
-
-
-
-
   return (
     <>
       <Toaster />

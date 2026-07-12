@@ -3,14 +3,16 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   Crown,
+  LogOut,
   PanelRightClose,
   PanelRightOpen,
 } from "lucide-react";
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
-import { useMe } from "@/api/wrappers/auth.wrappers";
+import { useLogout, useMe } from "@/api/wrappers/auth.wrappers";
 import melLogo from "@/assets/imgs/logo/mel-logo.svg";
+import { toast } from "sonner";
 
 import {
   getSidebarSections,
@@ -63,12 +65,27 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
   const location = useLocation();
   const navigate = useNavigate();
   const { data: me } = useMe();
+  const { mutate: logoutMutation, isPending: isLoggingOut } = useLogout();
   const { isPhysicalStore } = usePhysicalStoreEnabled();
   const sidebarSections = getSidebarSections(isPhysicalStore);
   const [internalCollapsed, setInternalCollapsed] = useState(false);
 
   // Use external collapsed state if provided, otherwise use internal state
   const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
+
+  const handleLogout = () => {
+    logoutMutation(
+      {},
+      {
+        onSuccess: () => {
+          toast.success("تم تسجيل الخروج بنجاح");
+        },
+        onSettled: () => {
+          navigate("/login", { replace: true });
+        },
+      },
+    );
+  };
 
   return (
     <aside
@@ -145,7 +162,7 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
 
       {/* Subscription footer */}
       {!collapsed && (
-        <div className="p-3 pt-0">
+        <div className="space-y-2 p-3 pt-0">
           <button
             type="button"
             onClick={() => {
@@ -164,6 +181,16 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#5733ea] to-[#00b7ff] shadow-[0_0_12px_rgba(0,183,255,0.45)]">
               <Crown className="size-4 text-white" strokeWidth={1.75} />
             </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30"
+          >
+            <LogOut className="size-4" />
+            {isLoggingOut ? "جاري الخروج..." : "تسجيل الخروج"}
           </button>
         </div>
       )}

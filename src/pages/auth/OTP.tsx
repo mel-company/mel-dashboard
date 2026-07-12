@@ -17,10 +17,13 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { useResendOtp, useVerify } from "@/api/wrappers/auth.wrappers";
+import { markAuthSession } from "@/utils/auth-session";
+import { useQueryClient } from "@tanstack/react-query";
 import { parse } from "tldts";
 
 const OTP = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const phone = searchParams.get("phone") ?? "";
   const store = searchParams.get("store") ?? "";
@@ -78,7 +81,7 @@ const OTP = () => {
         },
         {
           onSuccess: () => {
-            localStorage.setItem("lgd", "true");
+            markAuthSession(queryClient);
             navigate("/", { replace: true });
           },
           onError: () => {

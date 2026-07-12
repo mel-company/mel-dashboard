@@ -1,5 +1,6 @@
 import axios from "axios";
 import { parse } from "tldts";
+import { clearAuthSession, redirectToLogin } from "@/utils/auth-session";
 
 const parsed = parse(window.location.hostname);
 
@@ -52,8 +53,9 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // window.location.href = "/login";
+    if (error.response?.status === 401) {
+      clearAuthSession();
+      redirectToLogin();
     }
     return Promise.reject(error);
   },

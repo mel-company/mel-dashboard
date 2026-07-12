@@ -1,48 +1,49 @@
-import { Outlet, useNavigate } from "react-router";
+import { Navigate, Outlet } from "react-router";
 import { useMe } from "../../api/wrappers/auth.wrappers";
 import LogoLight from "../../assets/imgs/logo/mel-light.png";
-import { useEffect } from "react";
+import { clearAuthSession, isAuthSessionMarked } from "@/utils/auth-session";
+import { useQueryClient } from "@tanstack/react-query";
 
-const PrivateRoute = () => {
-  const { data: user, isLoading, isFetching, error } = useMe();
-
-  const navigate = useNavigate();
-
-  // const token = new URLSearchParams(window.location.search).get("token");
-
-  // Only redirect when auth check has fully settled and user is missing.
-  // Don't redirect while loading/fetching to avoid racing after login (user not in state yet).
-  useEffect(() => {
-    if (!isLoading && !isFetching && !user) {
-      navigate("/login", { replace: true });
-    }
-  }, [user, error, isLoading, isFetching, navigate]);
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30">
-        <div className="flex flex-col items-center gap-0">
-          <div className="relative flex items-center justify-center w-40 h-40">
-            <img
-              src={LogoLight}
-              alt="Mel"
-              className="relative animate-pulse z-10 w-full h-full object-contain"
-            />
-          </div>
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
-            </div>
+function AuthLoadingScreen() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30">
+      <div className="flex flex-col items-center gap-0">
+        <div className="relative flex h-40 w-40 items-center justify-center">
+          <img
+            src={LogoLight}
+            alt="Mel"
+            className="relative z-10 h-full w-full animate-pulse object-contain"
+          />
+        </div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex gap-1.5">
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary" />
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
+}
+
+const PrivateRoute = () => {
+  const queryClient = useQueryClient();
+  const loggedIn = isAuthSessionMarked();
+  const { data: user, isPending, error } = useMe();
+
+  if (!loggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Only block the first auth check — not background refetches
+  if (isPending) {
+    return <AuthLoadingScreen />;
+  }
+
+  if (error || !user) {
+    clearAuthSession(queryClient);
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;

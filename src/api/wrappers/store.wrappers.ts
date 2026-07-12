@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { storeAPI } from "../endpoints/store.endpoints";
+import { isAuthSessionMarked } from "@/utils/auth-session";
 
 /**
  * Query key factory for stores
@@ -29,6 +30,9 @@ export const useFetchStoreDetails = () => {
   return useQuery<any>({
     queryKey: storeKeys.details(),
     queryFn: () => storeAPI.fetchDetails(),
+    enabled: isAuthSessionMarked(),
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 };
 

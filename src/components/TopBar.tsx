@@ -61,10 +61,11 @@ const TopBar = ({ onMenuClick, hideSidebar }: Props) => {
       {
         onSuccess: () => {
           toast.success("تم تسجيل الخروج بنجاح");
-          localStorage.setItem("lgd", "false");
+        },
+        onSettled: () => {
           navigate("/login", { replace: true });
         },
-      }
+      },
     );
   };
 

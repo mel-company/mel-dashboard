@@ -1,5 +1,6 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authAPI } from "../endpoints/auth.endpoints";
+import { clearAuthSession, isAuthSessionMarked } from "@/utils/auth-session";
 
 /**
  * Query key factory for auth
@@ -91,6 +92,10 @@ export const useMe = () => {
   return useQuery<any, Error, any>({
     queryKey: authKeys.all,
     queryFn: () => authAPI.me(),
+    enabled: isAuthSessionMarked(),
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
   });
 };
 
@@ -108,8 +113,13 @@ export const useDevMe = () => {
  * Logout
  */
 export const useLogout = () => {
+  const queryClient = useQueryClient();
+
   return useMutation<any, Error, any>({
     mutationFn: () => authAPI.logout(),
+    onSettled: () => {
+      clearAuthSession(queryClient);
+    },
   });
 };
 
@@ -118,8 +128,10 @@ export const useLogout = () => {
  */
 export const useRefresh = () => {
   return useQuery<any, Error, any>({
-    queryKey: authKeys.all,
+    queryKey: [...authKeys.all, "refresh"] as const,
     queryFn: () => authAPI.refresh(),
+    enabled: isAuthSessionMarked(),
+    retry: false,
   });
 };
 
