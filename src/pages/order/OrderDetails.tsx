@@ -56,6 +56,7 @@ import EditDeliveryAddressDialog from "./EditDeliveryAddressDialog";
 import EditProductVariantDialog from "./EditProductVariantDialog";
 import RemoveOrderProduct from "./RemoveOrderProduct";
 import UseCouponDialog from "./UseCouponDialog";
+import OrderPrimeShipmentCard from "./OrderPrimeShipmentCard";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "./OrderInvoicePreview";
 import { toast } from "sonner";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
@@ -873,6 +874,8 @@ const OrderDetails = () => {
               </div>
             </CardContent>
           </Card>
+
+          <OrderPrimeShipmentCard order={order} onUpdated={() => refetch()} />
 
           {/* Notes */}
           {order.note && (

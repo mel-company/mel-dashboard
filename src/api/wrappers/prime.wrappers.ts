@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { primeAPI } from "@/api/endpoints/prime.endpoints";
+import { orderKeys } from "@/api/wrappers/order.wrappers";
 import type {
   CalculatePrimeChargesInput,
   CreatePrimeMerchantInput,
@@ -124,11 +125,20 @@ export const useCalculatePrimeCharges = () =>
       primeAPI.calculateCharges(body),
   });
 
-export const useCreatePrimeShipment = () =>
-  useMutation({
+export const useCreatePrimeShipment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
     mutationFn: (body: CreatePrimeShipmentInput) =>
       primeAPI.createShipment(body),
+    onSuccess: (_, body) => {
+      if (body.orderId) {
+        queryClient.invalidateQueries({
+          queryKey: orderKeys.detail(body.orderId),
+        });
+      }
+    },
   });
+};
 
 export const useSyncPrimeOrderShipment = () => {
   const queryClient = useQueryClient();
@@ -137,6 +147,9 @@ export const useSyncPrimeOrderShipment = () => {
     onSuccess: (_, orderId) => {
       queryClient.invalidateQueries({
         queryKey: primeKeys.orderShipment(orderId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.detail(orderId),
       });
     },
   });
