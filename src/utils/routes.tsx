@@ -45,6 +45,7 @@ import TicketDetails from "../new-pages/tickets/details";
 import CreateTicket from "../new-pages/tickets/create";
 import DevStoreLogin from "../pages/auth/DevStoreLogin";
 import DevOTP from "../pages/auth/DEVOTP";
+import PrimeTestPage from "../pages/prime/PrimeTestPage";
 
 export interface RouteConfig {
     path: string;
@@ -59,6 +60,7 @@ export const mainRoutes: RouteConfig[] = [
     { path: "/app-store", element: <AppStore /> },
     { path: "/accounting", element: <Accounting /> },
     { path: "/pos", element: <POS /> },
+    { path: "/prime-test", element: <PrimeTestPage /> },
     {
         path: "/products",
         children: [

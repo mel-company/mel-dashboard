@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { storeAPI } from "../endpoints/store.endpoints";
+import type { StoreDetails } from "@/api/types/store";
 import { isAuthSessionMarked } from "@/utils/auth-session";
 
 /**
@@ -27,7 +28,7 @@ export const useFetchStores = (params?: any) => {
  * Fetch store details
  */
 export const useFetchStoreDetails = () => {
-  return useQuery<any>({
+  return useQuery<StoreDetails>({
     queryKey: storeKeys.details(),
     queryFn: () => storeAPI.fetchDetails(),
     enabled: isAuthSessionMarked(),

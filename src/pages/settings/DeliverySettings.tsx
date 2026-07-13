@@ -44,10 +44,18 @@ const DeliverySettings = ({}: Props) => {
   const initialSettings = useMemo(() => {
     return {
       localDeliveryCompany: !!storeDetails?.deliveryCompanyId,
-      estimatedDeliveryDays: storeSettings?.estimated_delivery_days ?? 3,
-      deliveryNotes: storeSettings?.delivery_notes ?? "",
+      estimatedDeliveryDays:
+        storeSettings?.estimated_delivery_days ??
+        storeDetails?.deliverySettings?.estimatedDeliveryDays ??
+        3,
+      deliveryNotes:
+        storeSettings?.delivery_notes ??
+        storeDetails?.deliverySettings?.deliveryNotes ??
+        "",
       enableShippingProviders:
-        storeSettings?.enable_shipping_providers ?? false,
+        storeSettings?.enable_shipping_providers ??
+        storeDetails?.deliverySettings?.enableShippingProviders ??
+        false,
       selectedDeliveryCompanyId: storeDetails?.deliveryCompanyId || "",
     };
   }, [storeDetails, storeSettings]);
@@ -71,8 +79,13 @@ const DeliverySettings = ({}: Props) => {
 
   // Check if user can change delivery company (30 days restriction)
   const canChangeDeliveryCompany = useMemo(() => {
-    const lastUpdate = storeDetails?.settings?.delivery_company_last_update;
-    if (!lastUpdate) return true; // Can change if never updated
+    const fromApi = storeDetails?.deliverySettings?.canChangeDeliveryCompany;
+    if (fromApi !== undefined) return fromApi;
+
+    const lastUpdate =
+      storeDetails?.deliverySettings?.deliveryCompanyLastUpdate ??
+      storeDetails?.settings?.delivery_company_last_update;
+    if (!lastUpdate) return true;
 
     const lastUpdateDate = new Date(lastUpdate);
     const now = new Date();
@@ -80,11 +93,16 @@ const DeliverySettings = ({}: Props) => {
       (now.getTime() - lastUpdateDate.getTime()) / (1000 * 60 * 60 * 24);
 
     return daysSinceLastUpdate >= 30;
-  }, [storeDetails?.settings?.delivery_company_last_update]);
+  }, [
+    storeDetails?.deliverySettings?.canChangeDeliveryCompany,
+    storeDetails?.deliverySettings?.deliveryCompanyLastUpdate,
+    storeDetails?.settings?.delivery_company_last_update,
+  ]);
 
-  // Calculate remaining days if restriction applies
   const daysRemaining = useMemo(() => {
-    const lastUpdate = storeDetails?.settings?.delivery_company_last_update;
+    const lastUpdate =
+      storeDetails?.deliverySettings?.deliveryCompanyLastUpdate ??
+      storeDetails?.settings?.delivery_company_last_update;
     if (!lastUpdate) return 0;
 
     const lastUpdateDate = new Date(lastUpdate);
@@ -96,17 +114,28 @@ const DeliverySettings = ({}: Props) => {
       return Math.ceil(30 - daysSinceLastUpdate);
     }
     return 0;
-  }, [storeDetails?.settings?.delivery_company_last_update]);
+  }, [
+    storeDetails?.deliverySettings?.deliveryCompanyLastUpdate,
+    storeDetails?.settings?.delivery_company_last_update,
+  ]);
 
   // Update settings when store details or store settings change
   useEffect(() => {
     if (storeDetails && storeSettings !== undefined) {
       setSettings({
         localDeliveryCompany: !!storeDetails.deliveryCompanyId,
-        estimatedDeliveryDays: storeSettings.estimated_delivery_days ?? 3,
-        deliveryNotes: storeSettings.delivery_notes ?? "",
+        estimatedDeliveryDays:
+          storeSettings.estimated_delivery_days ??
+          storeDetails.deliverySettings?.estimatedDeliveryDays ??
+          3,
+        deliveryNotes:
+          storeSettings.delivery_notes ??
+          storeDetails.deliverySettings?.deliveryNotes ??
+          "",
         enableShippingProviders:
-          storeSettings.enable_shipping_providers ?? false,
+          storeSettings.enable_shipping_providers ??
+          storeDetails.deliverySettings?.enableShippingProviders ??
+          false,
         selectedDeliveryCompanyId: storeDetails.deliveryCompanyId || "",
       });
     }
@@ -264,7 +293,8 @@ const DeliverySettings = ({}: Props) => {
               <Label className="text-sm">
                 تاريخ اخر تحديث:{" "}
                 {formatDate(
-                  storeDetails?.settings?.delivery_company_last_update
+                  storeDetails?.deliverySettings?.deliveryCompanyLastUpdate ??
+                    storeDetails?.settings?.delivery_company_last_update,
                 )}
               </Label>
             </div>

@@ -1,5 +1,7 @@
 
 import axiosInstance from "@/utils/AxiosInstance";
+import type { StoreDetails } from "@/api/types/store";
+import { normalizeStoreDetails } from "@/api/utils/normalize-store-details";
 
 export const storeAPI = {
   /**
@@ -19,9 +21,11 @@ export const storeAPI = {
   /**
    * Get store details
    */
-  fetchDetails: async (): Promise<any> => {
-    const { data } = await axiosInstance.get<any>("/store/store-details");
-    return data;
+  fetchDetails: async (): Promise<StoreDetails> => {
+    const { data } = await axiosInstance.get<Record<string, unknown>>(
+      "/store/store-details",
+    );
+    return normalizeStoreDetails(data);
   },
 
   /**

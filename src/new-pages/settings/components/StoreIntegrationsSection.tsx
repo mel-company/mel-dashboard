@@ -16,6 +16,8 @@ import {
 import { useFetchPaymentProviders } from "@/api/wrappers/payment.wrappers";
 import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyDialog";
 import DomainSettings from "@/pages/settings/DomainSettings";
+import PrimeIntegrationCard from "./PrimeIntegrationCard";
+import { isPrimeDelivery } from "@/api/types/store";
 
 type PaymentMethodOption = { id: string; name: string };
 
@@ -146,6 +148,8 @@ const StoreIntegrationsSection = () => {
               <Truck className="size-4 shrink-0 text-slate-500" />
             </div>
           </button>
+
+          {isPrimeDelivery(storeDetails) && <PrimeIntegrationCard />}
         </SettingsCard>
       </div>
 

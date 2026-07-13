@@ -158,8 +158,8 @@ const SelectDeliveryCompanyDialog = ({
 
             {selectedCompany?.code === "prime" && (
               <p className="rounded-xl bg-sky-50 px-3 py-2 text-[11px] leading-snug text-sky-700">
-                Prime (برايم) — بعد الحفظ يمكنك إكمال ربط التاجر عبر إعدادات
-                Prime.
+                Prime (برايم) — بعد الحفظ، روح لإعدادات المتجر وراح تشوف بطاقة
+                Prime مع رابط الموقع وزر إكمال الربط.
               </p>
             )}
 
