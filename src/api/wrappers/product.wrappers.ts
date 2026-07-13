@@ -6,6 +6,7 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { productAPI } from "../endpoints/product.endpoints";
+import { statsAPI } from "../endpoints/stats.endpoints";
 
 /**
  * Query key factory for products
@@ -204,12 +205,12 @@ function normalizeProductStats(data: any): ProductStatsSummary {
   };
 }
 
-/** Product dashboard summary (GET /product/stats) */
+/** Product dashboard summary (from GET /stats/store — /product/stats is not a valid route) */
 export const useFetchProductStats = (enabled = true) => {
   return useQuery({
     queryKey: productKeys.stats(),
     queryFn: async () =>
-      normalizeProductStats(await productAPI.getStats()),
+      normalizeProductStats(await statsAPI.getStoreStats()),
     enabled,
     staleTime: 60_000,
   });
@@ -416,11 +417,16 @@ export const useUpdateProduct = () => {
 
   return useMutation<any, Error, { id: string; data: any }>({
     mutationFn: ({ id, data }) => productAPI.update(id, data),
-    onSuccess: (data) => {
-      // Invalidate and refetch products list
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
-      // Update the specific product cache
-      queryClient.setQueryData(productKeys.detail(data.id), data);
+      const productId = data?.id ?? variables.id;
+      if (!productId) return;
+
+      queryClient.setQueryData(productKeys.detail(productId), (old: any) => {
+        if (!old) return { ...data, id: productId };
+        return { ...old, ...data, id: productId };
+      });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
     },
   });
 };
@@ -474,17 +480,20 @@ export const useUpdateProductImage = () => {
   return useMutation<any, Error, { productId: string; image: File }>({
     mutationFn: ({ productId, image }) =>
       productAPI.updateProductImage(productId, image),
-    onSuccess: (data) => {
-      // Invalidate and refetch products list
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
-      // Update the specific product cache if we have the ID
-      if (data?.id) {
-        queryClient.setQueryData(productKeys.detail(data.id), data);
-        // Also invalidate to ensure fresh data
-        queryClient.invalidateQueries({
-          queryKey: productKeys.detail(data.id),
-        });
-      }
+      const productId = data?.id ?? variables.productId;
+
+      queryClient.setQueryData(productKeys.detail(productId), (old: any) => {
+        if (!old) return { ...data, id: productId };
+        return {
+          ...old,
+          ...data,
+          id: productId,
+          image: data?.image ?? old.image,
+        };
+      });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
     },
   });
 };

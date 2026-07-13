@@ -74,6 +74,7 @@ export interface DashboardPageReturn<TData = any, TFilters = Record<string, any>
 
   // Data
   data: TData[];
+  imageBaseUrl: string;
   stats?: any;
 
   // Search
@@ -183,6 +184,7 @@ export function useDashboardPage<TData = any, TFilters = Record<string, any>>(
 
     // Data
     data: tableData.data,
+    imageBaseUrl: tableData.imageBaseUrl,
     stats,
 
     // Search

@@ -9,6 +9,7 @@ import {
 import { ShoppingCart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getImageUrl } from "@/utils/image-url";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import type { ProductListItem } from "@/api/types/product";
 
 const CATEGORY_STYLES = [
@@ -98,9 +99,12 @@ function renderCategories(product: ProductListItem) {
 
 interface ProductCardsProps {
   products: ProductListItem[];
+  imageBaseUrl?: string;
 }
 
-const ProductCards = ({ products }: ProductCardsProps) => {
+const ProductCards = ({ products, imageBaseUrl = "" }: ProductCardsProps) => {
+  const resolvedBaseUrl = useImageBaseUrl(imageBaseUrl);
+
   const renderProductCard = (product: ProductListItem) => (
     <Link key={product.id} to={`/products/${product.id}`}>
       <Card className="group h-full cursor-pointer gap-y-0 transition-all hover:border-primary/25 hover:shadow-lg">
@@ -108,7 +112,7 @@ const ProductCards = ({ products }: ProductCardsProps) => {
           <div className="relative flex h-40 w-full items-center justify-center overflow-hidden rounded-lg bg-muted/40">
             {product.image ? (
               <img
-                src={getImageUrl(product.image)}
+                src={getImageUrl(product.image, resolvedBaseUrl)}
                 alt={product.title}
                 className="h-full w-full object-contain"
               />

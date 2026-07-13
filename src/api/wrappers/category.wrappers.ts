@@ -193,11 +193,18 @@ export const useUpdateCategory = () => {
 
   return useMutation<any, Error, { id: string; data: any }>({
     mutationFn: ({ id, data }) => categoryAPI.update(id, data),
-    onSuccess: (data) => {
-      // Invalidate and refetch categories list
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.all });
-      // Update the specific category cache
-      queryClient.setQueryData(categoryKeys.detail(data.id), data);
+      const categoryId = data?.id ?? variables.id;
+      if (!categoryId) return;
+
+      queryClient.setQueryData(categoryKeys.detail(categoryId), (old: any) => {
+        if (!old) return { ...data, id: categoryId };
+        return { ...old, ...data, id: categoryId };
+      });
+      queryClient.invalidateQueries({
+        queryKey: categoryKeys.detail(categoryId),
+      });
     },
   });
 };
@@ -431,15 +438,22 @@ export const useUpdateCategoryImage = () => {
   return useMutation<any, Error, { categoryId: string; image: File }>({
     mutationFn: ({ categoryId, image }) =>
       categoryAPI.updateCategoryImage(categoryId, image),
-    onSuccess: (data) => {
-      // Invalidate and refetch categories list
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.all });
-      // Invalidate the specific category detail to force refetch with new image URL
-      if (data?.id) {
-        queryClient.invalidateQueries({
-          queryKey: categoryKeys.detail(data.id),
-        });
-      }
+      const categoryId = data?.id ?? variables.categoryId;
+
+      queryClient.setQueryData(categoryKeys.detail(categoryId), (old: any) => {
+        if (!old) return { ...data, id: categoryId };
+        return {
+          ...old,
+          ...data,
+          id: categoryId,
+          image: data?.image ?? old.image,
+        };
+      });
+      queryClient.invalidateQueries({
+        queryKey: categoryKeys.detail(categoryId),
+      });
     },
   });
 };

@@ -44,21 +44,21 @@ const ProductStatsCards = () => {
   {
     icon: PackageDeliveredIcon,
     title: "أضافة جديدة",
-    value: stats.totalProducts.toLocaleString("ar-IQ"),
+    value: stats.newProducts.toLocaleString("ar-IQ"),
     growth: 12.6,
     color: "success",
   },
   {
     icon: PackageProcessIcon,
     title: "قريبة على النفاذ",
-    value: stats.totalProducts.toLocaleString("ar-IQ"),
+    value: stats.lowStock.toLocaleString("ar-IQ"),
     growth: 12.6,
     color: "warning",
   },
   {
     icon: PackageOpenIcon,
     title: "نفذت الكمية",
-    value: stats.totalProducts.toLocaleString("ar-IQ"),
+    value: stats.outOfStock.toLocaleString("ar-IQ"),
     growth: 12.6,
     color: "danger",
   }]

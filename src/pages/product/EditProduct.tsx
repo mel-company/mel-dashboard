@@ -10,6 +10,8 @@ import {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import { toast } from "sonner";
 import type { ProductListItem } from "@/api/types/product";
+import { getImageUrl } from "@/utils/image-url";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 
 type Props = {};
 
@@ -23,6 +25,7 @@ const EditProduct = ({}: Props) => {
   );
 
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
+  const imageBaseUrl = useImageBaseUrl();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -35,6 +38,7 @@ const EditProduct = ({}: Props) => {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const currentImageUrl = getImageUrl(image, imageBaseUrl);
 
   // Populate form when product data is loaded
   useEffect(() => {
@@ -181,9 +185,9 @@ const EditProduct = ({}: Props) => {
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />
-                  ) : image ? (
+                  ) : currentImageUrl ? (
                     <img
-                      src={image}
+                      src={currentImageUrl}
                       alt={title}
                       className="w-full h-full object-cover"
                     />

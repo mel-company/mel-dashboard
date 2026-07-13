@@ -84,6 +84,8 @@ export function getDisplayName(name: unknown): string {
   return parseLocalizedName(name);
 }
 
+import { resolveAssetBaseUrl } from "@/utils/image-url";
+
 export function resolvePosImageUrl(
   image?: string | null,
   baseUrl?: string | null,
@@ -95,12 +97,9 @@ export function resolvePosImageUrl(
     return trimmed;
   }
 
-  const base = (baseUrl || import.meta.env.VITE_PUBLIC_URL || "")
-    .trim()
-    .replace(/\/+$/, "");
+  const base = resolveAssetBaseUrl(baseUrl);
   const path = trimmed.replace(/^\/+/, "");
 
-  if (!base) return path;
   return `${base}/${path}`;
 }
 

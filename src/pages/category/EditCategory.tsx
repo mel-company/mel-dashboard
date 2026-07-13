@@ -10,6 +10,8 @@ import {
 } from "@/api/wrappers/category.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import { toast } from "sonner";
+import { getImageUrl } from "@/utils/image-url";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 
 type Props = {};
 
@@ -23,6 +25,7 @@ const EditCategory = ({}: Props) => {
   );
 
   const { mutate: updateCategory, isPending: isUpdating } = useUpdateCategory();
+  const imageBaseUrl = useImageBaseUrl();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -31,6 +34,7 @@ const EditCategory = ({}: Props) => {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const currentImageUrl = getImageUrl(image, imageBaseUrl);
 
   // Populate form when category data is loaded
   useEffect(() => {
@@ -160,24 +164,11 @@ const EditCategory = ({}: Props) => {
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />
-                  ) : image ? (
+                  ) : currentImageUrl ? (
                     <img
-                      src={image}
+                      src={currentImageUrl}
                       alt={name}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        target.style.display = "none";
-                        const parent = target.parentElement;
-                        if (parent) {
-                          const folderIcon = document.createElement("div");
-                          folderIcon.className =
-                            "flex items-center justify-center w-full h-full";
-                          folderIcon.innerHTML =
-                            '<svg class="w-12 h-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>';
-                          parent.appendChild(folderIcon);
-                        }
-                      }}
                     />
                   ) : (
                     <Folder className="w-12 h-12 text-muted-foreground" />
@@ -200,7 +191,7 @@ const EditCategory = ({}: Props) => {
                       className="gap-2"
                     >
                       <Upload className="w-4 h-4" />
-                      {previewUrl || image ? "تغيير الصورة" : "اختر صورة"}
+                      {previewUrl || currentImageUrl ? "تغيير الصورة" : "اختر صورة"}
                     </Button>
                     {(previewUrl || selectedImageFile) && (
                       <Button
@@ -270,7 +261,7 @@ const EditCategory = ({}: Props) => {
               <Switch
                 id="enabled"
                 checked={enabled}
-                onCheckedChange={setEnabled}
+                onToggle={setEnabled}
               />
             </div>
             <p className="text-xs text-muted-foreground text-right -mt-2">

@@ -22,6 +22,8 @@ import {
   useDeleteProductImage,
 } from "@/api/wrappers/product.wrappers";
 import { useFetchProduct } from "@/api/wrappers/product.wrappers";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import { getImageUrl } from "@/utils/image-url";
 
 type Props = {
   open: boolean;
@@ -34,6 +36,7 @@ const ProductImageDialog = ({ open, onOpenChange, productId }: Props) => {
     productId,
     open && !!productId
   );
+  const { data: storeDetails } = useFetchStoreDetails();
   const { mutate: updateImage, isPending: isUpdating } =
     useUpdateProductImage();
   const { mutate: deleteImage, isPending: isDeleting } =
@@ -45,7 +48,7 @@ const ProductImageDialog = ({ open, onOpenChange, productId }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get current image URL - could be a signed URL or a key
-  const currentImageUrl = product?.image;
+  const currentImageUrl = getImageUrl(product?.image, storeDetails?.baseUrl);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

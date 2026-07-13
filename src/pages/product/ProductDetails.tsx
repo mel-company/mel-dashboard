@@ -48,6 +48,8 @@ import EditVariantDialog from "./EditVariantDialog";
 import RemoveCategoryFromProductDialog from "./RemoveCategoryFromProductDialog";
 import AddCategoryToProductDialog from "./AddCategoryToProductDialog";
 import ProductImageDialog from "./ProductImageDialog";
+import { getImageUrl } from "@/utils/image-url";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import {
   useFetchVariants,
   useDeleteVariant,
@@ -79,6 +81,7 @@ const ProductDetails = () => {
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? "",
   );
+  const imageBaseUrl = useImageBaseUrl();
 
   const { data: variantsData, refetch: refetchVariants } = useFetchVariants(
     { productId: id ?? "" },
@@ -190,7 +193,7 @@ const ProductDetails = () => {
               >
                 {data.image ? (
                   <img
-                    src={data.image}
+                    src={getImageUrl(data.image, imageBaseUrl)}
                     alt={data.title}
                     className="h-full w-full object-contain"
                     onError={(e) => {

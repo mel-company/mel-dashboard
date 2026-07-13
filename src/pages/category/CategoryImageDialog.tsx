@@ -22,6 +22,8 @@ import {
   useDeleteCategoryImage,
 } from "@/api/wrappers/category.wrappers";
 import { useFetchCategory } from "@/api/wrappers/category.wrappers";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import { getImageUrl } from "@/utils/image-url";
 
 type Props = {
   open: boolean;
@@ -34,6 +36,7 @@ const CategoryImageDialog = ({ open, onOpenChange, categoryId }: Props) => {
     categoryId,
     open && !!categoryId
   );
+  const { data: storeDetails } = useFetchStoreDetails();
   const { mutate: updateImage, isPending: isUpdating } =
     useUpdateCategoryImage();
   const { mutate: deleteImage, isPending: isDeleting } =
@@ -45,7 +48,7 @@ const CategoryImageDialog = ({ open, onOpenChange, categoryId }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get current image URL - could be a signed URL or a key
-  const currentImageUrl = category?.image;
+  const currentImageUrl = getImageUrl(category?.image, storeDetails?.baseUrl);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

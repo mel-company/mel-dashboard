@@ -68,10 +68,7 @@ export function useProductsPage() {
     statsHook: useFetchProductStats,
   });
 
-  const { data: categoriesData } = useFetchCategories(
-    undefined,
-    actions.hasActiveFilters || actions.isFilterDialogOpen,
-  );
+  const { data: categoriesData } = useFetchCategories(undefined, true);
 
   // Memoize category map for performance
   const categoryMap = useMemo(() => {
@@ -94,11 +91,15 @@ export function useProductsPage() {
 
   const newProductsCount = actions.stats?.newProducts ?? 0;
 
+  const imageBaseUrl =
+    actions.imageBaseUrl || categoriesData?.baseUrl || "";
+
   return {
     ...actions,
     filterTags,
     activeFilterCount,
     newProductsCount,
     products: actions?.data || [],
+    imageBaseUrl,
   };
 }

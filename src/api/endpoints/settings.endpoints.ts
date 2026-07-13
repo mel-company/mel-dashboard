@@ -1,4 +1,5 @@
 import axiosInstance from "@/utils/AxiosInstance";
+import { uploadEntityImage } from "@/api/utils/entity-image-upload";
 
 export const settingsAPI = {
   /**
@@ -157,10 +158,7 @@ export const settingsAPI = {
    * Update store logo
    */
   updateStoreLogo: async (logo: File): Promise<any> => {
-    const formData = new FormData();
-    formData.append("logo", logo);
-    const { data } = await axiosInstance.put<any>("/settings/logo", formData);
-    return data;
+    return uploadEntityImage("/settings/logo", logo, "logo");
   },
 
   /**

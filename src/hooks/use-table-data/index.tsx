@@ -14,6 +14,7 @@ export interface UseTableDataParams {
 
 export interface UseTableDataReturn<T> {
   data: T[];
+  imageBaseUrl: string;
   isLoading: boolean;
   isFetching: boolean;
   isFetchingNextPage: boolean;
@@ -116,9 +117,11 @@ export function useTableData<T = any>({
   // Flatten data from all pages
   const flattenedData: T[] = data?.pages.flatMap((page) => page.data || []) ?? [];
   const totalItems = data?.pages[0]?.total ?? flattenedData.length;
+  const imageBaseUrl = data?.pages?.[0]?.baseUrl ?? "";
 
   return {
     data: flattenedData,
+    imageBaseUrl,
     isLoading,
     isFetching,
     isFetchingNextPage,

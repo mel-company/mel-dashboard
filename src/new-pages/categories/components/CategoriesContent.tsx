@@ -24,6 +24,7 @@ import CategoriesSkeleton from "@/pages/category/CategoriesSkeleton";
 import EmptyPage from "@/pages/miscellaneous/EmptyPage";
 import CategoryTable from "./CategoryTable";
 import { getImageUrl } from "@/utils/image-url";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 
 interface CategoriesContentProps {
     actions: any;
@@ -46,6 +47,7 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
         <CategoryTable
             categories={actions.categories}
             refetch={actions.refetch}
+            imageBaseUrl={actions.imageBaseUrl}
         />
     ) : (
         <div className="space-y-6">
@@ -56,7 +58,11 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {actions.categories.map((category: any) => (
-                    <CategoryCard key={category.id} category={category} />
+                    <CategoryCard
+                        key={category.id}
+                        category={category}
+                        imageBaseUrl={actions.imageBaseUrl}
+                    />
                 ))}
                 <div
                     ref={actions.loadMoreRef}
@@ -87,7 +93,15 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
 
 export default CategoriesContent;
 
-const CategoryCard = ({ category }: { category: any; }) => {
+const CategoryCard = ({
+    category,
+    imageBaseUrl = "",
+}: {
+    category: any;
+    imageBaseUrl?: string;
+}) => {
+    const resolvedBaseUrl = useImageBaseUrl(imageBaseUrl);
+
     return (
         <Link key={category.id} to={`/categories/${category.id}`}>
             <Card className={cn(
@@ -99,7 +113,7 @@ const CategoryCard = ({ category }: { category: any; }) => {
                     <div className="relative h-48 flex items-center justify-center w-full overflow-hidden bg-linear-to-br from-blue-50 to-indigo-100">
                         {category.image ? (
                             <img
-                                src={getImageUrl(category?.image)}
+                                src={getImageUrl(category?.image, resolvedBaseUrl)}
                                 alt={category.name}
                                 className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
                                 onError={(e) => {

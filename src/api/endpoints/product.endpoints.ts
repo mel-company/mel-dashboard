@@ -1,5 +1,48 @@
 import axiosInstance from "@/utils/AxiosInstance";
+import { uploadEntityImage } from "@/api/utils/entity-image-upload";
 import type { ProductListResponse } from "../types/product";
+
+function parseJsonField(value: FormDataEntryValue | null): unknown {
+  if (typeof value !== "string" || !value) return undefined;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+function productFormDataToJson(formData: FormData): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
+
+  for (const key of ["title", "description"] as const) {
+    const value = formData.get(key);
+    if (typeof value === "string" && value.trim()) body[key] = value.trim();
+  }
+
+  for (const key of ["price", "cost_to_produce", "rate"] as const) {
+    const value = formData.get(key);
+    if (value == null || value === "") continue;
+    const num = Number(value);
+    if (Number.isFinite(num)) body[key] = num;
+  }
+
+  const enabled = formData.get("enabled");
+  if (enabled != null && enabled !== "") {
+    body.enabled = String(enabled) === "true";
+  }
+
+  for (const key of ["categoryIds", "properties", "options"] as const) {
+    const parsed = parseJsonField(formData.get(key));
+    if (parsed !== undefined) body[key] = parsed;
+  }
+
+  const tempImageUrl = formData.get("tempImageUrl");
+  if (typeof tempImageUrl === "string" && tempImageUrl.trim()) {
+    body.image = tempImageUrl.trim();
+  }
+
+  return body;
+}
 
 export const productAPI = {
   /**
@@ -139,7 +182,15 @@ export const productAPI = {
    * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
   create: async (formData: FormData): Promise<any> => {
-    const { data } = await axiosInstance.post<any>("/product", formData);
+    const imageFile = formData.get("image");
+    const jsonBody = productFormDataToJson(formData);
+
+    if (imageFile instanceof File) {
+      const { data: created } = await axiosInstance.post<any>("/product", jsonBody);
+      return uploadEntityImage(`/product/${created.id}/image`, imageFile);
+    }
+
+    const { data } = await axiosInstance.post<any>("/product", jsonBody);
     return data;
   },
 
@@ -223,16 +274,20 @@ export const productAPI = {
    * Update an existing product
    * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
-  update: async (id: string, product: any): Promise<any> => {
-    const { data } = await axiosInstance.put<any>(`/product/${id}`, product);
-    return data;
-  },
+  update: async (id: string, product: FormData | Record<string, unknown>): Promise<any> => {
+    if (product instanceof FormData) {
+      const imageFile = product.get("image");
+      const jsonBody = productFormDataToJson(product);
+      const { data } = await axiosInstance.put<any>(`/product/${id}`, jsonBody);
 
-  /**
-   * Get product summary stats for dashboard cards
-   */
-  getStats: async (): Promise<any> => {
-    const { data } = await axiosInstance.get<any>("/product/stats");
+      if (imageFile instanceof File) {
+        return uploadEntityImage(`/product/${id}/image`, imageFile);
+      }
+
+      return data;
+    }
+
+    const { data } = await axiosInstance.put<any>(`/product/${id}`, product);
     return data;
   },
 
@@ -270,13 +325,7 @@ export const productAPI = {
    * Update product image
    */
   updateProductImage: async (productId: string, image: File): Promise<any> => {
-    const formData = new FormData();
-    formData.append("image", image);
-    const { data } = await axiosInstance.put<any>(
-      `/product/${productId}/image`,
-      formData
-    );
-    return data;
+    return uploadEntityImage(`/product/${productId}/image`, image);
   },
 
   /**

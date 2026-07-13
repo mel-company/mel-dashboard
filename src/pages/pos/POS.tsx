@@ -37,6 +37,7 @@ import POSDisabledView from "@/new-pages/pos/components/POSDisabledView";
 import POSCheckoutDialog, {
   type POSCheckoutForm,
 } from "@/new-pages/pos/components/POSCheckoutDialog";
+import { resolveAssetBaseUrl } from "@/utils/image-url";
 
 // Product types matching API structure
 type Product = {
@@ -97,7 +98,8 @@ type CartItem = {
 
 type Category = {
   id: string;
-  name: any; // JSON field, could be string or object
+  name: any;
+  image?: string | null;
 };
 
 type Props = {};
@@ -205,12 +207,9 @@ const POS = ({ }: Props) => {
 
   const productBaseUrl = productsCursorData?.pages?.[0]?.baseUrl ?? "";
   const categoriesBaseUrl = categoriesData?.baseUrl ?? "";
-  const baseUrl =
-    productBaseUrl ||
-    categoriesBaseUrl ||
-    storeDetails?.baseUrl ||
-    import.meta.env.VITE_PUBLIC_URL ||
-    "";
+  const baseUrl = resolveAssetBaseUrl(
+    productBaseUrl || categoriesBaseUrl || storeDetails?.baseUrl,
+  );
 
   // Flatten paginated products
   const productsFromApi: Product[] =
@@ -264,8 +263,12 @@ const POS = ({ }: Props) => {
   // Variant finding hook
   const { mutateAsync: findVariantByOptions } = useFindVariantByOptions();
 
-  // Extract categories from API response
-  const categories: Category[] = categoriesData?.data || categoriesData || [];
+  // Extract categories from API response (keep image + baseUrl when present)
+  const categories: Category[] = Array.isArray(categoriesData?.data)
+    ? categoriesData.data
+    : Array.isArray(categoriesData)
+      ? categoriesData
+      : [];
 
   // Products from cursor API (already flattened above)
   const products: Product[] = productsFromApi;

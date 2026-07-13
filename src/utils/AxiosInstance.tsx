@@ -16,7 +16,6 @@ const axiosInstance = axios.create({
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${import.meta.env.VITE_API_KEY}`,
     "domain-name": parsed.subdomain,
     "x-tenant-subdomain": parsed.subdomain,
   },
@@ -30,6 +29,12 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (import.meta.env.VITE_API_KEY) {
+      config.headers.Authorization = `Bearer ${import.meta.env.VITE_API_KEY}`;
+    } else if (typeof config.headers.delete === "function") {
+      config.headers.delete("Authorization");
+    } else {
+      delete config.headers["Authorization"];
     }
 
     // Axios 1.x uses AxiosHeaders — delete() is required so multipart boundary is set correctly

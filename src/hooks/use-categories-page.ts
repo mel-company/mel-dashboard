@@ -76,7 +76,7 @@ export function useCategoriesPage() {
 
   const { data: categoriesData } = useFetchCategories(
     undefined,
-    actions.hasActiveFilters || actions.isFilterDialogOpen,
+    true,
   );
 
   // Memoize category map for performance
@@ -97,8 +97,8 @@ export function useCategoriesPage() {
     return getActiveFilterCount(actions.filters);
   }, [actions.filters]);
 
-  // Extract image base URL from categories data
-  const imageBaseUrl = categoriesData?.pages?.[0]?.baseUrl ?? "";
+  const imageBaseUrl =
+    actions.imageBaseUrl || categoriesData?.baseUrl || "";
 
   return {
     ...actions,

@@ -9,13 +9,16 @@ import type { ProductListItem } from "@/api/types/product";
 import Pagination from "@/components/table/pagination";
 import ProductRow from "./row";
 import ProductTableHeader from "./header";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 
 interface ProductTableProps {
   products: ProductListItem[];
   onDelete: (id: string) => void;
+  imageBaseUrl?: string;
 }
 
-const ProductTable = ({ products, onDelete }: ProductTableProps) => {
+const ProductTable = ({ products, onDelete, imageBaseUrl = "" }: ProductTableProps) => {
+  const resolvedBaseUrl = useImageBaseUrl(imageBaseUrl);
 
   const [activePage, setActivePage] = useState(1);
   const [viewCount, setViewCount] = useState(10);
@@ -46,6 +49,7 @@ const ProductTable = ({ products, onDelete }: ProductTableProps) => {
               product={product}
               rowIndex={startIndex + index}
               onDelete={onDelete}
+              imageBaseUrl={resolvedBaseUrl}
             />
           ))}
         </TableBody>

@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Save, X, Upload, Loader2 } from "lucide-react";
 import { useCreateCategory } from "@/api/wrappers/category.wrappers";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import { resolveTempImageUrl } from "@/utils/resolve-temp-image-url";
 import { toast } from "sonner";
 
 type Props = {
@@ -28,6 +30,7 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: createCategory, isPending } = useCreateCategory();
+  const { data: storeDetails } = useFetchStoreDetails();
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,7 +67,15 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
     formData.append("description", description);
     formData.append("enabled", enabled.toString());
     if (imageFile) {
+      const tempImageUrl = resolveTempImageUrl(storeDetails);
+      if (!tempImageUrl) {
+        toast.error(
+          "تعذر تجهيز صورة الفئة. ارفع شعار المتجر من الإعدادات ثم حاول مرة أخرى.",
+        );
+        return;
+      }
       formData.append("image", imageFile);
+      formData.append("tempImageUrl", tempImageUrl);
     }
 
     createCategory(formData, {

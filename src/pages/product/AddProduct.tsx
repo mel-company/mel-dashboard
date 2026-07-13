@@ -15,8 +15,10 @@ import {
 } from "lucide-react";
 import { useFilterCategoriesCursor } from "@/api/wrappers/category.wrappers";
 import { useCreateProduct } from "@/api/wrappers/product.wrappers";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import { productAPI } from "@/api/endpoints/product.endpoints";
 import { variantAPI } from "@/api/endpoints/variant.endpionts";
+import { resolveTempImageUrl } from "@/utils/resolve-temp-image-url";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -88,6 +90,7 @@ const AddProduct = ({}: Props) => {
   const navigate = useNavigate();
 
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
+  const { data: storeDetails } = useFetchStoreDetails();
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -317,6 +320,14 @@ const AddProduct = ({}: Props) => {
       return;
     }
 
+    const tempImageUrl = resolveTempImageUrl(storeDetails);
+    if (!tempImageUrl) {
+      toast.error(
+        "تعذر تجهيز صورة المنتج. ارفع شعار المتجر من الإعدادات ثم حاول مرة أخرى.",
+      );
+      return;
+    }
+
     // Filter out empty properties
     const validProperties = properties.filter(
       (prop) => prop.name.trim() && prop.value.trim(),
@@ -344,6 +355,7 @@ const AddProduct = ({}: Props) => {
     if (costToProduct) formData.append("cost_to_produce", costToProduct);
     if (rate) formData.append("rate", rate);
     if (imageFile) formData.append("image", imageFile);
+    formData.append("tempImageUrl", tempImageUrl);
     if (selectedCategories.length > 0) {
       formData.append("categoryIds", JSON.stringify(selectedCategories));
     }

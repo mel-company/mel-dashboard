@@ -1,4 +1,27 @@
 import axiosInstance from "@/utils/AxiosInstance";
+import { uploadEntityImage } from "@/api/utils/entity-image-upload";
+
+function categoryFormDataToJson(formData: FormData): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
+
+  const name = formData.get("name");
+  if (typeof name === "string") body.name = name;
+
+  const description = formData.get("description");
+  if (typeof description === "string") body.description = description;
+
+  const enabled = formData.get("enabled");
+  if (enabled != null && enabled !== "") {
+    body.enabled = String(enabled) === "true";
+  }
+
+  const tempImageUrl = formData.get("tempImageUrl");
+  if (typeof tempImageUrl === "string" && tempImageUrl.trim()) {
+    body.image = tempImageUrl.trim();
+  }
+
+  return body;
+}
 
 export const categoryAPI = {
   /**
@@ -116,7 +139,15 @@ export const categoryAPI = {
    * Accepts FormData with: name, description, enabled, image (file, optional)
    */
   create: async (formData: FormData): Promise<any> => {
-    const { data } = await axiosInstance.post<any>("/category", formData);
+    const imageFile = formData.get("image");
+    const jsonBody = categoryFormDataToJson(formData);
+
+    if (imageFile instanceof File) {
+      const { data: created } = await axiosInstance.post<any>("/category", jsonBody);
+      return uploadEntityImage(`/category/${created.id}/image`, imageFile);
+    }
+
+    const { data } = await axiosInstance.post<any>("/category", jsonBody);
     return data;
   },
 
@@ -124,7 +155,19 @@ export const categoryAPI = {
    * Update an existing category
    * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
-  update: async (id: string, category: any): Promise<any> => {
+  update: async (id: string, category: FormData | Record<string, unknown>): Promise<any> => {
+    if (category instanceof FormData) {
+      const imageFile = category.get("image");
+      const jsonBody = categoryFormDataToJson(category);
+      const { data } = await axiosInstance.put<any>(`/category/${id}`, jsonBody);
+
+      if (imageFile instanceof File) {
+        return uploadEntityImage(`/category/${id}/image`, imageFile);
+      }
+
+      return data;
+    }
+
     const { data } = await axiosInstance.put<any>(`/category/${id}`, category);
     return data;
   },
@@ -292,13 +335,7 @@ export const categoryAPI = {
     categoryId: string,
     image: File
   ): Promise<any> => {
-    const formData = new FormData();
-    formData.append("image", image);
-    const { data } = await axiosInstance.put<any>(
-      `/category/${categoryId}/image`,
-      formData
-    );
-    return data;
+    return uploadEntityImage(`/category/${categoryId}/image`, image);
   },
 
   /**

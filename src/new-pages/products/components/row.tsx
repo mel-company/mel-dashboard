@@ -1,19 +1,17 @@
-
+import { useState } from "react";
 import {
     TableCell,
     TableRow,
-
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Package, Eye, Pencil, Trash2, } from "lucide-react";
+import { Package, Eye, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getImageUrl } from "@/utils/image-url";
+import { coerceImagePath, getImageUrl } from "@/utils/image-url";
 import Rating from "@/components/table/rating";
 import { useNavigate } from "react-router-dom";
 import { costMargin, formatPrice, getProductCategories, shortDescription } from "../utils";
 import Badge from "@/components/table/badge";
 import type { ProductListItem } from "@/api/types/product";
-
 
 function renderCategories(product: ProductListItem) {
     const cats = getProductCategories(product);
@@ -23,10 +21,7 @@ function renderCategories(product: ProductListItem) {
     return (
         <div className="flex max-w-[180px] flex-wrap gap-1.5">
             {cats.slice(0, 3).map((c) => (
-                <Badge
-                    key={c.id}
-                    color="purple"
-                >
+                <Badge key={c.id} color="purple">
                     {c.name}
                 </Badge>
             ))}
@@ -37,20 +32,23 @@ function renderCategories(product: ProductListItem) {
     );
 }
 
-
 const ProductRow = ({
     product,
     onDelete,
     rowIndex,
+    imageBaseUrl = "",
 }: {
     product: ProductListItem;
     onDelete: (id: string) => void;
     rowIndex: number;
+    imageBaseUrl?: string;
 }) => {
     const navigate = useNavigate();
+    const [imageFailed, setImageFailed] = useState(false);
     const tdClass = "whitespace-normal px-4 py-3.5 text-right align-middle";
     const margin = costMargin(product.price, product.cost_to_produce);
-
+    const imagePath = coerceImagePath(product.image);
+    const imageUrl = imagePath ? getImageUrl(imagePath, imageBaseUrl) : "";
 
     return (
         <TableRow
@@ -60,13 +58,14 @@ const ProductRow = ({
             <TableCell className={cn(tdClass, "text-muted-foreground")}>
                 {String(rowIndex + 1).padStart(2, "0")}
             </TableCell>
-            <TableCell className={tdClass}>
-                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/30">
-                    {product.image ? (
+            <TableCell className={cn(tdClass, "w-16")}>
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/30">
+                    {imageUrl && !imageFailed ? (
                         <img
-                            src={getImageUrl(product.image)}
+                            src={imageUrl}
                             alt={product.title}
-                            className="size-full object-contain p-1"
+                            className="block h-12 w-12 object-cover"
+                            onError={() => setImageFailed(true)}
                         />
                     ) : (
                         <Package className="size-5 text-muted-foreground" />
@@ -112,7 +111,7 @@ const ProductRow = ({
                 )}
             </TableCell>
             <TableCell className={tdClass}>
-                <Badge color={product.enabled ? "success" : "default"} >
+                <Badge color={product.enabled ? "success" : "default"}>
                     {product.enabled ? "متاح" : "مخفي"}
                 </Badge>
             </TableCell>
@@ -151,8 +150,7 @@ const ProductRow = ({
                 </div>
             </TableCell>
         </TableRow>
-    )
-}
+    );
+};
 
-export default ProductRow
-
+export default ProductRow;

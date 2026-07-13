@@ -42,6 +42,7 @@ import AddProductToCategoryDialog from "./AddProductToCategoryDialog";
 import RemoveProductFromCategoryDialog from "./RemoveProductFromCategoryDialog";
 import ToggleEnableCategoryDialog from "./ToggleEnableCategoryDialog";
 import CategoryImageDialog from "./CategoryImageDialog";
+import { getImageUrl } from "@/utils/image-url";
 import { toast } from "sonner";
 
 const CategoryDetails = () => {
@@ -64,19 +65,6 @@ const CategoryDetails = () => {
     refetch,
     isFetching,
   } = useFetchCategory(id ?? "");
-
-  const baseUrl = category?.baseUrl ?? "";
-
-  // Some API responses return full URLs, others return relative paths.
-  // Avoid prefixing `baseUrl/` twice by detecting http(s) links.
-  const getImageUrl = (image?: string | null) => {
-    if (!image) return undefined;
-    if (image.startsWith("http://") || image.startsWith("https://")) {
-      return image;
-    }
-    if (!baseUrl) return image;
-    return `${baseUrl}/${image}`;
-  };
 
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
@@ -165,12 +153,9 @@ const CategoryDetails = () => {
               >
                 {category.image ? (
                   <img
-                    src={category.image}
+                    src={getImageUrl(category.image, category?.baseUrl)}
                     alt={category.name}
                     className="h-full w-full object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
                   />
                 ) : (
                   <Folder className="size-24 text-white bg-cyan/40 rounded-full p-6" />
@@ -249,7 +234,10 @@ const CategoryDetails = () => {
                           <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
                             {product.product.image ? (
                               <img
-                                src={getImageUrl(product.product.image)}
+                                src={getImageUrl(
+                                  product.product.image,
+                                  category?.baseUrl,
+                                )}
                                 alt={product.product.title}
                                 className="w-full h-full object-cover"
                               />

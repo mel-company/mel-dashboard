@@ -24,9 +24,13 @@ const ProductsContent = ({ actions }: ProductsContentProps) => {
     }
 
     return actions.viewMode === "table" ? (
-        <ProductTable products={actions.products} onDelete={actions.setDeleteId} />
+        <ProductTable
+            products={actions.products}
+            onDelete={actions.setDeleteId}
+            imageBaseUrl={actions.imageBaseUrl}
+        />
     ) : (
-        <ProductCards products={actions.products} />
+        <ProductCards products={actions.products} imageBaseUrl={actions.imageBaseUrl} />
     );
 };
 

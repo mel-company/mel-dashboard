@@ -21,20 +21,21 @@ import { Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Pagination from "@/components/table/pagination";
 import { getImageUrl } from "@/utils/image-url";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import { Switch } from "@/components/ui/switch";
 
-import axiosInstance from "@/utils/AxiosInstance";
 import ActionBtnList from "@/components/table/action-btn-list";
 import { useNavigate } from "react-router-dom";
-import { useDeleteCategory } from "@/api/wrappers/category.wrappers";
+import { useDeleteCategory, useToggleCategoryEnabled } from "@/api/wrappers/category.wrappers";
 import { toast } from "sonner";
 
 interface CategoryTableProps {
   categories: any[];
   refetch: () => void;
+  imageBaseUrl?: string;
 }
 
-const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
+const CategoryTable = ({ categories, refetch, imageBaseUrl = "" }: CategoryTableProps) => {
   const [activePage, setActivePage] = useState(1);
   const [viewCount, setViewCount] = useState(10);
   const [deleteModalCategory, setDeleteModalCategory] = useState<any>(null);
@@ -94,6 +95,7 @@ const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
                 category={category}
                 refetch={refetch}
                 onDeleteModal={handleDeleteModal}
+                imageBaseUrl={imageBaseUrl}
               />
             ))}
           </TableBody>
@@ -144,21 +146,28 @@ const CategoryTable = ({ categories, refetch }: CategoryTableProps) => {
   );
 };
 
-const CategoryTableRow = ({ category, refetch, onDeleteModal }: {
+const CategoryTableRow = ({ category, refetch, onDeleteModal, imageBaseUrl = "" }: {
   category: any;
   refetch: () => void;
   onDeleteModal: (category: any) => void;
+  imageBaseUrl?: string;
 }) => {
 
   const [data, setData] = useState(category)
   const navigate = useNavigate()
+  const resolvedBaseUrl = useImageBaseUrl(imageBaseUrl)
+  const { mutate: toggleEnabled } = useToggleCategoryEnabled()
 
-  const handleUpdate = async () => {
-    setData({ ...data, enabled: !data.enabled })
-    await axiosInstance.put(`${import.meta.env.VITE_PUBLIC_URL}/category/${category.id}`, {
-      enabled: !category.enabled
+  const handleUpdate = () => {
+    const nextEnabled = !data.enabled
+    setData({ ...data, enabled: nextEnabled })
+    toggleEnabled(category.id, {
+      onSuccess: () => refetch(),
+      onError: () => {
+        setData(category)
+        toast.error("فشل تحديث حالة الفئة")
+      },
     })
-    refetch()
   }
 
   return (
@@ -171,14 +180,13 @@ const CategoryTableRow = ({ category, refetch, onDeleteModal }: {
           <span>1</span>
         </div>
       </TableCell>
-      <TableCell>
-        <div className="bg-slate-100 h-10 w-10 aspect-square rounded-lg">
+      <TableCell className="w-16">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
           {data.image ? (
             <img
-              src={getImageUrl(data.image)}
+              src={getImageUrl(data.image, resolvedBaseUrl)}
               alt={data.name}
-              className="w-12 h-12 object-cover rounded-lg"
-
+              className="block h-12 w-12 object-cover rounded-lg"
             />
           ) : (
             <Folder className="size-6 text-slate-600" />
