@@ -10,6 +10,7 @@ import {
 } from "@/api/wrappers/settings.wrappers";
 import { PRODUCT_STATUS } from "@/utils/constants";
 import { sanitizePhoneNumber } from "@/utils/helpers";
+import { parseBooleanFlag } from "@/utils/parse-boolean";
 
 function getApiErrorMessage(error: Error, fallback: string) {
   const apiError = error as Error & {
@@ -73,9 +74,9 @@ export function useSettingsPage() {
   const { data: currentSettings, isLoading: isLoadingSettings } =
     useFetchCurrentSettings();
 
-  const { mutate: updateStoreDetails, isPending: isSavingStore } =
+  const { mutateAsync: updateStoreDetails, isPending: isSavingStore } =
     useUpdateStoreDetails();
-  const { mutate: updateSettings, isPending: isSavingSettings } =
+  const { mutateAsync: updateSettings, isPending: isSavingSettings } =
     useUpdateCurrentSettings();
   const updateGeneralSettingsMutation = useUpdateGeneralSettings();
 
@@ -83,6 +84,7 @@ export function useSettingsPage() {
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const originalStoreFormRef = useRef<StoreFormData | null>(null);
+  const hasInitializedStoreFormRef = useRef(false);
 
   const [generalSettings, setGeneralSettings] = useState({
     defaultProductStatus: PRODUCT_STATUS.DRAFT,
@@ -92,9 +94,11 @@ export function useSettingsPage() {
     maintenanceMode: false,
   });
   const originalGeneralRef = useRef<typeof generalSettings | null>(null);
+  const hasInitializedGeneralRef = useRef(false);
 
   useEffect(() => {
-    if (!storeDetails && currentSettings === undefined) return;
+    if (isLoadingStore || isLoadingSettings) return;
+    if (hasInitializedStoreFormRef.current) return;
 
     const next: StoreFormData = {
       storeName: storeDetails?.name ?? "",
@@ -102,7 +106,9 @@ export function useSettingsPage() {
       businessEmail: storeDetails?.email ?? "",
       businessPhone: storeDetails?.phone ?? "",
       physicalAddress: storeDetails?.location ?? "",
-      isPhysicalStore: storeDetails?.is_physical_store ?? false,
+      isPhysicalStore: parseBooleanFlag(
+        storeDetails?.is_physical_store ?? storeDetails?.isPhysicalStore,
+      ),
       latitude: storeDetails?.latitude ?? null,
       longitude: storeDetails?.longitude ?? null,
       workStartTime: storeDetails?.work_start_time ?? "10:00",
@@ -120,10 +126,12 @@ export function useSettingsPage() {
 
     setStoreForm(next);
     originalStoreFormRef.current = JSON.parse(JSON.stringify(next));
-  }, [storeDetails, currentSettings]);
+    hasInitializedStoreFormRef.current = true;
+  }, [isLoadingStore, isLoadingSettings, storeDetails, currentSettings]);
 
   useEffect(() => {
     if (!currentSettings) return;
+    if (hasInitializedGeneralRef.current) return;
 
     const next = {
       defaultProductStatus:
@@ -137,6 +145,7 @@ export function useSettingsPage() {
 
     setGeneralSettings(next);
     originalGeneralRef.current = JSON.parse(JSON.stringify(next));
+    hasInitializedGeneralRef.current = true;
   }, [currentSettings]);
 
   const handleTabChange = useCallback(
@@ -196,7 +205,7 @@ export function useSettingsPage() {
     );
   }, [generalSettings]);
 
-  const saveStoreSettings = useCallback(() => {
+  const saveStoreSettings = useCallback(async () => {
     const updateData: Record<string, unknown> = {
       name: storeForm.storeName,
       description: storeForm.storeDescription,
@@ -222,39 +231,28 @@ export function useSettingsPage() {
       }
     }
 
-    updateStoreDetails(updateData, {
-      onSuccess: () => {
-        updateSettings(
-          {
-            estimated_delivery_days: storeForm.estimatedDeliveryDays,
-            delivery_notes: storeForm.deliveryNotes,
-            product_default_state: storeForm.defaultProductStatus,
-            low_stock_alert: storeForm.lowStockThreshold,
-            cash_on_delivery: storeForm.cashOnDelivery,
-            allow_edit_order: storeForm.allowOrderEditing,
-            cancel_order_after_hours: storeForm.autoCancelUnpaidHours,
-          },
-          {
-            onSuccess: () => {
-              originalStoreFormRef.current = JSON.parse(
-                JSON.stringify(storeForm),
-              );
-              toast.success("تم حفظ الإعدادات بنجاح");
-            },
-            onError: (error: Error) => {
-              toast.error(
-                getApiErrorMessage(error, "حدث خطأ أثناء حفظ إعدادات المتجر"),
-              );
-            },
-          },
-        );
-      },
-      onError: (error: Error) => {
-        toast.error(
-          getApiErrorMessage(error, "حدث خطأ أثناء حفظ معلومات المتجر"),
-        );
-      },
-    });
+    try {
+      await updateStoreDetails(updateData);
+      await updateSettings({
+        estimated_delivery_days: storeForm.estimatedDeliveryDays,
+        delivery_notes: storeForm.deliveryNotes,
+        product_default_state: storeForm.defaultProductStatus,
+        low_stock_alert: storeForm.lowStockThreshold,
+        cash_on_delivery: storeForm.cashOnDelivery,
+        allow_edit_order: storeForm.allowOrderEditing,
+        cancel_order_after_hours: storeForm.autoCancelUnpaidHours,
+      });
+
+      originalStoreFormRef.current = JSON.parse(JSON.stringify(storeForm));
+      toast.success("تم حفظ الإعدادات بنجاح");
+    } catch (error: unknown) {
+      toast.error(
+        getApiErrorMessage(
+          error instanceof Error ? error : new Error("فشل الحفظ"),
+          "حدث خطأ أثناء حفظ الإعدادات",
+        ),
+      );
+    }
   }, [storeForm, updateStoreDetails, updateSettings]);
 
   const saveGeneralSettings = useCallback(async () => {

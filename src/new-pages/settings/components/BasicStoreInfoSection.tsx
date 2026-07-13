@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Store, MapPin } from "lucide-react";
+import { getImageUrl } from "@/utils/image-url";
 import SettingsCard from "./SettingsCard";
 import {
   SettingsField,
@@ -39,6 +41,9 @@ const BasicStoreInfoSection = ({
   setLocationDialogOpen,
   updateStoreLocation,
 }: Props) => {
+  const [logoError, setLogoError] = useState(false);
+  const storeLogoUrl = getImageUrl(storeDetails?.logo, storeDetails?.baseUrl);
+  const showStoreLogo = Boolean(storeLogoUrl) && !logoError;
   const mapLat = storeForm.latitude ?? 33.3152;
   const mapLng = storeForm.longitude ?? 44.3661;
   const mapBbox = `${mapLng - 0.015},${mapLat - 0.01},${mapLng + 0.015},${mapLat + 0.01}`;
@@ -64,11 +69,12 @@ const BasicStoreInfoSection = ({
             }
           }}
         >
-          {storeDetails?.logo ? (
+          {showStoreLogo ? (
             <img
-              src={storeDetails.logo}
+              src={storeLogoUrl}
               alt="شعار المتجر"
               className="size-full object-contain p-3"
+              onError={() => setLogoError(true)}
             />
           ) : (
             <div className="flex size-full items-center justify-center">
@@ -110,8 +116,8 @@ const BasicStoreInfoSection = ({
             name="storeDescription"
             value={storeForm.storeDescription}
             onChange={handleStoreInputChange}
-            rows={2}
-            className="min-h-[52px] max-h-[52px] resize-none text-xs leading-snug"
+            rows={3}
+            className="min-h-[82px] max-h-[82px] resize-none text-xs leading-snug"
           />
         </SettingsField>
 
@@ -122,7 +128,7 @@ const BasicStoreInfoSection = ({
               name="businessPhone"
               value={storeForm.businessPhone}
               onChange={handleStoreInputChange}
-              placeholder="0771 345 1330"
+              placeholder="7xx xxx xxxx"
               className="h-10"
             />
           </SettingsField>
@@ -132,6 +138,7 @@ const BasicStoreInfoSection = ({
               id="businessEmail"
               name="businessEmail"
               type="email"
+              placeholder="example@example.com"
               value={storeForm.businessEmail}
               onChange={handleStoreInputChange}
               dir="ltr"

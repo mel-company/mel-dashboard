@@ -17,11 +17,9 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  useUpdateStoreLogo,
-  useDeleteStoreLogo,
-} from "@/api/wrappers/settings.wrappers";
+import { useUpdateStoreLogo, useDeleteStoreLogo } from "@/api/wrappers/settings.wrappers";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import { getImageUrl } from "@/utils/image-url";
 
 type Props = {
   open: boolean;
@@ -40,7 +38,7 @@ const LogoDialog = ({ open, onOpenChange }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get current logo URL - could be a signed URL or a key
-  const currentLogoUrl = storeDetails?.logo;
+  const currentLogoUrl = getImageUrl(storeDetails?.logo, storeDetails?.baseUrl);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

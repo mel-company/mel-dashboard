@@ -30,14 +30,13 @@ function AuthLoadingScreen() {
 const PrivateRoute = () => {
   const queryClient = useQueryClient();
   const loggedIn = isAuthSessionMarked();
-  const { data: user, isPending, error } = useMe();
+  const { data: user, isLoading, isFetching, error } = useMe();
 
   if (!loggedIn) {
     return <Navigate to="/login" replace />;
   }
 
-  // Only block the first auth check — not background refetches
-  if (isPending) {
+  if (isLoading || (isFetching && !user)) {
     return <AuthLoadingScreen />;
   }
 

@@ -251,23 +251,20 @@ export const useUpdateStoreDetails = () => {
     mutationFn: (storeDetails: any) =>
       settingsAPI.updateStoreDetails(storeDetails),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: settingsKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: ["store", "details", "auth"] });
-      queryClient.invalidateQueries({ queryKey: ["auth"] });
-      queryClient.invalidateQueries({ queryKey: ["me"] });
-      queryClient.setQueryData(storeKeys.details(), (old: unknown) => ({
-        ...(typeof old === "object" && old !== null ? old : {}),
+      queryClient.setQueryData(storeKeys.details(), (old: Record<string, unknown> | undefined) => ({
+        ...(old ?? {}),
         ...variables,
         ...data,
+        is_physical_store:
+          variables.is_physical_store ??
+          data?.is_physical_store ??
+          old?.is_physical_store,
+        isPhysicalStore:
+          variables.is_physical_store ??
+          data?.isPhysicalStore ??
+          data?.is_physical_store ??
+          old?.isPhysicalStore,
       }));
-      queryClient.invalidateQueries({ queryKey: storeKeys.details() });
-      queryClient.invalidateQueries({ queryKey: storeKeys.all });
-      if (data?.storeId) {
-        queryClient.setQueryData(settingsKeys.byStore(data.storeId), data);
-      }
-      if (data?.id) {
-        queryClient.setQueryData(settingsKeys.detail(data.id), data);
-      }
       queryClient.invalidateQueries({ queryKey: ["settings", "current"] });
     },
   });

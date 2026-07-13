@@ -11,7 +11,9 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import { useLogout, useMe } from "@/api/wrappers/auth.wrappers";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import melLogo from "@/assets/imgs/logo/mel-logo.svg";
+import { getImageUrl } from "@/utils/image-url";
 import { toast } from "sonner";
 
 import {
@@ -65,6 +67,8 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
   const location = useLocation();
   const navigate = useNavigate();
   const { data: me } = useMe();
+  const { data: storeDetails } = useFetchStoreDetails();
+  const storeLogoUrl = getImageUrl(storeDetails?.logo, storeDetails?.baseUrl);
   const { mutate: logoutMutation, isPending: isLoggingOut } = useLogout();
   const { isPhysicalStore } = usePhysicalStoreEnabled();
   const sidebarSections = getSidebarSections(isPhysicalStore);
@@ -124,12 +128,20 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
                   متجر إلكتروني
                 </p>
               </div>
-              <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-orange-400 to-orange-500 p-1.5">
-                <img
-                  src={melLogo}
-                  alt=""
-                  className="size-full object-contain brightness-0 invert"
-                />
+              <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background">
+                {storeLogoUrl ? (
+                  <img
+                    src={storeLogoUrl}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={melLogo}
+                    alt=""
+                    className="size-6 object-contain"
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -171,9 +183,6 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
             }}
             className="flex w-full items-center gap-2 rounded-2xl bg-[#0f172a] px-3 py-3 text-white transition-opacity hover:opacity-95"
           >
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#00b7ff]/20">
-              <img src={melLogo} alt="" className="size-5 object-contain" />
-            </div>
             <span className="flex-1 text-right text-sm font-medium">
               الاشتراك الاحترافي
             </span>

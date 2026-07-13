@@ -76,10 +76,6 @@ export const SettingsPhoneInput = ({
       className,
     )}
   >
-    <div className="flex shrink-0 items-center gap-1.5 rounded-xl bg-sky-100 px-3 py-2 text-sm font-medium text-slate-600">
-      <span aria-hidden>🇮🇶</span>
-      <span dir="ltr">+964</span>
-    </div>
     <input
       id={id}
       type="tel"
@@ -89,5 +85,9 @@ export const SettingsPhoneInput = ({
       className="min-w-0 flex-1 border-0 bg-transparent px-2 text-sm text-slate-900 outline-none placeholder:text-slate-400"
       {...props}
     />
+    <div className="flex shrink-0 items-center gap-1.5 rounded-xl bg-sky-100 px-3 py-2 text-sm font-medium text-slate-600">
+      <span dir="ltr">+964</span>
+      <span aria-hidden>🇮🇶</span>
+    </div>
   </div>
 );
