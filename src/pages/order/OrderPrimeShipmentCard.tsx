@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -14,22 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Loader2, RefreshCw, Truck } from "lucide-react";
 import { toast } from "sonner";
-import { isPrimeDelivery } from "@/api/types/store";
-import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import { primeAPI } from "@/api/endpoints/prime.endpoints";
+import { storeAPI } from "@/api/endpoints/store.endpoints";
+import { getPrimeSenderId, isPrimeDelivery } from "@/api/types/store";
+import { storeKeys, useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import { usePrimeSetupStatus } from "@/hooks/use-prime-setup-status";
 import {
-  useCalculatePrimeCharges,
   useCreatePrimeShipment,
   usePrimeDistricts,
+  usePrimeLogin,
   usePrimeStates,
   useSyncPrimeOrderShipment,
 } from "@/api/wrappers/prime.wrappers";
@@ -39,11 +35,18 @@ import {
   getPrimeDistrictLabel,
   getPrimeStateCode,
   getPrimeStateLabel,
+  pickDefaultPrimeState,
 } from "@/utils/prime/lookups";
+import { getPrimeApiError } from "@/utils/prime/errors";
+import { extractSenderIdFromShops } from "@/utils/prime/setup";
 import {
   buildPrimeShipmentFromOrder,
   formatPrimeShipmentStatus,
+  getOrderDeliveryAddress,
   getOrderPrimeShipment,
+  getPrimeDistrictLabelById,
+  guessPrimeStateFromOrder,
+  resolvePrimeLocationForOrder,
 } from "@/utils/order/prime-shipment";
 
 type Props = {
@@ -52,224 +55,298 @@ type Props = {
 };
 
 const OrderPrimeShipmentCard = ({ order, onUpdated }: Props) => {
+  const queryClient = useQueryClient();
   const { data: storeDetails } = useFetchStoreDetails();
   const setupStatus = usePrimeSetupStatus();
+  const loginMutation = usePrimeLogin();
   const primeShipment = getOrderPrimeShipment(order);
   const orderId = String(order.id ?? "");
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [stateCode, setStateCode] = useState("");
-  const [districtId, setDistrictId] = useState("");
-  const [shippingFee, setShippingFee] = useState<number | null>(null);
-
-  const { data: statesData, isLoading: loadingStates } = usePrimeStates(
-    dialogOpen,
+  const canAutoShip = setupStatus.isReady && !primeShipment;
+  const [showManual, setShowManual] = useState(false);
+  const [manualState, setManualState] = useState("");
+  const [manualDistrict, setManualDistrict] = useState("");
+  const [resolvedSenderId, setResolvedSenderId] = useState<number | undefined>(
+    setupStatus.senderId,
   );
+
+  const { data: statesData, isLoading: loadingStates } =
+    usePrimeStates(canAutoShip);
+  const states = useMemo(() => asPrimeList(statesData), [statesData]);
+  const merchantDefaults = storeDetails?.primeMerchant;
+  const deliveryAddress = useMemo(() => getOrderDeliveryAddress(order), [order]);
+
+  const autoState = useMemo(() => {
+    if (!canAutoShip || states.length === 0) return "";
+    return pickDefaultPrimeState(
+      states,
+      guessPrimeStateFromOrder(order) || merchantDefaults?.state,
+    );
+  }, [canAutoShip, states, order, merchantDefaults?.state]);
+
+  const lookupState = showManual ? manualState || autoState : autoState;
+
   const { data: districtsData, isLoading: loadingDistricts } = usePrimeDistricts(
-    stateCode,
-    dialogOpen && !!stateCode,
+    lookupState,
+    canAutoShip && !!lookupState,
+  );
+  const districts = useMemo(() => asPrimeList(districtsData), [districtsData]);
+
+  const autoLocation = useMemo(
+    () =>
+      canAutoShip && states.length > 0 && districts.length > 0
+        ? resolvePrimeLocationForOrder(
+            order,
+            states,
+            districts,
+            merchantDefaults?.state,
+          )
+        : null,
+    [canAutoShip, order, states, districts, merchantDefaults?.state],
   );
 
   const createMutation = useCreatePrimeShipment();
   const syncMutation = useSyncPrimeOrderShipment();
-  const calculateMutation = useCalculatePrimeCharges();
-
-  const states = useMemo(() => asPrimeList(statesData), [statesData]);
-  const districts = useMemo(() => asPrimeList(districtsData), [districtsData]);
 
   useEffect(() => {
-    if (!dialogOpen || states.length === 0) return;
-    const codes = states.map(getPrimeStateCode).filter(Boolean);
-    if (codes.length > 0 && (!stateCode || !codes.includes(stateCode))) {
-      setStateCode(codes[0]);
-    }
-  }, [dialogOpen, states, stateCode]);
+    setResolvedSenderId(getPrimeSenderId(storeDetails));
+  }, [storeDetails]);
 
   useEffect(() => {
-    if (!dialogOpen || !stateCode) return;
-    setDistrictId("");
-    setShippingFee(null);
-  }, [dialogOpen, stateCode]);
-
-  useEffect(() => {
-    if (!dialogOpen || districts.length === 0) return;
-    const firstId = getPrimeDistrictId(districts[0]);
-    if (firstId != null) setDistrictId(String(firstId));
-  }, [dialogOpen, districts]);
+    if (!showManual || !autoLocation) return;
+    if (!manualState) setManualState(autoLocation.state);
+    if (!manualDistrict) setManualDistrict(String(autoLocation.district));
+  }, [showManual, autoLocation, manualState, manualDistrict]);
 
   if (!isPrimeDelivery(storeDetails)) return null;
 
-  const senderId = setupStatus.senderId;
-  const districtNumber = Number(districtId);
-  const canCreate =
-    !!senderId &&
-    !!stateCode &&
-    Number.isInteger(districtNumber) &&
-    districtNumber >= 1 &&
+  const senderId = resolvedSenderId;
+  const activeState = showManual ? manualState : autoLocation?.state ?? "";
+  const activeDistrict = showManual
+    ? Number(manualDistrict)
+    : autoLocation?.district ?? 0;
+  const districtLabel =
+    activeDistrict > 0
+      ? getPrimeDistrictLabelById(districts, activeDistrict)
+      : "—";
+
+  const locationReady =
+    !!activeState &&
+    Number.isInteger(activeDistrict) &&
+    activeDistrict >= 1 &&
     !loadingStates &&
     !loadingDistricts;
 
-  const handleCalculate = () => {
-    if (!senderId || !canCreate) return;
-    calculateMutation.mutate(
-      {
-        state: stateCode,
-        district: districtNumber,
-        receiptAmtIqd: Number(
-          (order.pricing as Record<string, unknown> | undefined)?.totalPrice ?? 0,
-        ),
-        senderId,
-      },
-      {
-        onSuccess: (data) => {
-          const fee =
-            (data as Record<string, unknown>)?.shippingFee ??
-            (data as Record<string, unknown>)?.shipping_fee;
-          if (typeof fee === "number") setShippingFee(fee);
-          toast.success("تم حساب رسوم الشحن");
+  const ensurePrimeSession = async (): Promise<number> => {
+    await loginMutation.mutateAsync();
+
+    const updatedStore = await queryClient.fetchQuery({
+      queryKey: storeKeys.details(),
+      queryFn: () => storeAPI.fetchDetails(),
+    });
+
+    const merchantLoginId = updatedStore?.primeMerchant?.merchantLoginId;
+    let id = getPrimeSenderId(updatedStore);
+
+    if (merchantLoginId) {
+      try {
+        const shopsRaw = await primeAPI.getMerchantShops(merchantLoginId);
+        const primeSenderId = extractSenderIdFromShops(shopsRaw);
+        if (primeSenderId) id = primeSenderId;
+      } catch {
+        // shops فشل — نكمل بـ senderId من store-details
+      }
+    }
+
+    if (!id) {
+      throw new Error("senderId غير موجود — أكمل إعداد Prime من الإعدادات");
+    }
+
+    setResolvedSenderId(id);
+    return id;
+  };
+
+  const handleAutoCreate = async () => {
+    if (!locationReady) {
+      setShowManual(true);
+      toast.error("انتظر تحميل العنوان أو عدّل المحافظة/القضاء يدوياً");
+      return;
+    }
+
+    try {
+      const activeSenderId = await ensurePrimeSession();
+      const payload = buildPrimeShipmentFromOrder(
+        order,
+        activeSenderId,
+        activeState,
+        activeDistrict,
+      );
+
+      await createMutation.mutateAsync(payload);
+      toast.success("تم إنشاء شحنة Prime وربطها بالطلب");
+      setShowManual(false);
+      onUpdated?.();
+    } catch (error) {
+      toast.error(getPrimeApiError(error, "فشل إنشاء الشحنة"));
+    }
+  };
+
+  const handleSync = async () => {
+    try {
+      await loginMutation.mutateAsync();
+      syncMutation.mutate(orderId, {
+        onSuccess: () => {
+          toast.success("تمت مزامنة حالة الشحنة");
+          onUpdated?.();
         },
-        onError: () => toast.error("فشل حساب رسوم الشحن"),
-      },
-    );
-  };
-
-  const handleCreate = () => {
-    if (!senderId || !canCreate) return;
-
-    const payload = buildPrimeShipmentFromOrder(
-      order,
-      senderId,
-      stateCode,
-      districtNumber,
-    );
-
-    createMutation.mutate(payload, {
-      onSuccess: () => {
-        toast.success("تم إنشاء شحنة Prime وربطها بالطلب");
-        setDialogOpen(false);
-        onUpdated?.();
-      },
-      onError: (error) => {
-        const apiError = error as Error & {
-          response?: { data?: { message?: string | string[] } };
-        };
-        const message = apiError.response?.data?.message;
-        toast.error(
-          Array.isArray(message)
-            ? message.join(" — ")
-            : message || "فشل إنشاء الشحنة",
-        );
-      },
-    });
-  };
-
-  const handleSync = () => {
-    syncMutation.mutate(orderId, {
-      onSuccess: () => {
-        toast.success("تمت مزامنة حالة الشحنة");
-        onUpdated?.();
-      },
-      onError: () => toast.error("فشلت المزامنة"),
-    });
+        onError: (error) =>
+          toast.error(getPrimeApiError(error, "فشلت المزامنة")),
+      });
+    } catch {
+      toast.error("فشل تسجيل دخول Prime");
+    }
   };
 
   const busy =
+    loginMutation.isPending ||
     createMutation.isPending ||
-    syncMutation.isPending ||
-    calculateMutation.isPending;
+    syncMutation.isPending;
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-right">
-            <Truck className="size-5" />
-            شحنة Prime
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {primeShipment ? (
-            <div className="space-y-2 rounded-xl border bg-slate-50 p-3 text-sm">
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">رقم الشحنة</span>
-                <span className="font-medium" dir="ltr">
-                  {primeShipment.caseId ?? "—"}
-                </span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">كود الشحنة</span>
-                <span dir="ltr">{primeShipment.merchantShipmentCode ?? "—"}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">الحالة</span>
-                <span>{formatPrimeShipmentStatus(primeShipment.status)}</span>
-              </div>
-              {primeShipment.shippingFee != null && (
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">رسوم الشحن</span>
-                  <span>{primeShipment.shippingFee.toLocaleString()} د.ع</span>
-                </div>
-              )}
-              {primeShipment.receiptNumber && (
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">رقم الوصل</span>
-                  <span dir="ltr">{primeShipment.receiptNumber}</span>
-                </div>
-              )}
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-right">
+          <Truck className="size-5" />
+          شحنة Prime
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {primeShipment ? (
+          <div className="space-y-2 rounded-xl border bg-slate-50 p-3 text-sm">
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">رقم الشحنة</span>
+              <span className="font-medium" dir="ltr">
+                {primeShipment.caseId ?? "—"}
+              </span>
             </div>
-          ) : (
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">كود الشحنة</span>
+              <span dir="ltr">{primeShipment.merchantShipmentCode ?? "—"}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">الحالة</span>
+              <span>{formatPrimeShipmentStatus(primeShipment.status)}</span>
+            </div>
+            {primeShipment.shippingFee != null && (
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">رسوم الشحن</span>
+                <span>{primeShipment.shippingFee.toLocaleString()} د.ع</span>
+              </div>
+            )}
+            {primeShipment.receiptNumber && (
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">رقم الوصل</span>
+                <span dir="ltr">{primeShipment.receiptNumber}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
             <p className="text-sm text-muted-foreground">
               لا توجد شحنة Prime مربوطة بهذا الطلب بعد.
             </p>
-          )}
 
-          <div className="flex flex-wrap gap-2">
-            {!primeShipment && (
-              <Button
-                size="sm"
-                disabled={!setupStatus.isReady || busy}
-                onClick={() => setDialogOpen(true)}
-              >
-                إنشاء شحنة Prime
-              </Button>
+            {canAutoShip && (
+              <div className="rounded-xl border bg-slate-50 p-3 text-xs text-slate-600">
+                <p>
+                  <span className="text-muted-foreground">التوصيل إلى: </span>
+                  <span className="font-medium text-slate-800">
+                    {deliveryAddress}
+                  </span>
+                </p>
+                <p className="mt-1" dir="ltr">
+                  {loadingStates || loadingDistricts ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Loader2 className="size-3 animate-spin" />
+                      جاري تحديد المحافظة والقضاء...
+                    </span>
+                  ) : locationReady ? (
+                    <>
+                      {activeState} · {districtLabel} ({activeDistrict})
+                    </>
+                  ) : (
+                    "تعذر تحديد العنوان تلقائياً"
+                  )}
+                </p>
+              </div>
             )}
-            {primeShipment && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busy}
-                onClick={handleSync}
-              >
-                {syncMutation.isPending ? (
-                  <Loader2 className="ml-1 size-3 animate-spin" />
-                ) : (
-                  <RefreshCw className="ml-1 size-3" />
-                )}
-                مزامنة الحالة
-              </Button>
-            )}
-          </div>
+          </>
+        )}
 
-          {!setupStatus.isReady && !primeShipment && (
-            <p className="text-xs text-amber-700">
-              أكمل إعداد Prime من الإعدادات أولاً (حساب + محل).
-            </p>
+        {setupStatus.isReady && senderId && (
+          <p className="text-[11px] text-slate-500" dir="ltr">
+            senderId: {senderId}
+            {setupStatus.merchantLoginId
+              ? ` · merchant: ${setupStatus.merchantLoginId}`
+              : ""}
+          </p>
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          {!primeShipment && (
+            <Button
+              size="sm"
+              disabled={!setupStatus.isReady || busy || !locationReady}
+              onClick={handleAutoCreate}
+            >
+              {busy ? (
+                <Loader2 className="ml-1 size-3 animate-spin" />
+              ) : (
+                <Truck className="ml-1 size-3" />
+              )}
+              شحن تلقائي بـ Prime
+            </Button>
           )}
-        </CardContent>
-      </Card>
+          {!primeShipment && canAutoShip && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => setShowManual((v) => !v)}
+            >
+              {showManual ? "إخفاء التعديل" : "تعديل العنوان"}
+            </Button>
+          )}
+          {primeShipment && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={handleSync}
+            >
+              {syncMutation.isPending ? (
+                <Loader2 className="ml-1 size-3 animate-spin" />
+              ) : (
+                <RefreshCw className="ml-1 size-3" />
+              )}
+              مزامنة الحالة
+            </Button>
+          )}
+        </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="text-right sm:max-w-md">
-          <DialogHeader className="text-right">
-            <DialogTitle>إنشاء شحنة Prime للطلب</DialogTitle>
-          </DialogHeader>
-
-          <div className="grid gap-3 py-2">
+        {showManual && canAutoShip && (
+          <div className="grid gap-2 rounded-xl border p-3">
             <div className="space-y-1">
-              <Label className="text-xs">محافظة Prime</Label>
-              <Select value={stateCode || undefined} onValueChange={setStateCode}>
+              <Label className="text-xs">محافظة التوصيل</Label>
+              <Select
+                value={manualState || autoState || undefined}
+                onValueChange={(v) => {
+                  setManualState(v);
+                  setManualDistrict("");
+                }}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder={loadingStates ? "..." : "اختر"} />
+                  <SelectValue placeholder="اختر" />
                 </SelectTrigger>
                 <SelectContent>
                   {states.map((s) => {
@@ -285,10 +362,10 @@ const OrderPrimeShipmentCard = ({ order, onUpdated }: Props) => {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">قضاء Prime</Label>
+              <Label className="text-xs">قضاء التوصيل</Label>
               <Select
-                value={districtId || undefined}
-                onValueChange={setDistrictId}
+                value={manualDistrict || undefined}
+                onValueChange={setManualDistrict}
               >
                 <SelectTrigger>
                   <SelectValue
@@ -308,31 +385,16 @@ const OrderPrimeShipmentCard = ({ order, onUpdated }: Props) => {
                 </SelectContent>
               </Select>
             </div>
-            {shippingFee != null && (
-              <p className="text-sm text-sky-700">
-                رسوم الشحن المتوقعة: {shippingFee.toLocaleString()} د.ع
-              </p>
-            )}
           </div>
+        )}
 
-          <DialogFooter className="gap-2">
-            <Button
-              variant="secondary"
-              disabled={!canCreate || calculateMutation.isPending}
-              onClick={handleCalculate}
-            >
-              حساب الرسوم
-            </Button>
-            <Button disabled={!canCreate || busy} onClick={handleCreate}>
-              {createMutation.isPending && (
-                <Loader2 className="ml-1 size-3 animate-spin" />
-              )}
-              إنشاء الشحنة
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        {!setupStatus.isReady && !primeShipment && (
+          <p className="text-xs text-amber-700">
+            أكمل إعداد Prime من الإعدادات أولاً (حساب + محل).
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

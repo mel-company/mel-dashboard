@@ -23,3 +23,20 @@ export function extractSenderId(response: unknown): number | undefined {
   if (typeof id === "number" && id > 0) return id;
   return undefined;
 }
+
+export function extractSenderIdFromShops(shopsRaw: unknown): number | undefined {
+  if (!Array.isArray(shopsRaw)) {
+    if (shopsRaw && typeof shopsRaw === "object") {
+      const obj = shopsRaw as Record<string, unknown>;
+      for (const key of ["data", "items", "shops"]) {
+        const nested = obj[key];
+        if (Array.isArray(nested) && nested.length > 0) {
+          return extractSenderId(nested[0]);
+        }
+      }
+    }
+    return undefined;
+  }
+  if (shopsRaw.length === 0) return undefined;
+  return extractSenderId(shopsRaw[0]);
+}

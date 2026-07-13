@@ -18,11 +18,24 @@ export type DeliverySettingsSummary = {
   localPickup?: boolean;
 };
 
+export type PrimeMerchantShop = {
+  id: number;
+  name?: string;
+  phone1?: string;
+  active?: boolean;
+};
+
 export type PrimeMerchantSummary = {
   merchantLoginId?: string;
+  merchantId?: number;
   senderId?: number;
   active?: boolean;
   name?: string;
+  state?: string;
+  district?: number;
+  branch?: number;
+  hasShop?: boolean;
+  shops?: PrimeMerchantShop[];
 };
 
 export type StoreDetails = {
@@ -64,5 +77,14 @@ export function isPrimeReadyForShipping(
   storeDetails?: Pick<StoreDetails, "primeMerchant"> | null,
 ): boolean {
   const merchant = storeDetails?.primeMerchant;
-  return !!merchant?.merchantLoginId && !!merchant?.senderId;
+  if (!merchant?.merchantLoginId) return false;
+  return !!(merchant.senderId && merchant.senderId > 0) || !!merchant.hasShop;
+}
+
+export function getPrimeSenderId(
+  storeDetails?: Pick<StoreDetails, "primeMerchant"> | null,
+): number | undefined {
+  const merchant = storeDetails?.primeMerchant;
+  const id = merchant?.senderId ?? merchant?.shops?.[0]?.id;
+  return id && id > 0 ? id : undefined;
 }

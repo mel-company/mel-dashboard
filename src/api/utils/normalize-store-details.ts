@@ -44,15 +44,46 @@ function mapPrimeMerchant(
   raw: Record<string, unknown> | null | undefined,
 ): PrimeMerchantSummary | null {
   if (!raw) return null;
+
+  const shopsRaw = Array.isArray(raw.shops) ? raw.shops : [];
+  const shops = shopsRaw
+    .map((shop) => {
+      const s = shop as Record<string, unknown>;
+      const id = Number(s.id);
+      if (!Number.isInteger(id) || id < 1) return null;
+      return {
+        id,
+        name: s.name as string | undefined,
+        phone1: s.phone1 as string | undefined,
+        active: s.active as boolean | undefined,
+      };
+    })
+    .filter((s): s is NonNullable<typeof s> => s != null);
+
+  const firstShopId = shops[0]?.id;
+  const senderId =
+    (raw.sender_id as number | undefined) ??
+    (raw.senderId as number | undefined) ??
+    firstShopId;
+
   return {
     merchantLoginId:
       (raw.merchantLoginId as string | undefined) ||
       (raw.merchant_login_id as string | undefined),
-    senderId:
-      (raw.senderId as number | undefined) ||
-      (raw.sender_id as number | undefined),
+    merchantId:
+      (raw.merchantId as number | undefined) ||
+      (raw.merchant_id as number | undefined),
+    senderId,
     active: raw.active as boolean | undefined,
     name: raw.name as string | undefined,
+    state: raw.state as string | undefined,
+    district: raw.district as number | undefined,
+    branch: raw.branch as number | undefined,
+    hasShop:
+      (raw.has_shop as boolean | undefined) ??
+      (raw.hasShop as boolean | undefined) ??
+      shops.length > 0,
+    shops,
   };
 }
 

@@ -35,7 +35,10 @@ import {
   getPrimeDistrictLabel,
   getPrimeStateCode,
   getPrimeStateLabel,
+  pickDefaultPrimeDistrict,
+  pickDefaultPrimeState,
 } from "@/utils/prime/lookups";
+import { getPrimeApiError } from "@/utils/prime/errors";
 import type { PrimeTestConfig } from "@/api/types/prime";
 
 const CONFIG_KEY = "mel-prime-test-config";
@@ -104,13 +107,15 @@ const PrimeTestPage = () => {
   const branches = useMemo(() => asPrimeList(branchesData), [branchesData]);
 
   useEffect(() => {
-    if (states.length > 0) {
-      const codes = states.map(getPrimeStateCode).filter(Boolean);
-      if (codes.length > 0 && (!stateCode || !codes.includes(stateCode))) {
-        setStateCode(codes[0]);
-      }
+    if (states.length === 0) return;
+    const preferred = pickDefaultPrimeState(
+      states,
+      storeDetails?.primeMerchant?.state,
+    );
+    if (preferred && (!stateCode || stateCode !== preferred)) {
+      setStateCode(preferred);
     }
-  }, [states, stateCode]);
+  }, [states, stateCode, storeDetails?.primeMerchant?.state]);
 
   useEffect(() => {
     if (!stateCode) return;
@@ -118,11 +123,14 @@ const PrimeTestPage = () => {
   }, [stateCode]);
 
   useEffect(() => {
-    if (districts.length > 0) {
-      const firstId = getPrimeDistrictId(districts[0]);
-      if (firstId != null) setDistrictId(String(firstId));
-    }
-  }, [districts]);
+    if (districts.length === 0 || districtId) return;
+    setDistrictId(
+      pickDefaultPrimeDistrict(
+        districts,
+        storeDetails?.primeMerchant?.district,
+      ),
+    );
+  }, [districts, districtId, storeDetails?.primeMerchant?.district]);
 
   useEffect(() => {
     const fromStore = storeDetails?.primeMerchant;
@@ -440,9 +448,14 @@ const PrimeTestPage = () => {
               calculateMutation.mutate(
                 {
                   state: stateCode,
-                  district: Number(districtId) || 469,
+                  district: Number(districtId) || storeDetails?.primeMerchant?.district || 0,
                   receiptAmtIqd: Number(receiptAmt) || 0,
                   senderId: Number(senderId),
+                  receiverName: "عميل تجريبي",
+                  receiverHp1: "07701234567",
+                  locationDetails: "بصرة - تجريبي",
+                  productInfo: "منتج تجريبي*1",
+                  qty: 1,
                 },
                 {
                   onSuccess: (d) => handleSuccess("رسوم الشحن", d),
@@ -465,7 +478,10 @@ const PrimeTestPage = () => {
                   receiverHp1: "07701234567",
                   locationDetails: "بغداد - تجريبي",
                   state: stateCode,
-                  district: Number(districtId) || 469,
+                  district:
+                    Number(districtId) ||
+                    storeDetails?.primeMerchant?.district ||
+                    0,
                   receiptAmtIqd: Number(receiptAmt) || 0,
                   productInfo: "منتج تجريبي*1",
                   qty: 1,

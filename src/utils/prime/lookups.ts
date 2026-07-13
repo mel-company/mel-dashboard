@@ -63,3 +63,29 @@ export function getPrimeDistrictLabel(item: Record<string, unknown>): string {
   if (name != null && String(name).trim()) return String(name);
   return id != null ? String(id) : "—";
 }
+
+export function pickDefaultPrimeState(
+  states: Record<string, unknown>[],
+  preferred?: string,
+): string {
+  const codes = states.map(getPrimeStateCode).filter(Boolean);
+  if (codes.length === 0) return "";
+  if (preferred && codes.includes(preferred)) return preferred;
+  return codes[0];
+}
+
+export function pickDefaultPrimeDistrict(
+  districts: Record<string, unknown>[],
+  preferred?: number,
+): string {
+  if (preferred != null) {
+    const preferredStr = String(preferred);
+    if (
+      districts.some((d) => String(getPrimeDistrictId(d)) === preferredStr)
+    ) {
+      return preferredStr;
+    }
+  }
+  const firstId = getPrimeDistrictId(districts[0] ?? {});
+  return firstId != null ? String(firstId) : "";
+}

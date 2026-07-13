@@ -1,9 +1,9 @@
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import {
+  getPrimeSenderId,
   hasPrimeAccount,
   isPrimeReadyForShipping,
 } from "@/api/types/store";
-
 type PrimeSetupStatus = {
   isLoading: boolean;
   isReady: boolean;
@@ -27,7 +27,7 @@ export function usePrimeSetupStatus(): PrimeSetupStatus {
     hasAccount,
     needsShop: hasAccount && !isReady,
     merchantLoginId: primeMerchant?.merchantLoginId,
-    senderId: primeMerchant?.senderId,
+    senderId: getPrimeSenderId(storeDetails),
     merchantName: primeMerchant?.name,
     active: primeMerchant?.active,
   };

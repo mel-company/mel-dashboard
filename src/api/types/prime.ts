@@ -36,8 +36,13 @@ export type CreatePrimeShopInput = {
 export type CalculatePrimeChargesInput = {
   state: string;
   district: number;
-  receiptAmtIqd: number;
-  senderId: number;
+  receiptAmtIqd?: number;
+  senderId?: number;
+  receiverName?: string;
+  receiverHp1?: string;
+  locationDetails?: string;
+  productInfo?: string;
+  qty?: number;
 };
 
 export type CreatePrimeShipmentInput = {
