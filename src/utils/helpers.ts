@@ -146,6 +146,31 @@ export const sanitizePhoneNumber = (
   return countryCode + phone;
 };
 
+/** Local Iraqi mobile digits only (10 digits, starts with 75/77/78). */
+export function filterIraqiMobileInput(raw: string): string {
+  let digits = raw.replace(/\D/g, "");
+
+  if (digits.startsWith("964")) {
+    digits = digits.slice(3);
+  }
+  digits = digits.replace(/^0+/, "");
+
+  if (digits.length > 0 && digits[0] !== "7") {
+    return "";
+  }
+
+  if (digits.length >= 2 && !["5", "7", "8"].includes(digits[1]!)) {
+    digits = digits.slice(0, 1);
+  }
+
+  return digits.slice(0, 10);
+}
+
+export function normalizeIraqiPhoneForDisplay(phone?: string | null): string {
+  if (!phone) return "";
+  return filterIraqiMobileInput(phone);
+}
+
 export const validateInternationalPhoneNumber = (
   phoneNumber: string,
   countryCode: string

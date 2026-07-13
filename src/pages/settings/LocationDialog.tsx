@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, MapPin, Search } from "lucide-react";
 import { toast } from "sonner";
-import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -20,20 +26,25 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
+const pinIcon = new L.Icon({
   iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
   shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
 });
 
 const DEFAULT_LAT = 33.3152;
 const DEFAULT_LNG = 44.3661;
+const IRAQ_BBOX = "38.7,29.0,49.0,37.5";
 
-type NominatimResult = {
-  place_id: number;
+type GeocodeResult = {
+  id: string;
   display_name: string;
-  lat: string;
-  lon: string;
+  lat: number;
+  lon: number;
 };
 
 type Props = {
@@ -49,6 +60,58 @@ type Props = {
   }) => void;
 };
 
+function formatPhotonAddress(properties: Record<string, string | undefined>) {
+  return [
+    properties.name,
+    properties.street,
+    properties.district,
+    properties.city,
+    properties.state,
+    properties.country,
+  ]
+    .filter(Boolean)
+    .join("، ");
+}
+
+async function searchPlaces(query: string): Promise<GeocodeResult[]> {
+  const res = await fetch(
+    `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lang=ar&bbox=${IRAQ_BBOX}`,
+  );
+  if (!res.ok) throw new Error("search failed");
+
+  const data = await res.json();
+  return (data.features ?? []).map(
+  (
+    feature: {
+      properties: Record<string, string | undefined>;
+      geometry: { coordinates: [number, number] };
+    },
+    index: number,
+  ) => ({
+    id: String(feature.properties.osm_id ?? index),
+    display_name: formatPhotonAddress(feature.properties),
+    lat: feature.geometry.coordinates[1],
+    lon: feature.geometry.coordinates[0],
+  }),
+  );
+}
+
+async function reverseGeocodePlace(
+  lat: number,
+  lng: number,
+): Promise<string | null> {
+  const res = await fetch(
+    `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=ar`,
+  );
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  const feature = data.features?.[0];
+  if (!feature) return null;
+
+  return formatPhotonAddress(feature.properties);
+}
+
 function MapClickHandler({
   onPositionChange,
 }: {
@@ -62,12 +125,60 @@ function MapClickHandler({
   return null;
 }
 
-function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
+function MapResizeFix() {
   const map = useMap();
   useEffect(() => {
-    map.setView([lat, lng], map.getZoom());
-  }, [lat, lng, map]);
+    const timer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [map]);
   return null;
+}
+
+function RecenterMap({
+  lat,
+  lng,
+  zoom,
+}: {
+  lat: number;
+  lng: number;
+  zoom: number;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo([lat, lng], zoom, { duration: 0.6 });
+  }, [lat, lng, zoom, map]);
+  return null;
+}
+
+function LocationMarker({
+  position,
+  onPositionChange,
+}: {
+  position: [number, number];
+  onPositionChange: (lat: number, lng: number) => void;
+}) {
+  const markerRef = useRef<L.Marker>(null);
+
+  useEffect(() => {
+    markerRef.current?.setLatLng(position);
+  }, [position]);
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={position}
+      icon={pinIcon}
+      draggable
+      eventHandlers={{
+        dragend: (e) => {
+          const pos = (e.target as L.Marker).getLatLng();
+          onPositionChange(pos.lat, pos.lng);
+        },
+      }}
+    />
+  );
 }
 
 const LocationDialog = ({
@@ -80,9 +191,10 @@ const LocationDialog = ({
 }: Props) => {
   const [draftLat, setDraftLat] = useState(DEFAULT_LAT);
   const [draftLng, setDraftLng] = useState(DEFAULT_LNG);
+  const [mapZoom, setMapZoom] = useState(14);
   const [draftAddress, setDraftAddress] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
+  const [searchResults, setSearchResults] = useState<GeocodeResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
 
@@ -90,6 +202,7 @@ const LocationDialog = ({
     if (!open) return;
     setDraftLat(latitude ?? DEFAULT_LAT);
     setDraftLng(longitude ?? DEFAULT_LNG);
+    setMapZoom(latitude != null && longitude != null ? 15 : 14);
     setDraftAddress(address);
     setSearchQuery("");
     setSearchResults([]);
@@ -98,13 +211,9 @@ const LocationDialog = ({
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     setIsReverseGeocoding(true);
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar`,
-      );
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data?.display_name) {
-        setDraftAddress(data.display_name);
+      const placeName = await reverseGeocodePlace(lat, lng);
+      if (placeName) {
+        setDraftAddress(placeName);
       }
     } catch {
       // keep current address on failure
@@ -128,16 +237,9 @@ const LocationDialog = ({
 
     setIsSearching(true);
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=iq&limit=5&accept-language=ar`,
-      );
-      if (!res.ok) {
-        toast.error("تعذر البحث عن العنوان");
-        return;
-      }
-      const data = (await res.json()) as NominatimResult[];
-      setSearchResults(data);
-      if (data.length === 0) {
+      const results = await searchPlaces(query);
+      setSearchResults(results);
+      if (results.length === 0) {
         toast.error("لم يتم العثور على نتائج");
       }
     } catch {
@@ -147,11 +249,10 @@ const LocationDialog = ({
     }
   }, [searchQuery]);
 
-  const handleSelectResult = (result: NominatimResult) => {
-    const lat = parseFloat(result.lat);
-    const lng = parseFloat(result.lon);
-    setDraftLat(lat);
-    setDraftLng(lng);
+  const handleSelectResult = (result: GeocodeResult) => {
+    setDraftLat(result.lat);
+    setDraftLng(result.lon);
+    setMapZoom(16);
     setDraftAddress(result.display_name);
     setSearchResults([]);
     setSearchQuery("");
@@ -212,7 +313,7 @@ const LocationDialog = ({
             {searchResults.length > 0 && (
               <ul className="max-h-40 overflow-y-auto rounded-xl border bg-background">
                 {searchResults.map((result) => (
-                  <li key={result.place_id}>
+                  <li key={result.id}>
                     <button
                       type="button"
                       className="w-full px-3 py-2 text-right text-sm hover:bg-muted"
@@ -229,8 +330,9 @@ const LocationDialog = ({
           <div className="relative h-80 overflow-hidden rounded-2xl border sm:h-96">
             {open && (
               <MapContainer
+                key={`map-${open}`}
                 center={[draftLat, draftLng]}
-                zoom={14}
+                zoom={mapZoom}
                 className="size-full z-0"
                 scrollWheelZoom
               >
@@ -238,17 +340,11 @@ const LocationDialog = ({
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <RecenterMap lat={draftLat} lng={draftLng} />
-                <Marker
+                <MapResizeFix />
+                <RecenterMap lat={draftLat} lng={draftLng} zoom={mapZoom} />
+                <LocationMarker
                   position={[draftLat, draftLng]}
-                  draggable
-                  eventHandlers={{
-                    dragend: (e) => {
-                      const marker = e.target as L.Marker;
-                      const pos = marker.getLatLng();
-                      handlePositionChange(pos.lat, pos.lng);
-                    },
-                  }}
+                  onPositionChange={handlePositionChange}
                 />
                 <MapClickHandler onPositionChange={handlePositionChange} />
               </MapContainer>

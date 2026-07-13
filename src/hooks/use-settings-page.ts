@@ -9,7 +9,7 @@ import {
   useUpdateStoreDetails,
 } from "@/api/wrappers/settings.wrappers";
 import { PRODUCT_STATUS } from "@/utils/constants";
-import { sanitizePhoneNumber } from "@/utils/helpers";
+import { sanitizePhoneNumber, normalizeIraqiPhoneForDisplay } from "@/utils/helpers";
 import { parseBooleanFlag } from "@/utils/parse-boolean";
 
 function getApiErrorMessage(error: Error, fallback: string) {
@@ -104,7 +104,7 @@ export function useSettingsPage() {
       storeName: storeDetails?.name ?? "",
       storeDescription: storeDetails?.description ?? "",
       businessEmail: storeDetails?.email ?? "",
-      businessPhone: storeDetails?.phone ?? "",
+      businessPhone: normalizeIraqiPhoneForDisplay(storeDetails?.phone),
       physicalAddress: storeDetails?.location ?? "",
       isPhysicalStore: parseBooleanFlag(
         storeDetails?.is_physical_store ?? storeDetails?.isPhysicalStore,

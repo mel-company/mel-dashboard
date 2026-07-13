@@ -14,6 +14,7 @@ import {
 import type { useSettingsPage } from "@/hooks/use-settings-page";
 import LogoDialog from "@/pages/settings/LogoDialog";
 import LocationDialog from "@/pages/settings/LocationDialog";
+import StoreMapPreview from "./StoreMapPreview";
 
 const compactInputClass = "h-10";
 
@@ -46,7 +47,6 @@ const BasicStoreInfoSection = ({
   const showStoreLogo = Boolean(storeLogoUrl) && !logoError;
   const mapLat = storeForm.latitude ?? 33.3152;
   const mapLng = storeForm.longitude ?? 44.3661;
-  const mapBbox = `${mapLng - 0.015},${mapLat - 0.01},${mapLng + 0.015},${mapLat + 0.01}`;
 
   const openLocationDialog = () => setLocationDialogOpen(true);
 
@@ -128,8 +128,6 @@ const BasicStoreInfoSection = ({
               name="businessPhone"
               value={storeForm.businessPhone}
               onChange={handleStoreInputChange}
-              placeholder="7xx xxx xxxx"
-              className="h-10"
             />
           </SettingsField>
 
@@ -167,7 +165,10 @@ const BasicStoreInfoSection = ({
 
           {storeForm.isPhysicalStore && (
             <>
-              <SettingsLabel>موقع المتجر</SettingsLabel>
+              <div className="flex items-center gap-1.5">
+                <MapPin className="size-4 shrink-0 text-red-500" />
+                <SettingsLabel className="mb-0">موقع المتجر</SettingsLabel>
+              </div>
               <div
                 className="relative h-44 cursor-pointer overflow-hidden rounded-xl bg-slate-100 sm:h-48"
                 role="button"
@@ -180,13 +181,8 @@ const BasicStoreInfoSection = ({
                   }
                 }}
               >
-                <iframe
-                  title="معاينة موقع المتجر"
-                  className="pointer-events-none absolute inset-0 size-full border-0"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapBbox}&layer=mapnik&marker=${mapLat}%2C${mapLng}`}
-                />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <MapPin className="size-8 text-red-500 drop-shadow" />
+                <div className="pointer-events-none absolute inset-0">
+                  <StoreMapPreview lat={mapLat} lng={mapLng} />
                 </div>
                 <Button
                   type="button"
