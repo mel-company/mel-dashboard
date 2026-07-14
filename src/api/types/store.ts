@@ -48,6 +48,12 @@ export type StoreDetails = {
   logo?: string;
   baseUrl?: string;
   base_url?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  work_start_time?: string | null;
+  work_end_time?: string | null;
+  is_physical_store?: boolean;
+  isPhysicalStore?: boolean;
   deliveryCompanyId?: string | null;
   deliveryCompany?: DeliveryCompanySummary | null;
   deliverySettings?: DeliverySettingsSummary | null;

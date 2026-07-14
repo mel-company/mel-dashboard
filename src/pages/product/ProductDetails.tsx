@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useMemo, useState } from "react";

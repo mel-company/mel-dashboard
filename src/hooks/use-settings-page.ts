@@ -110,10 +110,24 @@ export function useSettingsPage() {
       isPhysicalStore: parseBooleanFlag(
         storeDetails?.is_physical_store ?? storeDetails?.isPhysicalStore,
       ),
-      latitude: storeDetails?.latitude ?? null,
-      longitude: storeDetails?.longitude ?? null,
-      workStartTime: storeDetails?.work_start_time ?? "10:00",
-      workEndTime: storeDetails?.work_end_time ?? "22:00",
+      latitude:
+        typeof storeDetails?.latitude === "number"
+          ? storeDetails.latitude
+          : null,
+      longitude:
+        typeof storeDetails?.longitude === "number"
+          ? storeDetails.longitude
+          : null,
+      workStartTime:
+        typeof storeDetails?.work_start_time === "string" &&
+        storeDetails.work_start_time
+          ? storeDetails.work_start_time
+          : "10:00",
+      workEndTime:
+        typeof storeDetails?.work_end_time === "string" &&
+        storeDetails.work_end_time
+          ? storeDetails.work_end_time
+          : "22:00",
       estimatedDeliveryDays: currentSettings?.estimated_delivery_days ?? 10,
       deliveryNotes: currentSettings?.delivery_notes ?? "",
       defaultProductStatus:

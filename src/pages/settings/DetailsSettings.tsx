@@ -74,7 +74,7 @@ const DetailsSettings = ({}: Props) => {
         storeName: storeDetails.name || "",
         storeDescription: storeDetails.description || "",
         businessEmail: storeDetails.email || "",
-        businessPhone: storeDetails.phone,
+        businessPhone: storeDetails.phone || "",
         physicalAddress: storeDetails.location || "",
         timezone: timezoneValue,
         currency: currencyValue,

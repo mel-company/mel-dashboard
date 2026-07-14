@@ -38,7 +38,6 @@ import {
   pickDefaultPrimeDistrict,
   pickDefaultPrimeState,
 } from "@/utils/prime/lookups";
-import { getPrimeApiError } from "@/utils/prime/errors";
 import type { PrimeTestConfig } from "@/api/types/prime";
 
 const CONFIG_KEY = "mel-prime-test-config";
@@ -66,7 +65,7 @@ function JsonBox({ data }: { data: unknown }) {
 
 const PrimeTestPage = () => {
   const { data: storeDetails } = useFetchStoreDetails();
-  const [config, setConfig] = useState<PrimeTestConfig>(loadConfig);
+  const [config] = useState<PrimeTestConfig>(loadConfig);
   const [lastResult, setLastResult] = useState<unknown>(null);
 
   const [stateCode, setStateCode] = useState("");
@@ -224,7 +223,9 @@ const PrimeTestPage = () => {
         merchantLoginId,
         body: {
           name: "المحل الرئيسي",
-          phone1: storeDetails?.businessPhone || "07701234567",
+          phone1:
+            (typeof storeDetails?.phone === "string" && storeDetails.phone) ||
+            "07701234567",
         },
       },
       {

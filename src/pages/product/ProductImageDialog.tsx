@@ -300,7 +300,7 @@ const ProductImageDialog = ({ open, onOpenChange, productId }: Props) => {
             </div>
             {pendingPreviews.length > 0 && (
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {pendingPreviews.map((url, i) => (
+                {pendingPreviews.map((url) => (
                   <img
                     key={url}
                     src={url}

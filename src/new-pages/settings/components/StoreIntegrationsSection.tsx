@@ -162,7 +162,9 @@ const StoreIntegrationsSection = () => {
       <SelectDeliveryCompanyDialog
         open={deliveryDialogOpen}
         onOpenChange={setDeliveryDialogOpen}
-        currentDeliveryCompanyId={storeDetails?.deliveryCompanyId}
+        currentDeliveryCompanyId={
+          storeDetails?.deliveryCompanyId ?? undefined
+        }
       />
     </>
   );
