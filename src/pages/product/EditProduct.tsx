@@ -10,10 +10,18 @@ import {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import { toast } from "sonner";
 import type { ProductListItem } from "@/api/types/product";
+import { MAX_PRODUCT_IMAGES } from "@/api/types/product";
 import { getImageUrl } from "@/utils/image-url";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
+import {
+  mergeProductImageFiles,
+  revokeObjectUrls,
+} from "@/utils/product-images";
+import { cn } from "@/lib/utils";
 
 type Props = {};
+
+const PRODUCT_DESCRIPTION_MAX = 300;
 
 const EditProduct = ({}: Props) => {
   const { id } = useParams<{ id: string }>();
@@ -32,58 +40,78 @@ const EditProduct = ({}: Props) => {
   const [price, setPrice] = useState("");
   const [costToProduct, setCostToProduct] = useState("");
   const [image, setImage] = useState("");
+  const [existingImages, setExistingImages] = useState<
+    Array<{ id?: string; url: string; isPrimary?: boolean }>
+  >([]);
   const [rate, setRate] = useState("");
   // @ts-ignore
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentImageUrl = getImageUrl(image, imageBaseUrl);
+  const slotsLeft = Math.max(
+    0,
+    MAX_PRODUCT_IMAGES - existingImages.length - selectedImageFiles.length,
+  );
 
   // Populate form when product data is loaded
   useEffect(() => {
     if (data) {
       const product = data as ProductListItem;
       setTitle(product.title ?? "");
-      setDescription(product.description ?? "");
+      setDescription((product.description ?? "").slice(0, PRODUCT_DESCRIPTION_MAX));
       setPrice(product.price?.toString() ?? "");
       setCostToProduct(product.cost_to_produce?.toString() ?? "");
       setImage(product.image ?? "");
       setRate(product.rate?.toString() ?? "");
-      // Map category IDs from product categories
       setSelectedCategories(product.categories?.map((cat) => cat.id) ?? []);
-      // Reset image file selection when data loads
-      setSelectedImageFile(null);
-      setPreviewUrl(null);
+      const gallery =
+        Array.isArray(product.images) && product.images.length > 0
+          ? [...product.images].sort(
+              (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+            )
+          : product.image
+            ? [{ url: product.image, isPrimary: true }]
+            : [];
+      setExistingImages(gallery);
+      revokeObjectUrls(previewUrls);
+      setSelectedImageFiles([]);
+      setPreviewUrls([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error("الرجاء اختيار ملف صورة");
-        return;
-      }
-
-      // Validate file size (2MB max)
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("حجم الملف يجب أن يكون أقل من 2MB");
-        return;
-      }
-
-      setSelectedImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    const result = mergeProductImageFiles(
+      selectedImageFiles,
+      e.target.files,
+      Math.max(0, MAX_PRODUCT_IMAGES - existingImages.length),
+    );
+    if (result.error) toast.error(result.error);
+    if (result.files === selectedImageFiles) {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
     }
+    revokeObjectUrls(previewUrls);
+    setSelectedImageFiles(result.files);
+    setPreviewUrls(result.files.map((f) => URL.createObjectURL(f)));
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleRemoveImage = () => {
-    setSelectedImageFile(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  const handleRemovePendingAt = (index: number) => {
+    const removed = previewUrls[index];
+    if (removed) URL.revokeObjectURL(removed);
+    setSelectedImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleClearPending = () => {
+    revokeObjectUrls(previewUrls);
+    setSelectedImageFiles([]);
+    setPreviewUrls([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -94,17 +122,28 @@ const EditProduct = ({}: Props) => {
       return;
     }
 
+    if (!description.trim()) {
+      toast.error("الرجاء إدخال وصف المنتج");
+      return;
+    }
+
+    if (description.trim().length > PRODUCT_DESCRIPTION_MAX) {
+      toast.error(`وصف المنتج يجب ألا يتجاوز ${PRODUCT_DESCRIPTION_MAX} حرف`);
+      return;
+    }
+
     // Create FormData for multipart/form-data
     const formData = new FormData();
     formData.append("title", title);
-    formData.append("description", description);
+    formData.append("description", description.trim().slice(0, PRODUCT_DESCRIPTION_MAX));
     formData.append("price", parseFloat(price).toString());
     formData.append("cost_to_produce", parseFloat(costToProduct).toString());
     formData.append("rate", parseFloat(rate).toString());
 
-    // Add image file if selected
-    if (selectedImageFile) {
-      formData.append("image", selectedImageFile);
+    // Add new gallery images if selected
+    selectedImageFiles.forEach((file) => formData.append("images", file));
+    if (selectedImageFiles[0]) {
+      formData.append("image", selectedImageFiles[0]);
     }
 
     // Add category IDs if any - send as repeated fields (standard FormData array format)
@@ -175,61 +214,91 @@ const EditProduct = ({}: Props) => {
           <CardContent className="spacey-4">
             <div className="space-y-2 mb-4">
               <label className="text-sm font-medium text-right block">
-                صورة المنتج
+                صور المنتج
               </label>
-              <div className="flex gap-x-4">
-                <div className="w-32 h-32 flex items-center justify-center bg-muted rounded-lg overflow-hidden shrink-0">
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : currentImageUrl ? (
-                    <img
-                      src={currentImageUrl}
-                      alt={title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Image className="w-12 h-12 object-cover text-muted-foreground" />
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap gap-2">
+                  {existingImages.map((img, idx) => (
+                    <div
+                      key={img.id ?? `${img.url}-${idx}`}
+                      className={cn(
+                        "relative h-24 w-24 overflow-hidden rounded-lg border bg-muted",
+                        img.isPrimary && "border-sky-400 ring-1 ring-sky-400",
+                      )}
+                    >
+                      <img
+                        src={getImageUrl(img.url, imageBaseUrl) || currentImageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                      {img.isPrimary && (
+                        <span className="absolute bottom-1 right-1 rounded bg-sky-500 px-1 text-[9px] font-bold text-white">
+                          رئيسية
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {existingImages.length === 0 && !previewUrls.length && (
+                    <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-muted">
+                      <Image className="size-10 text-muted-foreground" />
+                    </div>
                   )}
+                  {previewUrls.map((url, idx) => (
+                    <div
+                      key={url}
+                      className="relative h-24 w-24 overflow-hidden rounded-lg border border-dashed border-sky-300"
+                    >
+                      <img
+                        src={url}
+                        alt="Preview"
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePendingAt(idx)}
+                        className="absolute -left-1 -top-1 rounded-full bg-red-500 p-0.5 text-white"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                      className="hidden"
-                      id="image-upload"
-                    />
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={slotsLeft <= 0}
+                    className="gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    إضافة صور ({slotsLeft} متبقية)
+                  </Button>
+                  {selectedImageFiles.length > 0 && (
                     <Button
                       type="button"
-                      variant="secondary"
-                      onClick={() => fileInputRef.current?.click()}
+                      variant="outline"
+                      onClick={handleClearPending}
                       className="gap-2"
                     >
-                      <Upload className="w-4 h-4" />
-                      {previewUrl || image ? "تغيير الصورة" : "اختر صورة"}
+                      <X className="w-4 h-4" />
+                      إزالة الجديدة
                     </Button>
-                    {(previewUrl || selectedImageFile) && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleRemoveImage}
-                        className="gap-2"
-                      >
-                        <X className="w-4 h-4" />
-                        إزالة
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    PNG, JPG حتى 2MB
-                  </p>
+                  )}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  حتى {MAX_PRODUCT_IMAGES} صور · PNG, JPG حتى 2MB — إدارة الحذف
+                  والتعيين الرئيسي من صفحة التفاصيل
+                </p>
               </div>
             </div>
 
@@ -254,19 +323,27 @@ const EditProduct = ({}: Props) => {
 
             {/* Description */}
             <div className="space-y-2">
-              <label
-                htmlFor="description"
-                className="text-sm font-medium text-right block"
-              >
-                الوصف
-              </label>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground" dir="ltr">
+                  {description.length}/{PRODUCT_DESCRIPTION_MAX}
+                </span>
+                <label
+                  htmlFor="description"
+                  className="text-sm font-medium text-right block"
+                >
+                  الوصف / النص الفرعي
+                </label>
+              </div>
               <textarea
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="أدخل وصف المنتج"
+                onChange={(e) =>
+                  setDescription(e.target.value.slice(0, PRODUCT_DESCRIPTION_MAX))
+                }
+                placeholder="أدخل وصف قصير للمنتج"
                 required
                 rows={4}
+                maxLength={PRODUCT_DESCRIPTION_MAX}
                 className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
               />
             </div>

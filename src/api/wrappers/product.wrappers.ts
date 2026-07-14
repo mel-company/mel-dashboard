@@ -472,12 +472,12 @@ export const useFindVariantByOptions = () => {
 };
 
 /**
- * Update product image mutation
+ * Update product image mutation (adds to gallery via POST /product/:id/images)
  */
 export const useUpdateProductImage = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<any, Error, { productId: string; image: File }>({
+  return useMutation<any, Error, { productId: string; image: File | File[] }>({
     mutationFn: ({ productId, image }) =>
       productAPI.updateProductImage(productId, image),
     onSuccess: (data, variables) => {
@@ -491,6 +491,7 @@ export const useUpdateProductImage = () => {
           ...data,
           id: productId,
           image: data?.image ?? old.image,
+          images: data?.images ?? old.images,
         };
       });
       queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
@@ -499,7 +500,78 @@ export const useUpdateProductImage = () => {
 };
 
 /**
- * Delete product image mutation
+ * Add gallery images mutation
+ */
+export const useAddProductImages = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { productId: string; images: File[] }>({
+    mutationFn: ({ productId, images }) =>
+      productAPI.addImages(productId, images),
+    onSuccess: (data, variables) => {
+      const productId = data?.id ?? variables.productId;
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.setQueryData(productKeys.detail(productId), (old: any) => {
+        if (!old) return { ...data, id: productId };
+        return { ...old, ...data, id: productId };
+      });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
+    },
+  });
+};
+
+/**
+ * Set primary product image
+ */
+export const useSetPrimaryProductImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    any,
+    Error,
+    { productId: string; imageId: string }
+  >({
+    mutationFn: ({ productId, imageId }) =>
+      productAPI.setPrimaryImage(productId, imageId),
+    onSuccess: (data, variables) => {
+      const productId = data?.id ?? variables.productId;
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.setQueryData(productKeys.detail(productId), (old: any) => {
+        if (!old) return { ...data, id: productId };
+        return { ...old, ...data, id: productId };
+      });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
+    },
+  });
+};
+
+/**
+ * Delete a single gallery image
+ */
+export const useDeleteProductGalleryImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    any,
+    Error,
+    { productId: string; imageId: string }
+  >({
+    mutationFn: ({ productId, imageId }) =>
+      productAPI.deleteGalleryImage(productId, imageId),
+    onSuccess: (data, variables) => {
+      const productId = data?.id ?? variables.productId;
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.setQueryData(productKeys.detail(productId), (old: any) => {
+        if (!old) return { ...data, id: productId };
+        return { ...old, ...data, id: productId };
+      });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
+    },
+  });
+};
+
+/**
+ * Delete all product gallery images — DELETE /product/:id/image
  */
 export const useDeleteProductImage = () => {
   const queryClient = useQueryClient();
@@ -507,12 +579,9 @@ export const useDeleteProductImage = () => {
   return useMutation<any, Error, string>({
     mutationFn: (productId: string) => productAPI.deleteProductImage(productId),
     onSuccess: (data) => {
-      // Invalidate and refetch products list
       queryClient.invalidateQueries({ queryKey: productKeys.all });
-      // Update the specific product cache if we have the ID
       if (data?.id) {
         queryClient.setQueryData(productKeys.detail(data.id), data);
-        // Also invalidate to ensure fresh data
         queryClient.invalidateQueries({
           queryKey: productKeys.detail(data.id),
         });

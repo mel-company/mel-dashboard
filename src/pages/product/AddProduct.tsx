@@ -1,50 +1,82 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Save,
-  ArrowLeft,
-  Check,
   Loader2,
   Plus,
-  Trash2,
   Upload,
-  Search,
+  ArrowRight,
+  X,
 } from "lucide-react";
 import { useFilterCategoriesCursor } from "@/api/wrappers/category.wrappers";
 import { useCreateProduct } from "@/api/wrappers/product.wrappers";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import { productAPI } from "@/api/endpoints/product.endpoints";
 import { variantAPI } from "@/api/endpoints/variant.endpionts";
+import { MAX_PRODUCT_IMAGES } from "@/api/types/product";
 import { resolveTempImageUrl } from "@/utils/resolve-temp-image-url";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  mergeProductImageFiles,
+  revokeObjectUrls,
+} from "@/utils/product-images";
 import { toast } from "sonner";
-
-type Props = {};
+import { cn } from "@/lib/utils";
+import { ProductSectionCard } from "@/components/product/tags";
+import { ProductCategoriesCard } from "@/components/product/ProductCategoriesCard";
+import { ProductPropertiesCard } from "@/components/product/ProductPropertiesCard";
+import { ProductOptionsCard } from "@/components/product/ProductOptionsCard";
+import { ProductVariantsCard } from "@/components/product/ProductVariantsCard";
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
-
   useEffect(() => {
     const id = setTimeout(() => setDebouncedValue(value), delayMs);
     return () => clearTimeout(id);
   }, [value, delayMs]);
-
   return debouncedValue;
 }
 
 const CURSOR_LIMIT = 20;
+const PRODUCT_DESCRIPTION_MAX = 300;
 
-const AddProduct = ({}: Props) => {
+const fieldClass =
+  "w-full rounded-2xl border-0 bg-slate-50 px-3 py-2.5 text-right text-sm text-slate-800 outline-none ring-sky-300 placeholder:text-muted-foreground focus:ring-2 dark:bg-slate-900 dark:text-slate-100";
+
+function FieldLabel({
+  htmlFor,
+  children,
+  hint,
+}: {
+  htmlFor?: string;
+  children: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <div className="mb-1.5 flex items-center justify-between gap-2">
+      {hint ? (
+        <span className="text-[11px] text-muted-foreground" dir="ltr">
+          {hint}
+        </span>
+      ) : (
+        <span />
+      )}
+      <label
+        htmlFor={htmlFor}
+        className="block text-xs font-medium text-muted-foreground"
+      >
+        {children}
+      </label>
+    </div>
+  );
+}
+
+const AddProduct = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [costToProduct, setCostToProduct] = useState("");
   const [categorySearchQuery, setCategorySearchQuery] = useState("");
   const loadMoreCategoriesRef = useRef<HTMLDivElement>(null);
-
   const debouncedCategoryQuery = useDebouncedValue(
     categorySearchQuery.trim(),
     350,
@@ -63,8 +95,9 @@ const AddProduct = ({}: Props) => {
 
   const categories = filterCategoriesData?.pages.flatMap((p) => p.data) ?? [];
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [activePreviewIndex, setActivePreviewIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rate, setRate] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -88,35 +121,56 @@ const AddProduct = ({}: Props) => {
     }>
   >([]);
   const navigate = useNavigate();
-
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
   const { data: storeDetails } = useFetchStoreDetails();
 
+  const selectedCategoryItems = useMemo(() => {
+    return selectedCategories.map((id) => {
+      const found = categories.find((c: any) => c.id === id);
+      return { id, name: found?.name ?? id };
+    });
+  }, [selectedCategories, categories]);
+
+  const activePreviewUrl = previewUrls[activePreviewIndex] ?? previewUrls[0] ?? null;
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast.error("الرجاء اختيار ملف صورة");
-        return;
-      }
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("حجم الملف يجب أن يكون أقل من 2MB");
-        return;
-      }
-      setImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    const result = mergeProductImageFiles(imageFiles, e.target.files);
+    if (result.error) toast.error(result.error);
+    if (result.files === imageFiles) {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
     }
+
+    revokeObjectUrls(previewUrls);
+    const urls = result.files.map((f) => URL.createObjectURL(f));
+    setImageFiles(result.files);
+    setPreviewUrls(urls);
+    setActivePreviewIndex(0);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleRemoveImage = () => {
-    setImageFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  const handleRemoveImageAt = (index: number) => {
+    const nextFiles = imageFiles.filter((_, i) => i !== index);
+    const removed = previewUrls[index];
+    if (removed) URL.revokeObjectURL(removed);
+    const nextUrls = previewUrls.filter((_, i) => i !== index);
+    setImageFiles(nextFiles);
+    setPreviewUrls(nextUrls);
+    setActivePreviewIndex((prev) => {
+      if (nextUrls.length === 0) return 0;
+      if (prev >= nextUrls.length) return nextUrls.length - 1;
+      if (prev > index) return prev - 1;
+      return prev;
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleClearImages = () => {
+    revokeObjectUrls(previewUrls);
+    setImageFiles([]);
+    setPreviewUrls([]);
+    setActivePreviewIndex(0);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const toggleCategory = (categoryId: string) => {
@@ -149,16 +203,16 @@ const AddProduct = ({}: Props) => {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [handleLoadMoreCategories, hasNextCategoriesPage, isFetchingNextCategoriesPage]);
+  }, [
+    handleLoadMoreCategories,
+    hasNextCategoriesPage,
+    isFetchingNextCategoriesPage,
+  ]);
 
-  const addProperty = () => {
+  const addProperty = () =>
     setProperties((prev) => [...prev, { name: "", value: "" }]);
-  };
-
-  const removeProperty = (index: number) => {
+  const removeProperty = (index: number) =>
     setProperties((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const updateProperty = (
     index: number,
     field: "name" | "value",
@@ -169,34 +223,36 @@ const AddProduct = ({}: Props) => {
     );
   };
 
-  // Options management functions
-  const addOption = () => {
+  const addOption = () =>
     setOptions((prev) => [
       ...prev,
       { name: "", values: [{ value: "", label: "" }] },
     ]);
-  };
-
-  const removeOption = (index: number) => {
+  const removeOption = (index: number) =>
     setOptions((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const updateOptionName = (index: number, name: string) => {
     setOptions((prev) =>
       prev.map((opt, i) => (i === index ? { ...opt, name } : opt)),
     );
   };
-
-  const addOptionValue = (optionIndex: number) => {
+  const addOptionValue = (optionIndex: number, text?: string) => {
+    const trimmed = text?.trim();
     setOptions((prev) =>
       prev.map((opt, i) =>
         i === optionIndex
-          ? { ...opt, values: [...opt.values, { value: "", label: "" }] }
+          ? {
+              ...opt,
+              values: [
+                ...opt.values,
+                trimmed
+                  ? { value: trimmed, label: trimmed }
+                  : { value: "", label: "" },
+              ],
+            }
           : opt,
       ),
     );
   };
-
   const removeOptionValue = (optionIndex: number, valueIndex: number) => {
     setOptions((prev) =>
       prev.map((opt, i) =>
@@ -209,7 +265,6 @@ const AddProduct = ({}: Props) => {
       ),
     );
   };
-
   const updateOptionValue = (
     optionIndex: number,
     valueIndex: number,
@@ -230,8 +285,7 @@ const AddProduct = ({}: Props) => {
     );
   };
 
-  // Variants management functions
-  const addVariant = () => {
+  const addVariant = () =>
     setVariants((prev) => [
       ...prev,
       {
@@ -243,12 +297,8 @@ const AddProduct = ({}: Props) => {
         image: "",
       },
     ]);
-  };
-
-  const removeVariant = (index: number) => {
+  const removeVariant = (index: number) =>
     setVariants((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const updateVariant = (
     index: number,
     field: "sku" | "qr_code" | "price" | "stock" | "image",
@@ -260,7 +310,6 @@ const AddProduct = ({}: Props) => {
       ),
     );
   };
-
   const toggleVariantOptionValue = (
     variantIndex: number,
     optionName: string,
@@ -269,71 +318,56 @@ const AddProduct = ({}: Props) => {
     setVariants((prev) =>
       prev.map((variant, i) => {
         if (i !== variantIndex) return variant;
-
         const existingIndex = variant.selectedOptionValues.findIndex(
           (ov) => ov.optionName === optionName && ov.value === value,
         );
-
         if (existingIndex >= 0) {
-          // Remove if already selected
           return {
             ...variant,
             selectedOptionValues: variant.selectedOptionValues.filter(
               (_, idx) => idx !== existingIndex,
             ),
           };
-        } else {
-          // Remove any existing value for this option and add new one
-          const filtered = variant.selectedOptionValues.filter(
-            (ov) => ov.optionName !== optionName,
-          );
-          return {
-            ...variant,
-            selectedOptionValues: [...filtered, { optionName, value }],
-          };
         }
+        const filtered = variant.selectedOptionValues.filter(
+          (ov) => ov.optionName !== optionName,
+        );
+        return {
+          ...variant,
+          selectedOptionValues: [...filtered, { optionName, value }],
+        };
       }),
     );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate required fields
     if (!title.trim()) {
       toast.error("الرجاء إدخال عنوان المنتج");
       return;
     }
-
     if (!description.trim()) {
       toast.error("الرجاء إدخال وصف المنتج");
       return;
     }
-
+    if (description.trim().length > PRODUCT_DESCRIPTION_MAX) {
+      toast.error(`وصف المنتج يجب ألا يتجاوز ${PRODUCT_DESCRIPTION_MAX} حرف`);
+      return;
+    }
     if (!price || parseFloat(price) <= 0) {
       toast.error("الرجاء إدخال سعر صحيح للمنتج");
       return;
     }
-
-    if (!imageFile) {
-      toast.error("الرجاء اختيار صورة للمنتج");
+    if (imageFiles.length === 0) {
+      toast.error("الرجاء اختيار صورة واحدة للمنتج على الأقل");
       return;
     }
-
+    // Fallback placeholder for older JSON-create path (multipart usually skips this)
     const tempImageUrl = resolveTempImageUrl(storeDetails);
-    if (!tempImageUrl) {
-      toast.error(
-        "تعذر تجهيز صورة المنتج. ارفع شعار المتجر من الإعدادات ثم حاول مرة أخرى.",
-      );
-      return;
-    }
 
-    // Filter out empty properties
     const validProperties = properties.filter(
       (prop) => prop.name.trim() && prop.value.trim(),
     );
-
-    // Filter and validate options
     const validOptions = options
       .filter((opt) => opt.name.trim() && opt.values.length > 0)
       .map((opt) => ({
@@ -354,8 +388,9 @@ const AddProduct = ({}: Props) => {
     formData.append("enabled", "true");
     if (costToProduct) formData.append("cost_to_produce", costToProduct);
     if (rate) formData.append("rate", rate);
-    if (imageFile) formData.append("image", imageFile);
-    formData.append("tempImageUrl", tempImageUrl);
+    imageFiles.forEach((file) => formData.append("images", file));
+    if (imageFiles[0]) formData.append("image", imageFiles[0]);
+    if (tempImageUrl) formData.append("tempImageUrl", tempImageUrl);
     if (selectedCategories.length > 0) {
       formData.append("categoryIds", JSON.stringify(selectedCategories));
     }
@@ -376,7 +411,6 @@ const AddProduct = ({}: Props) => {
 
     createProduct(formData, {
       onSuccess: async (createdProduct: any) => {
-        // If there are variants to create, create them after product is created
         const validVariants = variants.filter(
           (v) =>
             v.sku.trim() &&
@@ -385,18 +419,13 @@ const AddProduct = ({}: Props) => {
         );
 
         if (validVariants.length > 0 && createdProduct?.id) {
-          // Fetch the created product to get option value IDs
           try {
             const productWithOptions = await productAPI.fetchOne(
               createdProduct.id,
             );
-
-            // Create variants one by one
             let successCount = 0;
             for (const variant of validVariants) {
-              // Match option values by option name and value
               const optionValueIds: string[] = [];
-
               variant.selectedOptionValues.forEach((selected) => {
                 const option = productWithOptions.options?.find(
                   (opt: any) => opt.name === selected.optionName,
@@ -405,12 +434,9 @@ const AddProduct = ({}: Props) => {
                   const optionValue = option.values?.find(
                     (val: any) => val.value === selected.value,
                   );
-                  if (optionValue) {
-                    optionValueIds.push(optionValue.id);
-                  }
+                  if (optionValue) optionValueIds.push(optionValue.id);
                 }
               });
-
               try {
                 await variantAPI.create({
                   productId: createdProduct.id,
@@ -427,7 +453,6 @@ const AddProduct = ({}: Props) => {
                 console.error("Error creating variant:", error);
               }
             }
-
             if (successCount === validVariants.length) {
               toast.success("تم إضافة المنتج والمتغيرات بنجاح");
             } else {
@@ -437,14 +462,13 @@ const AddProduct = ({}: Props) => {
                 } من المتغيرات`,
               );
             }
-          } catch (error: any) {
+          } catch (error) {
             toast.error("تم إضافة المنتج ولكن فشل في إضافة المتغيرات");
             console.error("Error creating variants:", error);
           }
         } else {
           toast.success("تم إضافة المنتج بنجاح");
         }
-
         navigate("/products", { replace: true });
       },
       onError: (error: any) => {
@@ -457,169 +481,116 @@ const AddProduct = ({}: Props) => {
   };
 
   return (
-    <div className="mx-auto space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-secondary p-4 rounded-lg">
-          <p className="text-lg font-bold">معلومات المنتج الأساسية</p>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3 text-right">
+          <button
+            type="button"
+            onClick={() => navigate("/products")}
+            className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm dark:bg-slate-900 dark:text-slate-200"
+            aria-label="رجوع"
+          >
+            <ArrowRight className="size-4" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-blue-950 dark:text-blue-100">
+              اضافة منتج
+            </h1>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              <Link to="/products" className="hover:underline">
+                المنتجات
+              </Link>
+              <span className="mx-1">›</span>
+              <span>اضافة منتج جديد</span>
+            </p>
+          </div>
         </div>
-        <Card className="gap-2">
-          <CardContent className="spacey-4">
-            {/* Image File Upload */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-right block">
-                صورة المنتج *
-              </label>
-              <div className="flex gap-4 items-start">
-                <div className="w-24 h-24 flex items-center justify-center bg-muted rounded-lg overflow-hidden shrink-0">
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      لا توجد صورة
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 space-y-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                    id="product-image"
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="gap-2"
-                    >
-                      <Upload className="size-4" />
-                      {imageFile ? "تغيير الصورة" : "اختر صورة"}
-                    </Button>
-                    {imageFile && (
-                      <Button
-                        type="button"
-                        variant="default"
-                        size="sm"
-                        onClick={handleRemoveImage}
-                      >
-                        إزالة
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    PNG, JPG حتى 2MB
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            {/* Title */}
-            <div className="space-y-2">
-              <label
-                htmlFor="title"
-                className="text-sm font-medium text-right block"
-              >
-                العنوان
-              </label>
+        <Button
+          type="submit"
+          disabled={isCreating}
+          className="h-11 gap-2 rounded-full bg-[#00b7ff] px-5 text-white hover:bg-[#00a3e6]"
+        >
+          {isCreating ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <span className="flex size-7 items-center justify-center rounded-full bg-white/25">
+              <Plus className="size-4" strokeWidth={2.5} />
+            </span>
+          )}
+          {isCreating ? "جاري الإضافة..." : "اضافة منتج جديد"}
+        </Button>
+      </div>
+
+
+      {/* Info + Images */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ProductSectionCard title="معلومات المنتج">
+          <div className="space-y-3">
+            <div>
+              <FieldLabel htmlFor="title">اسم المنتج</FieldLabel>
               <input
                 id="title"
-                type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="أدخل عنوان المنتج"
+                placeholder="أدخل اسم المنتج"
                 required
-                className="w-full text-right rounded-md border border-input bgbackground py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
+                className={fieldClass}
               />
             </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <label
+            <div>
+              <FieldLabel
                 htmlFor="description"
-                className="text-sm font-medium text-right block"
+                hint={`${description.length}/${PRODUCT_DESCRIPTION_MAX}`}
               >
-                الوصف
-              </label>
+                وصف المنتج
+              </FieldLabel>
               <textarea
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="أدخل وصف المنتج"
+                onChange={(e) =>
+                  setDescription(
+                    e.target.value.slice(0, PRODUCT_DESCRIPTION_MAX),
+                  )
+                }
+                placeholder="أدخل وصف قصير للمنتج"
                 required
                 rows={4}
-                className="w-full text-right rounded-md border border-input bgbackground py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
+                maxLength={PRODUCT_DESCRIPTION_MAX}
+                className={cn(fieldClass, "resize-none")}
               />
             </div>
-
-            {/* Price and Rate Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Price */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="price"
-                  className="text-sm font-medium text-right block"
-                >
-                  السعر
-                </label>
-                <div className="relative">
-                  <input
-                    id="price"
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="0.00"
-                    required
-                    min="0"
-                    step="0.01"
-                    className="w-full text-right rounded-md border border-input bgbackground py-2.5 pl-12 pr-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
-                  />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    IQD
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <FieldLabel htmlFor="price">السعر</FieldLabel>
+                <input
+                  id="price"
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="0"
+                  required
+                  min="0"
+                  step="1"
+                  className={fieldClass}
+                />
               </div>
-
-              {/* Cost to Product */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="costToProduct"
-                  className="text-sm font-medium text-right block"
-                >
-                  تكلفة الإنتاج (اختياري)
-                </label>
-                <div className="relative">
-                  <input
-                    id="costToProduct"
-                    type="number"
-                    value={costToProduct}
-                    onChange={(e) => setCostToProduct(e.target.value)}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    className="w-full text-right rounded-md border border-input bgbackground py-2.5 pl-12 pr-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
-                  />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    IQD
-                  </span>
-                </div>
+              <div>
+                <FieldLabel htmlFor="costToProduct">تكلفة المنتج</FieldLabel>
+                <input
+                  id="costToProduct"
+                  type="number"
+                  value={costToProduct}
+                  onChange={(e) => setCostToProduct(e.target.value)}
+                  placeholder="0"
+                  min="0"
+                  step="1"
+                  className={fieldClass}
+                />
               </div>
-
-              {/* Rate */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="rate"
-                  className="text-sm font-medium text-right block"
-                >
-                  التقييم (من 5) (اختياري)
-                </label>
+              <div>
+                <FieldLabel htmlFor="rate">تقييم المنتج</FieldLabel>
                 <input
                   id="rate"
                   type="number"
@@ -629,750 +600,157 @@ const AddProduct = ({}: Props) => {
                   min="0"
                   max="5"
                   step="0.1"
-                  className="w-full text-right rounded-md border border-input bgbackground py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50 "
+                  className={fieldClass}
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </ProductSectionCard>
 
-        <div className="bg-secondary p-4 rounded-lg">
-          <p className="text-lg font-bold">الخصائص (اختياري)</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            قم بإضافة خصائص للمنتج (مثل: المادة، العلامة التجارية، الجنس، إلخ)
-          </p>
-        </div>
-        <Card>
-          <CardContent className="space-y-4">
-            {properties.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground mb-4">
-                  لا توجد خصائص مضافة بعد
-                </p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={addProperty}
-                  className="gap-2"
-                >
-                  <Plus className="size-4" />
-                  إضافة خاصية
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {properties.map((property, index) => (
-                  <div
-                    key={index}
-                    className="flex gap-3 items-start p-4 border rounded-lg bg-card"
-                  >
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <label
-                          htmlFor={`property-name-${index}`}
-                          className="text-sm font-medium text-right block"
-                        >
-                          اسم الخاصية
-                        </label>
-                        <input
-                          id={`property-name-${index}`}
-                          type="text"
-                          value={property.name}
-                          onChange={(e) =>
-                            updateProperty(index, "name", e.target.value)
-                          }
-                          placeholder="مثال: المادة، العلامة التجارية"
-                          className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label
-                          htmlFor={`property-value-${index}`}
-                          className="text-sm font-medium text-right block"
-                        >
-                          قيمة الخاصية
-                        </label>
-                        <input
-                          id={`property-value-${index}`}
-                          type="text"
-                          value={property.value}
-                          onChange={(e) =>
-                            updateProperty(index, "value", e.target.value)
-                          }
-                          placeholder="مثال: قطن، نايك"
-                          className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeProperty(index)}
-                      className="shrink-0 mt-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      title="حذف الخاصية"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={addProperty}
-                  className="w-full gap-2"
-                >
-                  <Plus className="size-4" />
-                  إضافة خاصية أخرى
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Options Section */}
-        <div className="bg-secondary p-4 rounded-lg">
-          <p className="text-lg font-bold">خيارات المنتج (اختياري)</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            قم بإضافة خيارات للمنتج (مثل: اللون، الحجم، المادة، إلخ)
-          </p>
-        </div>
-        <Card>
-          <CardContent className="space-y-4">
-            {options.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground mb-4">
-                  لا توجد خيارات مضافة بعد
-                </p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={addOption}
-                  className="gap-2"
-                >
-                  <Plus className="size-4" />
-                  إضافة خيار
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {options.map((option, optionIndex) => (
-                  <div
-                    key={optionIndex}
-                    className="p-4 border rounded-lg bg-card space-y-4"
-                  >
-                    {/* Option Header */}
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1 space-y-2">
-                        <label
-                          htmlFor={`option-name-${optionIndex}`}
-                          className="text-sm font-medium text-right block"
-                        >
-                          اسم الخيار
-                        </label>
-                        <input
-                          id={`option-name-${optionIndex}`}
-                          type="text"
-                          value={option.name}
-                          onChange={(e) =>
-                            updateOptionName(optionIndex, e.target.value)
-                          }
-                          placeholder="مثال: اللون، الحجم"
-                          className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeOption(optionIndex)}
-                        className="shrink-0 mt-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        title="حذف الخيار"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-
-                    {/* Option Values */}
-                    <div className="space-y-3 pr-4 border-r-2 border-muted">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-muted-foreground">
-                          قيم الخيار
-                        </p>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => addOptionValue(optionIndex)}
-                          className="gap-2"
-                        >
-                          <Plus className="size-3" />
-                          إضافة قيمة
-                        </Button>
-                      </div>
-
-                      {option.values.length === 0 ? (
-                        <div className="text-center py-4 bg-muted/50 rounded-md">
-                          <p className="text-xs text-muted-foreground mb-2">
-                            لا توجد قيم مضافة لهذا الخيار
-                          </p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addOptionValue(optionIndex)}
-                            className="gap-2"
-                          >
-                            <Plus className="size-3" />
-                            إضافة قيمة
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {option.values.map((value, valueIndex) => (
-                            <div
-                              key={valueIndex}
-                              className="flex gap-2 items-start p-3 bg-muted/30 rounded-md"
-                            >
-                              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <div className="space-y-1">
-                                  <label
-                                    htmlFor={`option-${optionIndex}-label-${valueIndex}`}
-                                    className="text-xs font-medium text-right block text-muted-foreground"
-                                  >
-                                    التسمية (اختياري)
-                                  </label>
-                                  <input
-                                    id={`option-${optionIndex}-label-${valueIndex}`}
-                                    type="text"
-                                    value={value.label}
-                                    onChange={(e) =>
-                                      updateOptionValue(
-                                        optionIndex,
-                                        valueIndex,
-                                        "label",
-                                        e.target.value,
-                                      )
-                                    }
-                                    placeholder="سيتم استخدام القيمة إذا تركت فارغاً"
-                                    className="w-full text-right rounded-md border border-input bg-background py-2 px-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                                  />
-                                </div>
-
-                                <div className="space-y-1">
-                                  <label
-                                    htmlFor={`option-${optionIndex}-value-${valueIndex}`}
-                                    className="text-xs font-medium text-right block text-muted-foreground"
-                                  >
-                                    القيمة
-                                  </label>
-                                  <input
-                                    id={`option-${optionIndex}-value-${valueIndex}`}
-                                    type="text"
-                                    value={value.value}
-                                    onChange={(e) =>
-                                      updateOptionValue(
-                                        optionIndex,
-                                        valueIndex,
-                                        "value",
-                                        e.target.value,
-                                      )
-                                    }
-                                    placeholder="مثال: أحمر، كبير"
-                                    className="w-full text-right rounded-md border border-input bg-background py-2 px-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                                  />
-                                </div>
-                              </div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  removeOptionValue(optionIndex, valueIndex)
-                                }
-                                className="shrink-0 mt-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                title="حذف القيمة"
-                                disabled={option.values.length === 1}
-                              >
-                                <Trash2 className="size-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={addOption}
-                  className="w-full gap-2"
-                >
-                  <Plus className="size-4" />
-                  إضافة خيار آخر
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Variants Section */}
-        <div className="bg-secondary p-4 rounded-lg">
-          <p className="text-lg font-bold">متغيرات المنتج (اختياري)</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            قم بإضافة متغيرات للمنتج (يتطلب إضافة خيارات أولاً)
-          </p>
-        </div>
-        <Card>
-          <CardContent className="space-y-4">
-            {options.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground mb-2">
-                  لا يمكن إضافة متغيرات بدون خيارات
-                </p>
-                <p className="text-xs text-muted-foreground mb-4">
-                  يرجى إضافة خيارات للمنتج أولاً (مثل: اللون، الحجم)
-                </p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={addOption}
-                  className="gap-2"
-                >
-                  <Plus className="size-4" />
-                  إضافة خيار
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {variants.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground mb-4">
-                      لا توجد متغيرات مضافة بعد
-                    </p>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={addVariant}
-                      className="gap-2"
-                    >
-                      <Plus className="size-4" />
-                      إضافة متغير
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    {variants.map((variant, variantIndex) => {
-                      // Get valid options (with at least one value)
-                      const validOptions = options.filter(
-                        (opt) =>
-                          opt.name.trim() &&
-                          opt.values.some((v) => v.value.trim()),
-                      );
-
-                      return (
-                        <div
-                          key={variantIndex}
-                          className="p-4 border rounded-lg bg-card space-y-4"
-                        >
-                          {/* Variant Header */}
-                          <div className="flex items-start justify-between gap-3">
-                            <h3 className="text-sm font-semibold">
-                              متغير #{variantIndex + 1}
-                            </h3>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeVariant(variantIndex)}
-                              className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              title="حذف المتغير"
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </div>
-
-                          {/* Option Values Selection */}
-                          <div className="space-y-3">
-                            <p className="text-sm font-medium text-muted-foreground">
-                              اختر قيم الخيارات:
-                            </p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {validOptions.map((option) => {
-                                const selectedValue =
-                                  variant.selectedOptionValues.find(
-                                    (ov) => ov.optionName === option.name,
-                                  )?.value;
-
-                                return (
-                                  <div key={option.name} className="space-y-2">
-                                    <label className="text-xs font-medium text-right block">
-                                      {option.name}
-                                    </label>
-                                    <div className="flex flex-wrap gap-2">
-                                      {option.values
-                                        .filter((v) => v.value.trim())
-                                        .map((val) => {
-                                          const isSelected =
-                                            selectedValue === val.value;
-                                          return (
-                                            <button
-                                              key={val.value}
-                                              type="button"
-                                              onClick={() =>
-                                                toggleVariantOptionValue(
-                                                  variantIndex,
-                                                  option.name,
-                                                  val.value,
-                                                )
-                                              }
-                                              className={`px-3 py-1.5 text-xs rounded-md border transition-all ${
-                                                isSelected
-                                                  ? "bg-primary text-primary-foreground border-primary"
-                                                  : "bg-background border-input hover:border-ring"
-                                              }`}
-                                            >
-                                              {val.label || val.value}
-                                            </button>
-                                          );
-                                        })}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Variant Details */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                            {/* SKU */}
-                            <div className="space-y-2">
-                              <label
-                                htmlFor={`variant-sku-${variantIndex}`}
-                                className="text-sm font-medium text-right block"
-                              >
-                                رمز SKU *
-                              </label>
-                              <input
-                                id={`variant-sku-${variantIndex}`}
-                                type="text"
-                                value={variant.sku}
-                                onChange={(e) =>
-                                  updateVariant(
-                                    variantIndex,
-                                    "sku",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="SKU-001"
-                                required
-                                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                              />
-                            </div>
-
-                            {/* QR Code */}
-                            <div className="space-y-2">
-                              <label
-                                htmlFor={`variant-qr-${variantIndex}`}
-                                className="text-sm font-medium text-right block"
-                              >
-                                رمز QR *
-                              </label>
-                              <input
-                                id={`variant-qr-${variantIndex}`}
-                                type="text"
-                                value={variant.qr_code}
-                                onChange={(e) =>
-                                  updateVariant(
-                                    variantIndex,
-                                    "qr_code",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="QR-001"
-                                required
-                                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                              />
-                            </div>
-
-                            {/* Price */}
-                            <div className="space-y-2">
-                              <label
-                                htmlFor={`variant-price-${variantIndex}`}
-                                className="text-sm font-medium text-right block"
-                              >
-                                السعر (اختياري)
-                              </label>
-                              <div className="relative">
-                                <input
-                                  id={`variant-price-${variantIndex}`}
-                                  type="number"
-                                  value={variant.price}
-                                  onChange={(e) =>
-                                    updateVariant(
-                                      variantIndex,
-                                      "price",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="0.00"
-                                  min="0"
-                                  step="0.01"
-                                  className="w-full text-right rounded-md border border-input bg-background py-2.5 pl-12 pr-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                                />
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                  IQD
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Stock */}
-                            <div className="space-y-2">
-                              <label
-                                htmlFor={`variant-stock-${variantIndex}`}
-                                className="text-sm font-medium text-right block"
-                              >
-                                المخزون
-                              </label>
-                              <input
-                                id={`variant-stock-${variantIndex}`}
-                                type="number"
-                                value={variant.stock}
-                                onChange={(e) =>
-                                  updateVariant(
-                                    variantIndex,
-                                    "stock",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="0"
-                                min="0"
-                                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                              />
-                            </div>
-
-                            {/* Image */}
-                            <div className="space-y-2 md:col-span-2">
-                              <label
-                                htmlFor={`variant-image-${variantIndex}`}
-                                className="text-sm font-medium text-right block"
-                              >
-                                رابط صورة المتغير (اختياري)
-                              </label>
-                              <input
-                                id={`variant-image-${variantIndex}`}
-                                type="url"
-                                value={variant.image || ""}
-                                onChange={(e) =>
-                                  updateVariant(
-                                    variantIndex,
-                                    "image",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="https://example.com/image.jpg"
-                                className="w-full text-right rounded-md border border-input bg-background py-2.5 px-4 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={addVariant}
-                      className="w-full gap-2"
-                    >
-                      <Plus className="size-4" />
-                      إضافة متغير آخر
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Categories Section */}
-        <div className="bg-secondary p-4 rounded-lg">
-          <p className="text-lg font-bold">الفئات (اختياري)</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            اختر فئة واحدة أو أكثر للمنتج
-          </p>
-        </div>
-        <Card>
-          <CardContent className="space-y-4">
-            <div className="relative max-w-md">
-              <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="ابحث عن فئة..."
-                value={categorySearchQuery}
-                onChange={(e) => setCategorySearchQuery(e.target.value)}
-                className="w-full text-right pr-10"
-                dir="rtl"
-              />
-            </div>
-            {isCategoriesLoading && categories.length === 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {Array.from({ length: 6 }).map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="relative p-4 bg-card rounded-lg border-2 border-border text-right"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-5 w-3/4" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-5/6" />
-                      </div>
-                      <Skeleton className="shrink-0 w-5 h-5 rounded border-2" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                {debouncedCategoryQuery
-                  ? "لا توجد نتائج للبحث"
-                  : "لا توجد فئات متاحة"}
-              </p>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {categories.map((category: any) => {
-                    const isSelected = selectedCategories.includes(category.id);
-                    return (
-                      <div
-                        key={category.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => toggleCategory(category.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            toggleCategory(category.id);
-                          }
-                        }}
-                        className={`relative p-4 bg-card rounded-lg border-2 border-border text-right transition-all hover:shadow-md cursor-pointer ${
-                          isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-input bg-card hover:border-ring"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-sm mb-1">
-                              {category.name}
-                            </h3>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {category.description}
-                            </p>
-                          </div>
-                          <div
-                            className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                              isSelected
-                                ? "bg-primary border-primary"
-                                : "border-input"
-                            }`}
-                          >
-                            {isSelected && (
-                              <Check className="size-3 text-primary-foreground" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div
-                  ref={loadMoreCategoriesRef}
-                  className="flex justify-center py-4"
-                >
-                  {hasNextCategoriesPage && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="gap-2"
-                      onClick={() => fetchNextCategoriesPage()}
-                      disabled={isFetchingNextCategoriesPage}
-                    >
-                      {isFetchingNextCategoriesPage ? (
-                        <>
-                          <Loader2 className="size-4 animate-spin" />
-                          جاري التحميل...
-                        </>
-                      ) : (
-                        "تحميل المزيد"
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </>
-            )}
-            {selectedCategories.length > 0 && (
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-sm font-medium mb-2 text-right">
-                  الفئات المحددة ({selectedCategories.length}):
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {/* {selectedCategories.map((categoryId) => {
-                    const category = dmy_categories.find(
-                      (c) => c.id === categoryId
-                    );
-                    return category ? (
-                      <Badge
-                        key={categoryId}
-                        variant="default"
-                        className="gap-1 px-4"
-                      >
-                        {category.name}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleCategory(categoryId);
-                          }}
-                          className="hover:bg-primary/20 rounded-full p-0.5 -mr-1"
-                        >
-                          <X className="size-3" />
-                          <span className="sr-only">إزالة</span>
-                        </button>
-                      </Badge>
-                    ) : null;
-                  })} */}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Submit Button */}
-        <div className="flex items-center justify-end gap-3">
-          <Button
-            type="submit"
-            size="lg"
-            className="gap-2"
-            disabled={isCreating}
+        <ProductSectionCard title="رفع الصور">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageSelect}
+            className="hidden"
+            id="product-image"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="relative flex h-64 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900"
           >
-            {isCreating ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                جاري الإضافة...
-              </>
+            {activePreviewUrl ? (
+              <img
+                src={activePreviewUrl}
+                alt="Preview"
+                className="h-full w-full object-contain"
+              />
             ) : (
-              <>
-                <Save className="size-4" />
-                إضافة المنتج
-                <ArrowLeft className="size-4" />
-              </>
+              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <Upload className="size-8" />
+                <span className="text-xs">اضغط لرفع صور المنتج</span>
+                <span className="text-[11px] text-slate-400">
+                  حتى {MAX_PRODUCT_IMAGES} صور · PNG, JPG · 2MB لكل صورة
+                </span>
+              </div>
             )}
-          </Button>
-        </div>
-      </form>
-    </div>
+          </button>
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={imageFiles.length >= MAX_PRODUCT_IMAGES}
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-sky-400 hover:text-sky-500 disabled:opacity-40 dark:border-slate-700"
+            >
+              <Plus className="size-5" />
+            </button>
+            {previewUrls.map((url, index) => (
+              <div
+                key={`${url}-${index}`}
+                className={cn(
+                  "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2",
+                  index === activePreviewIndex
+                    ? "border-sky-400"
+                    : "border-transparent",
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActivePreviewIndex(index)}
+                  className="h-full w-full"
+                >
+                  <img
+                    src={url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+                {index === 0 && (
+                  <span className="absolute bottom-0.5 right-0.5 rounded bg-sky-500 px-1 text-[9px] font-bold text-white">
+                    رئيسية
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImageAt(index)}
+                  className="absolute -left-1 -top-1 rounded-full bg-red-500 p-0.5 text-white"
+                  aria-label="حذف الصورة"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ))}
+            {previewUrls.length === 0 && (
+              <div className="flex h-16 flex-1 items-center justify-center rounded-xl bg-slate-50 text-xs text-muted-foreground dark:bg-slate-900">
+                PNG, JPG حتى 2MB — أول صورة هي الغلاف
+              </div>
+            )}
+            {previewUrls.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearImages}
+                className="shrink-0 text-xs text-rose-500 underline underline-offset-2"
+              >
+                مسح الكل
+              </button>
+            )}
+          </div>
+        </ProductSectionCard>
+      </div>
+
+      {/* Categories + Options */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ProductCategoriesCard
+          productTitle={title}
+          selected={selectedCategoryItems}
+          categories={categories}
+          searchQuery={categorySearchQuery}
+          onSearchChange={setCategorySearchQuery}
+          onToggle={toggleCategory}
+          isLoading={isCategoriesLoading}
+          hasMore={hasNextCategoriesPage}
+          isLoadingMore={isFetchingNextCategoriesPage}
+          onLoadMore={() => fetchNextCategoriesPage()}
+          loadMoreRef={loadMoreCategoriesRef}
+        />
+
+        <ProductOptionsCard
+          options={options}
+          onAddOption={addOption}
+          onRemoveOption={removeOption}
+          onChangeOptionName={updateOptionName}
+          onAddValue={addOptionValue}
+          onRemoveValue={removeOptionValue}
+          onChangeValue={updateOptionValue}
+          onAddVariantClick={addVariant}
+          variantAddedFor={
+            variants.length > 0 ? options.map((_, i) => i) : []
+          }
+        />
+      </div>
+
+      {/* Properties + Variants */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ProductPropertiesCard
+          properties={properties}
+          onAdd={addProperty}
+          onRemove={removeProperty}
+          onChange={updateProperty}
+        />
+
+        <ProductVariantsCard
+          options={options}
+          variants={variants}
+          onAdd={addVariant}
+          onRemove={removeVariant}
+          onChange={updateVariant}
+          onToggleOptionValue={toggleVariantOptionValue}
+        />
+      </div>
+    </form>
   );
 };
 

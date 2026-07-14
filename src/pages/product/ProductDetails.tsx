@@ -1,15 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -19,18 +11,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Star,
   ShoppingCart,
-  Package,
-  Tag,
   Edit,
   Trash2,
   Loader2,
-  List,
-  DollarSign,
   Plus,
-  Folder,
-  X,
+  ArrowRight,
+  Pencil,
 } from "lucide-react";
 import {
   useFetchProduct,
@@ -48,13 +35,34 @@ import EditVariantDialog from "./EditVariantDialog";
 import RemoveCategoryFromProductDialog from "./RemoveCategoryFromProductDialog";
 import AddCategoryToProductDialog from "./AddCategoryToProductDialog";
 import ProductImageDialog from "./ProductImageDialog";
-import { getImageUrl } from "@/utils/image-url";
+import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import {
   useFetchVariants,
   useDeleteVariant,
 } from "@/api/wrappers/variant.wrappers";
 import { toast } from "sonner";
+import Rating from "@/components/table/rating";
+import { cn } from "@/lib/utils";
+import {
+  AddedLabel,
+  DashedTag,
+  ProductSectionCard,
+} from "@/components/product/tags";
+
+const formatPrice = (value?: number | null) =>
+  typeof value === "number" ? `${value.toLocaleString("ar-IQ")} د.ع` : "—";
+
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5 text-right">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="rounded-2xl bg-slate-50 px-3 py-2.5 text-sm text-slate-800 dark:bg-slate-900 dark:text-slate-100">
+        {value}
+      </div>
+    </div>
+  );
+}
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -77,6 +85,7 @@ const ProductDetails = () => {
   } | null>(null);
   const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch, isFetching } = useFetchProduct(
     id ?? "",
@@ -92,6 +101,28 @@ const ProductDetails = () => {
     useDeleteVariant();
 
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
+
+  const gallery = useMemo(() => {
+    const images = Array.isArray(data?.images) ? data.images : [];
+    if (images.length > 0) {
+      return [...images].sort(
+        (a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+      );
+    }
+    if (data?.image) {
+      return [{ id: "cover", url: data.image, isPrimary: true, sortOrder: 0 }];
+    }
+    return [];
+  }, [data?.images, data?.image]);
+
+  const activeImageUrl = useMemo(() => {
+    if (selectedImageId) {
+      const found = gallery.find((g: any) => g.id === selectedImageId);
+      if (found?.url) return found.url;
+    }
+    const primary = gallery.find((g: any) => g.isPrimary);
+    return primary?.url ?? gallery[0]?.url ?? data?.image ?? null;
+  }, [gallery, selectedImageId, data?.image]);
 
   const handleDelete = () => {
     if (!id) return;
@@ -132,485 +163,385 @@ const ProductDetails = () => {
     );
   }
 
+  const categories = data.categories ?? [];
+  const options = data.options ?? [];
+  const properties = data.properties ?? [];
+  const variants = Array.isArray(variantsData) ? variantsData : [];
+
   return (
     <div className="space-y-6">
-      <div className="grd grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Product Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Product Image and Basic Info */}
-          <Card>
-            <CardHeader>
-              <div className="flex gap-x-2 items-center justify-between">
-                <div>
-                  <CardTitle className="text-2xl text-right">
-                    {data.title}
-                  </CardTitle>
-                  <CardDescription className="text-right">
-                    {data.description}
-                  </CardDescription>
-                </div>
-                <div className="flex gap-x-2 items-center">
-                  <Button variant="secondary" size="sm" className="gap-2">
-                    <Package className="size-4" />
-                    المخزون
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => navigate(`/products/${id}/edit`)}
-                  >
-                    <Edit className="size-4" />
-                    تعديل
-                  </Button>
-                  <Button
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="gap-2"
-                    size="sm"
-                    variant="destructive"
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" />
-                        جاري الحذف...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="size-4" />
-                        حذف
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <button
-                type="button"
-                onClick={() => setIsImageDialogOpen(true)}
-                className="relative group h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10 transition-opacity hover:opacity-90 cursor-pointer"
-              >
-                {data.image ? (
-                  <img
-                    src={getImageUrl(data.image, imageBaseUrl)}
-                    alt={data.title}
-                    className="h-full w-full object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <ShoppingCart className="size-24 text-white bg-cyan/40 rounded-full p-6" />
-                )}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                  <span className="text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                    تعديل الصورة
-                  </span>
-                </div>
-              </button>
-
-              <Separator />
-
-              {/* Rating */}
-              <div className="flex items-center gap-2 text-right">
-                <div className="flex items-center gap-1">
-                  <Star className="size-5 fill-yellow-400 text-yellow-400" />
-                  <span className="text-lg font-semibold">{data.rate}</span>
-                </div>
-                <span className="text-muted-foreground">تقييم المنتج</span>
-              </div>
-
-              <Separator />
-
-              {/* Price */}
-              <div className="flex flex-col itemscenter justify-between">
-                <div className="flex items-center gap-2">
-                  <DollarSign />
-                  <p className="text-white ">السعر</p>
-                </div>
-                <div className="flex items-center justify-between gap-2 text-right">
-                  <p className="text-sm px4 py-2 text-muted-foreground">
-                    سعر البيع
-                  </p>
-                  {/* <DollarSign className="size-5 text-primary" /> */}
-                  <span className="text-2xl font-bold text-primary">
-                    {data?.price?.toLocaleString()} د.ع
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-2 text-right">
-                  <p className="text-sm px4 py-2 text-muted-foreground">
-                    تكلفة المنتج
-                  </p>
-                  {/* <DollarSign className="size-5 text-primary" /> */}
-                  <span className="text-2xl font-bold text-primary">
-                    {data?.cost_to_produce?.toLocaleString()} د.ع
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Categories */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-right flex items-center gap-2">
-                    <Folder className="size-5" />
-                    فئات المنتج
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    يجب ان يرتبط المنتج بفئة واحدة على الاقل
-                  </p>
-                </div>
-                <div>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => setIsAddCategoryDialogOpen(true)}
-                  >
-                    <Plus className="size-3" />
-                    إضافة فئة
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {data?.categories && data?.categories?.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {data?.categories?.map((category: any) => (
-                    <Link
-                      key={category.category.id}
-                      to={`/categories/${category.category.id}`}
-                      className="inline-block"
-                    >
-                      <Badge
-                        variant="default"
-                        className="group text-sm gap-x-2 flex cursor-pointer hover:bg-primary/95 transition-colors"
-                      >
-                        <p className="group-hover:underline">
-                          {category.category.name}
-                        </p>
-
-                        {data?.categories?.length > 1 && (
-                          <Button
-                            tabIndex={-1}
-                            variant="ghost"
-                            size="sm"
-                            className="gap-2 p-2 m-0 h-auto w-auto"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setRemovingCategory({
-                                id: category.category.id,
-                                name: category.category.name,
-                              });
-                            }}
-                          >
-                            <X className="size-3" />
-                          </Button>
-                        )}
-                      </Badge>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-sm">لا توجد فئات مرتبطة بهذا المنتج</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Properties */}
-          <Card>
-            <CardHeader className="flex items-center justify-between">
-              <CardTitle className="text-right flex items-center gap-2">
-                <Tag className="size-5" />
-                خصائص المنتج
-              </CardTitle>
-              <Button
-                variant="default"
-                size="sm"
-                className="gap-2"
-                onClick={() => setIsAddPropertyDialogOpen(true)}
-              >
-                <Plus className="size-3" />
-                إضافة خاصية
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data?.properties?.map((property: any) => (
-                  <div
-                    key={property.id || property.name}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card"
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <span className="text-sm font-medium text-muted-foreground text-right">
-                        {property.name}
-                      </span>
-                      <Badge variant="outline" className="text-sm">
-                        {property.value as string}
-                      </Badge>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => setEditingPropertyId(property.id)}
-                    >
-                      <Edit className="size-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Options */}
-          <Card>
-            <CardHeader className="flex items-center justify-between">
-              <CardTitle className="text-right flex items-center gap-2">
-                <List className="size-5" />
-                خيارات المنتج
-              </CardTitle>
-              <Button
-                variant="default"
-                size="sm"
-                className="gap-2"
-                onClick={() => setIsAddOptionDialogOpen(true)}
-              >
-                <Plus className="size-3" />
-                إضافة خيار
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {data.options && data.options.length > 0 ? (
-                <div className="space-y-4">
-                  {data.options.map((option: any) => (
-                    <div
-                      key={option.id}
-                      className="p-4 rounded-lg border bg-card"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-base font-semibold text-right">
-                          {option.name}
-                        </span>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="gap-2"
-                          onClick={() => setEditingOptionId(option.id)}
-                        >
-                          <Edit className="size-3" />
-                          تعديل
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {option.values.map((value: any) => (
-                          <Badge
-                            key={value.id}
-                            variant="secondary"
-                            className="text-sm"
-                          >
-                            {value.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-sm">لا توجد خيارات للمنتج</p>
-                  <p className="text-xs mt-1">
-                    اضغط على "إضافة خيار" لإضافة خيار جديد
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Variants */}
-          <Card>
-            <CardHeader className="flex items-center justify-between">
-              <CardTitle className="text-right flex items-center gap-2">
-                <Package className="size-5" />
-                متغيرات المنتج
-              </CardTitle>
-              <Button
-                variant="default"
-                size="sm"
-                className="gap-2"
-                onClick={() => setIsAddVariantDialogOpen(true)}
-              >
-                <Plus className="size-3" />
-                إضافة متغير
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {variantsData && variantsData.length > 0 ? (
-                <div className="space-y-3">
-                  {variantsData.map((variant: any) => (
-                    <div
-                      key={variant.id}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-card"
-                    >
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">
-                              SKU:
-                            </span>
-                            <Badge variant="outline" className="text-xs">
-                              {variant.sku}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">
-                              QR:
-                            </span>
-                            <Badge variant="outline" className="text-xs">
-                              {variant.qr_code}
-                            </Badge>
-                          </div>
-                          {variant.price !== null &&
-                            variant.price !== undefined && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground">
-                                  السعر:
-                                </span>
-                                <span className="text-sm font-medium">
-                                  {variant.price.toLocaleString()} د.ع
-                                </span>
-                              </div>
-                            )}
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">
-                              المخزون:
-                            </span>
-                            <span className="text-sm font-medium">
-                              {variant.stock}
-                            </span>
-                          </div>
-                        </div>
-                        {variant.optionValues &&
-                          variant.optionValues.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {variant.optionValues.map((optValue: any) => (
-                                <Badge
-                                  key={optValue.id}
-                                  variant="secondary"
-                                  className="text-xs"
-                                >
-                                  {optValue.option?.name}:{" "}
-                                  {optValue.label || optValue.value}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-2"
-                          onClick={() => setEditingVariantId(variant.id)}
-                        >
-                          <Edit className="size-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-2 text-destructive hover:text-destructive"
-                          onClick={() => setDeletingVariantId(variant.id)}
-                        >
-                          <Trash2 className="size-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-sm">لا توجد متغيرات للمنتج</p>
-                  <p className="text-xs mt-1">
-                    اضغط على "إضافة متغير" لإضافة متغير جديد
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3 text-right">
+          <button
+            type="button"
+            onClick={() => navigate("/products")}
+            className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm dark:bg-slate-900 dark:text-slate-200"
+            aria-label="رجوع"
+          >
+            <ArrowRight className="size-4" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-blue-950 dark:text-blue-100">
+              عرض المنتج
+            </h1>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              <Link to="/products" className="hover:underline">
+                المنتجات
+              </Link>
+              <span className="mx-1">›</span>
+              <span>{data.title}</span>
+            </p>
+          </div>
         </div>
 
-        {/* Sidebar Info */}
-        {/* <div className="space-y-6">
-           Quick Info Card
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">معلومات سريعة</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col items-start  justify-between">
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  رقم المنتج
-                </span>
-                <Badge variant="secondary" className="text-sm">
-                  #{data.id}
-                </Badge>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  متوفر في المخزون
-                </span>
-                <Package className="size-5 text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="default"
+            className="gap-2 rounded-full bg-[#00b7ff] px-5 hover:bg-[#00a3e6]"
+            onClick={() => navigate(`/products/${id}/edit`)}
+          >
+            <Pencil className="size-4" />
+            تعديل المنتج
+          </Button>
+          <Button
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="gap-2 rounded-full px-5"
+            variant="destructive"
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Trash2 className="size-4" />
+            )}
+            حذف المنتج
+          </Button>
+        </div>
+      </div>
 
-          Actions Card 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">الإجراءات</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button
-                onClick={() => navigate(`/products/${id}/edit`)}
-                className="w-full gap-2"
-                variant="default"
+      {/* Top: info + images */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ProductSectionCard title="معلومات المنتج">
+          <div className="space-y-3">
+            <InfoRow label="اسم المنتج" value={data.title} />
+            <InfoRow
+              label="وصف المنتج"
+              value={
+                <p className="max-h-28 overflow-y-auto whitespace-pre-wrap leading-6">
+                  {data.description?.trim() || "—"}
+                </p>
+              }
+            />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <InfoRow label="السعر" value={formatPrice(data.price)} />
+              <InfoRow
+                label="تكلفة المنتج"
+                value={formatPrice(data.cost_to_produce)}
+              />
+              <InfoRow
+                label="تقييم المنتج"
+                value={
+                  typeof data.rate === "number" ? (
+                    <div className="flex justify-end">
+                      <Rating count={data.rate} />
+                    </div>
+                  ) : (
+                    "—"
+                  )
+                }
+              />
+            </div>
+          </div>
+        </ProductSectionCard>
+
+        <ProductSectionCard
+          title="صور المنتج"
+          action={
+            <Button
+              size="sm"
+              variant="secondary"
+              className="rounded-full"
+              onClick={() => setIsImageDialogOpen(true)}
+            >
+              إدارة الصور
+            </Button>
+          }
+        >
+          <button
+            type="button"
+            onClick={() => setIsImageDialogOpen(true)}
+            className="relative flex h-64 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900"
+          >
+            <AssetImage
+              image={activeImageUrl}
+              baseUrl={imageBaseUrl}
+              alt={data.title}
+              className="h-full w-full object-contain"
+              fallback={
+                <ShoppingCart className="size-16 text-muted-foreground" />
+              }
+            />
+          </button>
+
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {gallery.length > 0 ? (
+              gallery.map((img: any) => {
+                const isActive =
+                  (selectedImageId ??
+                    gallery.find((g: any) => g.isPrimary)?.id ??
+                    gallery[0]?.id) === img.id;
+                return (
+                  <button
+                    key={img.id ?? img.url}
+                    type="button"
+                    onClick={() => setSelectedImageId(img.id)}
+                    className={cn(
+                      "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-slate-50 dark:bg-slate-900",
+                      isActive ? "border-sky-400" : "border-transparent",
+                    )}
+                  >
+                    <AssetImage
+                      image={img.url}
+                      baseUrl={imageBaseUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                    {img.isPrimary && (
+                      <span className="absolute bottom-0.5 right-0.5 rounded bg-sky-500 px-1 text-[9px] font-bold text-white">
+                        رئيسية
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            ) : (
+              <div className="flex h-16 w-full items-center justify-center rounded-xl bg-slate-50 text-xs text-muted-foreground dark:bg-slate-900">
+                لا توجد صور — اضغط لإضافة صور
+              </div>
+            )}
+          </div>
+        </ProductSectionCard>
+      </div>
+
+      {/* Middle: categories + options */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ProductSectionCard
+          title="الأصناف"
+          action={
+            <Button
+              size="sm"
+              className="gap-1 rounded-full"
+              onClick={() => setIsAddCategoryDialogOpen(true)}
+            >
+              <Plus className="size-3" />
+              إضافة
+            </Button>
+          }
+        >
+          <div className="mb-3 rounded-2xl bg-slate-100 px-4 py-3 text-right text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-200">
+            {data.title}
+          </div>
+          {categories.length > 0 ? (
+            <div className="flex flex-row items-center justify-start gap-2">
+              <AddedLabel className="text-left" />
+         
+              {categories.map((category: any) => {
+                const catId = category?.category?.id ?? category?.id;
+                const catName = category?.category?.name ?? category?.name;
+                if (!catId || !catName) return null;
+                return (
+                  <DashedTag
+                    key={catId}
+                    onRemove={
+                      categories.length > 1
+                        ? () =>
+                            setRemovingCategory({ id: catId, name: catName })
+                        : undefined
+                    }
+                  >
+                    <Link
+                      to={`/categories/${catId}`}
+                      className="hover:underline"
+                    >
+                      {catName}
+                    </Link>
+                  </DashedTag>
+                );
+              })}
+                  
+            </div>
+          ) : (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              لا توجد أصناف مرتبطة — يجب ربط المنتج بصنف واحد على الأقل
+            </p>
+          )}
+        </ProductSectionCard>
+
+        <ProductSectionCard
+          title="خيارات المنتج"
+          description="أضف خيارات المنتج (اللون، المقاس، أو المادة)"
+          action={
+            <Button
+              size="sm"
+              className="gap-1 rounded-full"
+              onClick={() => setIsAddOptionDialogOpen(true)}
+            >
+              <Plus className="size-3" />
+              إضافة خيار
+            </Button>
+          }
+        >
+          {options.length > 0 ? (
+            <div className="space-y-4 flex flex-col items-start justify-around">
+              {options.map((option: any) => (
+                <div
+                  key={option.id}
+                  className="flex flex-row-reverse items-center justify-end w-full"
+                >
+                  <button
+                    type="button"
+                    className="shrink-0 mr-20 text-xs font-semibold text-violet-700 underline underline-offset-2"
+                    onClick={() => setEditingOptionId(option.id)}
+                  >
+                    تعديل
+                  </button>
+                  <div className="flex flex-row flex-wrap items-center justify-end gap-2 text-right">
+                    <span className="text-sm font-semibold text-blue-950 dark:text-blue-100">
+                      {option.name}:
+                    </span>
+                    {(option.values ?? []).map((value: any) => (
+                      <DashedTag key={value.id}>{value.label}</DashedTag>
+                    ))}
+                  </div>
+                </div>
+
+                
+              ))}
+
+              
+              <button
+                type="button"
+                className="text-xs font-semibold text-violet-700 underline underline-offset-2"
+                onClick={() => setIsAddVariantDialogOpen(true)}
               >
-                <Edit className="size-4" />
-                تعديل المنتج
-              </Button>
-              <Button className="w-full gap-2" variant="secondary">
-                <Package className="size-4" />
-                إدارة المخزون
-              </Button>
-              <Button
-                onClick={() => setIsDeleteDialogOpen(true)}
-                className="w-full gap-2"
-                variant="destructive"
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    جاري الحذف...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="size-4" />
-                    حذف المنتج
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </div> */}
+                اضافة متغير
+              </button>
+            </div>
+          ) : (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              لا توجد خيارات — اضغط إضافة خيار
+            </p>
+          )}
+        </ProductSectionCard>
+      </div>
+
+      {/* Bottom: properties + variants */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ProductSectionCard
+          title="خصائص المنتج"
+          description="مواصفات المنتج: كالماركة، الخامة، والجنس"
+          action={
+            <Button
+              size="sm"
+              className="gap-1 rounded-full"
+              onClick={() => setIsAddPropertyDialogOpen(true)}
+            >
+              <Plus className="size-3" />
+              إضافة خاصية
+            </Button>
+          }
+        >
+          {properties.length > 0 ? (
+            <div className="flex flex-row items-center justify-start gap-2">
+              <AddedLabel />
+              {properties.map((property: any) => (
+                <DashedTag
+                  key={property.id || property.name}
+                  onRemove={
+                    property.id
+                      ? () => setEditingPropertyId(property.id)
+                      : undefined
+                  }
+                >
+                  {property.name} : {property.value as string}
+                </DashedTag>
+              ))}
+            </div>
+          ) : (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              لا توجد خصائص للمنتج
+            </p>
+          )}
+        </ProductSectionCard>
+
+        <ProductSectionCard
+          title="المتغيرات"
+          action={
+            <Button
+              size="sm"
+              className="gap-1 rounded-full"
+              onClick={() => setIsAddVariantDialogOpen(true)}
+            >
+              <Plus className="size-3" />
+              إضافة متغير
+            </Button>
+          }
+        >
+          {variants.length > 0 ? (
+            <div className="space-y-3">
+              {variants.map((variant: any) => (
+                <div
+                  key={variant.id}
+                  className="rounded-2xl bg-violet-50 p-3 dark:bg-violet-950/30"
+                >
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        onClick={() => setEditingVariantId(variant.id)}
+                      >
+                        <Edit className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-destructive hover:text-destructive"
+                        onClick={() => setDeletingVariantId(variant.id)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                    <div className="text-right text-xs text-muted-foreground">
+                      <span dir="ltr">SKU: {variant.sku || "—"}</span>
+                      <span className="mx-2">·</span>
+                      <span>
+                        {variant.price != null
+                          ? formatPrice(variant.price)
+                          : "—"}
+                      </span>
+                      <span className="mx-2">·</span>
+                      <span>المخزون: {variant.stock ?? 0}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {(variant.optionValues ?? []).map((optValue: any) => (
+                      <DashedTag key={optValue.id}>
+                        {optValue.label || optValue.value}
+                      </DashedTag>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              لا توجد متغيرات — اضغط إضافة متغير
+            </p>
+          )}
+        </ProductSectionCard>
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -652,7 +583,6 @@ const ProductDetails = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Add Product Option Dialog */}
       {id && (
         <AddProductOptionDialog
           open={isAddOptionDialogOpen}
@@ -661,7 +591,6 @@ const ProductDetails = () => {
         />
       )}
 
-      {/* Edit Product Option Dialog */}
       {editingOptionId && (
         <EditProductOptionDialog
           open={!!editingOptionId}
@@ -670,7 +599,6 @@ const ProductDetails = () => {
         />
       )}
 
-      {/* Add Product Property Dialog */}
       {id && (
         <AddProductPropertyDialog
           open={isAddPropertyDialogOpen}
@@ -679,7 +607,6 @@ const ProductDetails = () => {
         />
       )}
 
-      {/* Edit Product Property Dialog */}
       {editingPropertyId && (
         <EditProductPropertyDialog
           open={!!editingPropertyId}
@@ -688,7 +615,6 @@ const ProductDetails = () => {
         />
       )}
 
-      {/* Add Variant Dialog */}
       {id && (
         <AddVariantDialog
           open={isAddVariantDialogOpen}
@@ -697,7 +623,6 @@ const ProductDetails = () => {
         />
       )}
 
-      {/* Edit Variant Dialog */}
       {editingVariantId && (
         <EditVariantDialog
           open={!!editingVariantId}
@@ -706,7 +631,6 @@ const ProductDetails = () => {
         />
       )}
 
-      {/* Delete Variant Confirmation Dialog */}
       <Dialog
         open={!!deletingVariantId}
         onOpenChange={(open) => !open && setDeletingVariantId(null)}
@@ -760,7 +684,6 @@ const ProductDetails = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Add Category Dialog */}
       {id && (
         <AddCategoryToProductDialog
           open={isAddCategoryDialogOpen}
@@ -772,7 +695,6 @@ const ProductDetails = () => {
         />
       )}
 
-      {/* Remove Category Dialog */}
       {id && removingCategory && (
         <RemoveCategoryFromProductDialog
           open={!!removingCategory}
@@ -786,7 +708,6 @@ const ProductDetails = () => {
         />
       )}
 
-      {/* Product Image Dialog */}
       {id && (
         <ProductImageDialog
           open={isImageDialogOpen}

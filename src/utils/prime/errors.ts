@@ -21,6 +21,11 @@ export function getPrimeApiError(error: unknown, fallback: string): string {
     return data.errorMessage;
   }
   if (Array.isArray(data?.message)) return data.message.join(" — ");
-  if (typeof data?.message === "string") return data.message;
+  if (typeof data?.message === "string") {
+    if (data.message.includes("No Prime caseId")) {
+      return "لا توجد شحنة Prime مربوطة بهذا الطلب — أنشئ الشحنة أولاً";
+    }
+    return data.message;
+  }
   return fallback;
 }

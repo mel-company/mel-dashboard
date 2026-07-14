@@ -42,12 +42,15 @@ import AddProductToCategoryDialog from "./AddProductToCategoryDialog";
 import RemoveProductFromCategoryDialog from "./RemoveProductFromCategoryDialog";
 import ToggleEnableCategoryDialog from "./ToggleEnableCategoryDialog";
 import CategoryImageDialog from "./CategoryImageDialog";
-import { getImageUrl } from "@/utils/image-url";
+import { AssetImage } from "@/components/AssetImage";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
+import { getProductCoverImage } from "@/utils/product-images";
 import { toast } from "sonner";
 
 const CategoryDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const imageBaseUrl = useImageBaseUrl();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false);
   const [isToggleEnabledDialogOpen, setIsToggleEnabledDialogOpen] =
@@ -111,6 +114,8 @@ const CategoryDetails = () => {
     );
   }
 
+  const resolvedBaseUrl = imageBaseUrl || category.baseUrl || "";
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -151,15 +156,15 @@ const CategoryDetails = () => {
                 onClick={() => setIsImageDialogOpen(true)}
                 className="relative group h-96 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10 transition-opacity hover:opacity-90 cursor-pointer"
               >
-                {category.image ? (
-                  <img
-                    src={getImageUrl(category.image, category?.baseUrl)}
-                    alt={category.name}
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <Folder className="size-24 text-white bg-cyan/40 rounded-full p-6" />
-                )}
+                <AssetImage
+                  image={category.image}
+                  baseUrl={resolvedBaseUrl}
+                  alt={category.name}
+                  className="h-full w-full object-contain"
+                  fallback={
+                    <Folder className="size-24 text-white bg-cyan/40 rounded-full p-6" />
+                  }
+                />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                   <span className="text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">
                     تعديل الصورة
@@ -232,18 +237,15 @@ const CategoryDetails = () => {
                       >
                         <div className="flex icenter gap-x-2">
                           <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
-                            {product.product.image ? (
-                              <img
-                                src={getImageUrl(
-                                  product.product.image,
-                                  category?.baseUrl,
-                                )}
-                                alt={product.product.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
-                            )}
+                            <AssetImage
+                              image={getProductCoverImage(product.product)}
+                              baseUrl={resolvedBaseUrl}
+                              alt={product.product.title}
+                              className="w-full h-full object-cover"
+                              fallback={
+                                <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
+                              }
+                            />
                           </div>
                           <div className="flex-1 text-right">
                             <p className="font-semibold line-clamp-1">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Pagination from "@/components/table/pagination";
-import { getImageUrl } from "@/utils/image-url";
+import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import { Switch } from "@/components/ui/switch";
 
@@ -158,6 +158,10 @@ const CategoryTableRow = ({ category, refetch, onDeleteModal, imageBaseUrl = "" 
   const resolvedBaseUrl = useImageBaseUrl(imageBaseUrl)
   const { mutate: toggleEnabled } = useToggleCategoryEnabled()
 
+  useEffect(() => {
+    setData(category)
+  }, [category])
+
   const handleUpdate = () => {
     const nextEnabled = !data.enabled
     setData({ ...data, enabled: nextEnabled })
@@ -182,15 +186,13 @@ const CategoryTableRow = ({ category, refetch, onDeleteModal, imageBaseUrl = "" 
       </TableCell>
       <TableCell className="w-16">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-          {data.image ? (
-            <img
-              src={getImageUrl(data.image, resolvedBaseUrl)}
-              alt={data.name}
-              className="block h-12 w-12 object-cover rounded-lg"
-            />
-          ) : (
-            <Folder className="size-6 text-slate-600" />
-          )}
+          <AssetImage
+            image={data.image}
+            baseUrl={resolvedBaseUrl}
+            alt={data.name}
+            className="block h-12 w-12 rounded-lg object-cover"
+            fallback={<Folder className="size-6 text-slate-600" />}
+          />
         </div>
       </TableCell>
       <TableCell>

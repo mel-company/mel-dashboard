@@ -1,6 +1,8 @@
 import axiosInstance from "@/utils/AxiosInstance";
-import { uploadEntityImage } from "@/api/utils/entity-image-upload";
 import type { ProductListResponse } from "../types/product";
+import { MAX_PRODUCT_IMAGES } from "../types/product";
+
+const IMAGE_UPLOAD_TIMEOUT_MS = 60_000;
 
 function parseJsonField(value: FormDataEntryValue | null): unknown {
   if (typeof value !== "string" || !value) return undefined;
@@ -42,6 +44,70 @@ function productFormDataToJson(formData: FormData): Record<string, unknown> {
   }
 
   return body;
+}
+
+/** Collect image files from FormData (`images` + optional legacy `image`). Max 10. */
+function collectImageFiles(formData: FormData): File[] {
+  const files: File[] = [];
+  const seen = new Set<string>();
+
+  const push = (file: File) => {
+    const key = `${file.name}:${file.size}:${file.lastModified}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    files.push(file);
+  };
+
+  for (const value of formData.getAll("images")) {
+    if (value instanceof File && value.size > 0) push(value);
+  }
+
+  if (files.length === 0) {
+    const single = formData.get("image");
+    if (single instanceof File && single.size > 0) push(single);
+  }
+
+  return files.slice(0, MAX_PRODUCT_IMAGES);
+}
+
+function appendJsonFieldsToFormData(
+  target: FormData,
+  body: Record<string, unknown>,
+) {
+  for (const [key, value] of Object.entries(body)) {
+    if (value === undefined || value === null) continue;
+    if (typeof value === "object") {
+      target.append(key, JSON.stringify(value));
+    } else {
+      target.append(key, String(value));
+    }
+  }
+}
+
+function appendImagesToFormData(target: FormData, files: File[]) {
+  files.forEach((file, index) => {
+    target.append("images", file);
+    if (index === 0) target.append("image", file);
+  });
+}
+
+function buildMultipartProductForm(
+  jsonBody: Record<string, unknown>,
+  files: File[],
+): FormData {
+  const multipart = new FormData();
+  // Don't send string `image` (e.g. temp logo URL) when uploading real files —
+  // it collides with the file field and can leave product.image empty/wrong.
+  const { image: _ignoredImage, ...fields } = jsonBody;
+  appendJsonFieldsToFormData(multipart, fields);
+  appendImagesToFormData(multipart, files);
+  return multipart;
+}
+
+function isAxiosStatus(err: unknown, status: number): boolean {
+  return (
+    (err as { response?: { status?: number } })?.response?.status === status
+  );
 }
 
 export const productAPI = {
@@ -178,16 +244,31 @@ export const productAPI = {
   },
 
   /**
-   * Create a new product
-   * Accepts FormData for multipart/form-data uploads (with optional image file)
+   * Create a new product.
+   * With files: multipart `images` (and/or `image`), fallback JSON + POST /:id/images.
    */
   create: async (formData: FormData): Promise<any> => {
-    const imageFile = formData.get("image");
+    const imageFiles = collectImageFiles(formData);
     const jsonBody = productFormDataToJson(formData);
 
-    if (imageFile instanceof File) {
-      const { data: created } = await axiosInstance.post<any>("/product", jsonBody);
-      return uploadEntityImage(`/product/${created.id}/image`, imageFile);
+    if (imageFiles.length > 0) {
+      try {
+        const { data } = await axiosInstance.post<any>(
+          "/product",
+          buildMultipartProductForm(jsonBody, imageFiles),
+          { timeout: IMAGE_UPLOAD_TIMEOUT_MS },
+        );
+        return data;
+      } catch (err) {
+        // Some envs expect JSON create then gallery upload
+        if (!isAxiosStatus(err, 400) && !isAxiosStatus(err, 415)) throw err;
+      }
+
+      const { data: created } = await axiosInstance.post<any>(
+        "/product",
+        jsonBody,
+      );
+      return productAPI.addImages(created.id, imageFiles);
     }
 
     const { data } = await axiosInstance.post<any>("/product", jsonBody);
@@ -271,23 +352,77 @@ export const productAPI = {
   },
 
   /**
-   * Update an existing product
-   * Accepts FormData for multipart/form-data uploads (with optional image file)
+   * Update an existing product.
+   * FormData may include new gallery files via `images` / `image`.
    */
-  update: async (id: string, product: FormData | Record<string, unknown>): Promise<any> => {
+  update: async (
+    id: string,
+    product: FormData | Record<string, unknown>,
+  ): Promise<any> => {
     if (product instanceof FormData) {
-      const imageFile = product.get("image");
+      const imageFiles = collectImageFiles(product);
       const jsonBody = productFormDataToJson(product);
-      const { data } = await axiosInstance.put<any>(`/product/${id}`, jsonBody);
 
-      if (imageFile instanceof File) {
-        return uploadEntityImage(`/product/${id}/image`, imageFile);
+      if (imageFiles.length > 0) {
+        try {
+          const { data } = await axiosInstance.put<any>(
+            `/product/${id}`,
+            buildMultipartProductForm(jsonBody, imageFiles),
+            { timeout: IMAGE_UPLOAD_TIMEOUT_MS },
+          );
+          return data;
+        } catch (err) {
+          if (!isAxiosStatus(err, 400) && !isAxiosStatus(err, 415)) throw err;
+          await axiosInstance.put<any>(`/product/${id}`, jsonBody);
+          return productAPI.addImages(id, imageFiles);
+        }
       }
 
+      const { data } = await axiosInstance.put<any>(`/product/${id}`, jsonBody);
       return data;
     }
 
     const { data } = await axiosInstance.put<any>(`/product/${id}`, product);
+    return data;
+  },
+
+  /**
+   * Add gallery images — POST /product/:id/images (field: images)
+   */
+  addImages: async (productId: string, images: File[]): Promise<any> => {
+    const formData = new FormData();
+    images.slice(0, MAX_PRODUCT_IMAGES).forEach((file, index) => {
+      formData.append("images", file);
+      if (index === 0) formData.append("image", file);
+    });
+    const { data } = await axiosInstance.post<any>(
+      `/product/${productId}/images`,
+      formData,
+      { timeout: IMAGE_UPLOAD_TIMEOUT_MS },
+    );
+    return data;
+  },
+
+  /**
+   * Set primary cover image — PUT /product/:id/images/:imageId/primary
+   */
+  setPrimaryImage: async (productId: string, imageId: string): Promise<any> => {
+    const { data } = await axiosInstance.put<any>(
+      `/product/${productId}/images/${imageId}/primary`,
+    );
+    return data;
+  },
+
+  /**
+   * Delete a single gallery image — DELETE /product/:id/images/:imageId
+   */
+  deleteGalleryImage: async (
+    productId: string,
+    imageId: string,
+  ): Promise<any> => {
+    const { data } = await axiosInstance.delete<any>(
+      `/product/${productId}/images/${imageId}`,
+    );
     return data;
   },
 
@@ -322,18 +457,22 @@ export const productAPI = {
   },
 
   /**
-   * Update product image
+   * Add / replace cover via gallery upload (POST /product/:id/images)
    */
-  updateProductImage: async (productId: string, image: File): Promise<any> => {
-    return uploadEntityImage(`/product/${productId}/image`, image);
+  updateProductImage: async (
+    productId: string,
+    image: File | File[],
+  ): Promise<any> => {
+    const files = Array.isArray(image) ? image : [image];
+    return productAPI.addImages(productId, files);
   },
 
   /**
-   * Delete product image
+   * Delete all gallery images — DELETE /product/:id/image
    */
   deleteProductImage: async (productId: string): Promise<any> => {
     const { data } = await axiosInstance.delete<any>(
-      `/product/${productId}/image`
+      `/product/${productId}/image`,
     );
     return data;
   },

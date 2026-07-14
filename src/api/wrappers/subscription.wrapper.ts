@@ -164,10 +164,13 @@ export const useRenewSubscription = () => {
     mutationFn: ({ id, durationMonths }) =>
       subscriptionAPI.renew(id, durationMonths),
     onSuccess: (data) => {
-      // Invalidate and refetch subscriptions list
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.lists() });
-      // Update the specific subscription cache
-      queryClient.setQueryData(subscriptionKeys.detail(data.id), data);
+      queryClient.invalidateQueries({
+        queryKey: subscriptionKeys.detail("store"),
+      });
+      if (data?.id) {
+        queryClient.setQueryData(subscriptionKeys.detail(data.id), data);
+      }
     },
   });
 };

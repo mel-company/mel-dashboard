@@ -23,7 +23,7 @@ import ErrorPage from "@/pages/miscellaneous/ErrorPage";
 import CategoriesSkeleton from "@/pages/category/CategoriesSkeleton";
 import EmptyPage from "@/pages/miscellaneous/EmptyPage";
 import CategoryTable from "./CategoryTable";
-import { getImageUrl } from "@/utils/image-url";
+import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 
 interface CategoriesContentProps {
@@ -111,24 +111,17 @@ const CategoryCard = ({
             )}>
                 <CardHeader className="pb-4">
                     <div className="relative h-48 flex items-center justify-center w-full overflow-hidden bg-linear-to-br from-blue-50 to-indigo-100">
-                        {category.image ? (
-                            <img
-                                src={getImageUrl(category?.image, resolvedBaseUrl)}
-                                alt={category.name}
-                                className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
-                                onError={(e) => {
-                                    const target = e.currentTarget;
-                                    target.src = `https://via.placeholder.com/300x300/cccccc/666666?text=${encodeURIComponent(
-                                        category.name,
-                                    )}`;
-                                    target.onerror = null;
-                                }}
-                            />
-                        ) : (
-                            <div className="w-20 h-20 bg-linear-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-center">
-                                <Folder className="size-10 text-white" />
-                            </div>
-                        )}
+                        <AssetImage
+                            image={category?.image}
+                            baseUrl={resolvedBaseUrl}
+                            alt={category.name}
+                            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+                            fallback={
+                                <div className="w-20 h-20 bg-linear-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-center">
+                                    <Folder className="size-10 text-white" />
+                                </div>
+                            }
+                        />
                         <div className="absolute top-2 left-2">
                             <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-md">
                                 <Star className="size-4 text-yellow-500" />

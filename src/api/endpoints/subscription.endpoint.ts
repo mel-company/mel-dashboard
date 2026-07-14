@@ -103,7 +103,7 @@ export const subscriptionAPI = {
    * Renew a subscription (extend end date)
    */
   renew: async (id: string, durationMonths?: number): Promise<any> => {
-    const { data } = await axiosInstance.patch<any>(
+    const { data } = await axiosInstance.put<any>(
       `/subscription/${id}/renew`,
       {
         ...(durationMonths && { durationMonths }),

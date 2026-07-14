@@ -4,6 +4,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 
 interface PageTableHeaderProps {
     title?: string;
+    subtitle?: string;
     searchQuery?: string;
     onSearchChange?: (value: string) => void;
     searchPlaceholder?: string;
@@ -15,6 +16,7 @@ interface PageTableHeaderProps {
 
 const PageTableHeader = ({
     title = "المنتجات",
+    subtitle,
     searchQuery = "",
     onSearchChange,
     searchPlaceholder,
@@ -26,7 +28,14 @@ const PageTableHeader = ({
     return (
         <header className='flex flex-col sm:flex-row gap-2 sm:items-center justify-between'>
             {title ? (
-                <h2 className='text-2xl text-blue-950 dark:text-blue-100'>{title}</h2>
+                <div className="min-w-0 text-right">
+                    <h2 className='text-2xl text-blue-950 dark:text-blue-100'>{title}</h2>
+                    {subtitle ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            {subtitle}
+                        </p>
+                    ) : null}
+                </div>
             ) : (
                 <div />
             )}

@@ -15,13 +15,20 @@ export function getOrderPrimeShipment(
     | Record<string, unknown>
     | null
     | undefined;
-  if (!raw) return null;
+  if (!raw || typeof raw !== "object") return null;
+
+  const caseId =
+    (raw.case_id as number | undefined) ?? (raw.caseId as number | undefined);
+  const merchantShipmentCode =
+    (raw.merchant_shipment_code as string | undefined) ??
+    (raw.merchantShipmentCode as string | undefined);
+
+  // sync يحتاج caseId مربوط بالطلب — بدونها نعتبر الشحنة غير موجودة
+  if (caseId == null && !merchantShipmentCode) return null;
 
   return {
-    caseId: (raw.case_id as number | undefined) ?? (raw.caseId as number | undefined),
-    merchantShipmentCode:
-      (raw.merchant_shipment_code as string | undefined) ??
-      (raw.merchantShipmentCode as string | undefined),
+    caseId,
+    merchantShipmentCode,
     status: (raw.status as string | undefined) ?? undefined,
     shippingFee:
       (raw.shipping_fee as number | undefined) ??

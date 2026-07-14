@@ -1,12 +1,7 @@
 import { useRef, useState } from "react";
-import { X, Loader2, Upload } from "lucide-react";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { PercentIcon } from "@hugeicons-pro/core-stroke-standard";
+import { Calendar, Loader2, Package, Plus, Upload, X } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { useCreateDiscount } from "@/api/wrappers/discount.wrappers";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
@@ -16,7 +11,9 @@ import {
   SettingsField,
   SettingsInput,
   SettingsTextarea,
+  settingsInputClassName,
 } from "@/new-pages/settings/components/SettingsField";
+import { cn } from "@/lib/utils";
 
 type CreateDiscountDialogProps = {
   open: boolean;
@@ -47,8 +44,9 @@ function resolveTempImageUrl(
 }
 
 function getErrorMessage(err: unknown, fallback: string): string {
-  const message = (err as { response?: { data?: { message?: string | string[] } } })
-    ?.response?.data?.message;
+  const message = (
+    err as { response?: { data?: { message?: string | string[] } } }
+  )?.response?.data?.message;
 
   if (Array.isArray(message)) return message.join("، ");
   if (typeof message === "string") return message;
@@ -125,7 +123,7 @@ const CreateDiscountDialog = ({
       return;
     }
     if (!trimmedName) {
-      toast.error("يرجى إدخال عنوان الخصم");
+      toast.error("يرجى إدخال عنوان الخيار");
       return;
     }
     if (!trimmedDesc) {
@@ -166,16 +164,17 @@ const CreateDiscountDialog = ({
         imageFile,
       },
       {
-      onSuccess: (data) => {
-        toast.success("تم إنشاء الخصم بنجاح");
-        reset();
-        onOpenChange(false);
-        onSuccess?.(data.id);
+        onSuccess: (data) => {
+          toast.success("تم إنشاء الخصم بنجاح");
+          reset();
+          onOpenChange(false);
+          onSuccess?.(data.id);
+        },
+        onError: (err: unknown) => {
+          toast.error(getErrorMessage(err, "فشل في إنشاء الخصم"));
+        },
       },
-      onError: (err: unknown) => {
-        toast.error(getErrorMessage(err, "فشل في إنشاء الخصم"));
-      },
-    });
+    );
   };
 
   return (
@@ -186,83 +185,43 @@ const CreateDiscountDialog = ({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-w-lg rounded-3xl p-0" dir="rtl">
+      <DialogContent
+        dir="rtl"
+        showCloseButton={false}
+        className="max-w-lg gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl"
+      >
         <form onSubmit={handleSubmit} className="p-6">
-          <div className="mb-5 flex items-start justify-between gap-3">
+          {/* Header */}
+          <div className="mb-5 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"
+              disabled={isPending}
+              className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-[#1a2b5a] hover:bg-violet-200 disabled:opacity-50"
               aria-label="إغلاق"
             >
-              <X className="size-5" />
+              <X className="size-4" />
             </button>
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-blue-950">إضافة خصم جديد</h2>
-              <div className="flex size-11 items-center justify-center rounded-2xl bg-violet-100">
-                <HugeiconsIcon icon={PercentIcon} size={24} className="text-violet-600" />
+            <div className="flex items-center gap-2.5">
+              <DialogTitle className="text-lg font-bold text-[#1a2b5a]">
+                أضافة خيار منتج جديد
+              </DialogTitle>
+              <div className="relative flex size-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-600">
+                <Package className="size-5" strokeWidth={2} />
+                <span className="absolute -bottom-0.5 -left-0.5 flex size-4 items-center justify-center rounded-full bg-[#00b7ff] text-white">
+                  <Plus className="size-2.5" strokeWidth={3} />
+                </span>
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <SettingsField label="صورة الخصم" htmlFor="discountImage">
-              <div className="flex items-start gap-3">
-                <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt="معاينة صورة الخصم"
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <span className="px-2 text-center text-xs text-slate-400">
-                      لا توجد صورة
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col gap-2">
-                  <input
-                    ref={fileInputRef}
-                    id="discountImage"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                    disabled={isPending}
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isPending}
-                      className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-100 px-3 text-sm font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
-                    >
-                      <Upload className="size-4" />
-                      {imageFile ? "تغيير الصورة" : "اختر صورة"}
-                    </button>
-                    {imageFile && (
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        disabled={isPending}
-                        className="inline-flex h-10 items-center rounded-xl bg-rose-50 px-3 text-sm font-medium text-rose-600 hover:bg-rose-100 disabled:opacity-50"
-                      >
-                        إزالة
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400">PNG أو JPG حتى 2MB</p>
-                </div>
-              </div>
-            </SettingsField>
-
-            <SettingsField label="عنوان الخصم" htmlFor="discountName">
+            <SettingsField label="عنوان الخيار" htmlFor="discountName">
               <SettingsInput
                 id="discountName"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="مثال: خصم نهاية السنة 75%"
+                placeholder="خصم نهاية السنة 75%"
                 disabled={isPending}
               />
             </SettingsField>
@@ -272,70 +231,152 @@ const CreateDiscountDialog = ({
                 id="discountDesc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="اشرح تفاصيل العرض للعملاء..."
+                placeholder="ودع السنة بقطعة جديدة وتوفير أكيد. خصوماتنا بدأت الآن!"
                 rows={3}
                 disabled={isPending}
+                className="min-h-[88px] border border-transparent focus-visible:border-[#00b7ff] focus-visible:ring-0"
               />
             </SettingsField>
 
             <SettingsField label="نسبة الخصم" htmlFor="discountPct">
-              <SettingsInput
-                id="discountPct"
-                type="number"
-                min={1}
-                max={100}
-                value={percentage}
-                onChange={(e) => setPercentage(e.target.value)}
-                placeholder="75"
-                disabled={isPending}
-              />
+              <div className="relative">
+                <SettingsInput
+                  id="discountPct"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={percentage}
+                  onChange={(e) => setPercentage(e.target.value)}
+                  placeholder="75"
+                  disabled={isPending}
+                  className="pl-10"
+                />
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">
+                  %
+                </span>
+              </div>
             </SettingsField>
 
-            <div className="grid grid-cols-2 gap-3">
-              <SettingsField label="تاريخ البدء" htmlFor="discountStart">
-                <SettingsInput
-                  id="discountStart"
-                  type="datetime-local"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+            {/* حالة الخصم — يمين العنوان / يسار التبديل */}
+            <div className="flex items-center justify-between gap-3 py-1">
+              <span className="text-sm font-medium text-slate-500">
+                حالة الخصم
+              </span>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={isActive}
+                  onToggle={setIsActive}
                   disabled={isPending}
                 />
+                <span
+                  className={cn(
+                    "text-sm font-semibold",
+                    isActive ? "text-teal-600" : "text-slate-400",
+                  )}
+                >
+                  {isActive ? "نشطة" : "معطلة"}
+                </span>
+              </div>
+            </div>
+
+            {/* التواريخ */}
+            <div className="grid grid-cols-2 gap-3">
+              <SettingsField label="تاريخ البدأ" htmlFor="discountStart">
+                <div className="relative">
+                  <Calendar className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    id="discountStart"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    disabled={isPending}
+                    className={cn(
+                      settingsInputClassName,
+                      "w-full pl-10 text-right",
+                    )}
+                  />
+                </div>
               </SettingsField>
               <SettingsField label="تاريخ النفاذ" htmlFor="discountEnd">
-                <SettingsInput
-                  id="discountEnd"
-                  type="datetime-local"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  disabled={isPending}
-                />
+                <div className="relative">
+                  <Calendar className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    id="discountEnd"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    disabled={isPending}
+                    placeholder="ادخل تاريخ نفاذ الخصم"
+                    className={cn(
+                      settingsInputClassName,
+                      "w-full pl-10 text-right",
+                    )}
+                  />
+                </div>
               </SettingsField>
             </div>
 
-            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-              <span className="text-sm font-medium text-slate-700">حالة الخصم</span>
-              <Switch
-                checked={isActive}
-                activeLabel="نشط"
-                disabledLabel="معطل"
-                onToggle={setIsActive}
-              />
-            </div>
+            {/* صورة — مطلوبة للـ API وغير ظاهرة في الموكب بشكل بارز */}
+            <SettingsField label="صورة الخصم" htmlFor="discountImage">
+              <div className="flex items-center gap-3">
+                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="معاينة"
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <Upload className="size-5 text-slate-300" />
+                  )}
+                </div>
+                <div className="flex flex-1 flex-wrap gap-2">
+                  <input
+                    ref={fileInputRef}
+                    id="discountImage"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    disabled={isPending}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isPending}
+                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-100 px-3 text-sm font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                  >
+                    {imageFile ? "تغيير الصورة" : "اختر صورة"}
+                  </button>
+                  {imageFile && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      disabled={isPending}
+                      className="inline-flex h-10 items-center rounded-xl bg-rose-50 px-3 text-sm font-medium text-rose-600 hover:bg-rose-100 disabled:opacity-50"
+                    >
+                      إزالة
+                    </button>
+                  )}
+                </div>
+              </div>
+            </SettingsField>
           </div>
 
-          <div className="mt-6 flex gap-3">
+          {/* Actions — يمين إلغاء / يسار حفظ */}
+          <div className="mt-6 grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="h-12 flex-1 rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+              className="h-12 rounded-2xl bg-slate-100 text-sm font-semibold text-[#1a2b5a] hover:bg-slate-200 disabled:opacity-50"
             >
-              إلغاء
+              الغاء
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6] disabled:opacity-50"
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6] disabled:opacity-50"
             >
               {isPending ? (
                 <>

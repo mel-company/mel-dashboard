@@ -15,6 +15,11 @@ const ProductsPage = () => {
     const navigate = useNavigate();
 
     const actions = useProductsPage();
+    const activeSearch = actions.searchQuery?.trim() ?? "";
+    const listTitle = activeSearch ? "نتائج البحث" : "المنتجات";
+    const listSubtitle = activeSearch
+        ? `قمت بالبحث عن : "${activeSearch}"`
+        : undefined;
 
     return (
         <div className="space-y-6">
@@ -37,7 +42,8 @@ const ProductsPage = () => {
             {/* Toolbar */}
             <PageTableHeader
                 {...actions}
-                title={"المنتجات"}
+                title={listTitle}
+                subtitle={listSubtitle}
                 onFilterClick={() => actions.setIsFilterDialogOpen(true)}
             >
                 <SwitchTab

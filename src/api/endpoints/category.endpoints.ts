@@ -135,15 +135,36 @@ export const categoryAPI = {
   },
 
   /**
-   * Create a new category
-   * Accepts FormData with: name, description, enabled, image (file, optional)
+   * Create a new category.
+   * With file: try multipart create, fallback JSON + PUT /:id/image.
    */
   create: async (formData: FormData): Promise<any> => {
     const imageFile = formData.get("image");
     const jsonBody = categoryFormDataToJson(formData);
 
     if (imageFile instanceof File) {
-      const { data: created } = await axiosInstance.post<any>("/category", jsonBody);
+      const multipart = new FormData();
+      for (const [key, value] of Object.entries(jsonBody)) {
+        if (key === "image") continue; // file field wins over temp logo URL
+        if (value === undefined || value === null) continue;
+        multipart.append(key, String(value));
+      }
+      multipart.append("image", imageFile);
+
+      try {
+        const { data } = await axiosInstance.post<any>("/category", multipart, {
+          timeout: 60_000,
+        });
+        return data;
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status !== 400 && status !== 415) throw err;
+      }
+
+      const { data: created } = await axiosInstance.post<any>(
+        "/category",
+        jsonBody,
+      );
       return uploadEntityImage(`/category/${created.id}/image`, imageFile);
     }
 
@@ -155,16 +176,39 @@ export const categoryAPI = {
    * Update an existing category
    * Accepts FormData for multipart/form-data uploads (with optional image file)
    */
-  update: async (id: string, category: FormData | Record<string, unknown>): Promise<any> => {
+  update: async (
+    id: string,
+    category: FormData | Record<string, unknown>,
+  ): Promise<any> => {
     if (category instanceof FormData) {
       const imageFile = category.get("image");
       const jsonBody = categoryFormDataToJson(category);
-      const { data } = await axiosInstance.put<any>(`/category/${id}`, jsonBody);
 
       if (imageFile instanceof File) {
-        return uploadEntityImage(`/category/${id}/image`, imageFile);
+        const multipart = new FormData();
+        for (const [key, value] of Object.entries(jsonBody)) {
+          if (key === "image") continue;
+          if (value === undefined || value === null) continue;
+          multipart.append(key, String(value));
+        }
+        multipart.append("image", imageFile);
+
+        try {
+          const { data } = await axiosInstance.put<any>(
+            `/category/${id}`,
+            multipart,
+            { timeout: 60_000 },
+          );
+          return data;
+        } catch (err: any) {
+          const status = err?.response?.status;
+          if (status !== 400 && status !== 415) throw err;
+          await axiosInstance.put<any>(`/category/${id}`, jsonBody);
+          return uploadEntityImage(`/category/${id}/image`, imageFile);
+        }
       }
 
+      const { data } = await axiosInstance.put<any>(`/category/${id}`, jsonBody);
       return data;
     }
 

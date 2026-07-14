@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     TableCell,
     TableRow,
@@ -6,9 +6,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Package, Eye, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { coerceImagePath, getImageUrl } from "@/utils/image-url";
+import { AssetImage } from "@/components/AssetImage";
+import { getProductCoverImage } from "@/utils/product-images";
 import Rating from "@/components/table/rating";
-import { useNavigate } from "react-router-dom";
 import { costMargin, formatPrice, getProductCategories, shortDescription } from "../utils";
 import Badge from "@/components/table/badge";
 import type { ProductListItem } from "@/api/types/product";
@@ -44,11 +44,9 @@ const ProductRow = ({
     imageBaseUrl?: string;
 }) => {
     const navigate = useNavigate();
-    const [imageFailed, setImageFailed] = useState(false);
     const tdClass = "whitespace-normal px-4 py-3.5 text-right align-middle";
     const margin = costMargin(product.price, product.cost_to_produce);
-    const imagePath = coerceImagePath(product.image);
-    const imageUrl = imagePath ? getImageUrl(imagePath, imageBaseUrl) : "";
+    const cover = getProductCoverImage(product);
 
     return (
         <TableRow
@@ -60,22 +58,19 @@ const ProductRow = ({
             </TableCell>
             <TableCell className={cn(tdClass, "w-16")}>
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/30">
-                    {imageUrl && !imageFailed ? (
-                        <img
-                            src={imageUrl}
-                            alt={product.title}
-                            className="block h-12 w-12 object-cover"
-                            onError={() => setImageFailed(true)}
-                        />
-                    ) : (
-                        <Package className="size-5 text-muted-foreground" />
-                    )}
+                    <AssetImage
+                        image={cover}
+                        baseUrl={imageBaseUrl}
+                        alt={product.title}
+                        className="block h-12 w-12 object-cover"
+                        fallback={<Package className="size-5 text-muted-foreground" />}
+                    />
                 </div>
             </TableCell>
             <TableCell className={tdClass}>
-                <p className="font-semibold leading-snug">{product.title}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                    {shortDescription(product.description, 40)}
+                <p className="line-clamp-1 font-semibold leading-snug">{product.title}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                    {shortDescription(product.description, 70)}
                 </p>
             </TableCell>
             <TableCell className={tdClass}>{renderCategories(product)}</TableCell>

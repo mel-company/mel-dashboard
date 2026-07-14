@@ -192,6 +192,11 @@ const OrderPrimeShipmentCard = ({ order, onUpdated }: Props) => {
   };
 
   const handleSync = async () => {
+    if (!primeShipment?.caseId) {
+      toast.error("لا توجد شحنة Prime مربوطة — أنشئ الشحنة أولاً");
+      return;
+    }
+
     try {
       await loginMutation.mutateAsync();
       syncMutation.mutate(orderId, {
@@ -317,7 +322,7 @@ const OrderPrimeShipmentCard = ({ order, onUpdated }: Props) => {
               {showManual ? "إخفاء التعديل" : "تعديل العنوان"}
             </Button>
           )}
-          {primeShipment && (
+          {primeShipment?.caseId != null && (
             <Button
               size="sm"
               variant="outline"

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   useFetchStoreSubscription,
   useCancelSubscription,
+  useRenewSubscription,
 } from "@/api/wrappers/subscription.wrapper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +45,35 @@ const StoreSubscriptionSection = () => {
     refetch,
   } = useFetchStoreSubscription();
   const cancelSubscription = useCancelSubscription();
+  const renewSubscription = useRenewSubscription();
+
+  const handleRenew = () => {
+    if (!subscription?.id) {
+      toast.error("لا يمكن تجديد الاشتراك — معرّف الاشتراك غير موجود");
+      return;
+    }
+
+    renewSubscription.mutate(
+      { id: subscription.id },
+      {
+        onSuccess: () => {
+          toast.success("تم تجديد الاشتراك بنجاح");
+          refetch();
+        },
+        onError: (error) => {
+          const apiError = error as Error & {
+            response?: { data?: { message?: string | string[] } };
+          };
+          const message = apiError.response?.data?.message;
+          toast.error(
+            Array.isArray(message)
+              ? message.join(" — ")
+              : message || "فشل تجديد الاشتراك",
+          );
+        },
+      },
+    );
+  };
 
   const handleConfirmCancel = () => {
     cancelSubscription.mutate(undefined, {
@@ -117,8 +148,20 @@ const StoreSubscriptionSection = () => {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button className="rounded-full px-5" type="button">
-                تجديد الاشتراك
+              <Button
+                className="rounded-full px-5"
+                type="button"
+                disabled={renewSubscription.isPending || !subscription.id}
+                onClick={handleRenew}
+              >
+                {renewSubscription.isPending ? (
+                  <>
+                    <Loader2 className="ml-2 size-4 animate-spin" />
+                    جاري التجديد...
+                  </>
+                ) : (
+                  "تجديد الاشتراك"
+                )}
               </Button>
               <Button
                 className="rounded-full px-5"

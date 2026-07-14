@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/card";
 import { ShoppingCart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getImageUrl } from "@/utils/image-url";
+import { getProductCoverImage } from "@/utils/product-images";
+import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import type { ProductListItem } from "@/api/types/product";
 
@@ -31,6 +32,14 @@ function shortDescription(text: string | null | undefined, max = 45) {
   return `${clean.slice(0, max)}…`;
 }
 
+function getCategoryName(c: any): string {
+  return c?.category?.name ?? c?.name ?? "";
+}
+
+function getCategoryId(c: any, idx: number): string {
+  return c?.category?.id ?? c?.id ?? String(idx);
+}
+
 function getProductCategories(product: ProductListItem) {
   const cats = product.categories ?? [];
   return cats
@@ -39,14 +48,6 @@ function getProductCategories(product: ProductListItem) {
       name: getCategoryName(c),
     }))
     .filter((c) => c.name);
-}
-
-function getCategoryName(c: any): string {
-  return c?.category?.name ?? c?.name ?? "";
-}
-
-function getCategoryId(c: any, idx: number): string {
-  return c?.category?.id ?? c?.id ?? String(idx);
 }
 
 function categoryStyle(name: string) {
@@ -105,46 +106,55 @@ interface ProductCardsProps {
 const ProductCards = ({ products, imageBaseUrl = "" }: ProductCardsProps) => {
   const resolvedBaseUrl = useImageBaseUrl(imageBaseUrl);
 
-  const renderProductCard = (product: ProductListItem) => (
-    <Link key={product.id} to={`/products/${product.id}`}>
-      <Card className="group h-full cursor-pointer gap-y-0 transition-all hover:border-primary/25 hover:shadow-lg">
-        <CardHeader className="pb-4">
-          <div className="relative flex h-40 w-full items-center justify-center overflow-hidden rounded-lg bg-muted/40">
-            {product.image ? (
-              <img
-                src={getImageUrl(product.image, resolvedBaseUrl)}
+  const renderProductCard = (product: ProductListItem) => {
+    const cover = getProductCoverImage(product);
+    return (
+      <Link key={product.id} to={`/products/${product.id}`}>
+        <Card className="group h-full cursor-pointer gap-y-0 transition-all hover:border-primary/25 hover:shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="relative flex h-40 w-full items-center justify-center overflow-hidden rounded-lg bg-muted/40">
+              <AssetImage
+                image={cover}
+                baseUrl={resolvedBaseUrl}
                 alt={product.title}
                 className="h-full w-full object-contain"
+                fallback={
+                  <ShoppingCart className="size-12 rounded-full bg-cyan/20 p-3 text-cyan" />
+                }
               />
-            ) : (
-              <ShoppingCart className="size-12 rounded-full bg-cyan/20 p-3 text-cyan" />
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <CardTitle className="line-clamp-2 text-right leading-8">
-            {product.title}
-          </CardTitle>
-          <p className="line-clamp-1 text-right text-sm text-muted-foreground">
-            {shortDescription(product.description, 60)}
-          </p>
-          {typeof product.rate === "number" ? (
-            <div className="flex items-center gap-1">
-              <Star className="size-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm font-medium">{product.rate.toFixed(1)}</span>
             </div>
-          ) : null}
-          <div className="mb-2 flex flex-wrap gap-2">{renderCategories(product)}</div>
-        </CardContent>
-        <CardFooter className="flex items-center justify-between border-t pt-2">
-          <span className="text-lg font-bold text-primary">
-            {typeof product.price === "number" ? formatPrice(product.price) : "—"}
-          </span>
-          {renderStatus(product.enabled)}
-        </CardFooter>
-      </Card>
-    </Link>
-  );
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <CardTitle className="line-clamp-2 text-right leading-8">
+              {product.title}
+            </CardTitle>
+            <p className="line-clamp-1 text-right text-sm text-muted-foreground">
+              {shortDescription(product.description, 60)}
+            </p>
+            {typeof product.rate === "number" ? (
+              <div className="flex items-center gap-1">
+                <Star className="size-4 fill-yellow-400 text-yellow-400" />
+                <span className="text-sm font-medium">
+                  {product.rate.toFixed(1)}
+                </span>
+              </div>
+            ) : null}
+            <div className="mb-2 flex flex-wrap gap-2">
+              {renderCategories(product)}
+            </div>
+          </CardContent>
+          <CardFooter className="flex items-center justify-between border-t pt-2">
+            <span className="text-lg font-bold text-primary">
+              {typeof product.price === "number"
+                ? formatPrice(product.price)
+                : "—"}
+            </span>
+            {renderStatus(product.enabled)}
+          </CardFooter>
+        </Card>
+      </Link>
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
