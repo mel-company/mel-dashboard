@@ -4,7 +4,22 @@ import './style.css'
 
 
 
-export const FeaturedCard = ({ icon, strokedIcon, title, value, color = "primary" }: { icon: IconSvgElement, strokedIcon?: IconSvgElement, title: string, value: string, color?: "orange" | "yellow" | "primary" }) => {
+export const FeaturedCard = ({
+    icon,
+    strokedIcon,
+    title,
+    value,
+    color = "primary",
+    suffix,
+}: {
+    icon: IconSvgElement
+    strokedIcon?: IconSvgElement
+    title: string
+    value: string
+    color?: "orange" | "yellow" | "primary"
+    /** e.g. "د.ع" for money — omit for counts */
+    suffix?: string
+}) => {
     return (
         <div className={`card ${color}-card`} >
             <div className='p-1 border border-white rounded-full'>
@@ -15,7 +30,10 @@ export const FeaturedCard = ({ icon, strokedIcon, title, value, color = "primary
 
             <div className='text-white'>
                 <p className="title">{title}</p>
-                <p className="value">{value} <span>د.ع</span></p>
+                <p className="value">
+                    {value}
+                    {suffix ? <span> {suffix}</span> : null}
+                </p>
             </div>
             {strokedIcon &&
                 <div className='absolute end-1.5 -top-4 h-full scale-125 opacity-10'>

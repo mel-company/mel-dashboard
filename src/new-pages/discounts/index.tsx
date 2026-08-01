@@ -58,6 +58,7 @@ const DiscountsPage = () => {
               strokedIcon={Money04IconStroked}
               title="سعر الخصم الكلي"
               value={actions.discountStats.totalUsageAmount.toLocaleString("ar-IQ")}
+              suffix="د.ع"
               color="orange"
             />
             <BaseCard
@@ -89,6 +90,7 @@ const DiscountsPage = () => {
               strokedIcon={Money04IconStroked}
               title="إجمالي المبالغ المخصومة"
               value={actions.couponStats.totalDiscountedAmount.toLocaleString("ar-IQ")}
+              suffix="د.ع"
               color="orange"
             />
             <BaseCard

@@ -1,14 +1,16 @@
-
 import {
   useFetchProductStats,
   type ProductStatsSummary,
 } from "@/api/wrappers/product.wrappers";
 import { useFetchStoreStats } from "@/api/wrappers/stats.wrappers";
 import { BaseCard, FeaturedCard } from "@/components/table/top-cards";
-import { BoxIcon, Money04Icon, PackageDeliveredIcon, PackageOpenIcon, PackageProcessIcon } from "@hugeicons-pro/core-bulk-rounded";
-import { Money04Icon as Money04IconStroked } from "@hugeicons-pro/core-stroke-rounded";
-
-
+import {
+  BoxIcon,
+  PackageDeliveredIcon,
+  PackageOpenIcon,
+  PackageProcessIcon,
+} from "@hugeicons-pro/core-bulk-rounded";
+import { BoxIcon as BoxIconStroked } from "@hugeicons-pro/core-stroke-rounded";
 
 function mergeWithStoreFallback(
   stats: ProductStatsSummary | undefined,
@@ -29,66 +31,55 @@ const ProductStatsCards = () => {
   const { data, isError } = useFetchProductStats();
   const { data: storeStats } = useFetchStoreStats();
 
-
-  // if (isLoading) return <StatsSkeleton />;
-
   const stats = mergeWithStoreFallback(data, storeStats?.products);
 
-  const baseCards = [{
-    icon: BoxIcon,
-    title: "إجمالي المنتجات",
-    value: stats.totalProducts.toLocaleString("ar-IQ"),
-    growth: 12.6,
-    color: "default",
-  },
-  {
-    icon: PackageDeliveredIcon,
-    title: "أضافة جديدة",
-    value: stats.newProducts.toLocaleString("ar-IQ"),
-    growth: 12.6,
-    color: "success",
-  },
-  {
-    icon: PackageProcessIcon,
-    title: "قريبة على النفاذ",
-    value: stats.lowStock.toLocaleString("ar-IQ"),
-    growth: 12.6,
-    color: "warning",
-  },
-  {
-    icon: PackageOpenIcon,
-    title: "نفذت الكمية",
-    value: stats.outOfStock.toLocaleString("ar-IQ"),
-    growth: 12.6,
-    color: "danger",
-  }]
-
+  const baseCards = [
+    {
+      icon: PackageDeliveredIcon,
+      title: "أضافة جديدة",
+      value: stats.newProducts.toLocaleString("ar-IQ"),
+      growth: 12.6,
+      color: "success" as const,
+    },
+    {
+      icon: PackageProcessIcon,
+      title: "قريبة على النفاذ",
+      value: stats.lowStock.toLocaleString("ar-IQ"),
+      growth: 12.6,
+      color: "warning" as const,
+    },
+    {
+      icon: PackageOpenIcon,
+      title: "نفذت الكمية",
+      value: stats.outOfStock.toLocaleString("ar-IQ"),
+      growth: 12.6,
+      color: "danger" as const,
+    },
+  ];
 
   if (isError && !storeStats) {
     return null;
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-      {/* <TotalValueCard value={stats.totalValue} /> */}
-
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <FeaturedCard
         title="إجمالي المنتجات"
         value={stats.totalProducts.toLocaleString("ar-IQ")}
-        // trend={stats.trends?.totalProducts}
-        icon={Money04Icon}
-        strokedIcon={Money04IconStroked}
-
+        icon={BoxIcon}
+        strokedIcon={BoxIconStroked}
         color="primary"
       />
-      {baseCards?.map((card, index) => <BaseCard
-        key={index}
-        icon={card.icon}
-        title={card.title}
-        value={card.value}
-        growth={card.growth}
-        color={card.color as any}
-      />)}
+      {baseCards.map((card, index) => (
+        <BaseCard
+          key={index}
+          icon={card.icon}
+          title={card.title}
+          value={card.value}
+          growth={card.growth}
+          color={card.color}
+        />
+      ))}
     </div>
   );
 };
