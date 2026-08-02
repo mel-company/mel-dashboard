@@ -2,6 +2,11 @@ import { useEffect } from "react";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import {
+  DARK_MAP_TILES,
+  LIGHT_MAP_TILES,
+  useResolvedTheme,
+} from "@/hooks/use-resolved-theme";
 
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -31,9 +36,12 @@ type Props = {
 };
 
 const StoreMapPreview = ({ lat, lng }: Props) => {
+  const theme = useResolvedTheme();
+  const tiles = theme === "dark" ? DARK_MAP_TILES : LIGHT_MAP_TILES;
+
   return (
     <MapContainer
-      key={`${lat}-${lng}`}
+      key={`${theme}-${lat}-${lng}`}
       center={[lat, lng]}
       zoom={15}
       className="size-full z-0"
@@ -43,7 +51,7 @@ const StoreMapPreview = ({ lat, lng }: Props) => {
       zoomControl={false}
       attributionControl={false}
     >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <TileLayer url={tiles} />
       <RecenterMap lat={lat} lng={lng} />
       <Marker position={[lat, lng]} icon={pinIcon} />
     </MapContainer>

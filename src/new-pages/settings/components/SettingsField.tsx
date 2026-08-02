@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 import { filterIraqiMobileInput } from "@/utils/helpers";
 
 export const settingsInputClassName =
-  "h-12 rounded-2xl border-0 bg-slate-100 px-4 text-sm text-slate-900 shadow-none ring-0 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/30 focus-visible:ring-offset-0 dark:bg-slate-100 dark:text-slate-900";
+  "h-12 rounded-2xl border-0 bg-slate-100 px-4 text-sm text-slate-900 shadow-none ring-0 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/30 focus-visible:ring-offset-0 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500";
 
 export const settingsTextareaClassName =
-  "min-h-[120px] resize-none rounded-2xl border-0 bg-slate-100 px-4 py-3 text-sm text-slate-900 shadow-none ring-0 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/30 focus-visible:ring-offset-0 dark:bg-slate-100 dark:text-slate-900";
+  "min-h-[120px] resize-none rounded-2xl border-0 bg-slate-100 px-4 py-3 text-sm text-slate-900 shadow-none ring-0 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/30 focus-visible:ring-offset-0 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500";
 
 export const settingsLabelClassName =
   "text-sm font-medium text-slate-500 dark:text-slate-400";
@@ -73,7 +73,7 @@ export const SettingsPhoneInput = ({
 }: SettingsPhoneInputProps) => (
   <div
     className={cn(
-      "flex h-12 items-center gap-2 rounded-2xl bg-slate-100 px-2 focus-within:ring-2 focus-within:ring-sky-500/30 dark:bg-slate-100",
+      "flex h-12 items-center gap-2 rounded-2xl bg-slate-100 px-2 focus-within:ring-2 focus-within:ring-sky-500/30 dark:bg-slate-900",
       className,
     )}
   >
@@ -93,10 +93,10 @@ export const SettingsPhoneInput = ({
       }}
       dir="ltr"
       placeholder="7xx xxx xxxx"
-      className="min-w-0 flex-1 border-0 bg-transparent px-2 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+      className="min-w-0 flex-1 border-0 bg-transparent px-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
       {...props}
     />
-    <div className="flex shrink-0 items-center gap-1.5 rounded-xl bg-sky-100 px-1.5 py-2 text-sm font-medium text-slate-600 -mr-3 ">
+    <div className="flex shrink-0 items-center gap-1.5 rounded-xl bg-sky-100 px-1.5 py-2 text-sm font-medium text-slate-600 -mr-3 dark:bg-sky-950/50 dark:text-sky-300">
       <span dir="ltr">+964</span>
       <span aria-hidden>🇮🇶</span>
     </div>

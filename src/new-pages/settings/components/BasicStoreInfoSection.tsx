@@ -170,7 +170,7 @@ const BasicStoreInfoSection = ({
                 <SettingsLabel className="mb-0">موقع المتجر</SettingsLabel>
               </div>
               <div
-                className="relative h-44 cursor-pointer overflow-hidden rounded-xl bg-slate-100 sm:h-48"
+                className="relative h-44 cursor-pointer overflow-hidden rounded-xl bg-slate-100 sm:h-48 dark:bg-slate-900 dark:ring-1 dark:ring-slate-800"
                 role="button"
                 tabIndex={0}
                 onClick={openLocationDialog}
@@ -188,7 +188,7 @@ const BasicStoreInfoSection = ({
                   type="button"
                   variant="secondary"
                   size="sm"
-                  className="absolute bottom-2 left-2 z-10 rounded-lg bg-sky-100 px-3 text-xs text-sky-600 hover:bg-sky-200"
+                  className="absolute bottom-2 left-2 z-10 rounded-lg bg-white/95 px-3 text-xs text-sky-700 shadow-sm hover:bg-white dark:bg-slate-900/95 dark:text-sky-300 dark:hover:bg-slate-900"
                   onClick={(e) => {
                     e.stopPropagation();
                     openLocationDialog();

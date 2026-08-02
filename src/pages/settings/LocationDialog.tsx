@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, MapPin, Search, X } from "lucide-react";
-import { toast } from "sonner";
 import {
   MapContainer,
   Marker,
@@ -17,6 +16,13 @@ import {
   SettingsTextarea,
 } from "@/new-pages/settings/components/SettingsField";
 import { cn } from "@/lib/utils";
+import { useFetchStates } from "@/api/wrappers/state.wrappers";
+import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
+import {
+  DARK_MAP_TILES,
+  LIGHT_MAP_TILES,
+  useResolvedTheme,
+} from "@/hooks/use-resolved-theme";
 
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -35,11 +41,28 @@ const pinIcon = new L.Icon({
 const DEFAULT_LAT = 33.3152;
 const DEFAULT_LNG = 44.3661;
 
-type GeocodeResult = {
-  id: string;
-  display_name: string;
-  lat: number;
-  lon: number;
+const STATE_COORDS: Record<string, [number, number]> = {
+  بغداد: [33.3152, 44.3661],
+  البصرة: [30.5081, 47.7835],
+  نينوى: [36.3489, 43.1575],
+  أربيل: [36.1911, 44.0092],
+  اربيل: [36.1911, 44.0092],
+  السليمانية: [35.555, 45.435],
+  دهوك: [36.867, 42.988],
+  كركوك: [35.4681, 44.3922],
+  الأنبار: [33.425, 43.3],
+  الانبار: [33.425, 43.3],
+  ديالى: [33.75, 44.65],
+  واسط: [32.5, 45.83],
+  بابل: [32.47, 44.42],
+  كربلاء: [32.616, 44.025],
+  النجف: [32.0, 44.33],
+  القادسية: [31.99, 44.92],
+  المثنى: [31.32, 45.28],
+  "ذي قار": [31.05, 46.26],
+  ميسان: [31.84, 47.14],
+  "صلاح الدين": [34.6, 43.68],
+  حلبجة: [35.18, 45.98],
 };
 
 type Props = {
@@ -55,167 +78,34 @@ type Props = {
   }) => void;
 };
 
-function formatPhotonAddress(properties: Record<string, string | undefined>) {
-  const parts = [
-    properties.name,
-    properties.street,
-    properties.housenumber,
-    properties.suburb,
-    properties.district,
-    properties.locality,
-    properties.neighbourhood,
-    properties.city,
-    properties.town,
-    properties.county,
-    properties.state,
-    properties.country,
-  ].filter(Boolean);
-
-  return [...new Set(parts)].join("، ");
+function getDisplayName(name: unknown): string {
+  if (!name) return "";
+  if (typeof name === "string") return name;
+  if (typeof name === "object") {
+    const n = name as Record<string, string>;
+    return n.ar || n.arabic || n.en || n.english || "";
+  }
+  return String(name);
 }
 
-async function searchNominatim(query: string): Promise<GeocodeResult[]> {
-  const params = new URLSearchParams({
-    format: "jsonv2",
-    q: query,
-    countrycodes: "iq",
-    "accept-language": "ar",
-    limit: "6",
-    addressdetails: "1",
-  });
-
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-    { headers: { Accept: "application/json" } },
+function resolveStateCoords(stateName: string): [number, number] {
+  const trimmed = stateName.trim();
+  if (STATE_COORDS[trimmed]) return STATE_COORDS[trimmed];
+  const key = Object.keys(STATE_COORDS).find(
+    (k) => trimmed.includes(k) || k.includes(trimmed),
   );
-  if (!res.ok) throw new Error("nominatim search failed");
-
-  const data = await res.json();
-  if (!Array.isArray(data)) return [];
-
-  return data.map(
-    (
-      item: {
-        place_id?: number | string;
-        display_name?: string;
-        lat?: string;
-        lon?: string;
-      },
-      index: number,
-    ) => ({
-      id: String(item.place_id ?? `nom-${index}`),
-      display_name: item.display_name?.trim() || query,
-      lat: Number(item.lat),
-      lon: Number(item.lon),
-    }),
-  ).filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon));
+  return key ? STATE_COORDS[key] : [DEFAULT_LAT, DEFAULT_LNG];
 }
 
-async function searchPhoton(query: string): Promise<GeocodeResult[]> {
-  const params = new URLSearchParams({
-    q: query,
-    limit: "6",
-    lang: "ar",
-    lat: String(DEFAULT_LAT),
-    lon: String(DEFAULT_LNG),
-  });
-
-  const res = await fetch(`https://photon.komoot.io/api/?${params.toString()}`);
-  if (!res.ok) throw new Error("photon search failed");
-
-  const data = await res.json();
-  return (data.features ?? []).map(
-    (
-      feature: {
-        properties: Record<string, string | undefined> & { osm_id?: number };
-        geometry: { coordinates: [number, number] };
-      },
-      index: number,
-    ) => ({
-      id: String(feature.properties.osm_id ?? `ph-${index}`),
-      display_name:
-        formatPhotonAddress(feature.properties) ||
-        feature.properties.name ||
-        query,
-      lat: feature.geometry.coordinates[1],
-      lon: feature.geometry.coordinates[0],
-    }),
-  );
-}
-
-async function searchPlaces(query: string): Promise<GeocodeResult[]> {
-  // Nominatim first — better Arabic / Iraq place coverage
-  try {
-    const nominatim = await searchNominatim(query);
-    if (nominatim.length > 0) return nominatim;
-  } catch {
-    // fallback below
+function normalizeList(data: unknown): any[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+    if (Array.isArray(obj.data)) return obj.data;
+    if (Array.isArray(obj.states)) return obj.states;
+    if (Array.isArray(obj.regions)) return obj.regions;
   }
-
-  try {
-    return await searchPhoton(query);
-  } catch {
-    return [];
-  }
-}
-
-async function reverseGeocodePhoton(
-  lat: number,
-  lng: number,
-): Promise<string | null> {
-  const res = await fetch(
-    `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=ar`,
-  );
-  if (!res.ok) return null;
-
-  const data = await res.json();
-  const feature = data.features?.[0];
-  if (!feature?.properties) return null;
-
-  return formatPhotonAddress(feature.properties) || null;
-}
-
-async function reverseGeocodeNominatim(
-  lat: number,
-  lng: number,
-): Promise<string | null> {
-  const params = new URLSearchParams({
-    format: "jsonv2",
-    lat: String(lat),
-    lon: String(lng),
-    "accept-language": "ar",
-    addressdetails: "1",
-  });
-
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?${params.toString()}`,
-    { headers: { Accept: "application/json" } },
-  );
-  if (!res.ok) return null;
-
-  const data = await res.json();
-  if (typeof data?.display_name === "string" && data.display_name.trim()) {
-    return data.display_name.trim();
-  }
-  return null;
-}
-
-async function reverseGeocodePlace(
-  lat: number,
-  lng: number,
-): Promise<string | null> {
-  try {
-    const photon = await reverseGeocodePhoton(lat, lng);
-    if (photon) return photon;
-  } catch {
-    /* try nominatim */
-  }
-
-  try {
-    return await reverseGeocodeNominatim(lat, lng);
-  } catch {
-    return null;
-  }
+  return [];
 }
 
 function MapClickHandler({
@@ -296,16 +186,42 @@ const LocationDialog = ({
   address,
   onConfirm,
 }: Props) => {
+  const theme = useResolvedTheme();
+  const tiles = theme === "dark" ? DARK_MAP_TILES : LIGHT_MAP_TILES;
+
   const [draftLat, setDraftLat] = useState(DEFAULT_LAT);
   const [draftLng, setDraftLng] = useState(DEFAULT_LNG);
   const [mapZoom, setMapZoom] = useState(14);
   const [draftAddress, setDraftAddress] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<GeocodeResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  const [selectedStateId, setSelectedStateId] = useState("");
+  const [selectedRegionId, setSelectedRegionId] = useState("");
+  const [listFilter, setListFilter] = useState("");
   const [shouldRecenter, setShouldRecenter] = useState(false);
-  const reverseRequestId = useRef(0);
+
+  const { data: statesData, isLoading: isLoadingStates } = useFetchStates(
+    undefined,
+    open,
+  );
+  const { data: regionsData, isLoading: isLoadingRegions } =
+    useFetchRegionsByState(selectedStateId, open && !!selectedStateId);
+
+  const states = useMemo(() => normalizeList(statesData), [statesData]);
+  const regions = useMemo(() => normalizeList(regionsData), [regionsData]);
+
+  const selectedState = states.find((s: any) => s.id === selectedStateId);
+  const selectedStateName = getDisplayName(selectedState?.name);
+
+  const filteredStates = useMemo(() => {
+    const q = listFilter.trim();
+    if (!q || selectedStateId) return states;
+    return states.filter((s: any) => getDisplayName(s.name).includes(q));
+  }, [states, listFilter, selectedStateId]);
+
+  const filteredRegions = useMemo(() => {
+    const q = listFilter.trim();
+    if (!q) return regions;
+    return regions.filter((r: any) => getDisplayName(r.name).includes(q));
+  }, [regions, listFilter]);
 
   useEffect(() => {
     if (!open) return;
@@ -313,73 +229,42 @@ const LocationDialog = ({
     setDraftLng(longitude ?? DEFAULT_LNG);
     setMapZoom(latitude != null && longitude != null ? 15 : 14);
     setDraftAddress(address);
-    setSearchQuery("");
-    setSearchResults([]);
+    setSelectedStateId("");
+    setSelectedRegionId("");
+    setListFilter("");
     setShouldRecenter(false);
   }, [open, latitude, longitude, address]);
 
-  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
-    const requestId = ++reverseRequestId.current;
-    setIsReverseGeocoding(true);
-    try {
-      const placeName = await reverseGeocodePlace(lat, lng);
-      if (requestId !== reverseRequestId.current) return;
+  useEffect(() => {
+    setSelectedRegionId("");
+    setListFilter("");
+  }, [selectedStateId]);
 
-      setDraftAddress(
-        placeName || `موقع محدد (${lat.toFixed(5)}, ${lng.toFixed(5)})`,
-      );
-    } catch {
-      if (requestId !== reverseRequestId.current) return;
-      setDraftAddress(`موقع محدد (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
-    } finally {
-      if (requestId === reverseRequestId.current) {
-        setIsReverseGeocoding(false);
-      }
-    }
+  const applyPlace = useCallback((stateName: string, regionName?: string) => {
+    const [lat, lng] = resolveStateCoords(stateName);
+    const label = regionName ? `${regionName}، ${stateName}` : stateName;
+    setShouldRecenter(true);
+    setDraftLat(lat);
+    setDraftLng(lng);
+    setMapZoom(regionName ? 14 : 11);
+    setDraftAddress(label);
   }, []);
 
-  const handlePositionChange = useCallback(
-    (lat: number, lng: number) => {
-      setShouldRecenter(false);
-      setDraftLat(lat);
-      setDraftLng(lng);
-      setDraftAddress("");
-      void reverseGeocode(lat, lng);
-    },
-    [reverseGeocode],
-  );
-
-  const handleSearch = useCallback(async () => {
-    const query = searchQuery.trim();
-    if (!query) {
-      toast.error("اكتب اسم المنطقة أو العنوان للبحث");
-      return;
-    }
-
-    setIsSearching(true);
-    setSearchResults([]);
-    try {
-      const results = await searchPlaces(query);
-      setSearchResults(results);
-      if (results.length === 0) {
-        toast.error("لم يتم العثور على نتائج — جرّب اسم أوضح مثل: بغداد الكرادة");
-      }
-    } catch {
-      toast.error("تعذر البحث عن العنوان. تحقق من الاتصال وحاول مرة أخرى");
-    } finally {
-      setIsSearching(false);
-    }
-  }, [searchQuery]);
-
-  const handleSelectResult = (result: GeocodeResult) => {
-    setShouldRecenter(true);
-    setDraftLat(result.lat);
-    setDraftLng(result.lon);
-    setMapZoom(16);
-    setDraftAddress(result.display_name);
-    setSearchResults([]);
-    setSearchQuery("");
+  const handleSelectState = (state: any) => {
+    setSelectedStateId(state.id);
+    applyPlace(getDisplayName(state.name));
   };
+
+  const handleSelectRegion = (region: any) => {
+    setSelectedRegionId(region.id);
+    applyPlace(selectedStateName || "العراق", getDisplayName(region.name));
+  };
+
+  const handlePositionChange = useCallback((lat: number, lng: number) => {
+    setShouldRecenter(false);
+    setDraftLat(lat);
+    setDraftLng(lng);
+  }, []);
 
   const handleConfirm = () => {
     onConfirm({
@@ -390,101 +275,155 @@ const LocationDialog = ({
     onOpenChange(false);
   };
 
-  const busy = isSearching || isReverseGeocoding;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         dir="rtl"
         showCloseButton={false}
-        className="max-h-[90vh] gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl sm:max-w-xl"
+        className={cn(
+          "max-h-[90vh] gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl sm:max-w-xl",
+          "bg-white dark:bg-slate-950",
+        )}
       >
         <div className="max-h-[90vh] overflow-y-auto p-5 sm:p-6">
-          {/* Header — نفس ثيم الإعدادات */}
           <div className="mb-5 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-[#1a2b5a] hover:bg-violet-200"
+              className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-[#1a2b5a] hover:bg-violet-200 dark:bg-violet-950/60 dark:text-violet-200 dark:hover:bg-violet-900/70"
               aria-label="إغلاق"
             >
               <X className="size-4" />
             </button>
             <div className="flex items-center gap-2.5">
-              <DialogTitle className="text-lg font-bold text-[#1a2b5a]">
+              <DialogTitle className="text-lg font-bold tracking-tight text-[#1a2b5a] dark:text-slate-50">
                 تغيير موقع المتجر
               </DialogTitle>
-              <div className="flex size-10 items-center justify-center rounded-2xl bg-sky-100 text-[#00b7ff]">
+              <div className="flex size-10 items-center justify-center rounded-2xl bg-sky-100 text-[#00b7ff] dark:bg-sky-950/50 dark:text-sky-300">
                 <MapPin className="size-5" strokeWidth={2} />
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <SettingsField label="بحث عن عنوان" htmlFor="location-search">
-              <div className="flex gap-2">
-                <SettingsInput
-                  id="location-search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void handleSearch();
-                    }
-                  }}
-                  placeholder="مثال: بغداد، الكرادة"
-                  disabled={isSearching}
-                  className="flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => void handleSearch()}
-                  disabled={isSearching}
-                  className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#00b7ff] px-4 text-sm font-semibold text-white hover:bg-[#00a3e6] disabled:opacity-50"
-                >
-                  {isSearching ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Search className="size-4" />
-                  )}
-                  بحث
-                </button>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  {selectedStateId ? "اختر المنطقة" : "اختر المحافظة"}
+                </p>
+                {selectedStateId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedStateId("");
+                      setSelectedRegionId("");
+                      setListFilter("");
+                    }}
+                    className="text-xs font-semibold text-[#00b7ff] hover:underline dark:text-sky-400"
+                  >
+                    تغيير المحافظة
+                  </button>
+                )}
               </div>
-            </SettingsField>
 
-            {searchResults.length > 0 && (
-              <ul className="max-h-40 overflow-y-auto rounded-2xl bg-slate-50 dark:bg-slate-900">
-                {searchResults.map((result) => (
-                  <li key={result.id}>
-                    <button
-                      type="button"
-                      className={cn(
-                        "w-full px-4 py-2.5 text-right text-sm text-[#1a2b5a]",
-                        "hover:bg-sky-50 dark:text-blue-100 dark:hover:bg-slate-800",
-                      )}
-                      onClick={() => handleSelectResult(result)}
-                    >
-                      {result.display_name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+              <div className="relative">
+                <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                <SettingsInput
+                  value={listFilter}
+                  onChange={(e) => setListFilter(e.target.value)}
+                  placeholder={
+                    selectedStateId ? "فلتر المناطق..." : "فلتر المحافظات..."
+                  }
+                  className="pr-10"
+                />
+              </div>
 
-            <div className="relative h-72 overflow-hidden rounded-2xl border border-slate-100 sm:h-80 dark:border-slate-800">
+              <div className="max-h-44 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/80">
+                {!selectedStateId ? (
+                  isLoadingStates ? (
+                    <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-400 dark:text-slate-500">
+                      <Loader2 className="size-4 animate-spin" />
+                      جاري تحميل المحافظات...
+                    </div>
+                  ) : filteredStates.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+                      لا توجد محافظات
+                    </p>
+                  ) : (
+                    filteredStates.map((state: any) => (
+                      <button
+                        key={state.id}
+                        type="button"
+                        onClick={() => handleSelectState(state)}
+                        className="w-full border-b border-slate-100/80 px-4 py-2.5 text-right text-sm font-medium text-slate-800 last:border-0 hover:bg-sky-50 dark:border-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-800"
+                      >
+                        {getDisplayName(state.name)}
+                      </button>
+                    ))
+                  )
+                ) : isLoadingRegions ? (
+                  <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-400 dark:text-slate-500">
+                    <Loader2 className="size-4 animate-spin" />
+                    جاري تحميل المناطق...
+                  </div>
+                ) : filteredRegions.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+                    لا توجد مناطق لهذه المحافظة
+                  </p>
+                ) : (
+                  filteredRegions.map((region: any) => {
+                    const active = region.id === selectedRegionId;
+                    return (
+                      <button
+                        key={region.id}
+                        type="button"
+                        onClick={() => handleSelectRegion(region)}
+                        className={cn(
+                          "w-full border-b border-slate-100/80 px-4 py-2.5 text-right text-sm font-medium last:border-0 dark:border-slate-800/80",
+                          active
+                            ? "bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200"
+                            : "text-slate-800 hover:bg-sky-50 dark:text-slate-100 dark:hover:bg-slate-800",
+                        )}
+                      >
+                        {getDisplayName(region.name)}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+
+              {selectedStateName && (
+                <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+                  المحافظة:{" "}
+                  <span className="font-medium text-slate-600 dark:text-slate-300">
+                    {selectedStateName}
+                  </span>
+                  {selectedRegionId ? (
+                    <>
+                      {" · "}
+                      المنطقة:{" "}
+                      <span className="font-medium text-slate-600 dark:text-slate-300">
+                        {getDisplayName(
+                          regions.find((r: any) => r.id === selectedRegionId)
+                            ?.name,
+                        )}
+                      </span>
+                    </>
+                  ) : null}
+                </p>
+              )}
+            </div>
+
+            <div className="relative h-64 overflow-hidden rounded-2xl border border-slate-200/80 sm:h-72 dark:border-slate-800">
               {open && (
                 <MapContainer
-                  key={`map-${open}`}
+                  key={`map-${theme}-${open}`}
                   center={[draftLat, draftLng]}
                   zoom={mapZoom}
                   className="size-full z-0"
                   scrollWheelZoom
                 >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
+                  <TileLayer url={tiles} />
                   <MapResizeFix />
                   <RecenterMap
                     lat={draftLat}
@@ -506,36 +445,24 @@ const LocationDialog = ({
                 id="location-address"
                 value={draftAddress}
                 onChange={(e) => setDraftAddress(e.target.value)}
-                rows={3}
-                placeholder={
-                  isReverseGeocoding
-                    ? "جاري جلب اسم الموقع..."
-                    : "أدخل عنوان المتجر أو اسحب الدبوس"
-                }
-                className="min-h-[88px]"
+                rows={2}
+                placeholder="اختر من القائمة أو عدّل العنوان يدوياً"
+                className="min-h-[72px]"
               />
-              {isReverseGeocoding && (
-                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-400">
-                  <Loader2 className="size-3 animate-spin" />
-                  جاري تحديث العنوان من الموقع...
-                </p>
-              )}
             </SettingsField>
 
             <div className="grid grid-cols-2 gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                disabled={busy}
-                className="h-12 rounded-2xl bg-slate-100 text-sm font-semibold text-[#1a2b5a] hover:bg-slate-200 disabled:opacity-50"
+                className="h-12 rounded-2xl bg-slate-100 text-sm font-semibold text-[#1a2b5a] hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 الغاء
               </button>
               <button
                 type="button"
                 onClick={handleConfirm}
-                disabled={busy}
-                className="h-12 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6] disabled:opacity-50"
+                className="h-12 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6]"
               >
                 تأكيد الموقع
               </button>
