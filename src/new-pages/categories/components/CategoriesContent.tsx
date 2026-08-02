@@ -51,9 +51,9 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
         />
     ) : (
         <div className="space-y-6">
-            <div className="bg-linear-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">مكتبة الفئات</h3>
-                <p className="text-sm text-gray-600">تصفح وإدارة جميع فئات المنتجات في متجرك</p>
+            <div className="rounded-lg border border-blue-100 bg-linear-to-r from-blue-50 to-indigo-50 p-6 dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
+                <h3 className="mb-2 text-lg font-semibold text-gray-800 dark:text-slate-100">مكتبة الفئات</h3>
+                <p className="text-sm text-gray-600 dark:text-slate-400">تصفح وإدارة جميع فئات المنتجات في متجرك</p>
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -71,7 +71,7 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
                     {actions.hasNextPage && (
                         <Button
                             variant="outline"
-                            className="gap-2 bg-white border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                            className="gap-2 border-blue-200 bg-white text-blue-600 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 dark:border-sky-800 dark:bg-slate-900 dark:text-sky-300 dark:hover:border-sky-700 dark:hover:bg-sky-500/10"
                             onClick={() => actions.fetchNextPage()}
                             disabled={actions.isFetchingNextPage}
                         >
@@ -107,10 +107,10 @@ const CategoryCard = ({
             <Card className={cn(
                 "group gap-y-0 h-full cursor-pointer transition-all duration-300",
                 "border-0 shadow-lg hover:shadow-xl overflow-hidden",
-                "hover:scale-105 hover:border-blue-200"
+                "hover:scale-105 hover:border-blue-200 dark:hover:border-sky-700"
             )}>
                 <CardHeader className="pb-4">
-                    <div className="relative h-48 flex items-center justify-center w-full overflow-hidden bg-linear-to-br from-blue-50 to-indigo-100">
+                    <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-linear-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
                         <AssetImage
                             image={category?.image}
                             baseUrl={resolvedBaseUrl}
@@ -131,10 +131,10 @@ const CategoryCard = ({
                 </CardHeader>
                 <CardContent className="space-y-4 p-6">
                     <div className="space-y-2">
-                        <CardTitle className="line-clamp-1 text-right text-lg font-semibold text-gray-900">
+                        <CardTitle className="line-clamp-1 text-right text-lg font-semibold text-gray-900 dark:text-slate-100">
                             {category.name}
                         </CardTitle>
-                        <p className="text-sm text-gray-600 line-clamp-2 text-right">
+                        <p className="line-clamp-2 text-right text-sm text-gray-600 dark:text-slate-400">
                             {category.description}
                         </p>
                     </div>
@@ -142,7 +142,7 @@ const CategoryCard = ({
                         {category.enabled ? (
                             <Badge
                                 variant="default"
-                                className="bg-green-100 text-green-800 border-green-200 gap-1 text-sm font-medium"
+                                className="gap-1 border-green-200 bg-green-100 text-sm font-medium text-green-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300"
                             >
                                 <CheckCircle2 className="size-3" />
                                 مفعّل
@@ -150,28 +150,28 @@ const CategoryCard = ({
                         ) : (
                             <Badge
                                 variant="outline"
-                                className="bg-red-100 text-red-800 border-red-200 text-sm font-medium"
+                                className="border-red-200 bg-red-100 text-sm font-medium text-red-800 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300"
                             >
                                 معطّل
                             </Badge>
                         )}
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            <Package className="size-3 mr-1" />
+                        <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 dark:border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-300">
+                            <Package className="mr-1 size-3" />
                             {category._count?.products ?? 0} منتج
                         </Badge>
                     </div>
                 </CardContent>
-                <CardFooter className="flex items-center justify-between border-t bg-gray-50 p-4">
+                <CardFooter className="flex items-center justify-between border-t bg-gray-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
                     <div className="flex items-center gap-2">
                         <TrendingUp className="size-4 text-green-500" />
-                        <span className="text-sm font-medium text-gray-700">
+                        <span className="text-sm font-medium text-gray-700 dark:text-slate-300">
                             نشط
                         </span>
                     </div>
                     <Button
                         variant="outline"
                         size="sm"
-                        className="bg-white border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                        className="border-blue-200 bg-white text-blue-600 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 dark:border-sky-800 dark:bg-slate-900 dark:text-sky-300 dark:hover:border-sky-700 dark:hover:bg-sky-500/10"
                     >
                         عرض التفاصيل
                     </Button>

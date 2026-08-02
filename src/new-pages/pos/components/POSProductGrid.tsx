@@ -28,9 +28,9 @@ const POSProductGrid = ({
   loadMoreRef,
 }: POSProductGridProps) => {
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-5 py-4">
-        <h2 className="text-lg font-bold text-blue-950">المنتجات</h2>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-transparent bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
+      <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+        <h2 className="text-lg font-bold text-blue-950 dark:text-slate-100">المنتجات</h2>
         <p className="text-sm text-muted-foreground">
           {products.length > 0 ? `${products.length} منتج` : "لا توجد منتجات"}
         </p>

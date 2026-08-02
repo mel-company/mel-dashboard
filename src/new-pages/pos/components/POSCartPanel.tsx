@@ -30,18 +30,18 @@ const POSCartPanel = ({
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-transparent bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <div className="flex size-10 items-center justify-center rounded-full bg-sky-50 text-sky-600">
+            <div className="flex size-10 items-center justify-center rounded-full bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300">
               <ShoppingCart className="size-5" />
             </div>
             <div className="text-right">
-              <h2 className="text-lg font-bold text-blue-950">سلة المشتريات</h2>
+              <h2 className="text-lg font-bold text-blue-950 dark:text-slate-100">سلة المشتريات</h2>
               <p className="text-xs text-muted-foreground">راجع العناصر قبل الإتمام</p>
             </div>
           </div>
-          <span className="rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-700 tabular-nums">
+          <span className="rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-700 tabular-nums dark:bg-sky-500/20 dark:text-sky-300">
             {itemCount}
           </span>
         </div>
@@ -142,7 +142,7 @@ const POSCartPanel = ({
       </div>
 
       {cart.length > 0 ? (
-        <div className="rounded-3xl bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-transparent bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">عدد العناصر</span>

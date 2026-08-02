@@ -77,12 +77,12 @@ const CreateTicketPage = () => {
   };
 
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+    <div className="rounded-3xl border border-transparent bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
+      <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
         <button
           type="button"
           onClick={() => navigate("/tickets")}
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 transition-colors hover:bg-sky-100"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 transition-colors hover:bg-sky-100 dark:bg-sky-500/15 dark:text-sky-300 dark:hover:bg-sky-500/25"
           aria-label="إغلاق"
         >
           <X className="size-5" />

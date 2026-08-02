@@ -293,7 +293,7 @@ const Products = () => {
             return (
               <TableRow
                 key={product.id}
-                className="cursor-pointer"
+                className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/70"
                 onClick={() => navigate(`/products/${product.id}`)}
               >
                 <TableCell className={cn(tdClass, "text-muted-foreground")}>
@@ -538,7 +538,7 @@ const Products = () => {
               size="sm"
               className={cn(
                 "h-9 gap-1.5 rounded-lg px-3",
-                viewMode === "table" && "bg-white shadow-sm",
+                viewMode === "table" && "bg-white shadow-sm dark:bg-slate-900",
               )}
               onClick={() => handleViewModeChange("table")}
             >
@@ -550,7 +550,7 @@ const Products = () => {
               size="sm"
               className={cn(
                 "h-9 gap-1.5 rounded-lg px-3",
-                viewMode === "cards" && "bg-white shadow-sm",
+                viewMode === "cards" && "bg-white shadow-sm dark:bg-slate-900",
               )}
               onClick={() => handleViewModeChange("cards")}
             >

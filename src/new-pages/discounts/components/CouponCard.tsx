@@ -20,7 +20,7 @@ const CouponCard = ({ coupon, onClick }: CouponCardProps) => {
     <button
       type="button"
       onClick={onClick}
-      className="group flex h-full w-full flex-col rounded-3xl border border-slate-100 bg-white p-4 text-right shadow-sm transition-all hover:border-sky-200 hover:shadow-md"
+      className="group flex h-full w-full flex-col rounded-3xl border border-slate-100 bg-white p-4 text-right shadow-sm transition-all hover:border-sky-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-700"
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <Badge
@@ -29,21 +29,21 @@ const CouponCard = ({ coupon, onClick }: CouponCardProps) => {
           {status.label}
         </Badge>
         <div className="relative flex size-16 shrink-0 items-center justify-center">
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-50" />
-          <span className="relative text-xl font-black text-amber-600">
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-500/20 dark:to-orange-500/10" />
+          <span className="relative text-xl font-black text-amber-600 dark:text-amber-300">
             {formatCouponValue(coupon)}
           </span>
         </div>
       </div>
 
-      <h3 className="mb-1 line-clamp-1 text-base font-bold text-blue-950" dir="ltr">
+      <h3 className="mb-1 line-clamp-1 text-base font-bold text-blue-950 dark:text-slate-100" dir="ltr">
         {coupon.code}
       </h3>
-      <p className="mb-4 line-clamp-2 min-h-[2.5rem] text-sm leading-relaxed text-slate-500">
+      <p className="mb-4 line-clamp-2 min-h-[2.5rem] text-sm leading-relaxed text-slate-500 dark:text-slate-400">
         {coupon.description || "—"}
       </p>
 
-      <div className="mt-auto space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
+      <div className="mt-auto space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
         <p>استُخدم {formatCouponUsage(coupon)}</p>
         <p>
           من {formatCouponDate(coupon.startsAt)} إلى{" "}

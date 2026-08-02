@@ -73,19 +73,19 @@ const CategoryTable = ({ categories, refetch, imageBaseUrl = "" }: CategoryTable
   const paginatedCategories = categories.slice(startIndex, endIndex);
 
   return (
-    <Card className="border-0 shadow-lg overflow-hidden">
+    <Card className="overflow-hidden border-0 shadow-lg dark:border dark:border-slate-800">
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader className="bg-gray-50">
+          <TableHeader className="bg-gray-50 dark:bg-slate-900">
             <TableRow>
-              <TableHead className="text-right font-semibold text-gray-700"></TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">الصورة</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">معلومات الفئات</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">المعرف</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">الكمية</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">نوع الفئة</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">الحالة</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700">العمليات</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200"></TableHead>
+              <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">الصورة</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">معلومات الفئات</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">المعرف</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">الكمية</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">نوع الفئة</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">الحالة</TableHead>
+              <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">العمليات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -101,7 +101,7 @@ const CategoryTable = ({ categories, refetch, imageBaseUrl = "" }: CategoryTable
           </TableBody>
         </Table>
       </div>
-      <div className="p-4 border-t">
+      <div className="border-t border-slate-100 p-4 dark:border-slate-800">
         <Pagination
           totalPages={totalPages}
           activePage={activePage}
@@ -176,43 +176,43 @@ const CategoryTableRow = ({ category, refetch, onDeleteModal, imageBaseUrl = "" 
 
   return (
     <TableRow className={cn(
-      "hover:bg-gray-50 cursor-pointer transition-all duration-200",
-      "border-b border-gray-100"
+      "cursor-pointer border-b border-gray-100 transition-colors duration-200",
+      "hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/80",
     )}>
       <TableCell>
-        <div className="w-8 text-center">
+        <div className="w-8 text-center text-slate-700 dark:text-slate-300">
           <span>1</span>
         </div>
       </TableCell>
       <TableCell className="w-16">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
           <AssetImage
             image={data.image}
             baseUrl={resolvedBaseUrl}
             alt={data.name}
             className="block h-12 w-12 rounded-lg object-cover"
-            fallback={<Folder className="size-6 text-slate-600" />}
+            fallback={<Folder className="size-6 text-slate-600 dark:text-slate-400" />}
           />
         </div>
       </TableCell>
       <TableCell>
         <div>
-          <div className="font-medium text-gray-900">{data.name}</div>
-          <div className="text-sm text-gray-500">{data.description || "لا يوجد وصف"}</div>
+          <div className="font-medium text-gray-900 dark:text-slate-100">{data.name}</div>
+          <div className="text-sm text-gray-500 dark:text-slate-400">{data.description || "لا يوجد وصف"}</div>
         </div>
       </TableCell>
       <TableCell>
-        <div className="text-sm text-gray-600 max-w-xs">
+        <div className="max-w-xs text-sm text-gray-600 dark:text-slate-400">
           #{String(data.id).slice(0, 8)}
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200">
           {data._count?.products ?? 0}
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200">
           رئيسي
         </div>
       </TableCell>

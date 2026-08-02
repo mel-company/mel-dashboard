@@ -56,18 +56,18 @@ const TicketRow = ({ ticket, rowIndex }: TicketRowProps) => {
 
   return (
     <TableRow
-      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/80"
+      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-900/80"
       onClick={() => navigate(`/tickets/${ticket.id}`)}
     >
       <TableCell className={cn(tdClass, "w-14 text-muted-foreground")}>
-        <span className="text-sm font-semibold tabular-nums text-slate-700">
+        <span className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-300">
           {String(rowIndex + 1).padStart(2, "0")}
         </span>
       </TableCell>
       <TableCell className={tdClass}>
-        <p className="font-semibold text-slate-900">{ticket.title ?? "—"}</p>
+        <p className="font-semibold text-slate-900 dark:text-slate-100">{ticket.title ?? "—"}</p>
         {ticket.description && (
-          <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
+          <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
             {ticket.description}
           </p>
         )}
@@ -76,7 +76,7 @@ const TicketRow = ({ ticket, rowIndex }: TicketRowProps) => {
         <Badge color="default">{getTicketTypeLabel(ticket.type)}</Badge>
       </TableCell>
       <TableCell className={tdClass}>
-        <span className="text-sm text-slate-600">
+        <span className="text-sm text-slate-600 dark:text-slate-400">
           {getDepartmentLabel(ticket.department)}
         </span>
       </TableCell>
@@ -85,7 +85,7 @@ const TicketRow = ({ ticket, rowIndex }: TicketRowProps) => {
           {getStatusLabel(ticket.status)}
         </Badge>
       </TableCell>
-      <TableCell className={cn(tdClass, "text-sm text-slate-500")}>
+      <TableCell className={cn(tdClass, "text-sm text-slate-500 dark:text-slate-400")}>
         {formatDate(ticket.createdAt)}
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>

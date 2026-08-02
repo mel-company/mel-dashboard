@@ -34,29 +34,29 @@ const CouponRow = ({
 
   return (
     <TableRow
-      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/80"
+      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-900/80"
       onClick={onView}
     >
       <TableCell className={cn(tdClass, "w-14 text-muted-foreground")}>
-        <span className="text-sm font-semibold tabular-nums text-slate-700">
+        <span className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-300">
           {String(rowIndex + 1).padStart(2, "0")}
         </span>
       </TableCell>
       <TableCell className={tdClass}>
-        <p className="font-semibold text-slate-900" dir="ltr">
+        <p className="font-semibold text-slate-900 dark:text-slate-100" dir="ltr">
           {coupon.code}
         </p>
-        <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
+        <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
           {coupon.description || "—"}
         </p>
       </TableCell>
-      <TableCell className={cn(tdClass, "font-bold text-amber-600")}>
+      <TableCell className={cn(tdClass, "font-bold text-amber-600 dark:text-amber-300")}>
         {formatCouponValue(coupon)}
       </TableCell>
-      <TableCell className={cn(tdClass, "text-sm tabular-nums text-slate-600")}>
+      <TableCell className={cn(tdClass, "text-sm tabular-nums text-slate-600 dark:text-slate-400")}>
         {formatCouponDateTime(coupon.startsAt)}
       </TableCell>
-      <TableCell className={cn(tdClass, "text-sm tabular-nums text-slate-600")}>
+      <TableCell className={cn(tdClass, "text-sm tabular-nums text-slate-600 dark:text-slate-400")}>
         {formatCouponDateTime(coupon.expiresAt)}
       </TableCell>
       <TableCell className={cn(tdClass, "font-semibold tabular-nums")}>
@@ -67,7 +67,7 @@ const CouponRow = ({
         onClick={(e) => e.stopPropagation()}
       >
         {expired ? (
-          <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
+          <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-rose-500/15 dark:text-rose-300">
             منتهي
           </span>
         ) : (

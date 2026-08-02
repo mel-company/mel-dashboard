@@ -63,34 +63,34 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
     const getStatusBadge = (status: string) => {
         const statusMap: Record<string, { className: string; text: string; icon: React.ReactNode }> = {
             PENDING: {
-                className: "bg-yellow-100 text-yellow-800 border-yellow-200",
+                className: "border-yellow-200 bg-yellow-100 text-yellow-800 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300",
                 text: "قيد الانتظار",
                 icon: <Clock className="size-3" />
             },
             PROCESSING: {
-                className: "bg-blue-100 text-blue-800 border-blue-200",
+                className: "border-blue-200 bg-blue-100 text-blue-800 dark:border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-300",
                 text: "قيد المعالجة",
                 icon: <TrendingUp className="size-3" />
             },
             SHIPPED: {
-                className: "bg-purple-100 text-purple-800 border-purple-200",
+                className: "border-purple-200 bg-purple-100 text-purple-800 dark:border-violet-500/30 dark:bg-violet-500/15 dark:text-violet-300",
                 text: "تم الشحن",
                 icon: <Package className="size-3" />
             },
             DELIVERED: {
-                className: "bg-green-100 text-green-800 border-green-200",
+                className: "border-green-200 bg-green-100 text-green-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300",
                 text: "تم التسليم",
                 icon: <CheckCircle className="size-3" />
             },
             CANCELLED: {
-                className: "bg-red-100 text-red-800 border-red-200",
+                className: "border-red-200 bg-red-100 text-red-800 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300",
                 text: "ملغي",
                 icon: <TrendingDown className="size-3" />
             },
         };
         return (
             statusMap[status] || {
-                className: "bg-gray-100 text-gray-800 border-gray-200",
+                className: "border-gray-200 bg-gray-100 text-gray-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200",
                 text: status,
                 icon: null
             }
@@ -107,22 +107,22 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
                 onClear={actions.handleClearFilters}
             />
 
-            <Card className="border-0 shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b">
-                    <h3 className="text-lg font-semibold text-gray-800">قائمة الطلبات</h3>
-                    <p className="text-sm text-gray-600 mt-1">إدارة وتتبع جميع طلبات العملاء</p>
+            <Card className="overflow-hidden border-0 shadow-lg dark:border dark:border-slate-800">
+                <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-slate-100">قائمة الطلبات</h3>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-slate-400">إدارة وتتبع جميع طلبات العملاء</p>
                 </div>
                 <Table>
-                    <TableHeader className="bg-gray-50">
+                    <TableHeader className="bg-gray-50 dark:bg-slate-900">
                         <TableRow>
-                            <TableHead className="text-right font-semibold text-gray-700">رقم الطلب</TableHead>
-                            <TableHead className="text-right font-semibold text-gray-700">العميل</TableHead>
-                            <TableHead className="text-right font-semibold text-gray-700">المنتجات</TableHead>
-                            <TableHead className="text-right font-semibold text-gray-700">العنوان</TableHead>
-                            <TableHead className="text-right font-semibold text-gray-700">الحالة</TableHead>
-                            <TableHead className="text-right font-semibold text-gray-700">المبلغ الإجمالي</TableHead>
-                            <TableHead className="text-right font-semibold text-gray-700">التاريخ</TableHead>
-                            <TableHead className="text-right font-semibold text-gray-700">الإجراءات</TableHead>
+                            <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">رقم الطلب</TableHead>
+                            <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">العميل</TableHead>
+                            <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">المنتجات</TableHead>
+                            <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">العنوان</TableHead>
+                            <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">الحالة</TableHead>
+                            <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">المبلغ الإجمالي</TableHead>
+                            <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">التاريخ</TableHead>
+                            <TableHead className="text-right font-semibold text-gray-700 dark:text-slate-200">الإجراءات</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -142,14 +142,14 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
                                 <TableRow
                                     key={order.id}
                                     className={cn(
-                                        "hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer transition-all duration-200",
-                                        "border-b border-gray-100"
+                                        "cursor-pointer border-b border-gray-100 transition-colors duration-200",
+                                        "hover:bg-blue-50/70 dark:border-slate-800 dark:hover:bg-slate-900/80",
                                     )}
                                     onClick={() => actions.navigate(`/orders/${order.id}`)}
                                 >
                                     <TableCell className="font-medium">
                                         <div className="flex items-center gap-2">
-                                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm font-mono">
+                                            <span className="rounded-md bg-blue-100 px-2 py-1 font-mono text-sm text-blue-800 dark:bg-sky-500/15 dark:text-sky-300">
                                                 #{String(order.id).slice(0, 8)}
                                             </span>
                                         </div>
@@ -158,34 +158,34 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
                                         {customer ? (
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-center">
+                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-400 to-indigo-400">
                                                         <User className="size-4 text-white" />
                                                     </div>
                                                     <div>
-                                                        <span className="font-medium text-gray-900">
+                                                        <span className="font-medium text-gray-900 dark:text-slate-100">
                                                             {customer.name ?? "—"}
                                                         </span>
                                                         {customer.phone && (
-                                                            <div className="text-sm text-gray-600">
+                                                            <div className="text-sm text-gray-600 dark:text-slate-400">
                                                                 {customer.phone}
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
                                                 {customer.email && !customer.phone && (
-                                                    <div className="text-sm text-gray-600">
+                                                    <div className="text-sm text-gray-600 dark:text-slate-400">
                                                         {customer.email}
                                                     </div>
                                                 )}
                                                 {customer.location && (
-                                                    <div className="text-xs text-gray-500 flex items-center gap-1 bg-gray-50 p-2 rounded">
-                                                        <MapPin className="size-3" />
+                                                    <div className="flex items-center gap-1 rounded bg-gray-50 p-2 text-xs text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+                                                        <MapPin className="size-3 shrink-0" />
                                                         {customer.location}
                                                     </div>
                                                 )}
                                             </div>
                                         ) : (
-                                            <span className="text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                            <span className="rounded bg-gray-100 px-2 py-1 text-gray-500 dark:bg-slate-800 dark:text-slate-400">
                                                 غير معروف
                                             </span>
                                         )}
@@ -193,15 +193,15 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
                                     <TableCell>
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center">
+                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-green-400 to-emerald-400">
                                                     <Package className="size-4 text-white" />
                                                 </div>
                                                 <div>
-                                                    <span className="font-medium text-gray-900">
+                                                    <span className="font-medium text-gray-900 dark:text-slate-100">
                                                         {productCount} منتج
                                                     </span>
                                                     {productTitles.length > 0 && (
-                                                        <div className="text-xs text-gray-600 max-w-xs bg-gray-50 p-1 rounded">
+                                                        <div className="max-w-xs rounded bg-gray-50 p-1 text-xs text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                                                             {productTitles.slice(0, 2).join(", ")}
                                                             {productTitles.length > 2 ? ", ..." : ""}
                                                         </div>
@@ -212,7 +212,7 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
                                     </TableCell>
                                     <TableCell>
                                         {order.deliveryAddress ? (
-                                            <div className="text-sm max-w-xs">
+                                            <div className="max-w-xs text-sm text-slate-700 dark:text-slate-300">
                                                 {order.deliveryAddress}
                                             </div>
                                         ) : (
@@ -223,7 +223,7 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
                                         <Badge
                                             variant="default"
                                             className={cn(
-                                                "border font-medium flex items-center gap-1 px-3 py-1",
+                                                "flex items-center gap-1 border px-3 py-1 font-medium",
                                                 statusBadge.className
                                             )}
                                         >
@@ -233,16 +233,16 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
                                     </TableCell>
                                     <TableCell className="font-medium">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-lg font-bold text-green-600">
+                                            <span className="text-lg font-bold text-green-600 dark:text-emerald-400">
                                                 {total.toLocaleString("ar-IQ")}
                                             </span>
-                                            <span className="text-sm text-gray-500">IQD</span>
+                                            <span className="text-sm text-gray-500 dark:text-slate-400">IQD</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded">
-                                            <Calendar className="size-4 text-blue-500" />
-                                            <span className="text-gray-700">{formatDate(order.createdAt)}</span>
+                                        <div className="flex items-center gap-2 rounded bg-gray-50 p-2 text-sm dark:bg-slate-800">
+                                            <Calendar className="size-4 text-blue-500 dark:text-sky-400" />
+                                            <span className="text-gray-700 dark:text-slate-200">{formatDate(order.createdAt)}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell onClick={(e) => e.stopPropagation()}>
@@ -250,7 +250,7 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="gap-2 bg-white border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                                                className="gap-2 border-blue-200 bg-white text-blue-600 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 dark:border-sky-800 dark:bg-slate-900 dark:text-sky-300 dark:hover:border-sky-700 dark:hover:bg-sky-500/10"
                                             >
                                                 <FileText className="size-4" />
                                                 التفاصيل

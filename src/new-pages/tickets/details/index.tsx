@@ -132,7 +132,7 @@ const TicketDetailsPage = () => {
 
   if (isLoading && !ticket) {
     return (
-      <div className="space-y-4 rounded-3xl bg-white p-6">
+      <div className="space-y-4 rounded-3xl border border-transparent bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
         <Skeleton className="h-14 w-full" />
         <div className="grid gap-4 lg:grid-cols-5">
           <Skeleton className="h-[520px] lg:col-span-2" />
@@ -168,7 +168,7 @@ const TicketDetailsPage = () => {
   );
 
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+    <div className="rounded-3xl border border-transparent bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
       <TicketDetailsHeader
         ticketId={id}
         onClose={() => navigate("/tickets")}

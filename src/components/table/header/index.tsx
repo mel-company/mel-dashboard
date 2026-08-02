@@ -47,19 +47,19 @@ const PageTableHeader = ({
                 />
                 <button
                     onClick={onFilterClick}
-                    className="flex items-center gap-2 px-3 py-2 rounded-md bg-white text-sky-800"
+                    className="flex items-center gap-2 px-3 py-2 rounded-md bg-white text-sky-800 border border-transparent dark:bg-slate-950 dark:border-slate-800 dark:text-sky-300"
                 >
                     <HugeiconsIcon icon={FilterHorizontalIcon} size={20} />
                     فلاتر
                     {hasActiveFilters &&
                         <span
-                            className="ml-2 bg-blue-100 aspect-square text-blue-700 text-xs w-5 h-5 p-0.5 rounded-full">
+                            className="ml-2 bg-blue-100 aspect-square text-blue-700 text-xs w-5 h-5 p-0.5 rounded-full dark:bg-sky-500/20 dark:text-sky-300">
                             {activeFilterCount}
                         </span>
                     }
                 </button>
 
-                {children && <div className='h-6 w-px bg-slate-200' />}
+                {children && <div className='h-6 w-px bg-slate-200 dark:bg-slate-700' />}
                 {children}
             </div>
 

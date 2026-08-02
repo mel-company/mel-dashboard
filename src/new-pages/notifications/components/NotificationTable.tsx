@@ -56,7 +56,7 @@ const NotificationTable = ({
   }, [activePage, totalPages]);
 
   return (
-    <div className="w-full overflow-hidden rounded-3xl bg-white p-6 shadow-none">
+    <div className="w-full overflow-hidden rounded-3xl border border-transparent bg-white p-6 shadow-none dark:border-slate-800 dark:bg-slate-950">
       <Table>
         <NotificationTableHeader />
         <TableBody>

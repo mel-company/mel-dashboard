@@ -25,7 +25,7 @@ const NotificationsContent = ({ actions }: NotificationsContentProps) => {
 
   if (isLoading && !notifications.length) {
     return (
-      <div className="rounded-3xl bg-white p-6">
+      <div className="rounded-3xl border border-transparent bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
         <NotificationsSkeleton count={8} showHeader={false} />
       </div>
     );
@@ -43,7 +43,7 @@ const NotificationsContent = ({ actions }: NotificationsContentProps) => {
 
   if (!notifications.length) {
     return (
-      <div className="rounded-3xl bg-white p-6">
+      <div className="rounded-3xl border border-transparent bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
         <EmptyPage
           icon={<Bell className="size-7 text-muted-foreground" />}
           title={searchQuery.trim() ? "لا توجد نتائج" : "لا يوجد إشعارات"}

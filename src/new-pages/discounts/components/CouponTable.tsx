@@ -28,7 +28,7 @@ const CouponTable = ({
   const paginated = coupons.slice(startIndex, startIndex + viewCount);
 
   return (
-    <div className="w-full overflow-hidden rounded-3xl bg-white p-4 shadow-sm sm:p-6">
+    <div className="w-full overflow-hidden rounded-3xl border border-transparent bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
       <Table>
         <CouponTableHeader />
         <TableBody>

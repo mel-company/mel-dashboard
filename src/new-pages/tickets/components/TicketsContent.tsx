@@ -12,7 +12,7 @@ type TicketsContentProps = {
 const TicketsContent = ({ actions }: TicketsContentProps) => {
   if (actions.isLoading && actions.tickets.length === 0) {
     return (
-      <div className="space-y-3 rounded-3xl bg-white p-6">
+      <div className="space-y-3 rounded-3xl border border-transparent bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
         {[1, 2, 3, 4, 5].map((i) => (
           <Skeleton key={i} className="h-12 w-full" />
         ))}

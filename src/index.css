@@ -4,7 +4,8 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-THIN-TRIAL.OTF") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-THIN-TRIAL.OTF")
+    format("opentype");
   font-weight: 100;
   font-style: normal;
   font-display: swap;
@@ -12,7 +13,8 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-LIGHT-TRIAL.OTF") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-LIGHT-TRIAL.OTF")
+    format("opentype");
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -20,7 +22,8 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-REGULAR-TRIAL.OTF") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-REGULAR-TRIAL.OTF")
+    format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -28,7 +31,8 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-MEDIUM-TRIAL.OTF") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-MEDIUM-TRIAL.OTF")
+    format("opentype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -36,7 +40,8 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-BOLD-TRIAL.OTF") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-BOLD-TRIAL.OTF")
+    format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -44,7 +49,8 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-HEAVY-TRIAL.OTF") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-HEAVY-TRIAL.OTF")
+    format("opentype");
   font-weight: 800;
   font-style: normal;
   font-display: swap;
@@ -52,7 +58,8 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-BLACK-TRIAL.OTF") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-BLACK-TRIAL.OTF")
+    format("opentype");
   font-weight: 900;
   font-style: normal;
   font-display: swap;
@@ -60,12 +67,12 @@
 
 @font-face {
   font-family: "ABC Diatype Arabic";
-  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-ULTRA-TRIAL.OTF") format("opentype");
+  src: url("/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC-ULTRA-TRIAL.OTF")
+    format("opentype");
   font-weight: 950;
   font-style: normal;
   font-display: swap;
 }
-
 
 @font-face {
   font-family: "Setar XS";
@@ -213,7 +220,8 @@ html {
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  font-family: "ABC Diatype Arabic", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family:
+    "ABC Diatype Arabic", system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -228,11 +236,12 @@ html {
   --font-family-body: "ABC Diatype Arabic", sans-serif;
   --font-family-table: "Setar XS", "ABC Diatype Arabic", sans-serif;
   /* --font-family-english: "Inter", system-ui, -apple-system, BlinkMacSystemFont, */
-  --font-family-english: system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-english:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(14.479% 0.00002 271.152);
+  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -313,22 +322,23 @@ html {
 
 .dark {
   color-scheme: dark;
-  --background: oklch(0.145 0 0);
+  /* Neutral gray dark theme (no indigo/blue tint) */
+  --background: oklch(0.16 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.21 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.21 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --secondary: oklch(0.27 0 0);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
+  --muted: oklch(0.27 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --accent: oklch(0.27 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.488 0.243 264.376);
@@ -336,14 +346,28 @@ html {
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: oklch(0.18 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.45 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.27 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.556 0 0);
+  --dark-blue: oklch(0.32 0 0);
+
+  /* Remap slate → neutral gray so dark:bg-slate-* loses the navy tint */
+  --color-slate-50: oklch(0.985 0 0);
+  --color-slate-100: oklch(0.97 0 0);
+  --color-slate-200: oklch(0.922 0 0);
+  --color-slate-300: oklch(0.87 0 0);
+  --color-slate-400: oklch(0.708 0 0);
+  --color-slate-500: oklch(0.556 0 0);
+  --color-slate-600: oklch(0.439 0 0);
+  --color-slate-700: oklch(0.371 0 0);
+  --color-slate-800: oklch(0.269 0 0);
+  --color-slate-900: oklch(0.205 0 0);
+  --color-slate-950: oklch(0.145 0 0);
 }
 
 @layer base {
@@ -488,11 +512,11 @@ html {
 }
 
 table thead tr {
-  @apply bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-900
+  @apply border-slate-200 bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900;
 }
 
 table thead {
-  @apply bg-slate-50
+  @apply bg-slate-50 dark:bg-neutral-900;
 }
 
 table thead tr th:first-child {

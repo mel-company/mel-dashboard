@@ -40,7 +40,7 @@ const ProductsToolbar = ({
           variant="outline"
           onClick={onFilterClick}
           className={cn(
-            "h-11 shrink-0 gap-2 rounded-xl border-[#e2e8f0] bg-white px-4 font-medium shadow-none hover:bg-[#f8fafc] dark:bg-card",
+            "h-11 shrink-0 gap-2 rounded-xl border-[#e2e8f0] bg-white px-4 font-medium shadow-none hover:bg-[#f8fafc] dark:border-slate-700 dark:bg-card dark:hover:bg-slate-800",
             hasActiveFilters && "border-[#00b7ff] text-[#00b7ff]",
           )}
         >
@@ -81,7 +81,7 @@ const ProductsToolbar = ({
             size="sm"
             className={cn(
               "h-9 gap-1.5 rounded-lg px-3",
-              viewMode === "table" && "bg-white shadow-sm",
+              viewMode === "table" && "bg-white shadow-sm dark:bg-slate-900",
             )}
             onClick={() => onViewModeChange("table")}
           >
@@ -93,7 +93,7 @@ const ProductsToolbar = ({
             size="sm"
             className={cn(
               "h-9 gap-1.5 rounded-lg px-3",
-              viewMode === "cards" && "bg-white shadow-sm",
+              viewMode === "cards" && "bg-white shadow-sm dark:bg-slate-900",
             )}
             onClick={() => onViewModeChange("cards")}
           >

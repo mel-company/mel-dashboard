@@ -50,7 +50,7 @@ const ProductRow = ({
 
     return (
         <TableRow
-            className="cursor-pointer"
+            className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/70"
             onClick={() => navigate(`/products/${product.id}`)}
         >
             <TableCell className={cn(tdClass, "text-muted-foreground")}>

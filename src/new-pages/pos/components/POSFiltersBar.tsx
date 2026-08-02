@@ -24,7 +24,7 @@ const POSFiltersBar = ({
   imageBaseUrl = "",
 }: POSFiltersBarProps) => {
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-transparent bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <Searchbar
           value={searchQuery}

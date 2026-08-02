@@ -39,7 +39,7 @@ const ProductTable = ({ products, onDelete, imageBaseUrl = "" }: ProductTablePro
   const paginatedProducts = products.slice(startIndex, endIndex);
 
   return (
-    <div className="overflow-hidden shadow-none p-6 bg-white w-full rounded-3xl">
+    <div className="w-full overflow-hidden rounded-3xl border border-transparent bg-white p-6 shadow-none dark:border-slate-800 dark:bg-slate-950">
       <Table>
         <ProductTableHeader />
         <TableBody>

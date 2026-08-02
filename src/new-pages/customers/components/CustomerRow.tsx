@@ -25,31 +25,31 @@ const CustomerRow = ({ customer, rowIndex, onDelete }: CustomerRowProps) => {
 
   return (
     <TableRow
-      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/80"
+      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-900/80"
       onClick={() => navigate(`/customers/${customer.id}`)}
     >
       <TableCell className={cn(tdClass, "w-14 text-muted-foreground")}>
-        <span className="text-sm font-semibold tabular-nums text-slate-700">
+        <span className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-300">
           {String(rowIndex + 1).padStart(2, "0")}
         </span>
       </TableCell>
       <TableCell className={cn(tdClass, "w-24")}>
-        <span className="font-mono text-sm font-medium text-slate-600" dir="ltr">
+        <span className="font-mono text-sm font-medium text-slate-600 dark:text-slate-400" dir="ltr">
           #{customer.id.slice(0, 6)}
         </span>
       </TableCell>
       <TableCell className={tdClass}>
-        <p className="font-semibold text-slate-900">{user?.name ?? "—"}</p>
+        <p className="font-semibold text-slate-900 dark:text-slate-100">{user?.name ?? "—"}</p>
       </TableCell>
-      <TableCell className={cn(tdClass, "tabular-nums")} dir="ltr">
+      <TableCell className={cn(tdClass, "tabular-nums text-slate-800 dark:text-slate-200")} dir="ltr">
         {user?.phone ?? "—"}
       </TableCell>
       <TableCell className={tdClass}>
-        <p className="line-clamp-2 text-sm text-slate-600">
+        <p className="line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
           {user?.location ?? "—"}
         </p>
       </TableCell>
-      <TableCell className={cn(tdClass, "font-semibold tabular-nums")}>
+      <TableCell className={cn(tdClass, "font-semibold tabular-nums text-slate-900 dark:text-slate-100")}>
         {orderCount}
       </TableCell>
       <TableCell className={cn(tdClass, "text-center")}>

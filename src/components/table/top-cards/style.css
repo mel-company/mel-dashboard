@@ -5,7 +5,16 @@
 }
 
 .base-card {
-    @apply bg-white border border-slate-100;
+    @apply bg-white border border-slate-100 text-slate-900
+        dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100;
+}
+
+.base-card .title {
+    @apply text-slate-600 dark:text-slate-400;
+}
+
+.base-card .value {
+    @apply text-slate-900 dark:text-slate-50;
 }
 
 .orange-card {
@@ -29,26 +38,26 @@
 }
 
 .growth {
-    @apply text-sm text-emerald-500 flex items-center gap-0.5 font-normal;
+    @apply text-sm text-emerald-500 flex items-center gap-0.5 font-normal dark:text-emerald-400;
 }
 
 
 .accent-card {
-    @apply bg-violet-50 text-violet-500
+    @apply bg-violet-50 text-violet-500 dark:bg-violet-500/15 dark:text-violet-300;
 }
 
 .warning-card {
-    @apply bg-amber-50 text-amber-500
+    @apply bg-amber-50 text-amber-500 dark:bg-amber-500/15 dark:text-amber-300;
 }
 
 .danger-card {
-    @apply bg-rose-50 text-rose-500
+    @apply bg-rose-50 text-rose-500 dark:bg-rose-500/15 dark:text-rose-300;
 }
 
 .success-card {
-    @apply bg-teal-50 text-teal-500
+    @apply bg-teal-50 text-teal-500 dark:bg-teal-500/15 dark:text-teal-300;
 }
 
 .default-card {
-    @apply bg-cyan-50 text-cyan-500
+    @apply bg-cyan-50 text-cyan-500 dark:bg-cyan-500/15 dark:text-cyan-300;
 }

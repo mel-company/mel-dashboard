@@ -110,9 +110,9 @@ const TicketChatPanel = ({
   };
 
   return (
-    <div className="flex h-full min-h-[520px] flex-col rounded-3xl border border-slate-100 bg-white">
-      <div className="border-b border-slate-100 px-5 py-4">
-        <SettingsLabel className="text-base font-semibold text-blue-950">
+    <div className="flex h-full min-h-[520px] flex-col rounded-3xl border border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950">
+      <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+        <SettingsLabel className="text-base font-semibold text-blue-950 dark:text-slate-100">
           المحادثة
         </SettingsLabel>
       </div>
