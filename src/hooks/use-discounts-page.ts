@@ -58,9 +58,13 @@ export function useDiscountsPage() {
 
   const storageKey = `${DISCOUNTS_PAGE?.apiEndpoint ?? "discounts"}ViewMode`;
   const savedViewMode = localStorage.getItem(storageKey);
-  const [viewMode, setViewMode] = useState<"table" | "cards">(
-    savedViewMode === "cards" ? "cards" : "table",
-  );
+  const [viewMode, setViewMode] = useState<"table" | "cards">(() => {
+    if (savedViewMode === "cards" || savedViewMode === "table") return savedViewMode;
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
+      return "cards";
+    }
+    return "table";
+  });
 
   const isDiscountsTab = activeTab === "discounts";
   const debouncedSearch = useDebouncedValue(searchQuery.trim(), 350);

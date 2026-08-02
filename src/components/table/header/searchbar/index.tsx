@@ -21,8 +21,8 @@ export function Searchbar({
   placeholder?: string;
 }) {
     return (
-        <Field className="max-w-xs rounded-xl border border-transparent bg-white dark:border-slate-800 dark:bg-slate-900">
-            <InputGroup className="px-1.5 py-5.5">
+        <Field className="w-full max-w-none rounded-xl border border-transparent bg-white sm:max-w-xs dark:border-slate-800 dark:bg-slate-900">
+            <InputGroup className="min-h-11 px-1.5 py-2 sm:py-5.5">
                 <InputGroupAddon align="inline-start" className="px-2 items-center justify-center">
                     <HugeiconsIcon strokeWidth={2.5} className="w-5! h-5!" icon={Search01Icon} />
                 </InputGroupAddon>

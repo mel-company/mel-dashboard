@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AppsGrid from "@/components/AppsGrid";
 import AppSidebar from "@/components/AppSidebar";
+import MobileTopBar from "@/components/MobileTopBar";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import { cn } from "@/lib/utils";
 
 const Layout = () => {
@@ -10,54 +12,80 @@ const Layout = () => {
 
   const isHomePage = location.pathname === "/";
   const shouldShowApps = isHomePage;
-  const hideSidebar = false; // Never hide sidebar completely
   const isPosPage = location.pathname === "/pos";
+  const showMobileChrome = !isPosPage;
+
+  // Close drawer on route change
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Lock body scroll when drawer is open on mobile
+  useEffect(() => {
+    if (!mobileSidebarOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileSidebarOpen]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f4f7fb] dark:bg-background">
-      {/* Mobile sidebar overlay */}
-      {!hideSidebar && mobileSidebarOpen && (
-        <button
-          type="button"
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-          aria-label="إغلاق القائمة"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
+    <div className="flex h-dvh w-screen overflow-hidden bg-[#f4f7fb] dark:bg-background">
+      {/* Mobile drawer backdrop */}
+      <button
+        type="button"
+        className={cn(
+          "fixed inset-0 z-40 bg-black/45 transition-opacity duration-300 lg:hidden",
+          mobileSidebarOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0",
+        )}
+        aria-label="إغلاق القائمة"
+        onClick={() => setMobileSidebarOpen(false)}
+      />
 
-      {!hideSidebar && (
-        <AppSidebar
-          className={cn(
-            "fixed inset-y-0 right-0 z-50 lg:relative lg:z-auto",
-            mobileSidebarOpen ? "flex" : "hidden lg:flex",
-          )}
-          onNavigate={() => setMobileSidebarOpen(false)}
-          {...(isPosPage && { collapsed: true })}
-        />
-      )}
+      {/* Sidebar: drawer on mobile, static on desktop */}
+      <AppSidebar
+        className={cn(
+          "fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0",
+          mobileSidebarOpen
+            ? "translate-x-0 shadow-2xl"
+            : "translate-x-full lg:translate-x-0",
+          "flex",
+        )}
+        onNavigate={() => setMobileSidebarOpen(false)}
+        {...(isPosPage && { collapsed: true })}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* <TopBar onMenuClick={() => setMobileSidebarOpen(true)} hideSidebar={hideSidebar} /> */}
-        {/* <QuickNavigate /> */}
+        {showMobileChrome && <MobileTopBar />}
 
-        <main className="custom-scrollbar flex-1 overflow-x-hidden overflow-y-auto">
-
-
+        <main
+          className={cn(
+            "custom-scrollbar flex-1 overflow-x-hidden overflow-y-auto",
+            showMobileChrome && "pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0",
+          )}
+        >
           {shouldShowApps ? (
-            <div className="h-full w-full p-4 sm:p-6 lg:p-8">
+            <div className="h-full w-full p-3 sm:p-6 lg:p-8">
               <AppsGrid />
             </div>
           ) : (
             <div
               className={cn(
                 "w-full",
-                hideSidebar ? "p-0" : isPosPage ? "p-4 lg:p-5" : "p-4 sm:p-6 lg:p-8",
+                isPosPage ? "p-3 lg:p-5" : "p-3 sm:p-6 lg:p-8",
               )}
             >
               <Outlet />
             </div>
           )}
         </main>
+
+        {showMobileChrome && (
+          <MobileBottomNav onMoreClick={() => setMobileSidebarOpen(true)} />
+        )}
       </div>
     </div>
   );

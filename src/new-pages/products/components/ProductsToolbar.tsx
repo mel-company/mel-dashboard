@@ -75,30 +75,30 @@ const ProductsToolbar = ({
           )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 self-end rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-1 dark:bg-muted/30 sm:self-auto">
+        <div className="flex w-full shrink-0 items-center justify-stretch gap-1 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-1 dark:bg-muted/30 sm:w-auto sm:justify-start sm:self-auto">
           <Button
             variant={viewMode === "table" ? "secondary" : "ghost"}
             size="sm"
             className={cn(
-              "h-9 gap-1.5 rounded-lg px-3",
+              "h-10 min-h-10 flex-1 gap-1.5 rounded-lg px-3 sm:flex-none",
               viewMode === "table" && "bg-white shadow-sm dark:bg-slate-900",
             )}
             onClick={() => onViewModeChange("table")}
           >
             <List className="size-4" />
-            <span className="hidden sm:inline">جدول</span>
+            <span>جدول</span>
           </Button>
           <Button
             variant={viewMode === "cards" ? "secondary" : "ghost"}
             size="sm"
             className={cn(
-              "h-9 gap-1.5 rounded-lg px-3",
+              "h-10 min-h-10 flex-1 gap-1.5 rounded-lg px-3 sm:flex-none",
               viewMode === "cards" && "bg-white shadow-sm dark:bg-slate-900",
             )}
             onClick={() => onViewModeChange("cards")}
           >
             <LayoutGrid className="size-4" />
-            <span className="hidden sm:inline">بطاقات</span>
+            <span>بطاقات</span>
           </Button>
         </div>
       </div>

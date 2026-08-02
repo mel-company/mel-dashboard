@@ -526,3 +526,16 @@ table thead tr th:first-child {
 table thead tr th:last-child {
   border-radius: 1rem 0 0 0rem !important;
 }
+
+/* Mobile table horizontal scroll hint */
+.table-scroll-hint {
+  mask-image: linear-gradient(to left, transparent, #000 12px);
+  -webkit-mask-image: linear-gradient(to left, transparent, #000 12px);
+}
+
+@media (min-width: 640px) {
+  .table-scroll-hint {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}

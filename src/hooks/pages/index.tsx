@@ -6,7 +6,7 @@ export const usePage = () => {
     const location = useLocation();
     const pathname = location.pathname
     const currentPage = pages?.find(page => {
-        if (!page.slug) return false;
+        if (!page.slug) return pathname === "/";
         return pathname === page.slug || pathname.startsWith(`${page.slug}/`);
     })
 

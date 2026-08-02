@@ -22,7 +22,7 @@ const CategoriesPage = () => {
         <div className="space-y-6">
             {/* Header */}
             <TitleBar>
-                <div className="flex items-center gap-2">
+                <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                     <SwitchTab
                         selected={showGroups ? "groups" : "categories"}
                         onChange={(value) => setShowGroups(value === "groups")}
@@ -40,13 +40,13 @@ const CategoriesPage = () => {
                         ]}
                     />
                     <Button
-                        className="h-11 shrink-0 gap-2.5 rounded-full bg-[#00b7ff] px-5 text-white shadow-sm hover:bg-[#00a3e6]"
+                        className="h-11 w-full shrink-0 gap-2 rounded-full bg-[#00b7ff] px-4 text-white shadow-sm hover:bg-[#00a3e6] sm:w-auto sm:gap-2.5 sm:px-5"
                         onClick={() => actions.setIsFilterDialogOpen(true)}
                     >
-                        <span className="flex size-7 items-center justify-center rounded-full bg-white/25">
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/25">
                             <Plus className="size-4" strokeWidth={2.5} />
                         </span>
-                        إضافة فئة جديدة
+                        <span className="truncate">إضافة فئة جديدة</span>
                     </Button>
                 </div>
             </TitleBar>
@@ -58,7 +58,7 @@ const CategoriesPage = () => {
             ) : (
                 // Categories view
                 <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                         <BaseCard
                             icon={Fire03Icon}
                             title="الفئات الاعلى طلباً"

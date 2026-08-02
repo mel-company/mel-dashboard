@@ -95,7 +95,7 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
     <aside
       className={cn(
         "flex h-full shrink-0 flex-col border-l border-border/60 bg-card transition-[width] duration-200",
-        collapsed ? "w-[76px]" : "w-[272px]",
+        collapsed ? "w-[76px]" : "w-[min(272px,88vw)] lg:w-[272px]",
         className,
       )}
     >
@@ -106,7 +106,7 @@ const AppSidebar = ({ className, onNavigate, collapsed: externalCollapsed }: App
           <button
             type="button"
             onClick={() => setInternalCollapsed((v: boolean) => !v)}
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground transition-colors hover:bg-muted/60"
+            className="hidden size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground transition-colors hover:bg-muted/60 lg:flex"
             aria-label={collapsed ? "توسيع القائمة" : "طي القائمة"}
           >
             {collapsed ? (

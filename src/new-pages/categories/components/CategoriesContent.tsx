@@ -56,7 +56,7 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
                 <p className="text-sm text-gray-600 dark:text-slate-400">تصفح وإدارة جميع فئات المنتجات في متجرك</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
                 {actions.categories.map((category: any) => (
                     <CategoryCard
                         key={category.id}

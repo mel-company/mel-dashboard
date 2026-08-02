@@ -5,10 +5,20 @@ import useTableHeader from "@/hooks/table-header";
 import { usePageStore } from "@/store/use-page-store";
 
 // Helper hook for view mode management
+function getInitialViewMode(saved: string | null): "table" | "cards" {
+  if (saved === "cards" || saved === "table") return saved;
+  if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
+    return "cards";
+  }
+  return "table";
+}
+
 function useViewModeManager(apiEndpoint: string | undefined, enableViewMode: boolean) {
   const storageKey = `${apiEndpoint}ViewMode`;
   const saved = enableViewMode ? localStorage.getItem(storageKey) : null;
-  const [viewMode, setViewMode] = useState<"table" | "cards">(saved === "cards" ? "cards" : "table");
+  const [viewMode, setViewMode] = useState<"table" | "cards">(() =>
+    getInitialViewMode(saved),
+  );
 
   const handleViewModeChange = useCallback((newMode: "table" | "cards") => {
     setViewMode(newMode);
