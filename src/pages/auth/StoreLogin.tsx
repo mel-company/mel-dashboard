@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Store,
 } from "lucide-react";
-import { parse } from "tldts";
+import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 // import LogoLight from "../../assets/imgs/logo/mel-light.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,8 +154,7 @@ const StoreLogin = () => {
 
   const isProduction = import.meta.env.VITE_ENVIRONMENT === "production";
 
-  const parsed = parse(window.location.hostname);
-  const subdomain = parsed.subdomain;
+  const subdomain = getTenantSubdomain();
   const isAzyaaHost = window.location.hostname === "azyaa.mel.iq";
 
   const { data: stores, isLoading: isLoadingStores } = useFetchDevStores();
@@ -216,7 +215,7 @@ const StoreLogin = () => {
       toast.error("يرجى اختيار المتجر");
       return;
     }
-    if (!isProduction && !selectedStore) {
+    if (!isProduction && !selectedStore && !subdomain) {
       toast.error("لم يتم العثور على المتجر المختار");
       return;
     }
@@ -226,47 +225,31 @@ const StoreLogin = () => {
       return;
     }
 
+    const storeDomain =
+      subdomain === "azyaa" || isAzyaaHost
+        ? subdomain || "azyaa"
+        : selectedStore?.domain || subdomain || null;
+    const storeName =
+      subdomain === "azyaa" || isAzyaaHost
+        ? subdomain || "azyaa"
+        : selectedStore?.name || subdomain || null;
+
     setIsLoading(true);
     try {
       login(
         {
           phone: normalized,
           store: {
-            name:
-              parsed.subdomain === "azyaa"
-                ? "azyaa"
-                : (selectedStore?.name ?? null),
-            domain:
-              parsed.subdomain === "azyaa"
-                ? "azyaa"
-                : (selectedStore?.domain ?? null),
+            name: storeName,
+            domain: storeDomain,
           },
         },
         {
           onSuccess: (data) => {
-            let url = "";
-            if (isProduction) {
-              if (subdomain === "azyaa") {
-                url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                  parsed.subdomain === "azyaa" ? "azyaa" : null
-                }&code=${data?.codeOnlyOnDev}`;
-              } else if (isAzyaaHost) {
-                url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                  subdomain || "azyaa"
-                }&code=${data?.codeOnlyOnDev}`;
-              } else {
-                url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                  selectedStore?.domain
-                }`;
-              }
-            } else {
-              url = `/otp?phone=${encodeURIComponent(normalized)}&store=${
-                subdomain === "azyaa"
-                  ? "azyaa"
-                  : isAzyaaHost
-                    ? subdomain || "azyaa"
-                    : selectedStore?.domain
-              }&code=${data?.codeOnlyOnDev}`;
+            const storeParam = storeDomain || selectedStore?.domain || "";
+            let url = `/otp?phone=${encodeURIComponent(normalized)}&store=${encodeURIComponent(storeParam)}`;
+            if (data?.codeOnlyOnDev) {
+              url += `&code=${data.codeOnlyOnDev}`;
             }
 
             navigate(url);
@@ -306,8 +289,11 @@ const StoreLogin = () => {
             //   }
             // );
           },
-          onError: () => {
-            toast.error("فشل تسجيل الدخول. يرجى المحاولة مرة أخرى");
+          onError: (error: any) => {
+            toast.error(
+              error?.response?.data?.message ||
+                "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى",
+            );
           },
           onSettled: () => setIsLoading(false),
         },

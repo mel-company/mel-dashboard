@@ -16,16 +16,17 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
+        // Same-origin /api/v1 in dev → upstream API (Gateway-like)
         "/api/v1": {
-          target: env.VITE_API_BASE_URL || "https://api.mel.iq",
+          target: env.VITE_API_PROXY_TARGET || "https://api.mel.iq",
           changeOrigin: true,
           secure: true,
           configure: (proxy, _options) => {
-            proxy.on('error', (err, _req, _res) => {
-              console.log('proxy error', err);
+            proxy.on("error", (err, _req, _res) => {
+              console.log("proxy error", err);
             });
-            proxy.on('proxyReq', (_proxyReq, req, _res) => {
-              console.log('Sending request to the target:', req.method, req.url);
+            proxy.on("proxyReq", (_proxyReq, req, _res) => {
+              console.log("Sending request to the target:", req.method, req.url);
             });
           },
         },

@@ -7,6 +7,10 @@ import {
   Upload,
   ArrowRight,
   X,
+  CloudUpload,
+  Star,
+  ImageIcon,
+  HelpCircle,
 } from "lucide-react";
 import { useFilterCategoriesCursor } from "@/api/wrappers/category.wrappers";
 import { useCreateProduct } from "@/api/wrappers/product.wrappers";
@@ -21,7 +25,6 @@ import {
 } from "@/utils/product-images";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { ProductSectionCard } from "@/components/product/tags";
 import { ProductCategoriesCard } from "@/components/product/ProductCategoriesCard";
 import { ProductPropertiesCard } from "@/components/product/ProductPropertiesCard";
 import { ProductOptionsCard } from "@/components/product/ProductOptionsCard";
@@ -40,32 +43,39 @@ const CURSOR_LIMIT = 20;
 const PRODUCT_DESCRIPTION_MAX = 300;
 
 const fieldClass =
-  "w-full rounded-2xl border-0 bg-slate-50 px-3 py-2.5 text-right text-sm text-slate-800 outline-none ring-sky-300 placeholder:text-muted-foreground focus:ring-2 dark:bg-slate-900 dark:text-slate-100";
+  "w-full rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-right text-sm text-slate-800 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:ring-sky-900/30";
 
 function FieldLabel({
   htmlFor,
   children,
   hint,
+  hintTone = "muted",
 }: {
   htmlFor?: string;
   children: React.ReactNode;
-  hint?: string;
+  hint?: React.ReactNode;
+  hintTone?: "muted" | "optional" | "special";
 }) {
   return (
     <div className="mb-1.5 flex items-center justify-between gap-2">
-      {hint ? (
-        <span className="text-[11px] text-muted-foreground" dir="ltr">
-          {hint}
-        </span>
-      ) : (
-        <span />
-      )}
       <label
         htmlFor={htmlFor}
-        className="block text-xs font-medium text-muted-foreground"
+        className="block text-[13px] font-medium text-slate-500 dark:text-slate-300"
       >
         {children}
       </label>
+      {hint ? (
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 text-[11px] font-medium",
+            hintTone === "optional" && "text-emerald-500",
+            hintTone === "special" && "text-amber-500",
+            hintTone === "muted" && "text-muted-foreground",
+          )}
+        >
+          {hint}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -481,28 +491,28 @@ const AddProduct = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="relative space-y-6 pb-4">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3 text-right">
           <button
             type="button"
             onClick={() => navigate("/products")}
-            className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm dark:bg-slate-900 dark:text-slate-200"
+            className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             aria-label="رجوع"
           >
             <ArrowRight className="size-4" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-blue-950 dark:text-blue-100">
-              اضافة منتج
+            <h1 className="text-xl font-bold text-blue-950 sm:text-2xl dark:text-blue-100">
+              أضافة منتج جديد
             </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-0.5 text-xs text-violet-600 dark:text-violet-300">
               <Link to="/products" className="hover:underline">
                 المنتجات
               </Link>
               <span className="mx-1">›</span>
-              <span>اضافة منتج جديد</span>
+              <span>أضافة منتج جديد</span>
             </p>
           </div>
         </div>
@@ -510,245 +520,309 @@ const AddProduct = () => {
         <Button
           type="submit"
           disabled={isCreating}
-          className="h-11 gap-2 rounded-full bg-[#00b7ff] px-5 text-white hover:bg-[#00a3e6]"
+          className="hidden h-11 gap-2 rounded-full bg-violet-100 px-5 text-violet-700 shadow-sm hover:bg-violet-200 sm:inline-flex dark:bg-violet-500/20 dark:text-violet-200 dark:hover:bg-violet-500/30"
         >
           {isCreating ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
-            <span className="flex size-7 items-center justify-center rounded-full bg-white/25">
+            <span className="flex size-7 items-center justify-center rounded-full bg-violet-500/15 dark:bg-violet-400/20">
               <Plus className="size-4" strokeWidth={2.5} />
             </span>
           )}
-          {isCreating ? "جاري الإضافة..." : "اضافة منتج جديد"}
+          {isCreating ? "جاري الحفظ..." : "حفظ بيانات المنتج"}
         </Button>
       </div>
 
 
-      {/* Info + Images */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ProductSectionCard title="معلومات المنتج">
-          <div className="space-y-3">
-            <div>
-              <FieldLabel htmlFor="title">اسم المنتج</FieldLabel>
-              <input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="أدخل اسم المنتج"
-                required
-                className={fieldClass}
-              />
-            </div>
-            <div>
-              <FieldLabel
-                htmlFor="description"
-                hint={`${description.length}/${PRODUCT_DESCRIPTION_MAX}`}
-              >
-                وصف المنتج
-              </FieldLabel>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) =>
-                  setDescription(
-                    e.target.value.slice(0, PRODUCT_DESCRIPTION_MAX),
-                  )
-                }
-                placeholder="أدخل وصف قصير للمنتج"
-                required
-                rows={4}
-                maxLength={PRODUCT_DESCRIPTION_MAX}
-                className={cn(fieldClass, "resize-none")}
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div>
-                <FieldLabel htmlFor="price">السعر</FieldLabel>
-                <input
-                  id="price"
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="0"
-                  required
-                  min="0"
-                  step="1"
-                  className={fieldClass}
-                />
-              </div>
-              <div>
-                <FieldLabel htmlFor="costToProduct">تكلفة المنتج</FieldLabel>
-                <input
-                  id="costToProduct"
-                  type="number"
-                  value={costToProduct}
-                  onChange={(e) => setCostToProduct(e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  step="1"
-                  className={fieldClass}
-                />
-              </div>
-              <div>
-                <FieldLabel htmlFor="rate">تقييم المنتج</FieldLabel>
-                <input
-                  id="rate"
-                  type="number"
-                  value={rate}
-                  onChange={(e) => setRate(e.target.value)}
-                  placeholder="0.0"
-                  min="0"
-                  max="5"
-                  step="0.1"
-                  className={fieldClass}
-                />
-              </div>
-            </div>
-          </div>
-        </ProductSectionCard>
+      {/*
+        Desktop (RTL): يمين أساسي | يسار جانبي
+        md فما فوق: عمودين دائماً حتى يبين التقسيم
+      */}
+      <div
+        dir="rtl"
+        className="flex flex-col gap-4 md:flex-row md:items-start"
+      >
+        {/* العمود الرئيسي */}
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
+            <div className="grid grid-cols-1 gap-8 xl:grid-cols-2 xl:gap-10">
+              {/* معلومات المنتج الأساسية */}
+              <div className="min-w-0 space-y-4 text-right">
+                <h2 className="text-xl font-bold tracking-tight text-[#1a2b5a] dark:text-blue-100">
+                  معلومات المنتج الأساسية
+                </h2>
 
-        <ProductSectionCard title="رفع الصور">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageSelect}
-            className="hidden"
-            id="product-image"
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="relative flex h-64 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900"
-          >
-            {activePreviewUrl ? (
-              <img
-                src={activePreviewUrl}
-                alt="Preview"
-                className="h-full w-full object-contain"
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                <Upload className="size-8" />
-                <span className="text-xs">اضغط لرفع صور المنتج</span>
-                <span className="text-[11px] text-slate-400">
-                  حتى {MAX_PRODUCT_IMAGES} صور · PNG, JPG · 2MB لكل صورة
-                </span>
-              </div>
-            )}
-          </button>
-          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={imageFiles.length >= MAX_PRODUCT_IMAGES}
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-sky-400 hover:text-sky-500 disabled:opacity-40 dark:border-slate-700"
-            >
-              <Plus className="size-5" />
-            </button>
-            {previewUrls.map((url, index) => (
-              <div
-                key={`${url}-${index}`}
-                className={cn(
-                  "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2",
-                  index === activePreviewIndex
-                    ? "border-sky-400"
-                    : "border-transparent",
-                )}
-              >
-                <button
-                  type="button"
-                  onClick={() => setActivePreviewIndex(index)}
-                  className="h-full w-full"
-                >
-                  <img
-                    src={url}
-                    alt=""
-                    className="h-full w-full object-cover"
+                <div>
+                  <FieldLabel htmlFor="title">اسم المنتج</FieldLabel>
+                  <input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="أدخل اسم المنتج"
+                    required
+                    className={fieldClass}
                   />
-                </button>
-                {index === 0 && (
-                  <span className="absolute bottom-0.5 right-0.5 rounded bg-sky-500 px-1 text-[9px] font-bold text-white">
-                    رئيسية
-                  </span>
-                )}
+                </div>
+
+                <div>
+                  <FieldLabel htmlFor="description">وصف المنتج</FieldLabel>
+                  <textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) =>
+                      setDescription(
+                        e.target.value.slice(0, PRODUCT_DESCRIPTION_MAX),
+                      )
+                    }
+                    placeholder="أدخل وصف قصير للمنتج"
+                    required
+                    rows={4}
+                    maxLength={PRODUCT_DESCRIPTION_MAX}
+                    className={cn(fieldClass, "min-h-[7.5rem] resize-none")}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div>
+                    <FieldLabel
+                      htmlFor="price"
+                      hintTone="special"
+                      hint={
+                        <>
+                          ماذا يعني؟
+                          <HelpCircle className="size-3 opacity-80" />
+                        </>
+                      }
+                    >
+                      السعر الافتراضي
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="price"
+                        type="number"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        placeholder="0"
+                        required
+                        min="0"
+                        step="1"
+                        className={cn(fieldClass, "ps-11 text-start")}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        د.ع
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <FieldLabel
+                      htmlFor="costToProduct"
+                      hint="اختياري"
+                      hintTone="optional"
+                    >
+                      تكلفة المنتج
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="costToProduct"
+                        type="number"
+                        value={costToProduct}
+                        onChange={(e) => setCostToProduct(e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        step="1"
+                        className={cn(fieldClass, "ps-11 text-start")}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        د.ع
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <FieldLabel
+                      htmlFor="rate"
+                      hint="اختياري"
+                      hintTone="optional"
+                    >
+                      تقييم المنتج
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="rate"
+                        type="number"
+                        value={rate}
+                        onChange={(e) => setRate(e.target.value)}
+                        placeholder="0.0"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        className={cn(fieldClass, "ps-10 text-start")}
+                      />
+                      <Star className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 fill-amber-400 text-amber-400" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* صور المنتج */}
+              <div className="min-w-0 space-y-3 text-right">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-[#1a2b5a] dark:text-blue-100">
+                    صور المنتج
+                    <ImageIcon className="size-5 text-slate-400" strokeWidth={1.75} />
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs font-semibold text-sky-500 hover:text-sky-600"
+                  >
+                    يمكنك سحب وافلات الصورة
+                  </button>
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageSelect}
+                  className="hidden"
+                  id="product-image"
+                />
+
                 <button
                   type="button"
-                  onClick={() => handleRemoveImageAt(index)}
-                  className="absolute -left-1 -top-1 rounded-full bg-red-500 p-0.5 text-white"
-                  aria-label="حذف الصورة"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="relative flex h-52 w-full items-center justify-center overflow-hidden rounded-[1.35rem] bg-[#eef1f5] dark:bg-slate-900 sm:h-60"
                 >
-                  <X className="size-3" />
+                  {activePreviewUrl ? (
+                    <img
+                      src={activePreviewUrl}
+                      alt="Preview"
+                      className="h-full w-full object-contain p-5"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                      <Upload className="size-8" />
+                      <span className="text-xs">اضغط أو اسحب الصورة هنا</span>
+                    </div>
+                  )}
                 </button>
+
+                <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={imageFiles.length >= MAX_PRODUCT_IMAGES}
+                    className="flex h-[4.5rem] w-[5.5rem] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-sky-300 bg-sky-50 text-sky-500 disabled:opacity-40 dark:border-sky-700 dark:bg-sky-500/10"
+                  >
+                    <CloudUpload className="size-5" />
+                    <span className="px-1 text-center text-[10px] font-semibold leading-tight">
+                      رفع صورة جديدة
+                    </span>
+                  </button>
+                  {previewUrls.map((url, index) => (
+                    <div
+                      key={`${url}-${index}`}
+                      className={cn(
+                        "relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-2xl border-2 bg-[#eef1f5] dark:bg-slate-900",
+                        index === activePreviewIndex
+                          ? "border-sky-400"
+                          : "border-transparent",
+                      )}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setActivePreviewIndex(index)}
+                        className="h-full w-full"
+                      >
+                        <img
+                          src={url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImageAt(index)}
+                        className="absolute -left-1 -top-1 rounded-full bg-rose-500 p-0.5 text-white shadow-sm"
+                        aria-label="حذف الصورة"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-            {previewUrls.length === 0 && (
-              <div className="flex h-16 flex-1 items-center justify-center rounded-xl bg-slate-50 text-xs text-muted-foreground dark:bg-slate-900">
-                PNG, JPG حتى 2MB — أول صورة هي الغلاف
-              </div>
-            )}
-            {previewUrls.length > 0 && (
-              <button
-                type="button"
-                onClick={handleClearImages}
-                className="shrink-0 text-xs text-rose-500 underline underline-offset-2"
-              >
-                مسح الكل
-              </button>
-            )}
+            </div>
           </div>
-        </ProductSectionCard>
+
+          <ProductVariantsCard
+            options={options}
+            variants={variants}
+            onAdd={addVariant}
+            onRemove={removeVariant}
+            onChange={updateVariant}
+            onToggleOptionValue={toggleVariantOptionValue}
+          />
+        </div>
+
+        {/* العمود الجانبي: أصناف → خيارات → خصائص */}
+        <aside className="w-full shrink-0 space-y-4 md:sticky md:top-4 md:w-[300px] lg:w-[320px]">
+          <ProductCategoriesCard
+            productTitle={title}
+            selected={selectedCategoryItems}
+            categories={categories}
+            searchQuery={categorySearchQuery}
+            onSearchChange={setCategorySearchQuery}
+            onToggle={toggleCategory}
+            isLoading={isCategoriesLoading}
+            hasMore={hasNextCategoriesPage}
+            isLoadingMore={isFetchingNextCategoriesPage}
+            onLoadMore={() => fetchNextCategoriesPage()}
+            loadMoreRef={loadMoreCategoriesRef}
+          />
+
+          <ProductOptionsCard
+            options={options}
+            onAddOption={addOption}
+            onRemoveOption={removeOption}
+            onChangeOptionName={updateOptionName}
+            onAddValue={addOptionValue}
+            onRemoveValue={removeOptionValue}
+            onChangeValue={updateOptionValue}
+            onAddVariantClick={addVariant}
+            variantAddedFor={
+              variants.length > 0 ? options.map((_, i) => i) : []
+            }
+          />
+
+          <ProductPropertiesCard
+            properties={properties}
+            onAdd={addProperty}
+            onRemove={removeProperty}
+            onChange={updateProperty}
+          />
+        </aside>
       </div>
 
-      {/* Categories + Options */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ProductCategoriesCard
-          productTitle={title}
-          selected={selectedCategoryItems}
-          categories={categories}
-          searchQuery={categorySearchQuery}
-          onSearchChange={setCategorySearchQuery}
-          onToggle={toggleCategory}
-          isLoading={isCategoriesLoading}
-          hasMore={hasNextCategoriesPage}
-          isLoadingMore={isFetchingNextCategoriesPage}
-          onLoadMore={() => fetchNextCategoriesPage()}
-          loadMoreRef={loadMoreCategoriesRef}
-        />
-
-        <ProductOptionsCard
-          options={options}
-          onAddOption={addOption}
-          onRemoveOption={removeOption}
-          onChangeOptionName={updateOptionName}
-          onAddValue={addOptionValue}
-          onRemoveValue={removeOptionValue}
-          onChangeValue={updateOptionValue}
-          onAddVariantClick={addVariant}
-          variantAddedFor={
-            variants.length > 0 ? options.map((_, i) => i) : []
-          }
-        />
-      </div>
-
-      {/* Properties + Variants */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ProductPropertiesCard
-          properties={properties}
-          onAdd={addProperty}
-          onRemove={removeProperty}
-          onChange={updateProperty}
-        />
-
-        <ProductVariantsCard
-          options={options}
-          variants={variants}
-          onAdd={addVariant}
-          onRemove={removeVariant}
-          onChange={updateVariant}
-          onToggleOptionValue={toggleVariantOptionValue}
-        />
+      {/* Mobile sticky save */}
+      <div className="sticky bottom-3 z-20 sm:hidden">
+        <Button
+          type="submit"
+          disabled={isCreating}
+          className="h-12 w-full gap-2 rounded-2xl bg-violet-100 text-base font-semibold text-violet-700 shadow-lg hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-200 dark:hover:bg-violet-500/30"
+        >
+          {isCreating ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <span className="flex size-7 items-center justify-center rounded-full bg-violet-500/15">
+              <Plus className="size-4" strokeWidth={2.5} />
+            </span>
+          )}
+          {isCreating ? "جاري الحفظ..." : "حفظ بيانات المنتج"}
+        </Button>
       </div>
     </form>
   );

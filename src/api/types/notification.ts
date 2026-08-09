@@ -11,4 +11,10 @@ export type NotificationListItem = {
 export type NotificationFilterValues = {
   type?: "warning" | "alert" | "new" | "order";
   readStatus?: "read" | "unread";
+  /** Exact calendar day (yyyy-mm-dd) */
+  date?: string;
+  /** Range start (yyyy-mm-dd) */
+  dateFrom?: string;
+  /** Range end (yyyy-mm-dd) */
+  dateTo?: string;
 };

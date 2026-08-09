@@ -12,6 +12,7 @@ type NotificationsContentProps = {
 const NotificationsContent = ({ actions }: NotificationsContentProps) => {
   const {
     notifications,
+    totalAvailable,
     isLoading,
     error,
     refetch,
@@ -68,6 +69,7 @@ const NotificationsContent = ({ actions }: NotificationsContentProps) => {
   return (
     <NotificationTable
       notifications={notifications}
+      totalAvailable={totalAvailable}
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}
       fetchNextPage={fetchNextPage}

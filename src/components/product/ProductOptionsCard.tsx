@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DashedTag, ProductSectionCard } from "@/components/product/tags";
+import {
+  DashedTag,
+  ProductSectionCard,
+  PurpleAddButton,
+} from "@/components/product/tags";
 
 export type OptionValue = { value: string; label: string };
 export type ProductOption = {
@@ -33,8 +37,6 @@ export function ProductOptionsCard({
   onChangeOptionName,
   onAddValue,
   onRemoveValue,
-  onAddVariantClick,
-  variantAddedFor = [],
 }: ProductOptionsCardProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [draftValue, setDraftValue] = useState("");
@@ -48,41 +50,28 @@ export function ProductOptionsCard({
 
   return (
     <ProductSectionCard
-      title="خيارات المنتج"
+      title="خيارات المنتج الأساسي"
       description="أضف خيارات المنتج (كاللون، المقاس، أو المادة)"
-      action={
-        <Button
-          type="button"
-          size="sm"
-          className="gap-1 rounded-full"
-          onClick={onAddOption}
-        >
-          <Plus className="size-3" />
-          اضافة خيار جديد
-        </Button>
-      }
+      action={<PurpleAddButton onClick={onAddOption} label="اضافة خيار جديد" />}
     >
       {options.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          لا توجد خيارات — اضغط اضافة خيار جديد
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          لا توجد خيارات — اضغط + لإضافة خيار
         </p>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-3.5" dir="rtl">
           {options.map((option, optionIndex) => {
             const filledValues = option.values
               .map((v, i) => ({ ...v, index: i }))
               .filter((v) => v.value.trim());
-            const isAdded = variantAddedFor.includes(optionIndex);
             const isEditing = editingIndex === optionIndex;
 
             return (
               <div
                 key={optionIndex}
-                dir="rtl"
-                className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2"
+                className="group flex flex-wrap items-center gap-2"
               >
-                {/* العمود الأيمن: اسم الخيار */}
-                <div className="shrink-0">
+                <div className="flex shrink-0 items-center gap-0.5">
                   {option.name.trim() ? (
                     <button
                       type="button"
@@ -96,9 +85,9 @@ export function ProductOptionsCard({
                           onChangeOptionName(optionIndex, next);
                         }
                       }}
-                      className="text-sm font-semibold text-[#1a2b5a] dark:text-blue-100"
+                      className="text-sm font-semibold text-sky-500 dark:text-sky-400"
                     >
-                      {option.name}:
+                      {option.name}
                     </button>
                   ) : (
                     <input
@@ -108,80 +97,62 @@ export function ProductOptionsCard({
                         onChangeOptionName(optionIndex, e.target.value)
                       }
                       placeholder="اسم الخيار"
-                      className="w-24 rounded-lg border border-dashed border-slate-300 bg-transparent px-2 py-1 text-right text-sm font-semibold text-[#1a2b5a] outline-none"
+                      className="w-20 rounded-lg border border-dashed border-sky-300 bg-transparent px-2 py-1 text-right text-sm font-semibold text-sky-500 outline-none"
                     />
-                  )}
-                </div>
-
-                {/* الوسط: الوسوم */}
-                <div className="flex min-w-0 flex-wrap items-center justify-start gap-2">
-                  {filledValues.map((val) => (
-                    <DashedTag
-                      key={`${val.value}-${val.index}`}
-                      onRemove={() => onRemoveValue(optionIndex, val.index)}
-                    >
-                      {val.label || val.value}
-                    </DashedTag>
-                  ))}
-
-                  {isEditing ? (
-                    <input
-                      autoFocus
-                      value={draftValue}
-                      onChange={(e) => setDraftValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          commitDraft(optionIndex);
-                        }
-                        if (e.key === "Escape") {
-                          setEditingIndex(null);
-                          setDraftValue("");
-                        }
-                      }}
-                      onBlur={() => commitDraft(optionIndex)}
-                      placeholder="قيمة"
-                      className="w-20 rounded-full border border-dashed border-violet-300 bg-white px-2.5 py-1 text-xs outline-none"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingIndex(optionIndex);
-                        setDraftValue("");
-                      }}
-                      className="rounded-full border border-dashed border-[#c5d0dc] px-2 py-0.5 text-xs text-slate-400 hover:border-violet-400 hover:text-violet-600"
-                      title="إضافة قيمة"
-                    >
-                      +
-                    </button>
-                  )}
-                </div>
-
-                {/* العمود الأيسر: اضافة متغير */}
-                <div className="flex shrink-0 items-center gap-2">
-                  {onAddVariantClick ? (
-                    <button
-                      type="button"
-                      onClick={onAddVariantClick}
-                      className="whitespace-nowrap text-xs font-semibold text-[#7c3aed] underline underline-offset-2 dark:text-violet-400"
-                    >
-                      {isAdded ? "تم اضافة متغير" : "اضافة متغير"}
-                    </button>
-                  ) : (
-                    <span className="w-0" />
                   )}
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="size-7 text-slate-400 hover:text-destructive"
+                    className="size-6 opacity-0 text-slate-300 transition-opacity hover:text-destructive group-hover:opacity-100"
                     onClick={() => onRemoveOption(optionIndex)}
                     title="حذف الخيار"
                   >
-                    <Trash2 className="size-3.5" />
+                    <Trash2 className="size-3" />
                   </Button>
                 </div>
+
+                {filledValues.map((val) => (
+                  <DashedTag
+                    key={`${val.value}-${val.index}`}
+                    onRemove={() => onRemoveValue(optionIndex, val.index)}
+                  >
+                    {val.label || val.value}
+                  </DashedTag>
+                ))}
+
+                {isEditing ? (
+                  <input
+                    autoFocus
+                    value={draftValue}
+                    onChange={(e) => setDraftValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitDraft(optionIndex);
+                      }
+                      if (e.key === "Escape") {
+                        setEditingIndex(null);
+                        setDraftValue("");
+                      }
+                    }}
+                    onBlur={() => commitDraft(optionIndex)}
+                    placeholder="قيمة"
+                    className="w-20 rounded-full border border-dashed border-violet-300 bg-white px-2.5 py-1 text-xs outline-none"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingIndex(optionIndex);
+                      setDraftValue("");
+                    }}
+                    className="rounded-full border border-dashed border-slate-300 px-2 py-0.5 text-xs text-slate-400 hover:border-violet-400 hover:text-violet-600"
+                    title="إضافة قيمة"
+                  >
+                    +
+                  </button>
+                )}
               </div>
             );
           })}

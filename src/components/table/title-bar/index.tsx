@@ -9,7 +9,7 @@ const TitleBar = ({
   className,
 }: {
   children?: React.ReactNode;
-  description?: string;
+  description?: React.ReactNode;
   className?: string;
 }) => {
   const { currentPage } = usePage()
@@ -39,9 +39,9 @@ const TitleBar = ({
           <HugeiconsIcon icon={currentPage?.icon?.normal} className="size-6 shrink-0 sm:size-7" />
           <h1 className="truncate text-xl font-bold sm:text-2xl">{currentPage?.label}</h1>
         </div>
-        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground/80 sm:line-clamp-none">
+        <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground/80 sm:line-clamp-none">
           {subtitle}
-        </p>
+        </div>
       </div>
       {children ? (
         <div className="flex w-full min-w-0 shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto [&_button]:min-h-11">

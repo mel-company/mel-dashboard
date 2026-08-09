@@ -1,31 +1,61 @@
 import axios from "axios";
-import { parse } from "tldts";
 import { clearAuthSession, redirectToLogin } from "@/utils/auth-session";
+import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 
-const parsed = parse(window.location.hostname);
+/**
+ * Prefer same-origin `/api/v1` so:
+ * - production `dash.{store}.mel.iq` goes through the Gateway (tenant = hasan)
+ * - local Vite uses the `/api/v1` proxy
+ *
+ * Set `VITE_API_BASE_URL` to an absolute URL only when you must bypass the
+ * Gateway (e.g. direct local backend: http://localhost:3000/api/v1).
+ */
+function resolveApiBaseUrl(): string {
+  const raw = String(import.meta.env.VITE_API_BASE_URL ?? "")
+    .trim()
+    .replace(/^["']|["']$/g, "")
+    .replace(/\/+$/, "");
 
-// const domain = getDomain(window.location.hostname);
+  if (!raw) return "/api/v1";
 
-// const subdomain = getSubdomain(window.location.hostname);
+  // Absolute override (local API / special envs)
+  if (/^https?:\/\//i.test(raw)) return raw;
 
-// In dev, use Vite proxy (/api/v1 → api.mel.iq) to avoid CORS
-const baseURL = import.meta.env.VITE_API_BASE_URL || "https://api.mel.iq/api/v1";
+  // Relative override e.g. /api/v1 or /api
+  if (raw.startsWith("/")) return raw;
+
+  return "/api/v1";
+}
+
+const baseURL = resolveApiBaseUrl();
+const tenantSubdomain = getTenantSubdomain();
 
 const axiosInstance = axios.create({
   baseURL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
-    "domain-name": parsed.subdomain,
-    "x-tenant-subdomain": parsed.subdomain,
+    // Fallback tenant headers for Vite proxy / non-Gateway setups.
+    // On dash.{store}.mel.iq the Gateway should also inject x-tenant-subdomain.
+    ...(tenantSubdomain
+      ? {
+          "domain-name": tenantSubdomain,
+          "x-tenant-subdomain": tenantSubdomain,
+        }
+      : {}),
   },
   // Needed so the browser will store/send httpOnly cookies (e.g. `sat`)
   withCredentials: true,
 });
 
-// Interceptors
 axiosInstance.interceptors.request.use(
   (config) => {
+    const subdomain = getTenantSubdomain();
+    if (subdomain) {
+      config.headers["domain-name"] = subdomain;
+      config.headers["x-tenant-subdomain"] = subdomain;
+    }
+
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -37,7 +67,6 @@ axiosInstance.interceptors.request.use(
       delete config.headers["Authorization"];
     }
 
-    // Axios 1.x uses AxiosHeaders — delete() is required so multipart boundary is set correctly
     if (config.data instanceof FormData) {
       if (typeof config.headers.delete === "function") {
         config.headers.delete("Content-Type");
@@ -48,15 +77,11 @@ axiosInstance.interceptors.request.use(
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       clearAuthSession();

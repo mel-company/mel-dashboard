@@ -15,6 +15,12 @@ const MobileTopBar = ({ className }: MobileTopBarProps) => {
   const { currentPage } = usePage();
   const unreadCount = me?.notificationsCount || 0;
   const title = currentPage?.label || me?.store || "منصة ميل";
+  const welcomeName = me?.fullName || me?.name || me?.user?.name;
+  const subtitle = welcomeName
+    ? `أهلاً بك، ${welcomeName}`
+    : me?.store && currentPage?.label
+      ? me.store
+      : null;
 
   return (
     <header
@@ -26,8 +32,8 @@ const MobileTopBar = ({ className }: MobileTopBarProps) => {
     >
       <div className="min-w-0 flex-1 text-right">
         <h1 className="truncate text-base font-bold text-foreground">{title}</h1>
-        {me?.store && currentPage?.label ? (
-          <p className="truncate text-[11px] text-muted-foreground">{me.store}</p>
+        {subtitle ? (
+          <p className="truncate text-[11px] text-muted-foreground">{subtitle}</p>
         ) : null}
       </div>
 

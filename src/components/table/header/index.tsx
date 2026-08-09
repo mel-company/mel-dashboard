@@ -1,6 +1,5 @@
-import { Searchbar } from './searchbar'
-import { FilterHorizontalIcon } from '@hugeicons-pro/core-twotone-rounded';
-import { HugeiconsIcon } from '@hugeicons/react';
+﻿import { Searchbar } from './searchbar'
+import FilterSlidersIcon from '@/components/icons/FilterSlidersIcon';
 
 interface PageTableHeaderProps {
     title?: string;
@@ -53,12 +52,12 @@ const PageTableHeader = ({
                         onClick={onFilterClick}
                         className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 text-sky-800 sm:flex-none dark:border-slate-800 dark:bg-slate-950 dark:text-sky-300"
                     >
-                        <HugeiconsIcon icon={FilterHorizontalIcon} size={20} />
+                        <FilterSlidersIcon size={20} className="text-[#3B4656] dark:text-sky-300" />
                         فلاتر
                         {hasActiveFilters &&
                             <span
-                                className="ms-1 flex aspect-square h-5 w-5 items-center justify-center rounded-full bg-blue-100 p-0.5 text-xs text-blue-700 dark:bg-sky-500/20 dark:text-sky-300">
-                                {activeFilterCount}
+                                className="ms-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
+                                +{activeFilterCount}
                             </span>
                         }
                     </button>

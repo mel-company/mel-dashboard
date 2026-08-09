@@ -19,14 +19,14 @@ import {
 import { useResendOtp, useVerify } from "@/api/wrappers/auth.wrappers";
 import { markAuthSession } from "@/utils/auth-session";
 import { useQueryClient } from "@tanstack/react-query";
-import { parse } from "tldts";
+import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 
 const OTP = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const phone = searchParams.get("phone") ?? "";
-  const store = searchParams.get("store") ?? "";
+  const storeParam = searchParams.get("store") ?? "";
   const v_code = searchParams.get("code") ?? "";
 
   const [code, setCode] = useState("");
@@ -36,8 +36,11 @@ const OTP = () => {
   const { mutate: verify, isPending: isVerifyingPending } = useVerify();
   const { mutate: resendOtp, isPending: isResendingOtp } = useResendOtp();
 
-  const parsed = parse(window.location.hostname);
-  const subdomain = parsed.subdomain;
+  const tenantSubdomain = getTenantSubdomain();
+  const normalizedStoreParam = storeParam.startsWith("dash.")
+    ? storeParam.slice("dash.".length)
+    : storeParam;
+  const store = normalizedStoreParam || tenantSubdomain;
   const isAzyaaHost = window.location.hostname === "azyaa.mel.iq";
 
   const maskedPhone = useMemo(() => {
@@ -56,10 +59,10 @@ const OTP = () => {
   }, [cooldown]);
 
   useEffect(() => {
-    if ((subdomain === "fashion" || isAzyaaHost) && v_code) {
+    if ((tenantSubdomain === "fashion" || isAzyaaHost) && v_code) {
       setCode(v_code.toString());
     }
-  }, [subdomain, isAzyaaHost, v_code]);
+  }, [tenantSubdomain, isAzyaaHost, v_code]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,9 +87,12 @@ const OTP = () => {
             markAuthSession(queryClient);
             navigate("/", { replace: true });
           },
-          onError: () => {
+          onError: (error: any) => {
             localStorage.setItem("lgd", "false");
-            toast.error("فشل تحقق الرمز. يرجى المحاولة مرة أخرى");
+            toast.error(
+              error?.response?.data?.message ||
+                "فشل تحقق الرمز. يرجى المحاولة مرة أخرى",
+            );
           },
           onSettled: () => setIsVerifying(false),
         },

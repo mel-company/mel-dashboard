@@ -6,65 +6,95 @@ import ProductTable from "./ProductTable";
 import ProductCards from "./ProductCards";
 
 interface ProductsContentProps {
-    actions: any;
-    navigate: (path: string) => void;
+  actions: any;
+  navigate: (path: string) => void;
 }
 
 const ProductsContent = ({ actions }: ProductsContentProps) => {
-    if (actions.isLoading && actions.products.length === 0) {
-        return <ProductsSkeleton count={8} showHeader={false} viewMode={actions.viewMode} />;
-    }
+  if (actions.isLoading && actions.products.length === 0) {
+    return (
+      <ProductsSkeleton
+        count={8}
+        showHeader={false}
+        viewMode={actions.viewMode}
+      />
+    );
+  }
 
-    if (actions.error && actions.products.length === 0) {
-        return <ErrorPage error={actions.error} onRetry={() => actions.refetch()} isRetrying={false} />;
-    }
+  if (actions.error && actions.products.length === 0) {
+    return (
+      <ErrorPage
+        error={actions.error}
+        onRetry={() => actions.refetch()}
+        isRetrying={false}
+      />
+    );
+  }
 
-    if (actions.products.length === 0) {
-        return <EmptyCard actions={actions} />;
-    }
+  if (actions.products.length === 0) {
+    return <EmptyCard actions={actions} />;
+  }
 
-    return actions.viewMode === "table" ? (
-        <ProductTable
+  const cards = (
+    <ProductCards
+      products={actions.products}
+      imageBaseUrl={actions.imageBaseUrl}
+      onDelete={actions.setDeleteId}
+    />
+  );
+
+  return (
+    <>
+      {/* Mobile always uses card list */}
+      <div className="md:hidden">{cards}</div>
+
+      {/* Desktop respects table/cards toggle */}
+      <div className="hidden md:block">
+        {actions.viewMode === "table" ? (
+          <ProductTable
             products={actions.products}
             onDelete={actions.setDeleteId}
             imageBaseUrl={actions.imageBaseUrl}
-        />
-    ) : (
-        <ProductCards products={actions.products} imageBaseUrl={actions.imageBaseUrl} />
-    );
+          />
+        ) : (
+          cards
+        )}
+      </div>
+    </>
+  );
 };
 
 export default ProductsContent;
 
 const EmptyCard = ({ actions }: { actions: any }) => {
-    const navigate = actions.navigate;
-    const hasFilters = actions.search || actions.hasActiveFilters;
-    const primaryAction = hasFilters
-        ? {
-            label: "مسح البحث والتصفية",
-            onClick: () => {
-                actions.setSearchValue("");
-                actions.handleClearFilters();
-            },
-            icon: <X className="size-4" />,
-            variant: "secondary" as const,
-        }
-        : {
-            label: "إضافة منتج",
-            onClick: () => navigate("/products/add"),
-            icon: <Plus className="size-4" />,
-        };
+  const navigate = actions.navigate;
+  const hasFilters = actions.search || actions.hasActiveFilters;
+  const primaryAction = hasFilters
+    ? {
+        label: "مسح البحث والتصفية",
+        onClick: () => {
+          actions.setSearchValue("");
+          actions.handleClearFilters();
+        },
+        icon: <X className="size-4" />,
+        variant: "secondary" as const,
+      }
+    : {
+        label: "إضافة منتج",
+        onClick: () => navigate("/products/add"),
+        icon: <Plus className="size-4" />,
+      };
 
-    return (
-        <EmptyPage
-            title={hasFilters ? "لا توجد نتائج" : "لا توجد منتجات"}
-            description={
-                hasFilters
-                    ? "لم يتم العثور على منتجات تطابق البحث أو التصفية."
-                    : "ابدأ بإضافة منتج جديد لعرضه هنا."
-            }
-            icon={<ShoppingCart className="size-7 text-muted-foreground" />}
-            primaryAction={primaryAction}
-        />
-    );
-}
+  return (
+    <EmptyPage
+      title={hasFilters ? "لا توجد نتائج" : "لا توجد منتجات"}
+      description={
+        hasFilters
+          ? "لم يتم العثور على منتجات تطابق البحث أو التصفية."
+          : "ابدأ بإضافة منتج جديد لعرضه هنا."
+      }
+      icon={<ShoppingCart className="size-7 text-muted-foreground" />}
+      primaryAction={primaryAction}
+    />
+  );
+};

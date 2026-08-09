@@ -1,54 +1,24 @@
-import { Link } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ShoppingCart, Star } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Package, Pencil, Star, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getProductCoverImage } from "@/utils/product-images";
 import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import type { ProductListItem } from "@/api/types/product";
+import {
+  costMargin,
+  formatPrice,
+  getProductCategories,
+  shortDescription,
+} from "../utils";
 
 const CATEGORY_STYLES = [
-  "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
-  "bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300",
-  "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
-  "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
-  "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+  "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+  "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300",
+  "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+  "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
 ];
-
-function formatPrice(value: number) {
-  return `${value.toLocaleString("ar-IQ")} د.ع`;
-}
-
-function shortDescription(text: string | null | undefined, max = 45) {
-  if (!text?.trim()) return "—";
-  const clean = text.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-  if (clean.length <= max) return clean;
-  return `${clean.slice(0, max)}…`;
-}
-
-function getCategoryName(c: any): string {
-  return c?.category?.name ?? c?.name ?? "";
-}
-
-function getCategoryId(c: any, idx: number): string {
-  return c?.category?.id ?? c?.id ?? String(idx);
-}
-
-function getProductCategories(product: ProductListItem) {
-  const cats = product.categories ?? [];
-  return cats
-    .map((c: any, idx: number) => ({
-      id: getCategoryId(c, idx),
-      name: getCategoryName(c),
-    }))
-    .filter((c) => c.name);
-}
 
 function categoryStyle(name: string) {
   let hash = 0;
@@ -58,107 +28,130 @@ function categoryStyle(name: string) {
   return CATEGORY_STYLES[Math.abs(hash) % CATEGORY_STYLES.length];
 }
 
-function renderStatus(enabled: boolean) {
-  if (enabled) {
-    return (
-      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
-        متاح
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-      مخفي
-    </span>
-  );
-}
-
-function renderCategories(product: ProductListItem) {
-  const cats = getProductCategories(product);
-  if (cats.length === 0) {
-    return <span className="text-xs text-muted-foreground">بدون فئة</span>;
-  }
-  return (
-    <div className="flex max-w-[180px] flex-wrap gap-1.5">
-      {cats.slice(0, 3).map((c) => (
-        <span
-          key={c.id}
-          className={cn(
-            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
-            categoryStyle(c.name),
-          )}
-        >
-          {c.name}
-        </span>
-      ))}
-      {cats.length > 3 && (
-        <span className="text-xs text-muted-foreground">+{cats.length - 3}</span>
-      )}
-    </div>
-  );
-}
-
-interface ProductCardsProps {
+type ProductCardsProps = {
   products: ProductListItem[];
   imageBaseUrl?: string;
-}
+  onDelete?: (id: string) => void;
+};
 
-const ProductCards = ({ products, imageBaseUrl = "" }: ProductCardsProps) => {
+const ProductCards = ({
+  products,
+  imageBaseUrl = "",
+  onDelete,
+}: ProductCardsProps) => {
+  const navigate = useNavigate();
   const resolvedBaseUrl = useImageBaseUrl(imageBaseUrl);
 
-  const renderProductCard = (product: ProductListItem) => {
-    const cover = getProductCoverImage(product);
-    return (
-      <Link key={product.id} to={`/products/${product.id}`}>
-        <Card className="group h-full cursor-pointer gap-y-0 transition-all hover:border-primary/25 hover:shadow-lg">
-          <CardHeader className="pb-4">
-            <div className="relative flex h-40 w-full items-center justify-center overflow-hidden rounded-lg bg-muted/40">
-              <AssetImage
-                image={cover}
-                baseUrl={resolvedBaseUrl}
-                alt={product.title}
-                className="h-full w-full object-contain"
-                fallback={
-                  <ShoppingCart className="size-12 rounded-full bg-cyan/20 p-3 text-cyan" />
-                }
-              />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <CardTitle className="line-clamp-2 text-right leading-8">
-              {product.title}
-            </CardTitle>
-            <p className="line-clamp-1 text-right text-sm text-muted-foreground">
-              {shortDescription(product.description, 60)}
-            </p>
-            {typeof product.rate === "number" ? (
-              <div className="flex items-center gap-1">
-                <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm font-medium">
-                  {product.rate.toFixed(1)}
-                </span>
-              </div>
-            ) : null}
-            <div className="mb-2 flex flex-wrap gap-2">
-              {renderCategories(product)}
-            </div>
-          </CardContent>
-          <CardFooter className="flex items-center justify-between border-t pt-2">
-            <span className="text-lg font-bold text-primary">
-              {typeof product.price === "number"
-                ? formatPrice(product.price)
-                : "—"}
-            </span>
-            {renderStatus(product.enabled)}
-          </CardFooter>
-        </Card>
-      </Link>
-    );
-  };
-
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map(renderProductCard)}
+    <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+      {products.map((product) => {
+        const cover = getProductCoverImage(product);
+        const cats = getProductCategories(product);
+        const margin = costMargin(product.price, product.cost_to_produce);
+
+        return (
+          <article
+            key={product.id}
+            className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+          >
+            {/* Rating */}
+            <div className="absolute start-auto end-4 top-4 z-10 flex items-center gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <Star className="size-4 fill-amber-400 text-amber-400" />
+              {typeof product.rate === "number"
+                ? product.rate.toFixed(1)
+                : "—"}
+            </div>
+
+            {/* Actions */}
+            <div className="absolute start-4 top-4 z-10 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate(`/products/${product.id}/edit`);
+                }}
+                className="flex size-8 items-center justify-center rounded-xl bg-sky-50 text-sky-500 transition-colors hover:bg-sky-100 dark:bg-sky-500/15 dark:text-sky-300"
+                aria-label="تعديل"
+              >
+                <Pencil className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete?.(product.id);
+                }}
+                className="flex size-8 items-center justify-center rounded-xl bg-rose-50 text-rose-500 transition-colors hover:bg-rose-100 dark:bg-rose-500/15 dark:text-rose-300"
+                aria-label="حذف"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
+
+            <Link to={`/products/${product.id}`} className="block text-right">
+              <div className="mb-3 flex h-44 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900">
+                <AssetImage
+                  image={cover}
+                  baseUrl={resolvedBaseUrl}
+                  alt={product.title}
+                  className="h-full w-full object-contain"
+                  fallback={
+                    <Package className="size-12 text-muted-foreground" />
+                  }
+                />
+              </div>
+
+              {cats.length > 0 ? (
+                <div className="mb-2 flex flex-wrap justify-start gap-1.5">
+                  {cats.slice(0, 3).map((c) => (
+                    <span
+                      key={c.id}
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+                        categoryStyle(c.name),
+                      )}
+                    >
+                      {c.name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-slate-900 dark:text-slate-50">
+                {product.title}
+              </h3>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
+                {shortDescription(product.description, 90)}
+              </p>
+
+              <div className="mt-3 flex items-end justify-between gap-2">
+                {margin != null ? (
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                      margin >= 0
+                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"
+                        : "bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
+                    )}
+                  >
+                    {margin >= 0 ? "+" : ""}
+                    {margin.toFixed(0)}%
+                  </span>
+                ) : (
+                  <span />
+                )}
+                <p className="text-base font-bold tabular-nums text-slate-900 dark:text-slate-50">
+                  {typeof product.price === "number"
+                    ? formatPrice(product.price)
+                    : "—"}
+                </p>
+              </div>
+            </Link>
+          </article>
+        );
+      })}
     </div>
   );
 };

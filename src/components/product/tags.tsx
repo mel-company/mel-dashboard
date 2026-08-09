@@ -1,18 +1,27 @@
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type DashedTagProps = {
   children: React.ReactNode;
   onRemove?: () => void;
   className?: string;
+  /** Optional leading label shown in blue (e.g. property name) */
+  lead?: React.ReactNode;
 };
 
-export function DashedTag({ children, onRemove, className }: DashedTagProps) {
+export function DashedTag({
+  children,
+  onRemove,
+  className,
+  lead,
+}: DashedTagProps) {
   return (
     <span
-      dir="ltr"
+      dir="rtl"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border border-dashed border-[#c5d0dc] bg-white px-2.5 py-1 text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-300",
+        "inline-flex items-center gap-1.5 rounded-full border border-dashed px-2.5 py-1 text-xs",
+        "border-slate-300 bg-white text-slate-700",
+        "dark:border-slate-600 dark:bg-slate-950 dark:text-slate-200",
         className,
       )}
     >
@@ -20,12 +29,18 @@ export function DashedTag({ children, onRemove, className }: DashedTagProps) {
         <button
           type="button"
           onClick={onRemove}
-          className="flex size-4 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-900/50 dark:text-violet-300"
+          className="flex size-4 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-600 dark:bg-rose-500 dark:hover:bg-rose-400"
           aria-label="إزالة"
         >
           <X className="size-2.5" strokeWidth={2.5} />
         </button>
       ) : null}
+      {lead ? (
+        <span className="font-semibold text-sky-500 dark:text-sky-400">
+          {lead}
+        </span>
+      ) : null}
+      {lead ? <span className="text-slate-300">|</span> : null}
       <span dir="auto">{children}</span>
     </span>
   );
@@ -54,6 +69,31 @@ export function AddedLabel({
   );
 }
 
+const purpleAddBtn =
+  "size-9 shrink-0 rounded-xl bg-violet-100 p-0 text-violet-600 shadow-none hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-200 dark:hover:bg-violet-500/30";
+
+export function PurpleAddButton({
+  onClick,
+  label,
+}: {
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center justify-center transition-colors",
+        purpleAddBtn,
+      )}
+      aria-label={label}
+    >
+      <Plus className="size-4" strokeWidth={2.5} />
+    </button>
+  );
+}
+
 export function ProductSectionCard({
   title,
   description,
@@ -76,22 +116,23 @@ export function ProductSectionCard({
         className,
       )}
     >
-      <div
-        dir="rtl"
-        className="mb-3 flex items-start justify-between gap-3"
-      >
+      <div dir="rtl" className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0 text-right">
-          <h2 className="text-lg font-bold text-blue-950 dark:text-blue-100 text-right">
+          <h2 className="text-right text-base font-bold text-[#1a2b5a] sm:text-lg dark:text-blue-100">
             {title}
           </h2>
           {description ? (
-            <p className="mt-0.5 text-xs text-slate-400 text-right">{description}</p>
+            <p className="mt-1 max-w-xl text-right text-xs leading-relaxed text-slate-400">
+              {description}
+            </p>
           ) : null}
           {label ? (
-            <p className="mt-2 text-xs font-medium text-slate-400 text-left">{label}</p>
+            <p className="mt-1 text-right text-xs font-medium text-sky-500">
+              {label}
+            </p>
           ) : null}
         </div>
-        {action ? <div className="shrink-0 text-left">{action}</div> : null}
+        {action ? <div className="shrink-0">{action}</div> : null}
       </div>
       {children}
     </section>

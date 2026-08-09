@@ -12,7 +12,11 @@ import type {
   NotificationFilterValues,
   NotificationListItem,
 } from "@/api/types/notification";
-import { isNotificationRead, matchesNotificationFilters } from "@/new-pages/notifications/utils";
+import {
+  countActiveNotificationFilters,
+  isNotificationRead,
+  matchesNotificationFilters,
+} from "@/new-pages/notifications/utils";
 
 const CURSOR_LIMIT = 10;
 
@@ -76,9 +80,10 @@ export function useNotificationsPage() {
     me?.notificationsCount ??
     rawNotifications.filter((n) => !isNotificationRead(n)).length;
 
-  const hasActiveFilters = Boolean(filters.type || filters.readStatus);
+  const totalAvailable = notifications.length;
 
-  const activeFilterCount = [filters.type, filters.readStatus].filter(Boolean).length;
+  const activeFilterCount = countActiveNotificationFilters(filters);
+  const hasActiveFilters = activeFilterCount > 0;
 
   const loadMoreRef = useInfiniteScroll({
     hasNextPage: !!activeQuery.hasNextPage,
@@ -129,6 +134,7 @@ export function useNotificationsPage() {
 
   return {
     notifications,
+    totalAvailable,
     unreadCount,
     searchQuery,
     onSearchChange: setSearchQuery,

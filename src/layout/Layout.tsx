@@ -31,7 +31,7 @@ const Layout = () => {
   }, [mobileSidebarOpen]);
 
   return (
-    <div className="flex h-dvh w-screen overflow-hidden bg-[#f4f7fb] dark:bg-background">
+    <div className="relative flex h-dvh w-screen overflow-hidden bg-[#f4f7fb] dark:bg-[#07070a]">
       {/* Mobile drawer backdrop */}
       <button
         type="button"
@@ -48,7 +48,7 @@ const Layout = () => {
       {/* Sidebar: drawer on mobile, static on desktop */}
       <AppSidebar
         className={cn(
-          "fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0",
+          "fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-out lg:relative lg:z-10 lg:translate-x-0",
           mobileSidebarOpen
             ? "translate-x-0 shadow-2xl"
             : "translate-x-full lg:translate-x-0",
@@ -58,12 +58,20 @@ const Layout = () => {
         {...(isPosPage && { collapsed: true })}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/* Dark mode — purple circle beside the sidebar */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden dark:block"
+        >
+          <div className="absolute -top-28 -right-24 size-[480px] rounded-full bg-violet-600/18 blur-[140px]" />
+        </div>
+
         {showMobileChrome && <MobileTopBar />}
 
         <main
           className={cn(
-            "custom-scrollbar flex-1 overflow-x-hidden overflow-y-auto",
+            "custom-scrollbar relative z-10 flex-1 overflow-x-hidden overflow-y-auto",
             showMobileChrome && "pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0",
           )}
         >

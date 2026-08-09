@@ -65,6 +65,7 @@ export const mainRoutes: RouteConfig[] = [
         path: "/products",
         children: [
             { path: "", element: <Products /> },
+            { path: "add", element: <AddProduct /> },
             {
                 path: ":id",
                 children: [
@@ -72,7 +73,6 @@ export const mainRoutes: RouteConfig[] = [
                     { path: "edit", element: <EditProduct /> },
                 ],
             },
-            { path: "add", element: <AddProduct /> },
         ],
     },
     {
