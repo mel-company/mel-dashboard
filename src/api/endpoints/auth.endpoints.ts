@@ -1,16 +1,43 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
+/** Auth phones are stored as digits (e.g. 9647701234560), not +964… */
+function toAuthPhone(phone: unknown): string {
+  return String(phone ?? "").replace(/\D/g, "");
+}
+
+function toTenantSlug(domain: unknown): string {
+  return String(domain || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^dash\./i, "")
+    .split(".")[0];
+}
+
 export const authAPI = {
   login: async (params?: any): Promise<any> => {
     const storeName = params?.store?.name ?? params?.name;
     const storeDomain = params?.store?.domain ?? params?.domain;
-    const { data } = await axiosInstance.post<any>("/store-user-auth/login", {
-      phone: params?.phone,
-      store: {
-        name: storeName,
-        domain: storeDomain,
+    const tenant = toTenantSlug(storeDomain);
+    const phone = toAuthPhone(params?.phone);
+
+    const { data } = await axiosInstance.post<any>(
+      "/store-user-auth/login",
+      {
+        phone,
+        store: {
+          name: storeName,
+          domain: tenant || storeDomain,
+        },
       },
-    });
+      tenant
+        ? {
+            headers: {
+              "domain-name": tenant,
+              "x-tenant-subdomain": tenant,
+            },
+          }
+        : undefined,
+    );
 
     return data;
   },
@@ -23,15 +50,27 @@ export const authAPI = {
   },
 
   resendOtp: async (params?: any): Promise<any> => {
+    const storeDomain = params?.store?.domain;
+    const tenant = toTenantSlug(storeDomain);
+    const phone = toAuthPhone(params?.phone);
+
     const { data } = await axiosInstance.post<any>(
       "/store-user-auth/resend-otp",
       {
-        phone: params?.phone,
+        phone,
         store: {
           name: params?.store?.name,
-          domain: params?.store?.domain,
+          domain: tenant || storeDomain,
         },
       },
+      tenant
+        ? {
+            headers: {
+              "domain-name": tenant,
+              "x-tenant-subdomain": tenant,
+            },
+          }
+        : undefined,
     );
     return data;
   },
@@ -68,12 +107,27 @@ export const authAPI = {
 
   verify: async (params?: any): Promise<any> => {
     // Store-user flow: this endpoint sets the `sat` cookie on success
-    const { data } = await axiosInstance.post<any>("/store-user-auth/verify", {
-      phone: params?.phone,
-      code: parseInt(params?.code ?? "0"),
-      storeDomain: params?.store?.domain,
-      storeName: params?.store?.name,
-    });
+    const storeDomain = params?.store?.domain ?? params?.storeDomain;
+    const tenant = toTenantSlug(storeDomain);
+    const phone = toAuthPhone(params?.phone);
+
+    const { data } = await axiosInstance.post<any>(
+      "/store-user-auth/verify",
+      {
+        phone,
+        code: parseInt(params?.code ?? "0"),
+        storeDomain: tenant || storeDomain,
+        storeName: params?.store?.name ?? params?.storeName,
+      },
+      tenant
+        ? {
+            headers: {
+              "domain-name": tenant,
+              "x-tenant-subdomain": tenant,
+            },
+          }
+        : undefined,
+    );
     return data;
   },
 
