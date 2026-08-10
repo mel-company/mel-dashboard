@@ -175,14 +175,6 @@ const AddProduct = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleClearImages = () => {
-    revokeObjectUrls(previewUrls);
-    setImageFiles([]);
-    setPreviewUrls([]);
-    setActivePreviewIndex(0);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) =>
       prev.includes(categoryId)
