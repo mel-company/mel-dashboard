@@ -24,7 +24,7 @@ type MobileBottomNavProps = {
 const tabs = [
   {
     key: "home",
-    label: "الرئيسية",
+    label: "لوحة التحكم",
     path: "/",
     icon: Home12Icon,
     activeIcon: Home12IconActive,

@@ -194,7 +194,7 @@ type ShortcutItem = { description: string; keys: React.ReactNode };
 
 const shortcutItems: ShortcutItem[] = [
   {
-    description: "انتقل الى الصفحة الرئيسية",
+    description: "انتقل الى لوحة التحكم",
     keys: (
       <KbdGroup>
         <Kbd>Ctrl</Kbd>

@@ -71,7 +71,7 @@ const ErrorPage = ({
             <Button variant="outline" asChild>
               <Link to={homeTo}>
                 <Home />
-                <span>الصفحة الرئيسية</span>
+                <span>لوحة التحكم</span>
               </Link>
             </Button>
           </div>

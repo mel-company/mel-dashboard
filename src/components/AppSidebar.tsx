@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
   LogOut,
 } from "lucide-react";
 
@@ -55,6 +54,7 @@ function NavLink({
       to={item.path}
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
+      dir="rtl"
       className={cn(
         "relative flex items-center gap-2.5 overflow-hidden transition-all",
         collapsed
@@ -65,7 +65,7 @@ function NavLink({
                 : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5",
             )
           : cn(
-              "rounded-full px-3.5 py-2.5",
+              "w-full flex-row rounded-full px-3.5 py-2.5",
               active
                 ? "text-white shadow-lg shadow-sky-500/20"
                 : "rounded-2xl text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/4",
@@ -77,7 +77,7 @@ function NavLink({
           {/* Selected background — purple → cyan like Figma */}
           <span
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-l from-[#5B8CFF] via-[#6B6BFF] to-[#8B5CF6]"
+            className="absolute inset-0 bg-linear-to-l from-[#5B8CFF] via-[#6B6BFF] to-[#8B5CF6]"
           />
           <span
             aria-hidden
@@ -89,11 +89,12 @@ function NavLink({
           />
           <span
             aria-hidden
-            className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#4F46E5]/35 to-transparent"
+            className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-[#4F46E5]/35 to-transparent"
           />
         </>
       ) : null}
 
+      {/* RTL: icon on the right, label to its left */}
       <HugeiconsIcon
         icon={icon}
         className={cn(
@@ -104,7 +105,7 @@ function NavLink({
       {!collapsed && (
         <span
           className={cn(
-            "relative z-10 flex-1 text-right text-[15px] font-medium",
+            "relative z-10 min-w-0 flex-1 text-right text-[15px] font-medium",
             active && "text-white",
           )}
         >
@@ -157,9 +158,10 @@ const AppSidebar = ({
 
   return (
     <aside
+      dir="rtl"
       className={cn(
-        "relative flex h-full shrink-0 flex-col overflow-hidden border-l border-border/60 bg-card transition-[width] duration-200",
-        "dark:border-white/[0.06] dark:bg-[#08090f]",
+        "relative flex h-full shrink-0 flex-col overflow-hidden border-l border-border/60 bg-card text-right transition-[width] duration-200",
+        "dark:border-sidebar-border dark:bg-sidebar",
         collapsed ? "w-[76px]" : "w-[min(272px,88vw)] lg:w-[272px]",
         className,
       )}
@@ -187,7 +189,7 @@ const AppSidebar = ({
               </button>
             )}
             <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-500 to-sky-400 p-[2px]">
-              <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-[#08090f]">
+              <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-background">
                 {storeLogoUrl ? (
                   <img
                     src={storeLogoUrl}
@@ -202,26 +204,9 @@ const AppSidebar = ({
           </div>
         ) : (
           <div className="flex items-center gap-2 rounded-2xl border border-transparent bg-slate-50 px-2.5 py-2.5 dark:border-white/[0.06] dark:bg-white/[0.03]">
-            {canToggle && (
-              <button
-                type="button"
-                onClick={() => setInternalCollapsed((v) => !v)}
-                className="hidden size-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200/70 lg:flex dark:hover:bg-white/5"
-                aria-label="طي القائمة"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            )}
-            <div className="min-w-0 flex-1 text-right">
-              <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
-                {storeTitle}
-              </p>
-              <p className="truncate text-[11px] text-slate-400">
-                نظام إدارة المتاجر
-              </p>
-            </div>
-            <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-500 to-sky-400 p-[2px]">
-              <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-white dark:bg-[#08090f]">
+            {/* RTL: logo on the right */}
+            <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-violet-500 to-sky-400 p-[2px]">
+              <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-white dark:bg-background">
                 {storeLogoUrl ? (
                   <img
                     src={storeLogoUrl}
@@ -233,6 +218,24 @@ const AppSidebar = ({
                 )}
               </div>
             </div>
+            <div className="min-w-0 flex-1 text-right">
+              <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
+                {storeTitle}
+              </p>
+              <p className="truncate text-[11px] text-slate-400">
+                نظام إدارة المتاجر
+              </p>
+            </div>
+            {canToggle && (
+              <button
+                type="button"
+                onClick={() => setInternalCollapsed((v) => !v)}
+                className="hidden size-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200/70 lg:flex dark:hover:bg-white/5"
+                aria-label="طي القائمة"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -306,21 +309,22 @@ const AppSidebar = ({
               onClick={() => setProfileOpen((v) => !v)}
               className="flex w-full items-center gap-2.5 rounded-2xl border border-transparent bg-slate-50 px-2.5 py-2.5 text-right transition-colors hover:bg-slate-100 dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]"
             >
+              {/* RTL: avatar on the right */}
+              <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-violet-500 to-sky-400 text-xs font-bold text-white">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1 text-right">
+                <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                  {displayName}
+                </p>
+                <p className="truncate text-[11px] text-slate-400">{roleLabel}</p>
+              </div>
               <ChevronDown
                 className={cn(
                   "size-4 shrink-0 text-slate-400 transition-transform",
                   profileOpen && "rotate-180",
                 )}
               />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                  {displayName}
-                </p>
-                <p className="truncate text-[11px] text-slate-400">{roleLabel}</p>
-              </div>
-              <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-500 to-sky-400 text-xs font-bold text-white">
-                {initials}
-              </div>
             </button>
 
             {profileOpen ? (
@@ -328,10 +332,10 @@ const AppSidebar = ({
                 type="button"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                className="flex w-full flex-row items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30"
               >
                 <LogOut className="size-4" />
-                {isLoggingOut ? "جاري الخروج..." : "تسجيل الخروج"}
+                <span>{isLoggingOut ? "جاري الخروج..." : "تسجيل الخروج"}</span>
               </button>
             ) : null}
           </div>

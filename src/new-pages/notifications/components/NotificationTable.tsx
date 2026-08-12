@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import Pagination from "@/components/table/pagination";
 import NotificationTableHeader from "./NotificationTableHeader";
@@ -16,6 +16,7 @@ type NotificationTableProps = {
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
   onRowClick: (notification: NotificationListItem) => void;
+  toolbar?: ReactNode;
 };
 
 const NotificationTable = ({
@@ -25,6 +26,7 @@ const NotificationTable = ({
   isFetchingNextPage,
   fetchNextPage,
   onRowClick,
+  toolbar,
 }: NotificationTableProps) => {
   const [activePage, setActivePage] = useState(1);
   const [viewCount, setViewCount] = useState(10);
@@ -79,21 +81,23 @@ const NotificationTable = ({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-3xl border p-3.5 sm:p-6",
-        "border-slate-200/80 bg-white",
-        "dark:border-slate-800 dark:bg-slate-950",
+        "w-full overflow-hidden rounded-[24px] border border-transparent bg-card p-3 sm:p-4",
       )}
     >
-      <div className="mb-4 text-right sm:mb-5">
-        <h2 className="text-lg font-bold text-slate-900 sm:text-xl dark:text-white">
-          جميع الأشعارات
-        </h2>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          أجمالي العناصر المتاحة{" "}
-          <span className="font-semibold text-slate-700 dark:text-slate-200">
-            {totalAvailable}
-          </span>
-        </p>
+      <div className="mb-4 flex flex-col gap-4 sm:mb-5 md:flex-row md:items-center md:justify-between">
+        {toolbar ? <div className="hidden md:block">{toolbar}</div> : null}
+        <div className="text-right md:ms-auto">
+          <h2
+            className="text-base font-normal text-foreground sm:text-xl"
+            style={{ fontFamily: '"Setar XS", var(--font-family)' }}
+          >
+            جميع الأشعارات
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+            أجمالي العناصر المتاحة{" "}
+            <span className="font-bold text-foreground">{totalAvailable}</span>
+          </p>
+        </div>
       </div>
 
       <NotificationCards
@@ -116,10 +120,10 @@ const NotificationTable = ({
         </Table>
       </div>
 
-      <div className="mt-4 space-y-3 border-t border-slate-100 pt-4 dark:border-white/5 md:block">
-        <div className="hidden flex-wrap items-center justify-end gap-2 text-sm md:flex">
+      <div className="mt-4 space-y-3 border-t border-border pt-4 md:block">
+        <div className="hidden flex-wrap items-center justify-end gap-3 text-sm md:flex">
           <select
-            className="rounded-md border border-sky-500 bg-transparent p-1.5 font-medium text-sky-500 dark:bg-sky-500/15 dark:text-sky-400"
+            className="rounded-lg border border-[#7d26f726] bg-transparent px-3 py-1.5 font-bold text-[#7d26f7]"
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}
             aria-label="الترتيب"
@@ -127,9 +131,7 @@ const NotificationTable = ({
             <option value="desc">تنازلي</option>
             <option value="asc">تصاعدي</option>
           </select>
-          <span className="font-light text-slate-500 opacity-80 dark:text-slate-400">
-            مرتبة بشكل
-          </span>
+          <span className="text-muted-foreground">مرتبة بشكل</span>
         </div>
 
         <Pagination

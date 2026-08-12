@@ -43,7 +43,7 @@ export type PageType = {
 }
 
 export const pages: PageType[] = [{
-    label: "الرئيسية",
+    label: "لوحة التحكم",
     slug: "",
     apiEndpoint: "",
     group: "معلومات النظام",

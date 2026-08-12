@@ -1,17 +1,13 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import AppsGrid from "@/components/AppsGrid";
 import AppSidebar from "@/components/AppSidebar";
 import MobileTopBar from "@/components/MobileTopBar";
-import MobileBottomNav from "@/components/MobileBottomNav";
 import { cn } from "@/lib/utils";
 
 const Layout = () => {
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  const isHomePage = location.pathname === "/";
-  const shouldShowApps = isHomePage;
   const isPosPage = location.pathname === "/pos";
   const showMobileChrome = !isPosPage;
 
@@ -31,7 +27,7 @@ const Layout = () => {
   }, [mobileSidebarOpen]);
 
   return (
-    <div className="relative flex h-dvh w-screen overflow-hidden bg-[#f4f7fb] dark:bg-[#07070a]">
+    <div className="relative flex h-dvh w-screen overflow-hidden bg-background">
       {/* Mobile drawer backdrop */}
       <button
         type="button"
@@ -59,41 +55,29 @@ const Layout = () => {
       />
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Dark mode — purple circle beside the sidebar */}
+        {/* Soft brand glow — matches Figma dark atmosphere */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden dark:block"
         >
-          <div className="absolute -top-28 -right-24 size-[480px] rounded-full bg-violet-600/18 blur-[140px]" />
+          <div className="absolute -top-28 -right-24 size-[480px] rounded-full bg-[#9139c4]/18 blur-[140px]" />
+          <div className="absolute -bottom-32 -left-20 size-[380px] rounded-full bg-[#00b7ff]/10 blur-[120px]" />
         </div>
 
-        {showMobileChrome && <MobileTopBar />}
-
-        <main
-          className={cn(
-            "custom-scrollbar relative z-10 flex-1 overflow-x-hidden overflow-y-auto",
-            showMobileChrome && "pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0",
-          )}
-        >
-          {shouldShowApps ? (
-            <div className="h-full w-full p-3 sm:p-6 lg:p-8">
-              <AppsGrid />
-            </div>
-          ) : (
-            <div
-              className={cn(
-                "w-full",
-                isPosPage ? "p-3 lg:p-5" : "p-3 sm:p-6 lg:p-8",
-              )}
-            >
-              <Outlet />
-            </div>
-          )}
-        </main>
-
         {showMobileChrome && (
-          <MobileBottomNav onMoreClick={() => setMobileSidebarOpen(true)} />
+          <MobileTopBar onMenuClick={() => setMobileSidebarOpen(true)} />
         )}
+
+        <main className="custom-scrollbar relative z-10 flex-1 overflow-x-hidden overflow-y-auto">
+          <div
+            className={cn(
+              "w-full",
+              isPosPage ? "p-3 lg:p-5" : "p-3 sm:p-6 lg:p-8",
+            )}
+          >
+            <Outlet />
+          </div>
+        </main>
       </div>
     </div>
   );

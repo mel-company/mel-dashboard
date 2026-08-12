@@ -35,43 +35,44 @@ const NotificationCards = ({
             type="button"
             onClick={() => onCardClick(notification)}
             className={cn(
-              "w-full rounded-[1.25rem] border p-3.5 text-right transition-colors",
-              /* Light mode cards */
-              "border-slate-100 bg-[#f8f9fc]",
-              /* Dark mode cards — neutral, matches app theme */
-              "dark:border-slate-800 dark:bg-slate-950",
+              "w-full rounded-2xl border border-transparent bg-card p-4 text-right transition-colors",
               "active:scale-[0.995]",
-              !isRead && "ring-1 ring-sky-400/20 dark:ring-sky-500/20",
+              !isRead && "ring-1 ring-primary/20",
             )}
           >
-            <div className="mb-2.5 flex items-center justify-between gap-3">
-              <NotificationTypeBadge meta={meta} />
+            <div className="mb-3 flex items-center justify-between gap-3">
               <span
-                className="shrink-0 text-[11px] tabular-nums text-slate-400"
+                className="shrink-0 text-[11px] tabular-nums text-muted-foreground"
                 dir="ltr"
               >
                 {timePart} • {datePart}
               </span>
+              <NotificationTypeBadge meta={meta} />
             </div>
 
-            <h3 className="mb-1 text-[15px] leading-snug font-bold text-slate-900 dark:text-white">
+            <h3
+              className={cn(
+                "mb-1 text-[15px] leading-snug font-bold",
+                isRead ? "text-muted-foreground" : "text-foreground",
+              )}
+            >
               {notification.title || "بدون عنوان"}
             </h3>
 
-            <p className="mb-3 text-[11px] text-slate-400 dark:text-slate-500">
+            <p className="mb-3 text-[11px] text-muted-foreground">
               معرف الاشعارات:{" "}
               <span className="font-mono" dir="ltr">
                 #{notification.id.slice(0, 8)}
               </span>
             </p>
 
-            <div className="border-t border-slate-200/80 pt-3 dark:border-white/5">
+            <div className="border-t border-border/60 pt-3">
               {entity ? (
-                <p className="mb-1 text-sm font-medium text-sky-500">
+                <p className="mb-1 text-[13px] font-semibold text-[#33c5ff]">
                   {entity}
                 </p>
               ) : null}
-              <p className="line-clamp-2 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
+              <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                 {detail}
               </p>
             </div>

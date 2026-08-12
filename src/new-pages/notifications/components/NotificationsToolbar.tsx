@@ -1,6 +1,9 @@
-import { Search } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  FilterIcon,
+  Search01Icon,
+} from "@hugeicons-pro/core-stroke-rounded";
 import { cn } from "@/lib/utils";
-import FilterSlidersIcon from "@/components/icons/FilterSlidersIcon";
 
 type NotificationsToolbarProps = {
   searchQuery: string;
@@ -9,6 +12,7 @@ type NotificationsToolbarProps = {
   onFilterClick: () => void;
   hasActiveFilters?: boolean;
   activeFilterCount?: number;
+  showFilterLabel?: boolean;
   className?: string;
 };
 
@@ -19,18 +23,24 @@ const NotificationsToolbar = ({
   onFilterClick,
   hasActiveFilters = false,
   activeFilterCount = 0,
+  showFilterLabel = false,
   className,
 }: NotificationsToolbarProps) => {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
       <div
         className={cn(
-          "flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-2xl border px-3",
-          "border-slate-200 bg-white",
-          "dark:border-slate-700 dark:bg-slate-900",
+          "flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-[14px] border px-2 sm:max-w-[402px]",
+          "border-[#00b7ff26] bg-card",
         )}
       >
-        <Search className="size-5 shrink-0 text-sky-500" strokeWidth={2.25} />
+        <button
+          type="button"
+          onClick={() => onSearchSubmit?.()}
+          className="shrink-0 rounded-lg bg-[#00b7ff0d] px-3.5 py-2 text-sm font-medium text-primary"
+        >
+          البحث
+        </button>
         <input
           type="search"
           value={searchQuery}
@@ -39,15 +49,13 @@ const NotificationsToolbar = ({
             if (e.key === "Enter") onSearchSubmit?.();
           }}
           placeholder="ابحث عن المنتجات"
-          className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
         />
-        <button
-          type="button"
-          onClick={() => onSearchSubmit?.()}
-          className="shrink-0 px-1 text-sm font-semibold text-sky-500"
-        >
-          البحث
-        </button>
+        <HugeiconsIcon
+          icon={Search01Icon}
+          size={22}
+          className="me-1 shrink-0 text-muted-foreground"
+        />
       </div>
 
       <button
@@ -55,17 +63,16 @@ const NotificationsToolbar = ({
         onClick={onFilterClick}
         aria-label="الفلاتر"
         className={cn(
-          "relative flex size-12 shrink-0 items-center justify-center rounded-2xl border",
-          "border-slate-200 bg-white text-sky-700",
-          "dark:border-slate-700 dark:bg-slate-900 dark:text-sky-400",
+          "relative flex h-12 shrink-0 items-center justify-center gap-2 rounded-[14px] border border-[#00b7ff26] bg-card px-3.5 text-primary",
+          showFilterLabel ? "min-w-[110px]" : "size-12 px-0",
         )}
       >
-        <FilterSlidersIcon
-          size={20}
-          className="text-[#3B4656] dark:text-sky-400"
-        />
+        {showFilterLabel ? (
+          <span className="text-sm font-bold">الفلاتر</span>
+        ) : null}
+        <HugeiconsIcon icon={FilterIcon} size={22} />
         {hasActiveFilters && activeFilterCount > 0 ? (
-          <span className="absolute -start-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm">
+          <span className="absolute -start-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#ff0808] px-1 text-[10px] font-bold leading-none text-white shadow-[0_0_25px_#ff080833]">
             +{activeFilterCount}
           </span>
         ) : null}

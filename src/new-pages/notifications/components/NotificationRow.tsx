@@ -26,34 +26,37 @@ const NotificationRow = ({ notification, onClick }: NotificationRowProps) => {
   return (
     <TableRow
       className={cn(
-        "cursor-pointer border-b border-slate-100/80 transition-colors hover:bg-slate-50/80 dark:border-white/5 dark:hover:bg-white/[0.03]",
-        !isRead && "bg-sky-50/50 dark:bg-sky-500/[0.07]",
+        "cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/40",
+        !isRead && "bg-primary/5",
       )}
       onClick={() => onClick(notification)}
     >
       <TableCell className={cn(tdClass, "w-28")}>
         <span
-          className="font-mono text-sm font-medium text-slate-500 dark:text-slate-400"
+          className="font-mono text-sm font-medium text-[#33c5ff]"
           dir="ltr"
         >
           #{notification.id.slice(0, 8)}
         </span>
       </TableCell>
       <TableCell className={tdClass}>
-        <p className="font-semibold text-slate-900 dark:text-slate-50">
+        <p
+          className={cn(
+            "font-semibold",
+            isRead ? "text-muted-foreground" : "text-foreground",
+          )}
+        >
           {notification.title || "بدون عنوان"}
         </p>
       </TableCell>
       <TableCell className={tdClass}>
         <div className="max-w-md space-y-0.5">
           {entity ? (
-            <p className="text-sm font-medium text-sky-600 underline underline-offset-2 dark:text-sky-400">
+            <p className="text-sm font-medium text-[#33c5ff] underline underline-offset-2">
               {entity}
             </p>
           ) : null}
-          <p className="line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
-            {detail}
-          </p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">{detail}</p>
         </div>
       </TableCell>
       <TableCell className={tdClass}>
@@ -61,12 +64,8 @@ const NotificationRow = ({ notification, onClick }: NotificationRowProps) => {
       </TableCell>
       <TableCell className={cn(tdClass, "w-36")}>
         <div className="flex flex-col gap-0.5 tabular-nums" dir="ltr">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            {datePart}
-          </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            {timePart}
-          </span>
+          <span className="text-sm font-medium text-foreground">{datePart}</span>
+          <span className="text-xs text-muted-foreground">{timePart}</span>
         </div>
       </TableCell>
     </TableRow>

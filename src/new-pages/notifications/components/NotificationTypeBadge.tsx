@@ -14,16 +14,12 @@ const iconMap = {
   order: MessageCircle,
 } as const;
 
-/** Soft pastel light chips + solid dark chips */
+/** Soft tint chips like Figma Alerts */
 const colorMap = {
-  danger:
-    "bg-rose-100 text-rose-600 dark:bg-rose-500 dark:text-white",
-  warning:
-    "bg-orange-100 text-orange-600 dark:bg-orange-500 dark:text-white",
-  success:
-    "bg-emerald-100 text-emerald-600 dark:bg-emerald-500 dark:text-white",
-  purple:
-    "bg-violet-100 text-violet-600 dark:bg-violet-500 dark:text-white",
+  danger: "bg-[#ff52521a] text-[#ff5252]",
+  warning: "bg-[#ff9b3d1a] text-[#f57b00]",
+  success: "bg-[#00dfa81a] text-[#00b88a]",
+  purple: "bg-[#9a5cff1a] text-[#7d26f7]",
 } as const;
 
 type NotificationTypeBadgeProps = {
@@ -40,13 +36,13 @@ const NotificationTypeBadge = ({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold whitespace-nowrap",
+        "inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-[13px] font-medium whitespace-nowrap",
         colorMap[meta.color],
         className,
       )}
     >
-      <Icon className="size-3.5 shrink-0" strokeWidth={2.5} />
       {meta.label}
+      <Icon className="size-3.5 shrink-0" strokeWidth={2.25} />
     </span>
   );
 };

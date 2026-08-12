@@ -37,7 +37,7 @@ const Sidebar = ({ onClose }: SidebarProps) => {
   const navItems = useMemo(
     () => [
       {
-        label: "الرئيسية",
+        label: "لوحة التحكم",
         path: "/",
         icon: Home,
       },
