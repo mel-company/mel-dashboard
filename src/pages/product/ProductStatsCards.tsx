@@ -3,15 +3,14 @@ import {
   type ProductStatsSummary,
 } from "@/api/wrappers/product.wrappers";
 import { useFetchStoreStats } from "@/api/wrappers/stats.wrappers";
-import { BaseCard, FeaturedCard } from "@/components/table/top-cards";
+import { BaseCard } from "@/components/table/top-cards";
 import { cn } from "@/lib/utils";
 import {
-  BoxIcon,
   PackageDeliveredIcon,
   PackageOpenIcon,
   PackageProcessIcon,
 } from "@hugeicons-pro/core-bulk-rounded";
-import { BoxIcon as BoxIconStroked } from "@hugeicons-pro/core-stroke-rounded";
+import { Money04Icon } from "@hugeicons-pro/core-stroke-standard";
 import {
   AlertTriangle,
   Banknote,
@@ -48,7 +47,7 @@ function MobileStatCard({
   growth?: number;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-3.5 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+    <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-3.5 py-3 shadow-sm dark:border-white/[0.06] dark:bg-[#0a0e27]">
       <div
         className={cn(
           "flex size-11 shrink-0 items-center justify-center rounded-2xl",
@@ -58,7 +57,7 @@ function MobileStatCard({
         {icon}
       </div>
       <div className="min-w-0 flex-1 text-right">
-        <p className="text-xs text-slate-400">{title}</p>
+        <p className="text-xs text-slate-400 dark:text-[#a4b1fa]">{title}</p>
         <div className="mt-0.5 flex items-center justify-end gap-2">
           {typeof growth === "number" ? (
             <span
@@ -71,7 +70,7 @@ function MobileStatCard({
               {growth}%
             </span>
           ) : null}
-          <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-50">
+          <p className="truncate text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
             {value}
           </p>
         </div>
@@ -86,37 +85,12 @@ const ProductStatsCards = () => {
 
   const stats = mergeWithStoreFallback(data, storeStats?.products);
 
-  const baseCards = [
-    {
-      icon: PackageDeliveredIcon,
-      title: "أضافة جديدة",
-      value: stats.newProducts.toLocaleString("ar-IQ"),
-      growth: 12.6,
-      color: "success" as const,
-    },
-    {
-      icon: PackageProcessIcon,
-      title: "قريبة على النفاذ",
-      value: stats.lowStock.toLocaleString("ar-IQ"),
-      growth: 12.6,
-      color: "warning" as const,
-    },
-    {
-      icon: PackageOpenIcon,
-      title: "نفذت الكمية",
-      value: stats.outOfStock.toLocaleString("ar-IQ"),
-      growth: 12.6,
-      color: "danger" as const,
-    },
-  ];
-
   if (isError && !storeStats) {
     return null;
   }
 
   return (
     <>
-      {/* Mobile — stacked Figma cards */}
       <div className="flex flex-col gap-2.5 md:hidden">
         <MobileStatCard
           title="إجمالي أسعار المنتجات"
@@ -133,40 +107,49 @@ const ProductStatsCards = () => {
           growth={12.6}
         />
         <MobileStatCard
-          title="منتجات على الوشك"
-          value={`${stats.lowStock.toLocaleString("ar-IQ")} منتجات`}
+          title="قريبة على النفاذ"
+          value={stats.lowStock.toLocaleString("ar-IQ")}
           icon={<AlertTriangle className="size-5" />}
           iconWrapClass="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300"
           growth={-12.6}
         />
         <MobileStatCard
-          title="حالات الكمية"
-          value={`${stats.outOfStock.toLocaleString("ar-IQ")} منتج`}
+          title="نفذت الكمية"
+          value={stats.outOfStock.toLocaleString("ar-IQ")}
           icon={<Package className="size-5" />}
           iconWrapClass="bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"
-          growth={-12.6}
+          growth={12.6}
         />
       </div>
 
-      {/* Desktop */}
       <div className="hidden grid-cols-2 gap-3 md:grid lg:grid-cols-4">
-        <FeaturedCard
+        <BaseCard
+          icon={Money04Icon}
+          title="إجمالي أسعار المنتجات"
+          value={`${stats.totalValue.toLocaleString("ar-IQ")} د.ع`}
+          color="success"
+        />
+        <BaseCard
+          icon={PackageDeliveredIcon}
           title="إجمالي المنتجات"
           value={stats.totalProducts.toLocaleString("ar-IQ")}
-          icon={BoxIcon}
-          strokedIcon={BoxIconStroked}
-          color="primary"
+          growth={12.6}
+          color="default"
         />
-        {baseCards.map((card, index) => (
-          <BaseCard
-            key={index}
-            icon={card.icon}
-            title={card.title}
-            value={card.value}
-            growth={card.growth}
-            color={card.color}
-          />
-        ))}
+        <BaseCard
+          icon={PackageProcessIcon}
+          title="قريبة على النفاذ"
+          value={stats.lowStock.toLocaleString("ar-IQ")}
+          growth={-12.6}
+          color="warning"
+        />
+        <BaseCard
+          icon={PackageOpenIcon}
+          title="نفذت الكمية"
+          value={stats.outOfStock.toLocaleString("ar-IQ")}
+          growth={12.6}
+          color="danger"
+        />
       </div>
     </>
   );

@@ -39,7 +39,7 @@ const ProductTable = ({ products, onDelete, imageBaseUrl = "" }: ProductTablePro
   const paginatedProducts = products.slice(startIndex, endIndex);
 
   return (
-    <div className="w-full overflow-hidden rounded-3xl border border-transparent bg-white p-6 shadow-none dark:border-slate-800 dark:bg-slate-950">
+    <div className="w-full overflow-hidden rounded-3xl border border-transparent bg-white p-4 shadow-none sm:p-6 dark:border-white/[0.06] dark:bg-[#0a0e27]">
       <Table>
         <ProductTableHeader />
         <TableBody>
@@ -54,13 +54,15 @@ const ProductTable = ({ products, onDelete, imageBaseUrl = "" }: ProductTablePro
           ))}
         </TableBody>
       </Table>
-      <Pagination
-        totalPages={totalPages}
-        activePage={activePage}
-        viewCount={viewCount}
-        onPageChange={handlePageChange}
-        onViewCountChange={handleViewCountChange}
-      />
+      <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/[0.06]">
+        <Pagination
+          totalPages={totalPages}
+          activePage={activePage}
+          viewCount={viewCount}
+          onPageChange={handlePageChange}
+          onViewCountChange={handleViewCountChange}
+        />
+      </div>
     </div>
   );
 };

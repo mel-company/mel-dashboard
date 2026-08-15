@@ -13,7 +13,7 @@ import {
 } from "../utils";
 
 const CATEGORY_STYLES = [
-  "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+  "bg-violet-100 text-violet-700 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]",
   "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300",
   "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
   "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
@@ -52,17 +52,15 @@ const ProductCards = ({
         return (
           <article
             key={product.id}
-            className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+            className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-3.5 shadow-sm dark:border-white/[0.06] dark:bg-[#0a0e27]"
           >
-            {/* Rating */}
-            <div className="absolute start-auto end-4 top-4 z-10 flex items-center gap-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <div className="absolute start-auto end-4 top-4 z-10 flex items-center gap-1 text-sm font-semibold text-slate-700 dark:text-[#e4e7fc]">
               <Star className="size-4 fill-amber-400 text-amber-400" />
               {typeof product.rate === "number"
                 ? product.rate.toFixed(1)
                 : "—"}
             </div>
 
-            {/* Actions */}
             <div className="absolute start-4 top-4 z-10 flex items-center gap-2">
               <button
                 type="button"
@@ -71,7 +69,7 @@ const ProductCards = ({
                   e.stopPropagation();
                   navigate(`/products/${product.id}/edit`);
                 }}
-                className="flex size-8 items-center justify-center rounded-xl bg-sky-50 text-sky-500 transition-colors hover:bg-sky-100 dark:bg-sky-500/15 dark:text-sky-300"
+                className="flex size-8 items-center justify-center rounded-xl bg-sky-50 text-sky-500 transition-colors hover:bg-sky-100 dark:bg-[#33c5ff]/10 dark:text-[#a4b1fa]"
                 aria-label="تعديل"
               >
                 <Pencil className="size-3.5" />
@@ -83,7 +81,7 @@ const ProductCards = ({
                   e.stopPropagation();
                   onDelete?.(product.id);
                 }}
-                className="flex size-8 items-center justify-center rounded-xl bg-rose-50 text-rose-500 transition-colors hover:bg-rose-100 dark:bg-rose-500/15 dark:text-rose-300"
+                className="flex size-8 items-center justify-center rounded-xl bg-rose-50 text-rose-500 transition-colors hover:bg-rose-100 dark:bg-[#ff5252]/15 dark:text-[#ff5252]"
                 aria-label="حذف"
               >
                 <Trash2 className="size-3.5" />
@@ -91,7 +89,7 @@ const ProductCards = ({
             </div>
 
             <Link to={`/products/${product.id}`} className="block text-right">
-              <div className="mb-3 flex h-44 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900">
+              <div className="mb-3 flex h-44 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-[#12183b]">
                 <AssetImage
                   image={cover}
                   baseUrl={resolvedBaseUrl}
@@ -119,30 +117,36 @@ const ProductCards = ({
                 </div>
               ) : null}
 
-              <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-slate-900 dark:text-slate-50">
+              <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-slate-900 dark:text-[#f0f2ff]">
                 {product.title}
               </h3>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400 dark:text-[#a4b1fa]">
                 {shortDescription(product.description, 90)}
               </p>
 
               <div className="mt-3 flex items-end justify-between gap-2">
-                {margin != null ? (
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                      margin >= 0
-                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"
-                        : "bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
-                    )}
-                  >
-                    {margin >= 0 ? "+" : ""}
-                    {margin.toFixed(0)}%
-                  </span>
-                ) : (
-                  <span />
-                )}
-                <p className="text-base font-bold tabular-nums text-slate-900 dark:text-slate-50">
+                <div className="text-start">
+                  {margin != null ? (
+                    <p
+                      className={cn(
+                        "text-[11px] font-semibold",
+                        margin >= 0
+                          ? "text-emerald-600 dark:text-[#00dfa8]"
+                          : "text-rose-600 dark:text-[#ff5252]",
+                      )}
+                    >
+                      {Math.abs(margin).toFixed(1)}% {margin >= 0 ? "↗" : "↘"}
+                    </p>
+                  ) : null}
+                  {typeof product.cost_to_produce === "number" &&
+                  product.cost_to_produce > 0 &&
+                  product.cost_to_produce !== product.price ? (
+                    <p className="text-xs tabular-nums text-slate-400 line-through dark:text-[#a4b1fa]/70">
+                      {formatPrice(product.cost_to_produce)}
+                    </p>
+                  ) : null}
+                </div>
+                <p className="text-base font-bold tabular-nums text-slate-900 dark:text-[#f0f2ff]">
                   {typeof product.price === "number"
                     ? formatPrice(product.price)
                     : "—"}

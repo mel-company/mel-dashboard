@@ -45,18 +45,21 @@ export const FeaturedCard = ({
 }
 
 export const BaseCard = ({ icon, title, value, growth, color = "default" }: { icon: IconSvgElement, title: string, value: string, growth?: string | number, color?: "default" | "accent" | "warning" | "danger" | "success" }) => {
+    const growthValue = typeof growth === "string" ? Number.parseFloat(growth) : growth
+    const isNegative = typeof growthValue === "number" && growthValue < 0
+
     return (
         <div className="card base-card">
             <div className={`p-2.5 rounded-full ${color}-card`}>
                 <HugeiconsIcon icon={icon} size={28} />
             </div>
-            <div  >
+            <div>
                 <p className="title">{title}</p>
                 <p className="value">{value}
-                    {growth &&
-                        <span className="growth">
-                            <HugeiconsIcon icon={ArrowUpRight03Icon} size={16} />
-                            <span>{growth}%</span>
+                    {typeof growthValue === "number" && growthValue !== 0 &&
+                        <span className={`growth ${isNegative ? "is-down" : ""}`}>
+                            <HugeiconsIcon icon={ArrowUpRight03Icon} size={16} className={isNegative ? "rotate-90" : ""} />
+                            <span>{Math.abs(growthValue)}%</span>
                         </span>
                     }
                 </p>

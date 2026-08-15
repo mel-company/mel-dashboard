@@ -112,7 +112,7 @@ export function ProductSectionCard({
   return (
     <section
       className={cn(
-        "rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-950",
+        "rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5 dark:border-white/[0.06] dark:bg-[#0a0e27]",
         className,
       )}
     >

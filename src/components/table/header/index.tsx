@@ -28,7 +28,7 @@ const PageTableHeader = ({
         <header className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2'>
             {title ? (
                 <div className="min-w-0 text-right">
-                    <h2 className='text-xl text-blue-950 sm:text-2xl dark:text-blue-100'>{title}</h2>
+                    <h2 className='text-xl text-blue-950 sm:text-2xl dark:text-[#e4e7fc]'>{title}</h2>
                     {subtitle ? (
                         <p className="mt-0.5 text-xs text-muted-foreground">
                             {subtitle}
@@ -47,12 +47,13 @@ const PageTableHeader = ({
                     />
                 </div>
                 <div className="flex items-center gap-2">
+                    {onFilterClick ? (
                     <button
                         type="button"
                         onClick={onFilterClick}
-                        className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 text-sky-800 sm:flex-none dark:border-slate-800 dark:bg-slate-950 dark:text-sky-300"
+                        className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 text-sky-800 sm:flex-none dark:border-white/[0.08] dark:bg-[#0a0e27] dark:text-[#33c5ff]"
                     >
-                        <FilterSlidersIcon size={20} className="text-[#3B4656] dark:text-sky-300" />
+                        <FilterSlidersIcon size={20} className="text-[#3B4656] dark:text-[#33c5ff]" />
                         فلاتر
                         {hasActiveFilters &&
                             <span
@@ -61,6 +62,7 @@ const PageTableHeader = ({
                             </span>
                         }
                     </button>
+                    ) : null}
 
                     {children && <div className='hidden h-6 w-px bg-slate-200 sm:block dark:bg-slate-700' />}
                     {children ? (

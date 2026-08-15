@@ -30,7 +30,7 @@ const TitleBar = ({
   return (
     <div
       className={cn(
-        "flex w-full flex-col gap-3 text-blue-950 sm:flex-row sm:items-center sm:justify-between dark:text-blue-100",
+        "flex w-full flex-col gap-3 text-blue-950 sm:flex-row sm:items-center sm:justify-between dark:text-[#e4e7fc]",
         className,
       )}
     >

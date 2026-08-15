@@ -40,7 +40,7 @@ const ProductsPage = () => {
           }
         >
           <Button
-            className="h-11 shrink-0 gap-2.5 rounded-full bg-violet-100 px-5 text-violet-700 shadow-sm hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-200 dark:hover:bg-violet-500/30"
+            className="h-11 shrink-0 gap-2.5 rounded-full bg-violet-100 px-5 text-violet-700 shadow-sm hover:bg-violet-200 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20 dark:border dark:border-[#9a5cff]/15"
             onClick={() => navigate("/products/add")}
           >
             <span className="flex size-7 items-center justify-center rounded-full bg-violet-500/15 dark:bg-violet-400/20">
@@ -60,7 +60,7 @@ const ProductsPage = () => {
             className={cn(
               "flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-2xl border px-3",
               "border-slate-200 bg-white",
-              "dark:border-slate-700 dark:bg-slate-900",
+              "dark:border-white/[0.08] dark:bg-[#0a0e27]",
             )}
           >
             <Search className="size-5 shrink-0 text-sky-500" strokeWidth={2.25} />
@@ -79,7 +79,7 @@ const ProductsPage = () => {
             className={cn(
               "relative flex size-12 shrink-0 items-center justify-center rounded-2xl border",
               "border-slate-200 bg-sky-50 text-sky-600",
-              "dark:border-slate-700 dark:bg-sky-500/15 dark:text-sky-300",
+              "dark:border-white/[0.08] dark:bg-[#33c5ff]/10 dark:text-[#33c5ff]",
             )}
           >
             <FilterSlidersIcon size={20} />

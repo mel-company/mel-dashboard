@@ -11,6 +11,7 @@ type Props = {
         icon: IconSvgElement
     }[];
     onChange: (value: string) => void
+    accent?: "sky" | "violet"
 }
 
 const defaultOptions = [
@@ -28,7 +29,8 @@ const defaultOptions = [
 const SwitchTab = ({
     options = defaultOptions,
     onChange,
-    selected
+    selected,
+    accent = "sky",
 }: Props) => {
     const [selectedOption, setSelectedOption] = useState(selected || options[0]?.value);
 
@@ -39,22 +41,37 @@ const SwitchTab = ({
         setSelectedOption(value)
         onChange(value)
     }
+    const isViolet = accent === "violet";
+
     return (
-        <div className="flex w-full items-center justify-center self-center rounded-xl bg-white p-1.5 dark:bg-slate-950 sm:w-auto sm:p-2">
+        <div
+            className={classNames(
+                "flex w-full items-center justify-center self-center",
+                isViolet
+                    ? "h-[58px] rounded-[14px] bg-white p-1.5 dark:bg-[#12183b] md:w-auto"
+                    : "rounded-xl border border-transparent bg-white p-1.5 dark:border-[#00b7ff]/20 dark:bg-transparent sm:w-auto sm:p-2",
+            )}
+        >
             {options?.map((option) => (
                 <button
                     type="button"
                     key={option.value}
                     onClick={() => toggle(option.value)}
                     className={classNames(
-                        "flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-1 rounded-lg px-2.5 py-2 text-sm transition-colors duration-75 sm:flex-none sm:py-1.5",
-                        {
-                            "bg-sky-700 text-sky-50": option.value === selectedOption,
-                            "text-slate-600 dark:text-slate-300": option.value !== selectedOption,
-                        },
+                        "flex cursor-pointer items-center justify-center gap-1.5",
+                        isViolet
+                            ? "h-9 flex-1 rounded-xl px-[18px] text-sm font-medium md:flex-none"
+                            : "min-h-10 flex-1 rounded-lg px-2.5 py-2 text-sm sm:flex-none sm:py-1.5",
+                        option.value === selectedOption
+                            ? isViolet
+                                ? "bg-[#7d26f7] text-white dark:bg-[#b282ff] dark:text-white"
+                                : "bg-sky-700 text-sky-50 dark:bg-[#33c5ff]/10 dark:text-[#33c5ff]"
+                            : isViolet
+                                ? "text-slate-600 dark:text-white"
+                                : "text-slate-600 dark:text-[#a4b1fa]",
                     )}
                 >
-                    {option.icon && <HugeiconsIcon size={20} icon={option.icon} />}
+                    {option.icon && <HugeiconsIcon size={18} icon={option.icon} />}
                     <span>{option.label}</span>
                 </button>
             ))}

@@ -1,0 +1,129 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { Folder } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AssetImage } from "@/components/AssetImage";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
+import { Switch } from "@/components/ui/switch";
+import ActionBtnList from "@/components/table/action-btn-list";
+import { useUpdateGroup } from "@/api/wrappers/group.wrappers";
+import { toast } from "sonner";
+import { GroupCategoryTags } from "./GroupPreviewCard";
+import {
+  formatDate,
+  formatTime,
+  getGroupCategories,
+  shortId,
+  shortText,
+} from "../utils";
+
+type GroupRowProps = {
+  group: any;
+  refetch: () => void;
+  onDelete: (group: any) => void;
+  imageBaseUrl?: string;
+};
+
+const GroupRow = ({
+  group,
+  refetch,
+  onDelete,
+  imageBaseUrl = "",
+}: GroupRowProps) => {
+  const [data, setData] = useState(group);
+  const navigate = useNavigate();
+  const resolvedBaseUrl = useImageBaseUrl(imageBaseUrl);
+  const { mutate: updateGroup } = useUpdateGroup();
+  const tdClass = "whitespace-normal px-3.5 py-3.5 text-right align-middle";
+  const cats = getGroupCategories(data);
+  const updatedAt = data.updatedAt ?? data.createdAt;
+
+  useEffect(() => {
+    setData(group);
+  }, [group]);
+
+  const handleToggle = (checked: boolean) => {
+    setData({ ...data, enabled: checked });
+    const formData = new FormData();
+    formData.append("name", data.name ?? "");
+    formData.append("enabled", String(checked));
+    updateGroup(
+      { id: group.id, data: formData },
+      {
+        onSuccess: () => refetch(),
+        onError: () => {
+          setData(group);
+          toast.error("فشل تحديث حالة المجموعة");
+        },
+      },
+    );
+  };
+
+  return (
+    <TableRow
+      className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-[#12183b] dark:hover:bg-white/[0.03]"
+      onClick={() => navigate(`/category-group/${group.id}`)}
+    >
+      <TableCell className={cn(tdClass, "w-16")}>
+        <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 dark:bg-[#12183b]">
+          <AssetImage
+            image={data.image}
+            baseUrl={resolvedBaseUrl}
+            alt={data.name}
+            className="block size-12 rounded-lg object-cover"
+            fallback={<Folder className="size-6 text-slate-400" />}
+          />
+        </div>
+      </TableCell>
+      <TableCell className={tdClass}>
+        <span className="font-mono text-sm text-slate-600 dark:text-[#a4b1fa]" dir="ltr">
+          {shortId(data.id)}
+        </span>
+      </TableCell>
+      <TableCell className={tdClass}>
+        <p className="line-clamp-1 font-semibold text-slate-900 dark:text-[#f0f2ff]">
+          {data.name}
+        </p>
+        <p className="mt-0.5 line-clamp-1 text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+          {shortText(data.description)}
+        </p>
+      </TableCell>
+      <TableCell className={tdClass}>
+        <GroupCategoryTags group={data} />
+      </TableCell>
+      <TableCell
+        className={cn(
+          tdClass,
+          "font-semibold tabular-nums text-slate-900 dark:text-[#f0f2ff]",
+        )}
+      >
+        {data._count?.categories ?? cats.length}
+      </TableCell>
+      <TableCell className={tdClass}>
+        <p className="text-sm text-slate-900 dark:text-[#e4e7fc]">
+          {formatDate(updatedAt)}
+        </p>
+        <p className="text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+          {formatTime(updatedAt)}
+        </p>
+      </TableCell>
+      <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
+        <Switch
+          onToggle={handleToggle}
+          checked={data.enabled}
+          activeLabel="مفعل"
+          disabledLabel="معطل"
+        />
+      </TableCell>
+      <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
+        <ActionBtnList
+          onEdit={() => navigate(`/category-group/${group.id}/edit`)}
+          onDelete={() => onDelete(group)}
+        />
+      </TableCell>
+    </TableRow>
+  );
+};
+
+export default GroupRow;

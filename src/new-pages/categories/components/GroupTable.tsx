@@ -1,40 +1,36 @@
 import { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import Pagination from "@/components/table/pagination";
-import { CategoryTableHeader } from "./CategoryTableHeader";
-import CategoryRow from "./CategoryRow";
-import CategoryDeleteModal from "./CategoryDeleteModal";
+import { GroupTableHeader } from "./CategoryTableHeader";
+import GroupRow from "./GroupRow";
+import GroupDeleteModal from "./GroupDeleteModal";
 
-type CategoryTableProps = {
-  categories: any[];
+type GroupTableProps = {
+  groups: any[];
   refetch: () => void;
   imageBaseUrl?: string;
 };
 
-const CategoryTable = ({
-  categories,
-  refetch,
-  imageBaseUrl = "",
-}: CategoryTableProps) => {
+const GroupTable = ({ groups, refetch, imageBaseUrl = "" }: GroupTableProps) => {
   const [activePage, setActivePage] = useState(1);
   const [viewCount, setViewCount] = useState(10);
-  const [deleteCategory, setDeleteCategory] = useState<any>(null);
+  const [deleteGroup, setDeleteGroup] = useState<any>(null);
 
-  const totalPages = Math.ceil(categories.length / viewCount) || 1;
+  const totalPages = Math.ceil(groups.length / viewCount) || 1;
   const startIndex = (activePage - 1) * viewCount;
-  const paginated = categories.slice(startIndex, startIndex + viewCount);
+  const paginated = groups.slice(startIndex, startIndex + viewCount);
 
   return (
     <div className="w-full overflow-x-auto rounded-3xl border border-transparent bg-white p-4 shadow-none sm:p-4 dark:border-transparent dark:bg-[#0a0e27]">
       <Table>
-        <CategoryTableHeader />
+        <GroupTableHeader />
         <TableBody>
-          {paginated.map((category) => (
-            <CategoryRow
-              key={category.id}
-              category={category}
+          {paginated.map((group) => (
+            <GroupRow
+              key={group.id}
+              group={group}
               refetch={refetch}
-              onDelete={setDeleteCategory}
+              onDelete={setDeleteGroup}
               imageBaseUrl={imageBaseUrl}
             />
           ))}
@@ -52,9 +48,9 @@ const CategoryTable = ({
           }}
         />
       </div>
-      <CategoryDeleteModal
-        category={deleteCategory}
-        onOpenChange={(open) => !open && setDeleteCategory(null)}
+      <GroupDeleteModal
+        group={deleteGroup}
+        onOpenChange={(open) => !open && setDeleteGroup(null)}
         onSuccess={refetch}
         imageBaseUrl={imageBaseUrl}
       />
@@ -62,4 +58,4 @@ const CategoryTable = ({
   );
 };
 
-export default CategoryTable;
+export default GroupTable;

@@ -53,6 +53,7 @@ import {
   ProductSectionCard,
   PurpleAddButton,
 } from "@/components/product/tags";
+import ProductDeleteModal from "@/new-pages/products/components/delete-modal";
 
 const formatPrice = (value?: number | null) =>
   typeof value === "number" ? `${value.toLocaleString("en-US")} د.ع` : "—";
@@ -222,7 +223,7 @@ const ProductDetails = () => {
           <button
             type="button"
             onClick={() => navigate("/products")}
-            className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm dark:border-white/[0.08] dark:bg-[#12183b] dark:text-slate-200"
             aria-label="رجوع"
           >
             <ArrowRight className="size-4" />
@@ -281,14 +282,14 @@ const ProductDetails = () => {
 
                 <div>
                   <FieldLabel>اسم المنتج</FieldLabel>
-                  <div className="rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                  <div className="rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-800 dark:border-white/[0.08] dark:bg-[#12183b] dark:text-slate-100">
                     {data.title || "—"}
                   </div>
                 </div>
 
                 <div>
                   <FieldLabel>وصف المنتج</FieldLabel>
-                  <div className="min-h-[7.5rem] rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm leading-6 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                  <div className="min-h-[7.5rem] rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm leading-6 text-slate-800 dark:border-white/[0.08] dark:bg-[#12183b] dark:text-slate-100">
                     <p className="max-h-36 overflow-y-auto whitespace-pre-wrap">
                       {data.description?.trim() || "—"}
                     </p>
@@ -300,7 +301,7 @@ const ProductDetails = () => {
                     <FieldLabel hint="ماذا يعني؟" hintTone="special">
                       السعر الافتراضي
                     </FieldLabel>
-                    <div className="relative rounded-2xl border border-slate-200/90 ps-11 bg-white px-3.5 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900">
+                    <div className="relative rounded-2xl border border-slate-200/90 ps-11 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
                       <span className="text-slate-800 dark:text-slate-100">
                         {typeof data.price === "number"
                           ? data.price.toLocaleString("en-US")
@@ -315,7 +316,7 @@ const ProductDetails = () => {
                     <FieldLabel hint="اختياري" hintTone="optional">
                       تكلفة المنتج
                     </FieldLabel>
-                    <div className="relative rounded-2xl border border-slate-200/90 ps-11 bg-white px-3.5 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900">
+                    <div className="relative rounded-2xl border border-slate-200/90 ps-11 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
                       <span className="text-slate-800 dark:text-slate-100">
                         {typeof data.cost_to_produce === "number"
                           ? data.cost_to_produce.toLocaleString("en-US")
@@ -330,7 +331,7 @@ const ProductDetails = () => {
                     <FieldLabel hint="اختياري" hintTone="optional">
                       تقييم المنتج
                     </FieldLabel>
-                    <div className="relative rounded-2xl border border-slate-200/90 ps-10 bg-white px-3.5 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900">
+                    <div className="relative rounded-2xl border border-slate-200/90 ps-10 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
                       <span className="text-slate-800 dark:text-slate-100">
                         {typeof data.rate === "number" ? data.rate : "—"}
                       </span>
@@ -439,13 +440,13 @@ const ProductDetails = () => {
             ) : (
               <>
                 <div
-                  className="hidden overflow-hidden rounded-2xl border border-slate-100 md:block dark:border-slate-800"
+                  className="hidden overflow-hidden rounded-2xl border border-slate-100 md:block dark:border-white/[0.06]"
                   dir="rtl"
                 >
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[920px] text-sm">
                       <thead>
-                        <tr className="bg-[#eef2f7] dark:bg-slate-900">
+                        <tr className="bg-[#eef2f7] dark:bg-[#12183b]">
                           <SortHeader>KUS</SortHeader>
                           <SortHeader>QR</SortHeader>
                           <SortHeader>الكمية</SortHeader>
@@ -474,7 +475,7 @@ const ProductDetails = () => {
                           return (
                             <tr
                               key={variant.id}
-                              className="border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950"
+                              className="border-t border-slate-100 bg-white dark:border-white/[0.06] dark:bg-[#0a0e27]"
                             >
                               <td
                                 className="px-3 py-3.5 text-center font-medium"
@@ -532,7 +533,7 @@ const ProductDetails = () => {
                                     onClick={() =>
                                       setEditingVariantId(variant.id)
                                     }
-                                    className="flex size-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                    className="flex size-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/5 dark:hover:text-[#a4b1fa]"
                                     aria-label="تعديل"
                                   >
                                     <Pencil className="size-3.5" />
@@ -542,7 +543,7 @@ const ProductDetails = () => {
                                     onClick={() =>
                                       setDeletingVariantId(variant.id)
                                     }
-                                    className="flex size-9 items-center justify-center rounded-xl text-rose-500 hover:bg-rose-50"
+                                    className="flex size-9 items-center justify-center rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-[#ff5252]/10"
                                     aria-label="حذف"
                                   >
                                     <Trash2 className="size-3.5" />
@@ -561,7 +562,7 @@ const ProductDetails = () => {
                   {variants.map((variant: any) => (
                     <div
                       key={variant.id}
-                      className="space-y-3 rounded-3xl border border-slate-100 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900"
+                      className="space-y-3 rounded-3xl border border-slate-100 bg-white p-3.5 dark:border-white/[0.06] dark:bg-[#0a0e27]"
                     >
                       <div className="flex justify-between gap-2 text-sm">
                         <span className="text-slate-400">KUS</span>
@@ -730,43 +731,14 @@ const ProductDetails = () => {
         </aside>
       </div>
 
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="text-right">
-          <DialogHeader className="text-right">
-            <DialogTitle className="text-right">تأكيد حذف المنتج</DialogTitle>
-            <DialogDescription className="text-right">
-              هل أنت متأكد من حذف المنتج "{data.title}"؟ لا يمكنك التراجع عن هذا
-              الإجراء بعد التأكيد.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={isDeleting}
-            >
-              إلغاء
-            </Button>
-            <Button
-              onClick={() => {
-                setIsDeleteDialogOpen(false);
-                handleDelete();
-              }}
-              variant="destructive"
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="size-4 mr-2 animate-spin" />
-                  جاري الحذف...
-                </>
-              ) : (
-                "تأكيد الحذف"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ProductDeleteModal
+        deleteId={isDeleteDialogOpen ? (id ?? null) : null}
+        setDeleteId={(nextId) => setIsDeleteDialogOpen(!!nextId)}
+        isDeleting={isDeleting}
+        handleDelete={handleDelete}
+        products={data ? [data as any] : []}
+        imageBaseUrl={imageBaseUrl}
+      />
 
       {id && (
         <AddProductOptionDialog

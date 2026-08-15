@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Link, useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -21,7 +22,7 @@ const PAGE_SUBTITLES: Record<string, string> = {
   "/": "يمكنك مراقبة جميع نشاطاتك في واجهة واحدة",
   "/notifications": "تمتلك إشعارات جديدة في قائمة الاشعارات",
   "/orders": "تابع حالة طلباتك وإدارة المبيعات",
-  "/products": "إدارة منتجات متجرك بسهولة",
+  "/categories": "تمتلك حركات جديدة في قائمة الفئات",
   "/customers": "أفضل عملائك في مكان واحد",
   "/settings": "خصص إعدادات متجرك",
 };
