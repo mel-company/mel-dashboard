@@ -8,7 +8,7 @@ type TicketInfoSidebarProps = {
 };
 
 const fieldClass =
-  "w-full rounded-2xl border-0 bg-slate-100 px-4 py-3 text-right text-sm text-slate-800";
+  "w-full rounded-2xl border-0 bg-slate-100 px-4 py-3 text-right text-sm text-slate-800 dark:bg-[#1a224c] dark:text-[#c6d0ff]";
 
 const TicketInfoSidebar = ({ ticket }: TicketInfoSidebarProps) => {
   const ticketAttachments =
@@ -40,7 +40,7 @@ const TicketInfoSidebar = ({ ticket }: TicketInfoSidebarProps) => {
         </div>
       </div>
 
-      <div className="mt-auto rounded-2xl bg-amber-50 px-4 py-3 text-center text-sm font-medium text-amber-800">
+      <div className="mt-auto rounded-2xl bg-amber-50 px-4 py-3 text-center text-sm font-medium text-amber-800 dark:bg-[#3a2d25] dark:text-[#ffb468]">
         حالة الطلب الحالية : {getStatusBannerText(ticket.status)}
       </div>
     </div>

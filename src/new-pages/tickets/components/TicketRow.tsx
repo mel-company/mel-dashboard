@@ -1,8 +1,8 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import ActionBtnList from "@/components/table/action-btn-list";
 import Badge from "@/components/table/badge";
+import { AlertTriangle, CheckCircle2, Clock3, Eye, Pencil, Trash2 } from "lucide-react";
 import type { SupportTicketListItem } from "@/api/types/ticket";
 import {
   TICKET_DEPARTMENTS,
@@ -52,11 +52,12 @@ const statusColor = (status?: string): "success" | "danger" | "purple" | "defaul
 
 const TicketRow = ({ ticket, rowIndex }: TicketRowProps) => {
   const navigate = useNavigate();
-  const tdClass = "whitespace-normal px-4 py-3.5 text-right align-middle";
+  const tdClass = "whitespace-normal px-3.5 py-3.5 text-right align-middle";
+  const ticketCode = `TK${String(ticket.id).slice(0, 4).toUpperCase()}`;
 
   return (
     <TableRow
-      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-900/80"
+      className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-[#12183b] dark:hover:bg-white/3"
       onClick={() => navigate(`/tickets/${ticket.id}`)}
     >
       <TableCell className={cn(tdClass, "w-14 text-muted-foreground")}>
@@ -65,33 +66,51 @@ const TicketRow = ({ ticket, rowIndex }: TicketRowProps) => {
         </span>
       </TableCell>
       <TableCell className={tdClass}>
-        <p className="font-semibold text-slate-900 dark:text-slate-100">{ticket.title ?? "—"}</p>
+        <span className="font-mono text-sm font-medium text-slate-600 dark:text-[#a4b1fa]" dir="ltr">
+          #{ticketCode}
+        </span>
+      </TableCell>
+      <TableCell className={tdClass}>
+        <p className="font-semibold text-slate-900 dark:text-[#f0f2ff]">{ticket.title ?? "—"}</p>
         {ticket.description && (
-          <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-[#a4b1fa]">
             {ticket.description}
           </p>
         )}
       </TableCell>
       <TableCell className={tdClass}>
-        <Badge color="default">{getTicketTypeLabel(ticket.type)}</Badge>
+        <Badge color="purple">{getTicketTypeLabel(ticket.type)}</Badge>
       </TableCell>
       <TableCell className={tdClass}>
-        <span className="text-sm text-slate-600 dark:text-slate-400">
+        <span className="text-sm text-slate-600 dark:text-[#e4e7fc]">
           {getDepartmentLabel(ticket.department)}
         </span>
       </TableCell>
-      <TableCell className={tdClass}>
-        <Badge color={statusColor(ticket.status)}>
-          {getStatusLabel(ticket.status)}
-        </Badge>
-      </TableCell>
-      <TableCell className={cn(tdClass, "text-sm text-slate-500 dark:text-slate-400")}>
+      <TableCell className={cn(tdClass, "text-sm text-slate-500 dark:text-[#a4b1fa]")}>
         {formatDate(ticket.createdAt)}
       </TableCell>
+      <TableCell className={tdClass}>
+        <Badge color={statusColor(ticket.status)}>
+          <span className="inline-flex items-center gap-1">
+            {ticket.status?.toUpperCase() === "OPEN" ? <AlertTriangle className="size-3.5" /> : null}
+            {ticket.status?.toUpperCase() === "IN_PROGRESS" || ticket.status?.toUpperCase() === "ON_HOLD" ? <Clock3 className="size-3.5" /> : null}
+            {ticket.status?.toUpperCase() === "RESOLVED" || ticket.status?.toUpperCase() === "CLOSED" ? <CheckCircle2 className="size-3.5" /> : null}
+          {getStatusLabel(ticket.status)}
+          </span>
+        </Badge>
+      </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
-        <ActionBtnList
-          onView={() => navigate(`/tickets/${ticket.id}`)}
-        />
+        <div className="flex items-center gap-2 text-slate-400 dark:text-[#8f9de8]">
+          <button type="button" aria-label="حذف التذكرة" className="text-red-500 dark:text-[#ff5a67]">
+            <Trash2 className="size-4" />
+          </button>
+          <button type="button" aria-label="تعديل التذكرة" onClick={() => navigate(`/tickets/${ticket.id}`)}>
+            <Pencil className="size-4" />
+          </button>
+          <button type="button" aria-label="عرض التذكرة" onClick={() => navigate(`/tickets/${ticket.id}`)}>
+            <Eye className="size-4" />
+          </button>
+        </div>
       </TableCell>
     </TableRow>
   );

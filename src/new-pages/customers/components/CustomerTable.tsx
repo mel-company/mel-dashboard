@@ -28,7 +28,7 @@ const CustomerTable = ({ customers, onDelete }: CustomerTableProps) => {
   const paginatedCustomers = customers.slice(startIndex, startIndex + viewCount);
 
   return (
-    <div className="w-full overflow-hidden rounded-3xl border border-transparent bg-white p-6 shadow-none dark:border-slate-800 dark:bg-slate-950">
+    <div className="w-full overflow-x-auto rounded-3xl border border-transparent bg-white p-4 shadow-none sm:p-4 dark:border-transparent dark:bg-[#0a0e27]">
       <Table>
         <CustomerTableHeader />
         <TableBody>
@@ -42,7 +42,7 @@ const CustomerTable = ({ customers, onDelete }: CustomerTableProps) => {
           ))}
         </TableBody>
       </Table>
-      <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+      <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/6">
         <Pagination
           totalPages={totalPages}
           activePage={activePage}

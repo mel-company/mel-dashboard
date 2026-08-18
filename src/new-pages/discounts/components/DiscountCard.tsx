@@ -1,51 +1,83 @@
-import { Badge } from "@/components/ui/badge";
+import type { ReactNode } from "react";
+import { Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AssetImage } from "@/components/AssetImage";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import type { DiscountListItem } from "@/api/types/discount";
 import {
-  formatDiscountDate,
+  formatTableDate,
+  formatTableTime,
   getDiscountScope,
-  getDiscountStatusMeta,
+  shortText,
 } from "../utils";
 
 type DiscountCardProps = {
   discount: DiscountListItem;
   onClick: () => void;
+  footer?: ReactNode;
+  className?: string;
 };
 
-const DiscountCard = ({ discount, onClick }: DiscountCardProps) => {
-  const status = getDiscountStatusMeta(discount.discount_status);
+const DiscountCard = ({ discount, onClick, footer, className }: DiscountCardProps) => {
+  const imageBaseUrl = useImageBaseUrl(discount.baseUrl ?? "");
   const pct = discount.discount_percentage ?? 0;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex h-full w-full flex-col rounded-3xl border border-slate-100 bg-white p-4 text-right shadow-sm transition-all hover:border-sky-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-700"
+      className={cn(
+        "flex h-full w-full flex-col gap-4 rounded-[20px] bg-white p-4 text-right dark:bg-[#0a0e27]",
+        className,
+      )}
     >
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <Badge className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs", status.badgeClass)}>
-          {status.label}
-        </Badge>
-        <div className="relative flex size-16 shrink-0 items-center justify-center">
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-100 to-sky-50 dark:from-violet-500/20 dark:to-sky-500/10" />
-          <span className="relative text-2xl font-black text-violet-600 dark:text-violet-300">{pct}%</span>
+      <div className="flex items-center gap-3" dir="ltr">
+        <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-violet-50 dark:bg-[#9a5cff]/10">
+          {discount.image ? (
+            <AssetImage
+              image={discount.image}
+              baseUrl={imageBaseUrl}
+              alt={discount.name}
+              className="block size-12 rounded-xl object-cover"
+              fallback={<Percent className="size-5 text-violet-500 dark:text-[#b282ff]" />}
+            />
+          ) : (
+            <span className="text-sm font-black text-violet-600 dark:text-[#b282ff]">
+              {pct}%
+            </span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1 text-right" dir="rtl">
+          <h3 className="line-clamp-1 text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
+            {discount.name}
+          </h3>
+          <p className="mt-1 text-xs font-bold text-violet-600 dark:text-[#b282ff]">
+            {pct}%
+          </p>
         </div>
       </div>
 
-      <h3 className="mb-1 line-clamp-1 text-base font-bold text-blue-950 dark:text-slate-100">
-        {discount.name}
-      </h3>
-      <p className="mb-4 line-clamp-2 min-h-[2.5rem] text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-        {discount.description || "—"}
+      <p className="line-clamp-2 text-right text-[13px] leading-[19.5px] text-slate-400 dark:text-[#a4b1fa]">
+        {shortText(discount.description, 120)}
       </p>
 
-      <div className="mt-auto space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-        <p>{getDiscountScope(discount)}</p>
-        <p>
-          من {formatDiscountDate(discount.discount_start_date)} إلى{" "}
-          {formatDiscountDate(discount.discount_end_date)}
-        </p>
-      </div>
+      <span className="w-fit rounded-lg bg-violet-100 px-2 py-1 text-[11px] font-medium text-violet-700 dark:bg-[#9a5cff]/10 dark:text-[#b282ff]">
+        {getDiscountScope(discount)}
+      </span>
+
+      <div className="h-px bg-slate-100 dark:bg-[#1f2448]/40" />
+
+      {footer !== undefined ? footer : (
+        <div className="flex items-center justify-between gap-2" dir="ltr">
+          <p className="text-xs text-slate-400 dark:text-[#a4b1fa]" dir="rtl">
+            {formatTableDate(discount.discount_start_date)} —{" "}
+            {formatTableDate(discount.discount_end_date)}
+          </p>
+          <p className="text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+            {formatTableTime(discount.discount_end_date)}
+          </p>
+        </div>
+      )}
     </button>
   );
 };

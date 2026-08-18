@@ -53,7 +53,7 @@ const TicketAttachmentGallery = ({
   return (
     <div className="space-y-2">
       {images.length > 0 && (
-        <div className="overflow-hidden rounded-2xl bg-slate-100 p-2">
+        <div className="overflow-hidden rounded-2xl bg-slate-100 p-2 dark:bg-[#1a224c]">
           <a href={images[0].url} target="_blank" rel="noreferrer">
             <img
               src={images[0].url}
@@ -84,7 +84,7 @@ const TicketAttachmentGallery = ({
               href={file.url}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-700 hover:bg-slate-200"
+              className="flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-700 hover:bg-slate-200 dark:bg-[#1a224c] dark:text-[#c6d0ff] dark:hover:bg-[#232d61]"
             >
               <FileText className="size-4 shrink-0 text-red-500" />
               <span className="truncate">{file.fileName ?? "ملف PDF"}</span>

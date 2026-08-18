@@ -28,15 +28,14 @@ const CouponTable = ({
   const paginated = coupons.slice(startIndex, startIndex + viewCount);
 
   return (
-    <div className="w-full overflow-hidden rounded-3xl border border-transparent bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
+    <div className="w-full overflow-x-auto rounded-3xl border border-transparent bg-white p-4 shadow-none sm:p-4 dark:border-transparent dark:bg-[#0a0e27]">
       <Table>
         <CouponTableHeader />
         <TableBody>
-          {paginated.map((coupon, index) => (
+          {paginated.map((coupon) => (
             <CouponRow
               key={coupon.id}
               coupon={coupon}
-              rowIndex={startIndex + index}
               onView={() => onView(coupon.id)}
               onEdit={() => onEdit(coupon.id)}
               onDelete={() => onDelete(coupon)}
@@ -45,7 +44,7 @@ const CouponTable = ({
           ))}
         </TableBody>
       </Table>
-      <div className="mt-4 border-t border-slate-100 pt-4">
+      <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/6">
         <Pagination
           totalPages={totalPages}
           activePage={activePage}

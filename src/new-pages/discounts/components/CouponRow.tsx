@@ -4,16 +4,15 @@ import { cn } from "@/lib/utils";
 import ActionBtnList from "@/components/table/action-btn-list";
 import type { CouponListItem } from "@/api/types/coupon";
 import {
-  formatCouponDateTime,
   formatCouponUsage,
   formatCouponValue,
   getCouponStatusMeta,
   isCouponExpired,
 } from "../coupon-utils";
+import { formatTableDate, formatTableTime, shortText } from "../utils";
 
 type CouponRowProps = {
   coupon: CouponListItem;
-  rowIndex: number;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -22,52 +21,57 @@ type CouponRowProps = {
 
 const CouponRow = ({
   coupon,
-  rowIndex,
   onView,
   onEdit,
   onDelete,
   onToggleStatus,
 }: CouponRowProps) => {
-  const tdClass = "whitespace-normal px-4 py-3.5 text-right align-middle";
+  const tdClass = "whitespace-normal px-3.5 py-3.5 text-right align-middle";
   const status = getCouponStatusMeta(coupon);
   const expired = isCouponExpired(coupon);
 
   return (
     <TableRow
-      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-900/80"
+      className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-[#12183b] dark:hover:bg-white/[0.03]"
       onClick={onView}
     >
-      <TableCell className={cn(tdClass, "w-14 text-muted-foreground")}>
-        <span className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-300">
-          {String(rowIndex + 1).padStart(2, "0")}
-        </span>
-      </TableCell>
       <TableCell className={tdClass}>
-        <p className="font-semibold text-slate-900 dark:text-slate-100" dir="ltr">
+        <p className="font-semibold text-slate-900 dark:text-[#f0f2ff]" dir="ltr">
           {coupon.code}
         </p>
-        <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
-          {coupon.description || "—"}
+        <p className="mt-0.5 line-clamp-1 text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+          {shortText(coupon.description)}
         </p>
       </TableCell>
-      <TableCell className={cn(tdClass, "font-bold text-amber-600 dark:text-amber-300")}>
+      <TableCell
+        className={cn(tdClass, "font-bold tabular-nums text-amber-600 dark:text-[#b282ff]")}
+      >
         {formatCouponValue(coupon)}
       </TableCell>
-      <TableCell className={cn(tdClass, "text-sm tabular-nums text-slate-600 dark:text-slate-400")}>
-        {formatCouponDateTime(coupon.startsAt)}
+      <TableCell className={tdClass}>
+        <p className="text-sm text-slate-900 dark:text-[#e4e7fc]">
+          {formatTableDate(coupon.startsAt)}
+        </p>
+        <p className="text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+          {formatTableTime(coupon.startsAt)}
+        </p>
       </TableCell>
-      <TableCell className={cn(tdClass, "text-sm tabular-nums text-slate-600 dark:text-slate-400")}>
-        {formatCouponDateTime(coupon.expiresAt)}
-      </TableCell>
-      <TableCell className={cn(tdClass, "font-semibold tabular-nums")}>
-        {formatCouponUsage(coupon)}
+      <TableCell className={tdClass}>
+        <p className="text-sm text-slate-900 dark:text-[#e4e7fc]">
+          {formatTableDate(coupon.expiresAt)}
+        </p>
+        <p className="text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+          {formatTableTime(coupon.expiresAt)}
+        </p>
       </TableCell>
       <TableCell
-        className={cn(tdClass, "text-center")}
-        onClick={(e) => e.stopPropagation()}
+        className={cn(tdClass, "font-semibold tabular-nums text-slate-900 dark:text-[#f0f2ff]")}
       >
+        {formatCouponUsage(coupon)}
+      </TableCell>
+      <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
         {expired ? (
-          <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-rose-500/15 dark:text-rose-300">
+          <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-[#ff5252]/15 dark:text-[#ff5252]">
             منتهي
           </span>
         ) : (
@@ -80,7 +84,7 @@ const CouponRow = ({
         )}
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
-        <ActionBtnList onView={onView} onEdit={onEdit} onDelete={onDelete} />
+        <ActionBtnList onEdit={onEdit} onDelete={onDelete} />
       </TableCell>
     </TableRow>
   );

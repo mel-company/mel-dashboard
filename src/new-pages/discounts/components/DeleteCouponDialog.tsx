@@ -1,16 +1,13 @@
-import { X, Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { useDeleteCoupon } from "@/api/wrappers/coupon.wrappers";
-import type { CouponListItem } from "@/api/types/coupon";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
-  formatCouponDate,
-  formatCouponUsage,
-  formatCouponValue,
-  getCouponStatusMeta,
-} from "../coupon-utils";
+  useDeleteCoupon,
+  useToggleCouponActive,
+} from "@/api/wrappers/coupon.wrappers";
+import type { CouponListItem } from "@/api/types/coupon";
+import CouponCard from "./CouponCard";
 
 type DeleteCouponDialogProps = {
   coupon: CouponListItem | null;
@@ -23,14 +20,13 @@ const DeleteCouponDialog = ({
   onOpenChange,
   onSuccess,
 }: DeleteCouponDialogProps) => {
-  const { mutate: deleteCoupon, isPending } = useDeleteCoupon();
-  const open = !!coupon;
-
-  if (!coupon) return null;
-
-  const status = getCouponStatusMeta(coupon);
+  const { mutate: deleteCoupon, isPending: isDeleting } = useDeleteCoupon();
+  const { mutate: toggleCoupon, isPending: isHiding } = useToggleCouponActive();
+  const busy = isDeleting || isHiding;
+  const canHide = !!coupon?.isActive;
 
   const handleDelete = () => {
+    if (!coupon?.id) return;
     deleteCoupon(coupon.id, {
       onSuccess: () => {
         toast.success("تم حذف الكوبون");
@@ -46,71 +42,92 @@ const DeleteCouponDialog = ({
     });
   };
 
+  const handleHide = () => {
+    if (!coupon?.id) return;
+    toggleCoupon(coupon.id, {
+      onSuccess: () => {
+        toast.success("تم إخفاء الكوبون — لن يظهر للعملاء");
+        onOpenChange(false);
+        onSuccess?.();
+      },
+      onError: () => toast.error("فشل في إخفاء الكوبون"),
+    });
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl p-0" dir="rtl">
-        <div className="p-6">
-          <div className="mb-4 flex items-start justify-between">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"
-              aria-label="إغلاق"
-            >
-              <X className="size-5" />
-            </button>
-            <h2 className="text-lg font-bold text-blue-950">حذف كوبون</h2>
-          </div>
+    <Dialog open={!!coupon} onOpenChange={(open) => !busy && onOpenChange(open)}>
+      <DialogContent
+        dir="rtl"
+        showCloseButton={false}
+        className="max-h-[92dvh] gap-6 overflow-y-auto rounded-[2rem] border-0 bg-white p-6 text-right shadow-2xl sm:max-w-[718px] dark:bg-[#12183b]"
+      >
+        <div className="flex items-center justify-between">
+          <DialogTitle className="text-xl font-bold text-[#ff5252] sm:text-2xl">
+            حذف الكوبون
+          </DialogTitle>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onOpenChange(false)}
+            className="flex size-12 items-center justify-center rounded-[14px] border border-[#ff5252]/20 text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50"
+            aria-label="إغلاق"
+          >
+            <X className="size-5" strokeWidth={2.5} />
+          </button>
+        </div>
 
-          <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-            <div className="mb-2 flex items-start justify-between gap-2">
-              <Badge className={cn("rounded-full", status.badgeClass)}>
-                {status.label}
-              </Badge>
-              <span className="text-2xl font-black text-amber-600">
-                {formatCouponValue(coupon)}
-              </span>
-            </div>
-            <p className="font-semibold text-slate-900" dir="ltr">
-              {coupon.code}
-            </p>
-            <p className="mt-1 line-clamp-2 text-sm text-slate-500">
-              {coupon.description || "—"}
-            </p>
-            <p className="mt-2 text-xs text-slate-500">
-              استُخدم {formatCouponUsage(coupon)} مرة
-            </p>
-            <p className="mt-1 text-xs text-slate-400">
-              من {formatCouponDate(coupon.startsAt)} إلى{" "}
-              {formatCouponDate(coupon.expiresAt)}
-            </p>
-          </div>
+        <div className="flex justify-center rounded-[28px] bg-[#fde8e8] p-4 dark:bg-[#ff5252]/5 sm:p-8">
+          {coupon ? (
+            <CouponCard
+              coupon={coupon}
+              onClick={() => undefined}
+              footer={null}
+              className="w-full max-w-[310px] border border-slate-100 shadow-sm dark:border-transparent"
+            />
+          ) : null}
+        </div>
 
-          <p className="mb-2 text-center font-semibold text-slate-800">
-            هل أنت متأكد من حذف الكوبون؟
+        <div className="space-y-3 text-center sm:space-y-4">
+          <p className="text-lg font-bold text-slate-800 dark:text-[#e4e7fc] sm:text-[28px] sm:leading-8">
+            هل انت متأكد من حذف الكوبون
           </p>
-          <p className="mb-6 text-center text-sm leading-relaxed text-slate-500">
-            عند حذف الكوبون لن يعود متاحاً للعملاء ولن تتمكن من استعادته لاحقاً.
+          <p className="mx-auto max-w-[34rem] text-xs leading-6 text-slate-400 dark:text-[#a4b1fa] sm:text-lg sm:leading-8">
+            سوف تقوم بحذف الكوبون من النظام ولن تستطيع إعادته مرة أخرى، يمكنك
+            إخفاء الكوبون من خيار الإخفاء ولن يظهر للعملاء
           </p>
+        </div>
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              disabled={isPending}
-              className="h-12 flex-1 rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
-            >
-              الإبقاء على الكوبون
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isPending}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-red-500 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50"
-            >
-              {isPending ? <Loader2 className="size-4 animate-spin" /> : "حذف الكوبون"}
-            </button>
-          </div>
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row-reverse sm:gap-11">
+          <Button
+            type="button"
+            disabled={busy || !coupon || !canHide}
+            onClick={handleHide}
+            className="h-12 w-full rounded-2xl bg-rose-100 text-base font-bold text-[#ff5252] shadow-none hover:bg-rose-200 sm:h-[60px] sm:text-lg dark:bg-[#ff5252]/10 dark:hover:bg-[#ff5252]/20"
+          >
+            {isHiding ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                جاري الإخفاء...
+              </>
+            ) : (
+              "أخفاء الكوبون"
+            )}
+          </Button>
+          <button
+            type="button"
+            disabled={busy || !coupon}
+            onClick={handleDelete}
+            className="flex h-11 w-full items-center justify-center text-base font-bold text-slate-700 transition-colors hover:text-rose-600 disabled:opacity-50 sm:h-[60px] sm:text-lg dark:text-[#e4e7fc] dark:hover:text-[#ff5252]"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="me-2 size-4 animate-spin" />
+                جاري الحذف...
+              </>
+            ) : (
+              "حذف الكوبون"
+            )}
+          </button>
         </div>
       </DialogContent>
     </Dialog>

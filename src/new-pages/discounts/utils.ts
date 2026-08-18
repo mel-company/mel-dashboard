@@ -70,6 +70,35 @@ export function formatDiscountDateTime(dateString?: string | null): string {
   return `${datePart}، ${timePart}`;
 }
 
+export function formatTableDate(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+export function formatTableTime(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+export function shortText(text: string | null | undefined, max = 70) {
+  if (!text?.trim()) return "لا يوجد وصف";
+  const clean = text.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max)}…`;
+}
+
 export function getDiscountScope(discount: DiscountListItem): string {
   const products =
     discount._count?.products ?? discount.discount_products?.length ?? 0;

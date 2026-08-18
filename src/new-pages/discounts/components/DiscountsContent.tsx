@@ -90,17 +90,18 @@ const DiscountsContent = ({ actions, onCreateClick }: DiscountsContentProps) => 
 
   return (
     <>
-      {viewMode === "table" ? (
-        <DiscountTable
-          discounts={discounts}
-          onView={(id) => navigate(`/discounts/${id}`)}
-          onEdit={(id) => navigate(`/discounts/${id}/edit`)}
-          onDelete={(d) => setDeleteTarget(d)}
-          onToggleStatus={handleToggleStatus}
-        />
-      ) : (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="md:hidden">
+        <div className="rounded-[28px] bg-slate-50 p-3 dark:bg-[#12183b]">
+          <div className="mb-2 px-2 pt-1 text-right">
+            <h2 className="text-base text-slate-900 dark:text-[#e4e7fc]">جميع الخصومات</h2>
+            <p className="mt-0.5 text-xs text-slate-400 dark:text-[#a4b1fa]">
+              أجمالي العناصر المتاحة{" "}
+              <span className="font-bold text-slate-800 dark:text-[#e4e7fc]">
+                {discounts.length}
+              </span>
+            </p>
+          </div>
+          <div className="flex flex-col gap-2.5">
             {discounts.map((discount) => (
               <DiscountCard
                 key={discount.id}
@@ -109,27 +110,70 @@ const DiscountsContent = ({ actions, onCreateClick }: DiscountsContentProps) => 
               />
             ))}
           </div>
-          <div ref={actions.loadMoreRef} className="flex justify-center py-4">
-            {actions.hasNextPage && (
-              <Button
-                variant="outline"
-                className="gap-2"
-                onClick={() => actions.fetchNextPage()}
-                disabled={actions.isFetchingNextPage || isToggling}
-              >
-                {actions.isFetchingNextPage ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    جاري التحميل...
-                  </>
-                ) : (
-                  "تحميل المزيد"
-                )}
-              </Button>
-            )}
-          </div>
         </div>
-      )}
+        <div ref={actions.loadMoreRef} className="flex justify-center py-4">
+          {actions.hasNextPage && (
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => actions.fetchNextPage()}
+              disabled={actions.isFetchingNextPage || isToggling}
+            >
+              {actions.isFetchingNextPage ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  جاري التحميل...
+                </>
+              ) : (
+                "تحميل المزيد"
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="hidden md:block">
+        {viewMode === "table" ? (
+          <DiscountTable
+            discounts={discounts}
+            onView={(id) => navigate(`/discounts/${id}`)}
+            onEdit={(id) => navigate(`/discounts/${id}/edit`)}
+            onDelete={(d) => setDeleteTarget(d)}
+            onToggleStatus={handleToggleStatus}
+          />
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {discounts.map((discount) => (
+                <DiscountCard
+                  key={discount.id}
+                  discount={discount}
+                  onClick={() => navigate(`/discounts/${discount.id}`)}
+                />
+              ))}
+            </div>
+            <div ref={actions.loadMoreRef} className="flex justify-center py-4">
+              {actions.hasNextPage && (
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => actions.fetchNextPage()}
+                  disabled={actions.isFetchingNextPage || isToggling}
+                >
+                  {actions.isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      جاري التحميل...
+                    </>
+                  ) : (
+                    "تحميل المزيد"
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       <DeleteDiscountDialog
         discount={deleteTarget}

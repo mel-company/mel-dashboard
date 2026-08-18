@@ -1,55 +1,61 @@
-import { Badge } from "@/components/ui/badge";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { CouponListItem } from "@/api/types/coupon";
 import {
-  formatCouponDate,
   formatCouponUsage,
   formatCouponValue,
-  getCouponStatusMeta,
 } from "../coupon-utils";
+import { formatTableDate, formatTableTime, shortText } from "../utils";
 
 type CouponCardProps = {
   coupon: CouponListItem;
   onClick: () => void;
+  footer?: ReactNode;
+  className?: string;
 };
 
-const CouponCard = ({ coupon, onClick }: CouponCardProps) => {
-  const status = getCouponStatusMeta(coupon);
-
+const CouponCard = ({ coupon, onClick, footer, className }: CouponCardProps) => {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex h-full w-full flex-col rounded-3xl border border-slate-100 bg-white p-4 text-right shadow-sm transition-all hover:border-sky-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-700"
+      className={cn(
+        "flex h-full w-full flex-col gap-4 rounded-[20px] bg-white p-4 text-right dark:bg-[#0a0e27]",
+        className,
+      )}
     >
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <Badge
-          className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs", status.badgeClass)}
-        >
-          {status.label}
-        </Badge>
-        <div className="relative flex size-16 shrink-0 items-center justify-center">
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-500/20 dark:to-orange-500/10" />
-          <span className="relative text-xl font-black text-amber-600 dark:text-amber-300">
+      <div className="flex items-center gap-3" dir="ltr">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-[#9a5cff]/10">
+          <span className="text-[11px] font-black text-amber-600 dark:text-[#b282ff]">
             {formatCouponValue(coupon)}
           </span>
         </div>
+        <div className="min-w-0 flex-1 text-right" dir="rtl">
+          <h3 className="line-clamp-1 text-base font-bold text-slate-900 dark:text-[#e4e7fc]" dir="ltr">
+            {coupon.code}
+          </h3>
+          <p className="mt-1 text-xs text-slate-400 dark:text-[#a4b1fa]">
+            استُخدم {formatCouponUsage(coupon)}
+          </p>
+        </div>
       </div>
 
-      <h3 className="mb-1 line-clamp-1 text-base font-bold text-blue-950 dark:text-slate-100" dir="ltr">
-        {coupon.code}
-      </h3>
-      <p className="mb-4 line-clamp-2 min-h-[2.5rem] text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-        {coupon.description || "—"}
+      <p className="line-clamp-2 text-right text-[13px] leading-[19.5px] text-slate-400 dark:text-[#a4b1fa]">
+        {shortText(coupon.description, 120)}
       </p>
 
-      <div className="mt-auto space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-        <p>استُخدم {formatCouponUsage(coupon)}</p>
-        <p>
-          من {formatCouponDate(coupon.startsAt)} إلى{" "}
-          {formatCouponDate(coupon.expiresAt)}
-        </p>
-      </div>
+      <div className="h-px bg-slate-100 dark:bg-[#1f2448]/40" />
+
+      {footer !== undefined ? footer : (
+        <div className="flex items-center justify-between gap-2" dir="ltr">
+          <p className="text-xs text-slate-400 dark:text-[#a4b1fa]" dir="rtl">
+            {formatTableDate(coupon.startsAt)} — {formatTableDate(coupon.expiresAt)}
+          </p>
+          <p className="text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+            {formatTableTime(coupon.expiresAt)}
+          </p>
+        </div>
+      )}
     </button>
   );
 };

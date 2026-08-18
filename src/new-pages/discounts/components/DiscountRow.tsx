@@ -5,15 +5,16 @@ import ActionBtnList from "@/components/table/action-btn-list";
 import { DISCOUNT_STATUS } from "@/utils/constants";
 import type { DiscountListItem } from "@/api/types/discount";
 import {
-  formatDiscountDateTime,
+  formatTableDate,
+  formatTableTime,
   getDiscountScope,
   getDiscountStatusMeta,
   getDiscountUsageCount,
+  shortText,
 } from "../utils";
 
 type DiscountRowProps = {
   discount: DiscountListItem;
-  rowIndex: number;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -22,53 +23,60 @@ type DiscountRowProps = {
 
 const DiscountRow = ({
   discount,
-  rowIndex,
   onView,
   onEdit,
   onDelete,
   onToggleStatus,
 }: DiscountRowProps) => {
-  const tdClass = "whitespace-normal px-4 py-3.5 text-right align-middle";
+  const tdClass = "whitespace-normal px-3.5 py-3.5 text-right align-middle";
   const status = getDiscountStatusMeta(discount.discount_status);
   const isExpired = discount.discount_status === DISCOUNT_STATUS.EXPIRED;
 
   return (
     <TableRow
-      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-900/80"
+      className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-[#12183b] dark:hover:bg-white/[0.03]"
       onClick={onView}
     >
-      <TableCell className={cn(tdClass, "w-14 text-muted-foreground")}>
-        <span className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-300">
-          {String(rowIndex + 1).padStart(2, "0")}
-        </span>
-      </TableCell>
       <TableCell className={tdClass}>
-        <p className="font-semibold text-slate-900 dark:text-slate-100">{discount.name}</p>
-        <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
-          {discount.description || "—"}
+        <p className="line-clamp-1 font-semibold text-slate-900 dark:text-[#f0f2ff]">
+          {discount.name}
+        </p>
+        <p className="mt-0.5 line-clamp-1 text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+          {shortText(discount.description)}
         </p>
       </TableCell>
-      <TableCell className={cn(tdClass, "font-bold text-violet-600 dark:text-violet-300")}>
+      <TableCell
+        className={cn(tdClass, "font-bold tabular-nums text-violet-600 dark:text-[#b282ff]")}
+      >
         {discount.discount_percentage}%
       </TableCell>
-      <TableCell className={cn(tdClass, "text-sm text-sky-700 dark:text-sky-300")}>
+      <TableCell className={cn(tdClass, "text-sm text-sky-700 dark:text-[#33c5ff]")}>
         {getDiscountScope(discount)}
       </TableCell>
-      <TableCell className={cn(tdClass, "text-sm tabular-nums text-slate-600 dark:text-slate-400")}>
-        {formatDiscountDateTime(discount.discount_start_date)}
+      <TableCell className={tdClass}>
+        <p className="text-sm text-slate-900 dark:text-[#e4e7fc]">
+          {formatTableDate(discount.discount_start_date)}
+        </p>
+        <p className="text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+          {formatTableTime(discount.discount_start_date)}
+        </p>
       </TableCell>
-      <TableCell className={cn(tdClass, "text-sm tabular-nums text-slate-600 dark:text-slate-400")}>
-        {formatDiscountDateTime(discount.discount_end_date)}
-      </TableCell>
-      <TableCell className={cn(tdClass, "font-semibold tabular-nums")}>
-        {getDiscountUsageCount(discount)}
+      <TableCell className={tdClass}>
+        <p className="text-sm text-slate-900 dark:text-[#e4e7fc]">
+          {formatTableDate(discount.discount_end_date)}
+        </p>
+        <p className="text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
+          {formatTableTime(discount.discount_end_date)}
+        </p>
       </TableCell>
       <TableCell
-        className={cn(tdClass, "text-center")}
-        onClick={(e) => e.stopPropagation()}
+        className={cn(tdClass, "font-semibold tabular-nums text-slate-900 dark:text-[#f0f2ff]")}
       >
+        {getDiscountUsageCount(discount)}
+      </TableCell>
+      <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
         {isExpired ? (
-          <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-rose-500/15 dark:text-rose-300">
+          <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-[#ff5252]/15 dark:text-[#ff5252]">
             منتهي
           </span>
         ) : (
@@ -81,7 +89,7 @@ const DiscountRow = ({
         )}
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
-        <ActionBtnList onView={onView} onEdit={onEdit} onDelete={onDelete} />
+        <ActionBtnList onEdit={onEdit} onDelete={onDelete} />
       </TableCell>
     </TableRow>
   );

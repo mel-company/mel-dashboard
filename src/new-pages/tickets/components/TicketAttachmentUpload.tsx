@@ -59,22 +59,22 @@ const TicketAttachmentUpload = ({
   return (
     <div className="space-y-2">
       <SettingsLabel>{label}</SettingsLabel>
-      <div className="rounded-2xl bg-slate-100 p-3">
+      <div className="rounded-2xl bg-slate-100 p-3 dark:bg-[#1a224c]">
         <button
           type="button"
           disabled={disabled || files.length >= TICKET_MAX_FILES}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "flex w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white px-4 py-10 transition-colors hover:border-sky-300 hover:bg-sky-50/40",
+            "flex w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white px-4 py-10 transition-colors hover:border-sky-300 hover:bg-sky-50/40 dark:border-[#2f3a75] dark:bg-[#20295a] dark:hover:border-[#3cbcff]/40 dark:hover:bg-[#0d132f]",
             (disabled || files.length >= TICKET_MAX_FILES) &&
               "cursor-not-allowed opacity-60",
           )}
         >
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+          <div className="flex size-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-[#12183b] dark:text-[#8f9de8]">
             <ImagePlus className="size-6" />
           </div>
-          <p className="text-sm font-medium text-slate-600">اضافة صورة أو PDF</p>
-          <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
+          <p className="text-sm font-medium text-slate-600 dark:text-[#e4e7fc]">اضافة صورة أو PDF</p>
+          <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]">
             PNG, JPG, WEBP, GIF, PDF — حتى 5MB
           </span>
         </button>

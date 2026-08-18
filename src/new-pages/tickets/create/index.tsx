@@ -77,21 +77,26 @@ const CreateTicketPage = () => {
   };
 
   return (
-    <div className="rounded-3xl border border-transparent bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
-      <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+    <div className="rounded-[28px] border border-transparent bg-white p-5 shadow-sm sm:p-6 dark:border-[#1b2250] dark:bg-[#12183b]">
+      <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4 dark:border-[#2a3266]">
         <button
           type="button"
           onClick={() => navigate("/tickets")}
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 transition-colors hover:bg-sky-100 dark:bg-sky-500/15 dark:text-sky-300 dark:hover:bg-sky-500/25"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 transition-colors hover:bg-sky-100 dark:bg-transparent dark:text-[#e4e7fc] dark:hover:bg-white/5"
           aria-label="إغلاق"
         >
           <X className="size-5" />
         </button>
 
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold text-blue-950">أضافة تذكرة جديد</h1>
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-violet-100">
-            <HugeiconsIcon icon={Package01Icon} size={24} className="text-violet-600" />
+          <div className="text-right">
+            <h1 className="text-xl font-bold text-blue-950 dark:text-[#e4e7fc]">أضافة تذكرة جديد</h1>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-[#8f9de8]">
+              يرجى ادخال جميع الحقول لاتمام عملية الاضافة
+            </p>
+          </div>
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-violet-100 dark:bg-[#9a5cff]/12">
+            <HugeiconsIcon icon={Package01Icon} size={24} className="text-violet-600 dark:text-[#b282ff]" />
           </div>
         </div>
       </div>
@@ -103,7 +108,7 @@ const CreateTicketPage = () => {
               <Select value={type} onValueChange={setType} disabled={isCreating}>
                 <SelectTrigger
                   id="ticketType"
-                  className="h-12 w-full rounded-2xl border-0 bg-slate-100 text-right shadow-none focus:ring-2 focus:ring-sky-500/30"
+                  className="h-12 w-full rounded-2xl border-0 bg-slate-100 text-right shadow-none focus:ring-2 focus:ring-sky-500/30 dark:bg-[#1a224c] dark:text-[#e4e7fc]"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -148,19 +153,19 @@ const CreateTicketPage = () => {
           />
         </div>
 
-        <div className="flex gap-3 border-t border-slate-100 pt-4">
+        <div className="flex gap-3 border-t border-slate-100 pt-4 dark:border-[#2a3266]">
           <button
             type="button"
             onClick={() => navigate("/tickets")}
             disabled={isCreating}
-            className="h-12 flex-1 rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50"
+            className="h-12 flex-1 rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50 dark:bg-[#1a224c] dark:text-[#b6c2ff] dark:hover:bg-[#232d61]"
           >
             الغاء
           </button>
           <button
             type="submit"
             disabled={isCreating}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white transition-colors hover:bg-[#00a3e6] disabled:opacity-50"
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-[#6d5efc] to-[#49b8ff] text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {isCreating ? (
               <>

@@ -188,7 +188,7 @@ const CreateDiscountDialog = ({
       <DialogContent
         dir="rtl"
         showCloseButton={false}
-        className="max-w-lg gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl"
+        className="max-h-[92dvh] max-w-lg gap-0 overflow-y-auto rounded-[2rem] border-0 p-0 shadow-xl dark:bg-[#12183b]"
       >
         <form onSubmit={handleSubmit} className="p-6">
           {/* Header */}
@@ -197,16 +197,16 @@ const CreateDiscountDialog = ({
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-[#1a2b5a] hover:bg-violet-200 disabled:opacity-50"
+              className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-[#1a2b5a] hover:bg-violet-200 disabled:opacity-50 dark:bg-[#9a5cff]/15 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/25"
               aria-label="إغلاق"
             >
               <X className="size-4" />
             </button>
             <div className="flex items-center gap-2.5">
-              <DialogTitle className="text-lg font-bold text-[#1a2b5a]">
-                أضافة خيار منتج جديد
+              <DialogTitle className="text-lg font-bold text-[#1a2b5a] dark:text-[#e4e7fc]">
+                أضافة خصم جديد
               </DialogTitle>
-              <div className="relative flex size-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-600">
+              <div className="relative flex size-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]">
                 <Package className="size-5" strokeWidth={2} />
                 <span className="absolute -bottom-0.5 -left-0.5 flex size-4 items-center justify-center rounded-full bg-[#00b7ff] text-white">
                   <Plus className="size-2.5" strokeWidth={3} />
@@ -369,14 +369,14 @@ const CreateDiscountDialog = ({
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="h-12 rounded-2xl bg-slate-100 text-sm font-semibold text-[#1a2b5a] hover:bg-slate-200 disabled:opacity-50"
+              className="h-12 rounded-2xl bg-slate-100 text-sm font-semibold text-[#1a2b5a] hover:bg-slate-200 disabled:opacity-50 dark:bg-transparent dark:text-[#4a5596] dark:hover:text-[#e4e7fc]"
             >
               الغاء
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6] disabled:opacity-50"
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-sm font-semibold text-white disabled:opacity-50"
             >
               {isPending ? (
                 <>

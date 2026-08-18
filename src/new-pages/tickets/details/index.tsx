@@ -14,6 +14,7 @@ import ErrorPage from "@/pages/miscellaneous/ErrorPage";
 import NotFoundPage from "@/pages/miscellaneous/NotFoundPage";
 import CancelTicketDialog from "@/pages/support/CancelTicketDialog";
 import DeleteTicketDialog from "@/pages/support/DeleteTicketDialog";
+import { cn } from "@/lib/utils";
 import TicketDetailsHeader from "./TicketDetailsHeader";
 import TicketInfoSidebar from "./TicketInfoSidebar";
 import TicketChatPanel from "./TicketChatPanel";
@@ -25,6 +26,7 @@ const TicketDetailsPage = () => {
   const [replyFiles, setReplyFiles] = useState<File[]>([]);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"chat" | "details">("chat");
   const shouldScrollOnSendRef = useRef(true);
 
   const {
@@ -168,17 +170,46 @@ const TicketDetailsPage = () => {
   );
 
   return (
-    <div className="rounded-3xl border border-transparent bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
+    <div className="rounded-[28px] border border-transparent bg-white p-4 shadow-sm sm:p-6 dark:border-[#1b2250] dark:bg-[#12183b]">
       <TicketDetailsHeader
         ticketId={id}
         onClose={() => navigate("/tickets")}
       />
 
+      <div className="mt-4 md:hidden">
+        <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1 dark:bg-[#0f1433]">
+          <button
+            type="button"
+            onClick={() => setMobileTab("details")}
+            className={cn(
+              "rounded-xl px-4 py-2 text-sm transition-colors",
+              mobileTab === "details"
+                ? "bg-violet-500 text-white"
+                : "text-slate-500 dark:text-[#8f9de8]",
+            )}
+          >
+            التفاصيل
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("chat")}
+            className={cn(
+              "rounded-xl px-4 py-2 text-sm transition-colors",
+              mobileTab === "chat"
+                ? "bg-violet-500 text-white"
+                : "text-slate-500 dark:text-[#8f9de8]",
+            )}
+          >
+            المحادثة
+          </button>
+        </div>
+      </div>
+
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-5 lg:gap-6">
-        <div className="lg:col-span-2">
+        <div className={cn("lg:col-span-2", mobileTab !== "details" && "hidden md:block")}>
           <TicketInfoSidebar ticket={ticket} />
         </div>
-        <div className="lg:col-span-3">
+        <div className={cn("lg:col-span-3", mobileTab !== "chat" && "hidden md:block")}>
           <TicketChatPanel
             messages={messages}
             reply={reply}

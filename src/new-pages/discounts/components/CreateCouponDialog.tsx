@@ -130,21 +130,21 @@ const CreateCouponDialog = ({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-w-lg rounded-3xl p-0" dir="rtl">
+      <DialogContent className="max-h-[92dvh] max-w-lg overflow-y-auto rounded-[2rem] border-0 p-0 dark:bg-[#12183b]" dir="rtl">
         <form onSubmit={handleSubmit} className="p-6">
           <div className="mb-5 flex items-start justify-between gap-3">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"
+              className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]"
               aria-label="إغلاق"
             >
               <X className="size-5" />
             </button>
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-blue-950">إضافة كوبون جديد</h2>
-              <div className="flex size-11 items-center justify-center rounded-2xl bg-amber-100">
-                <HugeiconsIcon icon={Coupon02Icon} size={24} className="text-amber-600" />
+              <h2 className="text-xl font-bold text-blue-950 dark:text-[#e4e7fc]">إضافة كوبون جديد</h2>
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-amber-100 dark:bg-[#9a5cff]/15">
+                <HugeiconsIcon icon={Coupon02Icon} size={24} className="text-amber-600 dark:text-[#b282ff]" />
               </div>
             </div>
           </div>
@@ -272,14 +272,14 @@ const CreateCouponDialog = ({
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="h-12 flex-1 rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+              className="h-12 flex-1 rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50 dark:bg-transparent dark:text-[#4a5596] dark:hover:text-[#e4e7fc]"
             >
               إلغاء
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6] disabled:opacity-50"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-sm font-semibold text-white disabled:opacity-50"
             >
               {isPending ? (
                 <>

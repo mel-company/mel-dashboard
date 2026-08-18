@@ -110,8 +110,8 @@ const TicketChatPanel = ({
   };
 
   return (
-    <div className="flex h-full min-h-[520px] flex-col rounded-3xl border border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+    <div className="flex h-full min-h-[520px] flex-col rounded-3xl border border-slate-100 bg-white dark:border-[#2a3266] dark:bg-[#0f1433]">
+      <div className="border-b border-slate-100 px-5 py-4 dark:border-[#2a3266]">
         <SettingsLabel className="text-base font-semibold text-blue-950 dark:text-slate-100">
           المحادثة
         </SettingsLabel>
@@ -161,12 +161,12 @@ const TicketChatPanel = ({
                   className={cn(
                     "max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
                     isFromStore
-                      ? "rounded-br-md bg-sky-600 text-white"
-                      : "rounded-bl-md bg-slate-100 text-slate-800",
+                      ? "rounded-br-md bg-sky-500 text-white dark:bg-[#33c5ff] dark:text-[#061126]"
+                      : "rounded-bl-md bg-slate-100 text-slate-800 dark:bg-[#1a224c] dark:text-[#e4e7fc]",
                   )}
                 >
                   {msg.message?.trim() && (
-                    <p className="whitespace-pre-wrap break-words">{msg.message}</p>
+                    <p className="whitespace-pre-wrap wrap-break-word">{msg.message}</p>
                   )}
                   {attachments.length > 0 && (
                     <TicketAttachmentGallery
@@ -177,7 +177,7 @@ const TicketChatPanel = ({
                   <div
                     className={cn(
                       "mt-1 flex items-center gap-1 text-[11px]",
-                      isFromStore ? "justify-end text-sky-100" : "text-slate-500",
+                      isFromStore ? "justify-end text-sky-100 dark:text-[#d5f4ff]" : "text-slate-500 dark:text-[#8f9de8]",
                     )}
                   >
                     <span>{formatMessageTime(msg.createdAt)}</span>
@@ -191,13 +191,13 @@ const TicketChatPanel = ({
       </div>
 
       {canReply ? (
-        <form onSubmit={handleSubmit} className="border-t border-slate-100 p-4">
+        <form onSubmit={handleSubmit} className="border-t border-slate-100 p-4 dark:border-[#2a3266]">
           {replyFiles.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {replyFiles.map((file, index) => (
                 <span
                   key={`${file.name}-${index}`}
-                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600"
+                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-[#1a224c] dark:text-[#b6c2ff]"
                 >
                   {file.name}
                   <button
@@ -218,7 +218,7 @@ const TicketChatPanel = ({
             <button
               type="submit"
               disabled={isSending || !canSubmit}
-              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-sky-500 text-white transition-colors hover:bg-sky-600 disabled:opacity-50"
+              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-linear-to-r from-[#6d5efc] to-[#49b8ff] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               aria-label="إرسال"
             >
               {isSending ? (
@@ -235,13 +235,13 @@ const TicketChatPanel = ({
                 placeholder="اكتب رسالتك..."
                 disabled={isSending}
                 dir="rtl"
-                className="h-12 w-full rounded-full border border-slate-200 bg-slate-50 px-4 pl-12 text-right text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                className="h-12 w-full rounded-full border border-slate-200 bg-slate-50 px-4 pl-12 text-right text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-[#2a3266] dark:bg-[#12183b] dark:text-[#e4e7fc] dark:placeholder:text-[#6f7bb8]"
               />
               <button
                 type="button"
                 disabled={isSending || replyFiles.length >= TICKET_MAX_FILES}
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute left-3 text-slate-400 hover:text-slate-600 disabled:opacity-40"
+                className="absolute left-3 text-slate-400 hover:text-slate-600 disabled:opacity-40 dark:text-[#8f9de8] dark:hover:text-[#b6c2ff]"
                 aria-label="إرفاق ملف"
               >
                 <ImagePlus className="size-5" />
@@ -264,7 +264,7 @@ const TicketChatPanel = ({
           </div>
         </form>
       ) : (
-        <p className="border-t border-slate-100 p-4 text-center text-sm text-slate-500">
+        <p className="border-t border-slate-100 p-4 text-center text-sm text-slate-500 dark:border-[#2a3266] dark:text-[#8f9de8]">
           لا يمكن إرسال رسائل على تذكرة مغلقة أو ملغاة.
         </p>
       )}
