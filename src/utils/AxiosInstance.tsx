@@ -11,6 +11,15 @@ import { getTenantSubdomain } from "@/utils/tenant-subdomain";
  * Gateway (e.g. direct local backend: http://localhost:3000/api/v1).
  */
 function resolveApiBaseUrl(): string {
+  // On dash.{store}.mel.iq always stay same-origin so Safari sends `sat`.
+  // Ignore an absolute VITE_API_BASE_URL baked in by Vercel production env.
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname.toLowerCase();
+    if (host === "mel.iq" || host.endsWith(".mel.iq")) {
+      return "/api/v1";
+    }
+  }
+
   const raw = String(import.meta.env.VITE_API_BASE_URL ?? "")
     .trim()
     .replace(/^["']|["']$/g, "")
