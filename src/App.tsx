@@ -11,6 +11,7 @@ import SettingsLayout from "./layout/SettingsLayout";
 import Payment from "./pages/payment/Payment";
 import { useConsumeBridge } from "./api/wrappers/auth.wrappers";
 import { markAuthSession } from "./utils/auth-session";
+import AuthLoadingScreen from "./components/AuthLoadingScreen";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -58,7 +59,7 @@ function Bridge() {
     );
   }, [token, consumeBridge, queryClient]);
 
-  return <div>جاري تسجيل الدخول...</div>;
+  return <AuthLoadingScreen message="جاري تسجيل الدخول..." />;
 }
 
 
