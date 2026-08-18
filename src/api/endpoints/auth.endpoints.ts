@@ -186,8 +186,22 @@ export const authAPI = {
   },
 
   me: async (): Promise<any> => {
-    const { data } = await axiosInstance.get<any>("/store-user-auth/me");
-    return data;
+    const response = await fetch(
+      `${window.location.origin}/api/v1/store-user-auth/me`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`ME request failed: ${response.status}`);
+    }
+
+    return response.json();
   },
 
   devMe: async (): Promise<any> => {
