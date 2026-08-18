@@ -1,4 +1,5 @@
 import axiosInstance from "@/utils/AxiosInstance";
+import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 
 /** Auth phones are stored as digits (e.g. 9647701234560), not +964… */
 function toAuthPhone(phone: unknown): string {
@@ -11,6 +12,27 @@ function toTenantSlug(domain: unknown): string {
     .toLowerCase()
     .replace(/^dash\./i, "")
     .split(".")[0];
+}
+
+function sanitizeMeDebugText(text: string): string {
+  if (!text) return "";
+
+  try {
+    const parsed = JSON.parse(text) as Record<string, unknown>;
+    const redacted: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(parsed)) {
+      if (/token|jwt|cookie|sat|srt|authorization|secret/i.test(key)) {
+        redacted[key] = "[redacted]";
+      } else {
+        redacted[key] = value;
+      }
+    }
+
+    return JSON.stringify(redacted).slice(0, 400);
+  } catch {
+    return text.slice(0, 400);
+  }
 }
 
 export const authAPI = {
@@ -186,6 +208,8 @@ export const authAPI = {
   },
 
   me: async (): Promise<any> => {
+    const tenantSubdomain = getTenantSubdomain();
+
     const response = await fetch(
       `${window.location.origin}/api/v1/store-user-auth/me`,
       {
@@ -193,15 +217,29 @@ export const authAPI = {
         credentials: "include",
         headers: {
           Accept: "application/json",
+          ...(tenantSubdomain
+            ? {
+                "x-tenant-subdomain": tenantSubdomain,
+                "domain-name": tenantSubdomain,
+              }
+            : {}),
         },
       },
     );
 
+    const text = await response.text();
+    const safeText = sanitizeMeDebugText(text);
+
+    console.log("[ME] status:", response.status);
+    console.log("[ME] ok:", response.ok);
+    console.log("[ME] tenant:", tenantSubdomain);
+    console.log("[ME] response:", safeText);
+
     if (!response.ok) {
-      throw new Error(`ME request failed: ${response.status}`);
+      throw new Error(`ME request failed: ${response.status} ${safeText}`);
     }
 
-    return response.json();
+    return text ? JSON.parse(text) : null;
   },
 
   devMe: async (): Promise<any> => {

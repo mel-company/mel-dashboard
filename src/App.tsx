@@ -10,7 +10,9 @@ import OrderInvoicePreview from "./pages/order/OrderInvoicePreview";
 import SettingsLayout from "./layout/SettingsLayout";
 import Payment from "./pages/payment/Payment";
 import { useConsumeBridge } from "./api/wrappers/auth.wrappers";
+import { authAPI } from "./api/endpoints/auth.endpoints";
 import { markAuthSession } from "./utils/auth-session";
+import { getTenantSubdomain } from "./utils/tenant-subdomain";
 import AuthLoadingScreen from "./components/AuthLoadingScreen";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -70,14 +72,27 @@ function Bridge() {
     consumeBridge(
       { token },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           addLog("[BRIDGE] SUCCESS ✅");
           addLog(`[BRIDGE] status ${data?.status ?? "ok"}`);
           try {
             markAuthSession(queryClient);
             addLog("[BRIDGE] auth session marked ✅");
-            addLog("[BRIDGE] redirect / in 8s");
-            window.setTimeout(() => window.location.replace("/"), 8000);
+            addLog("[ME] calling...");
+            addLog(`[ME] tenant: ${getTenantSubdomain() || "(empty)"}`);
+
+            try {
+              const me = await authAPI.me();
+              addLog("[ME] status: 200");
+              addLog("[ME] ok: true");
+              addLog(`[ME] result: ${me ? "user object" : "null"}`);
+            } catch (meError) {
+              addLog("[ME] ERROR ❌");
+              addLog(meError instanceof Error ? meError.message : String(meError));
+            }
+
+            addLog("[BRIDGE] redirect / in 12s");
+            window.setTimeout(() => window.location.replace("/"), 12000);
           } catch (error) {
             addLog("[BRIDGE] markAuthSession ERROR ❌");
             addLog(error instanceof Error ? error.message : String(error));
