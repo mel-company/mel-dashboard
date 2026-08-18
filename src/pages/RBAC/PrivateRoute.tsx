@@ -1,17 +1,21 @@
 import { Navigate, Outlet } from "react-router";
 import { useMe } from "../../api/wrappers/auth.wrappers";
 import AuthLoadingScreen from "@/components/AuthLoadingScreen";
-import { clearAuthSession, isAuthSessionMarked } from "@/utils/auth-session";
+import {
+  clearAuthSession,
+  markAuthSession,
+} from "@/utils/auth-session";
 import { useQueryClient } from "@tanstack/react-query";
 
 const PrivateRoute = () => {
   const queryClient = useQueryClient();
-  const loggedIn = isAuthSessionMarked();
-  const { data: user, isLoading, isFetching, error } = useMe();
 
-  if (!loggedIn) {
-    return <Navigate to="/login" replace />;
-  }
+  const {
+    data: user,
+    isLoading,
+    isFetching,
+    error,
+  } = useMe();
 
   if (isLoading || (isFetching && !user)) {
     return <AuthLoadingScreen />;
@@ -21,6 +25,10 @@ const PrivateRoute = () => {
     clearAuthSession(queryClient);
     return <Navigate to="/login" replace />;
   }
+
+  // Backend confirmed the session.
+  // Make the frontend auth state persistent.
+  markAuthSession();
 
   return <Outlet />;
 };
