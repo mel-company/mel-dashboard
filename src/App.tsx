@@ -12,7 +12,8 @@ import Payment from "./pages/payment/Payment";
 import { useConsumeBridge } from "./api/wrappers/auth.wrappers";
 import { markAuthSession } from "./utils/auth-session";
 import AuthLoadingScreen from "./components/AuthLoadingScreen";
-import { useEffect } from "react";
+import { Button } from "./components/ui/button";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 function RootRedirect() {
@@ -23,41 +24,73 @@ function RootRedirect() {
 function Bridge() {
   const { mutate: consumeBridge } = useConsumeBridge();
   const queryClient = useQueryClient();
+  const [attempt, setAttempt] = useState(0);
+  const [status, setStatus] = useState<"loading" | "error" | "missing-token">(
+    "loading",
+  );
 
   const token = new URLSearchParams(window.location.search).get("token");
 
   useEffect(() => {
-    console.log("[BRIDGE] mounted");
-    console.log("[BRIDGE] token exists:", Boolean(token));
-
     if (!token) {
-      console.error("[BRIDGE] NO TOKEN");
+      setStatus("missing-token");
       return;
     }
 
-    console.log("[BRIDGE] calling consumeBridge");
+    setStatus("loading");
+    let timedOut = false;
+
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      setStatus("error");
+    }, 10000);
 
     consumeBridge(
       { token },
       {
-        onSuccess: (data) => {
-          console.log("[BRIDGE] consumeBridge SUCCESS", data);
-
+        onSuccess: () => {
+          window.clearTimeout(timeoutId);
           try {
             markAuthSession(queryClient);
-            console.log("[BRIDGE] auth session marked");
-
             window.location.assign("/");
           } catch (error) {
             console.error("[BRIDGE] markAuthSession ERROR", error);
+            setStatus("error");
           }
         },
         onError: (error) => {
+          window.clearTimeout(timeoutId);
           console.error("[BRIDGE] consumeBridge ERROR", error);
+          if (!timedOut) setStatus("error");
         },
       },
     );
-  }, [token, consumeBridge, queryClient]);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [token, consumeBridge, queryClient, attempt]);
+
+  if (status === "missing-token") {
+    return (
+      <AuthLoadingScreen
+        showSpinner={false}
+        message="تعذر تسجيل الدخول تلقائياً. رابط الدخول غير مكتمل."
+      />
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <AuthLoadingScreen
+        showSpinner={false}
+        message="تعذر تسجيل الدخول تلقائياً"
+        action={
+          <Button type="button" onClick={() => setAttempt((value) => value + 1)}>
+            أعد المحاولة
+          </Button>
+        }
+      />
+    );
+  }
 
   return <AuthLoadingScreen message="جاري تسجيل الدخول..." />;
 }

@@ -48,6 +48,11 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+function isConsumeBridgeRequest(config: { url?: string; baseURL?: string }) {
+  const url = `${config.baseURL ?? ""}${config.url ?? ""}`;
+  return url.includes("/store-user-auth/consume-bridge");
+}
+
 axiosInstance.interceptors.request.use(
   (config) => {
     const subdomain = getTenantSubdomain();
@@ -56,15 +61,24 @@ axiosInstance.interceptors.request.use(
       config.headers["x-tenant-subdomain"] = subdomain;
     }
 
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else if (import.meta.env.VITE_API_KEY) {
-      config.headers.Authorization = `Bearer ${import.meta.env.VITE_API_KEY}`;
-    } else if (typeof config.headers.delete === "function") {
-      config.headers.delete("Authorization");
+    // Bridge token lives in the body. Don't attach a stored JWT / API key.
+    if (isConsumeBridgeRequest(config)) {
+      if (typeof config.headers.delete === "function") {
+        config.headers.delete("Authorization");
+      } else {
+        delete config.headers["Authorization"];
+      }
     } else {
-      delete config.headers["Authorization"];
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      } else if (import.meta.env.VITE_API_KEY) {
+        config.headers.Authorization = `Bearer ${import.meta.env.VITE_API_KEY}`;
+      } else if (typeof config.headers.delete === "function") {
+        config.headers.delete("Authorization");
+      } else {
+        delete config.headers["Authorization"];
+      }
     }
 
     if (config.data instanceof FormData) {
@@ -83,7 +97,12 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const onBridgePage = window.location.pathname === "/bridge";
+    if (
+      error.response?.status === 401 &&
+      !onBridgePage &&
+      !isConsumeBridgeRequest(error.config ?? {})
+    ) {
       clearAuthSession();
       redirectToLogin();
     }

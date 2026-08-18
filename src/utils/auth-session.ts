@@ -27,6 +27,8 @@ export function markAuthSession(queryClient?: QueryClient) {
 
 export function redirectToLogin() {
   const path = window.location.pathname;
-  if (path === "/login" || path.startsWith("/dev-login")) return;
+  if (path === "/login" || path === "/bridge" || path.startsWith("/dev-login")) {
+    return;
+  }
   window.location.replace("/login");
 }

@@ -151,10 +151,17 @@ export const authAPI = {
   },
 
   consumeBridge: async (params?: any): Promise<any> => {
+    // Same-origin on dash.{store}.mel.iq so Safari can accept Set-Cookie
+    // via the Worker, instead of a cross-origin call to api.mel.iq.
     const { data } = await axiosInstance.post<any>(
-      "/store-user-auth/consume-bridge",
+      "/api/v1/store-user-auth/consume-bridge",
       {
         token: params?.token,
+      },
+      {
+        baseURL: "",
+        withCredentials: true,
+        timeout: 10000,
       },
     );
     return data;
