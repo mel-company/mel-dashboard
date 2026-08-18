@@ -26,23 +26,39 @@ function Bridge() {
   const token = new URLSearchParams(window.location.search).get("token");
 
   useEffect(() => {
-    if (token) {
-      consumeBridge(
-        { token },
-        {
-          onSuccess: () => {
-            markAuthSession(queryClient);
-            window.location.href = "/";
-          },
-          onError: (error) => {
-            console.error(error);
-          },
-        },
-      );
-    }
-  }, [token]);
+    console.log("[BRIDGE] mounted");
+    console.log("[BRIDGE] token exists:", Boolean(token));
 
-  return <div>Bridge</div>;
+    if (!token) {
+      console.error("[BRIDGE] NO TOKEN");
+      return;
+    }
+
+    console.log("[BRIDGE] calling consumeBridge");
+
+    consumeBridge(
+      { token },
+      {
+        onSuccess: (data) => {
+          console.log("[BRIDGE] consumeBridge SUCCESS", data);
+
+          try {
+            markAuthSession(queryClient);
+            console.log("[BRIDGE] auth session marked");
+
+            window.location.assign("/");
+          } catch (error) {
+            console.error("[BRIDGE] markAuthSession ERROR", error);
+          }
+        },
+        onError: (error) => {
+          console.error("[BRIDGE] consumeBridge ERROR", error);
+        },
+      },
+    );
+  }, [token, consumeBridge, queryClient]);
+
+  return <div>جاري تسجيل الدخول...</div>;
 }
 
 
