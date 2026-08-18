@@ -101,7 +101,7 @@ export const useMe = () => {
   return useQuery<any, Error, any>({
     queryKey: authKeys.all,
     queryFn: () => authAPI.me(),
-    enabled: isAuthSessionMarked(),
+    enabled: true,
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
