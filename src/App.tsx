@@ -12,8 +12,7 @@ import Payment from "./pages/payment/Payment";
 import { useConsumeBridge } from "./api/wrappers/auth.wrappers";
 import { markAuthSession } from "./utils/auth-session";
 import AuthLoadingScreen from "./components/AuthLoadingScreen";
-import { Button } from "./components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 function RootRedirect() {
@@ -24,73 +23,29 @@ function RootRedirect() {
 function Bridge() {
   const { mutate: consumeBridge } = useConsumeBridge();
   const queryClient = useQueryClient();
-  const [attempt, setAttempt] = useState(0);
-  const [status, setStatus] = useState<"loading" | "error" | "missing-token">(
-    "loading",
-  );
 
   const token = new URLSearchParams(window.location.search).get("token");
 
   useEffect(() => {
     if (!token) {
-      setStatus("missing-token");
+      window.location.replace("/login");
       return;
     }
-
-    setStatus("loading");
-    let timedOut = false;
-
-    const timeoutId = window.setTimeout(() => {
-      timedOut = true;
-      setStatus("error");
-    }, 10000);
 
     consumeBridge(
       { token },
       {
         onSuccess: () => {
-          window.clearTimeout(timeoutId);
-          try {
-            markAuthSession(queryClient);
-            window.location.assign("/");
-          } catch (error) {
-            console.error("[BRIDGE] markAuthSession ERROR", error);
-            setStatus("error");
-          }
+          markAuthSession(queryClient);
+          window.location.replace("/");
         },
         onError: (error) => {
-          window.clearTimeout(timeoutId);
-          console.error("[BRIDGE] consumeBridge ERROR", error);
-          if (!timedOut) setStatus("error");
+          console.error("[BRIDGE] consume failed", error);
+          window.location.replace("/login");
         },
       },
     );
-
-    return () => window.clearTimeout(timeoutId);
-  }, [token, consumeBridge, queryClient, attempt]);
-
-  if (status === "missing-token") {
-    return (
-      <AuthLoadingScreen
-        showSpinner={false}
-        message="تعذر تسجيل الدخول تلقائياً. رابط الدخول غير مكتمل."
-      />
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <AuthLoadingScreen
-        showSpinner={false}
-        message="تعذر تسجيل الدخول تلقائياً"
-        action={
-          <Button type="button" onClick={() => setAttempt((value) => value + 1)}>
-            أعد المحاولة
-          </Button>
-        }
-      />
-    );
-  }
+  }, [token, consumeBridge, queryClient]);
 
   return <AuthLoadingScreen message="جاري تسجيل الدخول..." />;
 }

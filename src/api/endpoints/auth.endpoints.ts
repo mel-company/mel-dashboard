@@ -160,7 +160,6 @@ export const authAPI = {
       },
       {
         baseURL: "",
-        withCredentials: true,
         timeout: 10000,
       },
     );
