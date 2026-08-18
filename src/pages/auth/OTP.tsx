@@ -16,7 +16,11 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { useResendOtp, useVerify } from "@/api/wrappers/auth.wrappers";
+import {
+  useResendOtp,
+  useValidateUser,
+  useVerify,
+} from "@/api/wrappers/auth.wrappers";
 import { markAuthSession } from "@/utils/auth-session";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
@@ -35,6 +39,7 @@ const OTP = () => {
 
   const { mutate: verify, isPending: isVerifyingPending } = useVerify();
   const { mutate: resendOtp, isPending: isResendingOtp } = useResendOtp();
+  const { mutate: validateUser } = useValidateUser();
 
   const tenantSubdomain = getTenantSubdomain();
   const normalizedStoreParam = storeParam.startsWith("dash.")
@@ -42,6 +47,8 @@ const OTP = () => {
     : storeParam;
   const store = normalizedStoreParam || tenantSubdomain;
   const isAzyaaHost = window.location.hostname === "azyaa.mel.iq";
+  const defaultFallbackUrl =
+    import.meta.env.VITE_STORE_AUTH_FALLBACK_URL || "https://mel-iq.vercel.app/";
 
   const maskedPhone = useMemo(() => {
     const digits = phone.replace(/\D/g, "");
@@ -83,9 +90,45 @@ const OTP = () => {
           },
         },
         {
-          onSuccess: () => {
-            markAuthSession(queryClient);
-            navigate("/", { replace: true });
+          onSuccess: (verifyData: any) => {
+            const verifyToken =
+              verifyData?.token || verifyData?.jwt || verifyData?.accessToken;
+            const verifyRedirect = verifyData?.redirectUrl;
+            const fallbackUrl = verifyData?.fallbackUrl || defaultFallbackUrl;
+
+            if (verifyRedirect) {
+              markAuthSession(queryClient);
+              window.location.assign(verifyRedirect);
+              return;
+            }
+
+            if (!verifyToken || !store) {
+              markAuthSession(queryClient);
+              window.location.assign(fallbackUrl);
+              return;
+            }
+
+            validateUser(
+              {
+                store,
+                token: verifyToken,
+              },
+              {
+                onSuccess: (validateData: any) => {
+                  markAuthSession(queryClient);
+                  const redirectUrl = validateData?.redirectUrl;
+                  if (redirectUrl) {
+                    window.location.assign(redirectUrl);
+                    return;
+                  }
+                  window.location.assign(fallbackUrl);
+                },
+                onError: () => {
+                  markAuthSession(queryClient);
+                  window.location.assign(fallbackUrl);
+                },
+              },
+            );
           },
           onError: (error: any) => {
             localStorage.setItem("lgd", "false");

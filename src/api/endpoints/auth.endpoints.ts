@@ -49,6 +49,25 @@ export const authAPI = {
     return data;
   },
 
+  validateUser: async (params?: any): Promise<any> => {
+    const store = toTenantSlug(params?.store);
+    const token = params?.token;
+    const { data } = await axiosInstance.post<any>(
+      "/store-user-auth/validate-user",
+      {
+        store,
+      },
+      token
+        ? {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        : undefined,
+    );
+    return data;
+  },
+
   resendOtp: async (params?: any): Promise<any> => {
     const storeDomain = params?.store?.domain;
     const tenant = toTenantSlug(storeDomain);

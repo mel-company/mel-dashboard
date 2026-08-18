@@ -32,6 +32,15 @@ export const useValidateUserToEditor = () => {
 };
 
 /**
+ * Validate User and get dashboard redirect
+ */
+export const useValidateUser = () => {
+  return useMutation<any, Error, any>({
+    mutationFn: (params: any) => authAPI.validateUser(params),
+  });
+};
+
+/**
  * Resend OTP
  */
 export const useResendOtp = () => {
