@@ -14,27 +14,6 @@ function toTenantSlug(domain: unknown): string {
     .split(".")[0];
 }
 
-function sanitizeMeDebugText(text: string): string {
-  if (!text) return "";
-
-  try {
-    const parsed = JSON.parse(text) as Record<string, unknown>;
-    const redacted: Record<string, unknown> = {};
-
-    for (const [key, value] of Object.entries(parsed)) {
-      if (/token|jwt|cookie|sat|srt|authorization|secret/i.test(key)) {
-        redacted[key] = "[redacted]";
-      } else {
-        redacted[key] = value;
-      }
-    }
-
-    return JSON.stringify(redacted).slice(0, 400);
-  } catch {
-    return text.slice(0, 400);
-  }
-}
-
 export const authAPI = {
   login: async (params?: any): Promise<any> => {
     const storeName = params?.store?.name ?? params?.name;
@@ -215,8 +194,10 @@ export const authAPI = {
       {
         method: "GET",
         credentials: "include",
+        cache: "no-store",
         headers: {
           Accept: "application/json",
+          "Cache-Control": "no-cache",
           ...(tenantSubdomain
             ? {
                 "x-tenant-subdomain": tenantSubdomain,
@@ -227,19 +208,11 @@ export const authAPI = {
       },
     );
 
-    const text = await response.text();
-    const safeText = sanitizeMeDebugText(text);
-
-    console.log("[ME] status:", response.status);
-    console.log("[ME] ok:", response.ok);
-    console.log("[ME] tenant:", tenantSubdomain);
-    console.log("[ME] response:", safeText);
-
     if (!response.ok) {
-      throw new Error(`ME request failed: ${response.status} ${safeText}`);
+      throw new Error(`ME request failed: ${response.status}`);
     }
 
-    return text ? JSON.parse(text) : null;
+    return response.json();
   },
 
   devMe: async (): Promise<any> => {
