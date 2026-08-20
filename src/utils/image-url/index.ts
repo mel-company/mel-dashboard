@@ -54,22 +54,63 @@ function encodePathSegment(segment: string): string {
   }
 }
 
-function encodeAssetPath(path: string): string {
+function encodeAssetPath(path: string, repair = true): string {
   return path
     .split("/")
     .filter((segment) => segment.length > 0)
-    .map(encodePathSegment)
+    .map((segment) =>
+      repair ? encodePathSegment(segment) : encodePathSegmentRaw(segment),
+    )
     .join("/");
 }
 
-function normalizeAssetHost(url: string): string {
+function encodePathSegmentRaw(segment: string): string {
+  try {
+    return encodeURIComponent(decodeURIComponent(segment));
+  } catch {
+    return encodeURIComponent(segment);
+  }
+}
+
+/**
+ * Pull `stores/...` out of relative keys or full R2 / CDN URLs
+ * (including private signed `r2.cloudflarestorage.com` links).
+ */
+export function extractStoresAssetPath(urlOrPath: string): string | null {
+  const trimmed = urlOrPath.trim();
+  if (!trimmed) return null;
+
+  const withoutQuery = trimmed.split("?")[0] ?? trimmed;
+
+  try {
+    const path = /^https?:\/\//i.test(withoutQuery)
+      ? new URL(withoutQuery).pathname.replace(/^\/+/, "")
+      : withoutQuery.replace(/^\/+/, "");
+
+    const idx = path.toLowerCase().indexOf("stores/");
+    if (idx >= 0) return path.slice(idx);
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function isPrivateOrSignedR2Url(url: string): boolean {
+  return (
+    /r2\.cloudflarestorage\.com/i.test(url) || /[?&]X-Amz-/i.test(url)
+  );
+}
+
+function normalizeAssetHost(url: string, baseUrl?: string | null): string {
+  const storesPath = extractStoresAssetPath(url);
+  if (storesPath && (isPrivateOrSignedR2Url(url) || baseUrl || cleanEnvUrl(import.meta.env.VITE_PUBLIC_URL))) {
+    const base = resolveAssetBaseUrl(baseUrl);
+    return `${base}/${encodeAssetPath(storesPath)}`;
+  }
+
   const publicUrl = cleanEnvUrl(import.meta.env.VITE_PUBLIC_URL);
   if (!publicUrl) return url;
-
-  const storesMatch = url.match(/^(?:https?:\/\/[^/]+)?\/?(stores\/.*)$/i);
-  if (storesMatch) {
-    return `${publicUrl}/${encodeAssetPath(storesMatch[1])}`;
-  }
 
   if (/^https?:\/\/[^/]+\.r2\.dev\//i.test(url)) {
     try {
@@ -86,12 +127,12 @@ function normalizeAssetHost(url: string): string {
 
 function buildAssetUrl(image: string, baseUrl?: string | null): string {
   if (image.startsWith("http://") || image.startsWith("https://")) {
-    return normalizeAssetHost(image);
+    return normalizeAssetHost(image, baseUrl);
   }
 
+  const storesPath = extractStoresAssetPath(image) ?? image.replace(/^\/+/, "");
   const base = resolveAssetBaseUrl(baseUrl);
-  const path = encodeAssetPath(image.replace(/^\/+/, ""));
-  return `${base}/${path}`;
+  return `${base}/${encodeAssetPath(storesPath)}`;
 }
 
 export const getImageUrl = (
@@ -103,3 +144,34 @@ export const getImageUrl = (
 
   return buildAssetUrl(trimmed, baseUrl);
 };
+
+/** Prefer public CDN URL, then encoding variants, then original signed URL. */
+export function buildAssetUrlCandidates(
+  image?: unknown,
+  baseUrl?: string | null,
+): string[] {
+  const trimmed = coerceImagePath(image);
+  if (!trimmed) return [];
+
+  const out: string[] = [];
+  const push = (url: string) => {
+    if (url && !out.includes(url)) out.push(url);
+  };
+
+  const storesPath = extractStoresAssetPath(trimmed);
+  if (storesPath) {
+    const base = resolveAssetBaseUrl(baseUrl);
+    push(`${base}/${encodeAssetPath(storesPath, true)}`);
+    push(`${base}/${encodeAssetPath(storesPath, false)}`);
+  }
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    push(trimmed);
+  } else if (!storesPath) {
+    const base = resolveAssetBaseUrl(baseUrl);
+    push(`${base}/${encodeAssetPath(trimmed.replace(/^\/+/, ""), true)}`);
+    push(`${base}/${encodeAssetPath(trimmed.replace(/^\/+/, ""), false)}`);
+  }
+
+  return out;
+}
