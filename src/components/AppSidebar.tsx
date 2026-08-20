@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -34,6 +34,31 @@ function getInitials(value?: string) {
     return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
   }
   return value.slice(0, 2).toUpperCase();
+}
+
+function SidebarStoreLogo({ storeLogoUrl }: { storeLogoUrl: string }) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setReady(false);
+  }, [storeLogoUrl]);
+
+  return (
+    <>
+      {storeLogoUrl ? (
+        <img
+          src={storeLogoUrl}
+          alt=""
+          className={cn("size-full object-cover", !ready && "hidden")}
+          onLoad={() => setReady(true)}
+          onError={() => setReady(false)}
+        />
+      ) : null}
+      {!ready ? (
+        <img src={melLogo} alt="mel.iq" className="size-5 object-contain" />
+      ) : null}
+    </>
+  );
 }
 
 function NavLink({
@@ -190,15 +215,7 @@ const AppSidebar = ({
             )}
             <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-500 to-sky-400 p-[2px]">
               <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-background">
-                {storeLogoUrl ? (
-                  <img
-                    src={storeLogoUrl}
-                    alt=""
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <img src={melLogo} alt="" className="size-5 object-contain" />
-                )}
+                <SidebarStoreLogo storeLogoUrl={storeLogoUrl} />
               </div>
             </div>
           </div>
@@ -207,15 +224,7 @@ const AppSidebar = ({
             {/* RTL: logo on the right */}
             <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-violet-500 to-sky-400 p-[2px]">
               <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-white dark:bg-background">
-                {storeLogoUrl ? (
-                  <img
-                    src={storeLogoUrl}
-                    alt=""
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <img src={melLogo} alt="" className="size-5 object-contain" />
-                )}
+                <SidebarStoreLogo storeLogoUrl={storeLogoUrl} />
               </div>
             </div>
             <div className="min-w-0 flex-1 text-right">
