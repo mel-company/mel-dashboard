@@ -22,9 +22,13 @@ const TotalOrdersCard = ({
     >
       <div>
         <div className="flex items-center justify-end gap-2">
-          <span className="text-xs font-bold text-[#00dfa8]">
-            {changePercent}
-            <span className="ms-0.5">↗</span>
+          <span
+            className={`text-xs font-bold ${
+              changePercent >= 0 ? "text-[#00dfa8]" : "text-[#ff5252]"
+            }`}
+          >
+            {Math.abs(changePercent)}
+            <span className="ms-0.5">{changePercent >= 0 ? "↗" : "↘"}</span>
           </span>
           <p className="text-sm font-medium text-text-secondary dark:text-foreground">
             {asOrderCount ? "أجمالي طلبات" : "إجمالي مبالغ الطلبات"}

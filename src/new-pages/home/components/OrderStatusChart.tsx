@@ -14,6 +14,18 @@ type OrderStatusChartProps = {
 const OrderStatusChart = ({ items }: OrderStatusChartProps) => {
   const total = items.reduce((sum, item) => sum + item.count, 0);
 
+  if (items.length === 0) {
+    return (
+      <DashboardCard
+        title="حالة الطلبات"
+        className="min-h-[215px]"
+        contentClassName="flex items-center justify-center"
+      >
+        <p className="text-sm text-muted-foreground">لا توجد طلبات في الفترة</p>
+      </DashboardCard>
+    );
+  }
+
   return (
     <DashboardCard
       title="حالة الطلبات"

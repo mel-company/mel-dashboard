@@ -5,7 +5,9 @@ type TopDiscount = {
   name: string;
   type: string;
   usageCount: number;
-  maxUsage: number;
+  /** 0–1 progress from API, or derive from usageCount/maxUsage */
+  progress?: number;
+  maxUsage?: number;
 };
 
 type TopDiscountsCardProps = {
@@ -13,6 +15,18 @@ type TopDiscountsCardProps = {
 };
 
 const TopDiscountsCard = ({ discounts }: TopDiscountsCardProps) => {
+  if (discounts.length === 0) {
+    return (
+      <DashboardCard
+        title="أكثر الخصومات استخداماً"
+        className="min-h-[226px]"
+        contentClassName="flex items-center justify-center"
+      >
+        <p className="text-sm text-muted-foreground">لا توجد كوبونات</p>
+      </DashboardCard>
+    );
+  }
+
   return (
     <DashboardCard
       title="أكثر الخصومات استخداماً"
@@ -21,9 +35,11 @@ const TopDiscountsCard = ({ discounts }: TopDiscountsCardProps) => {
     >
       {discounts.slice(0, 3).map((discount) => {
         const pct =
-          discount.maxUsage > 0
-            ? (discount.usageCount / discount.maxUsage) * 100
-            : 0;
+          discount.progress != null
+            ? discount.progress * 100
+            : discount.maxUsage && discount.maxUsage > 0
+              ? (discount.usageCount / discount.maxUsage) * 100
+              : 0;
         return (
           <div key={discount.id} className="space-y-2">
             <div className="flex items-center justify-between gap-2">

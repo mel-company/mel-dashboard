@@ -17,59 +17,74 @@ const PaymentMethodsCard = ({
   methods,
   electronicPercent,
 }: PaymentMethodsCardProps) => {
+  const chartData =
+    methods.length > 0 && methods.every((m) => m.value === 0)
+      ? methods.map((m) => ({ ...m, value: 1 }))
+      : methods;
+
   return (
     <DashboardCard
       title="طرق الدفع"
       className="min-h-[280px]"
       contentClassName="flex flex-col items-center"
     >
-      <div className="relative h-36 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={methods}
-              cx="50%"
-              cy="100%"
-              startAngle={180}
-              endAngle={0}
-              innerRadius={55}
-              outerRadius={80}
-              paddingAngle={3}
-              dataKey="value"
-              stroke="none"
-            >
-              {methods.map((entry) => (
-                <Cell key={entry.name} fill={entry.color} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-x-0 bottom-2 text-center">
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
-            {electronicPercent}%
-          </p>
-          <p className="text-xs text-slate-500 dark:text-white/45">دفع إلكتروني</p>
-        </div>
-      </div>
-      <div className="mt-2 w-full space-y-2">
-        {methods.map((method) => (
-          <div
-            key={method.name}
-            className="flex items-center justify-between text-xs"
-          >
-            <div className="flex items-center gap-2">
-              <span
-                className="size-2 rounded-full"
-                style={{ backgroundColor: method.color }}
-              />
-              <span className="text-slate-600 dark:text-white/60">{method.name}</span>
+      {methods.length === 0 ? (
+        <p className="py-10 text-sm text-muted-foreground">لا توجد طرق دفع</p>
+      ) : (
+        <>
+          <div className="relative h-36 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="100%"
+                  startAngle={180}
+                  endAngle={0}
+                  innerRadius={55}
+                  outerRadius={80}
+                  paddingAngle={3}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {chartData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-x-0 bottom-2 text-center">
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                {electronicPercent}%
+              </p>
+              <p className="text-xs text-slate-500 dark:text-white/45">
+                دفع إلكتروني
+              </p>
             </div>
-            <span className="font-semibold text-slate-800 dark:text-white/80">
-              {method.value}%
-            </span>
           </div>
-        ))}
-      </div>
+          <div className="mt-2 w-full space-y-2">
+            {methods.map((method) => (
+              <div
+                key={method.name}
+                className="flex items-center justify-between text-xs"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="size-2 rounded-full"
+                    style={{ backgroundColor: method.color }}
+                  />
+                  <span className="text-slate-600 dark:text-white/60">
+                    {method.name}
+                  </span>
+                </div>
+                <span className="font-semibold text-slate-800 dark:text-white/80">
+                  {method.value}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </DashboardCard>
   );
 };

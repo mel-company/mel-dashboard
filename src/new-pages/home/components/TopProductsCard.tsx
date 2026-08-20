@@ -13,6 +13,18 @@ type TopProductsCardProps = {
 };
 
 const TopProductsCard = ({ products, maxCount }: TopProductsCardProps) => {
+  if (products.length === 0) {
+    return (
+      <DashboardCard
+        title="أكثر المنتجات طلباً"
+        className="min-h-[320px] lg:col-span-3"
+        contentClassName="flex items-center justify-center"
+      >
+        <p className="text-sm text-muted-foreground">لا توجد منتجات بعد</p>
+      </DashboardCard>
+    );
+  }
+
   return (
     <DashboardCard
       title="أكثر المنتجات طلباً"

@@ -53,6 +53,18 @@ function CircularProgress({ percent }: { percent: number }) {
 }
 
 const TopCategoriesCard = ({ categories }: TopCategoriesCardProps) => {
+  if (categories.length === 0) {
+    return (
+      <DashboardCard
+        title="أفضل الفئات"
+        className="min-h-[280px] flex-1"
+        contentClassName="flex items-center justify-center"
+      >
+        <p className="text-sm text-muted-foreground">لا توجد فئات بعد</p>
+      </DashboardCard>
+    );
+  }
+
   return (
     <DashboardCard
       title="أفضل الفئات"

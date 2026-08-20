@@ -20,14 +20,23 @@ type SalesOverviewChartProps = {
   data: SalesPoint[];
   deliveredTotal: number;
   pendingTotal: number;
+  growthPercent?: number;
+};
+
+const formatGrowth = (value: number) => {
+  const abs = Math.abs(value);
+  const arrow = value >= 0 ? "↗" : "↘";
+  return `${abs}${arrow}`;
 };
 
 const SalesOverviewChart = ({
   data,
   deliveredTotal,
   pendingTotal,
+  growthPercent = 0,
 }: SalesOverviewChartProps) => {
   const theme = getChartTheme();
+  const growthPositive = growthPercent >= 0;
 
   const CustomTooltip = ({
     active,
@@ -81,7 +90,13 @@ const SalesOverviewChart = ({
         </div>
         <div className="text-right">
           <div className="flex items-center justify-end gap-2">
-            <span className="text-xs font-bold text-[#00dfa8]">12.8↗</span>
+            <span
+              className={`text-xs font-bold ${
+                growthPositive ? "text-[#00dfa8]" : "text-[#ff5252]"
+              }`}
+            >
+              {formatGrowth(growthPercent)}
+            </span>
             <p className="text-sm font-medium text-text-secondary dark:text-foreground">
               أجمالي مبالغ الطلبات
             </p>

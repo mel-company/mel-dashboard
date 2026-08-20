@@ -1,18 +1,11 @@
 import { useMemo } from "react";
-import {
-  useFetchCombinedStats,
-  useFetchStoreStats,
-} from "@/api/wrappers/stats.wrappers";
+import { useFetchDashboardHome } from "@/api/wrappers/dashboard.wrappers";
 import SalesOverviewChart from "./components/SalesOverviewChart";
 import TotalOrdersCard from "./components/TotalOrdersCard";
-import PeakAccessDayCard, {
-  defaultWeeklyAccess,
-} from "./components/PeakAccessDayCard";
+import PeakAccessDayCard from "./components/PeakAccessDayCard";
 import TopProductsCard from "./components/TopProductsCard";
 import TopCustomersCard from "./components/TopCustomersCard";
-import PaymentMethodsCard, {
-  defaultPaymentMethods,
-} from "./components/PaymentMethodsCard";
+import PaymentMethodsCard from "./components/PaymentMethodsCard";
 import OrderStatusChart from "./components/OrderStatusChart";
 import RevenueTrendCard from "./components/RevenueTrendCard";
 import SupportReportsChart from "./components/SupportReportsChart";
@@ -20,166 +13,194 @@ import TopCategoriesCard from "./components/TopCategoriesCard";
 import SubscriptionCard from "./components/SubscriptionCard";
 import TopDiscountsCard from "./components/TopDiscountsCard";
 import DashboardSkeleton from "./components/DashboardSkeleton";
-import { AR_MONTHS, CHART_COLORS } from "./utils";
+import {
+  AR_WEEKDAYS_SUNDAY_FIRST,
+  PAYMENT_METHOD_COLORS,
+  toArabicMonth,
+} from "./utils";
 
-const STATUS_COLORS: Record<string, string> = {
-  delivered: CHART_COLORS.green,
-  مسلّم: CHART_COLORS.green,
-  pending: CHART_COLORS.orange,
-  معلّق: CHART_COLORS.orange,
-  cancelled: CHART_COLORS.red,
-  ملغي: CHART_COLORS.red,
-};
+const isCashPayment = (key: string, label: string) =>
+  /cash|كاش|نقد|cod|استلام/i.test(`${key} ${label}`);
 
-const fallbackSalesData = AR_MONTHS.slice(0, 7).map((month, i) => ({
-  month,
-  delivered: [820, 940, 880, 1100, 980, 1250, 1180][i]! * 1_000_000,
-  pending: [120, 160, 140, 200, 180, 220, 190][i]! * 1_000_000,
-}));
-
-const fallbackTopProducts = [
-  { id: "1", name: "Sony WH-1000XM5", count: 248 },
-  { id: "2", name: "AirPods Pro 2", count: 196 },
-  { id: "3", name: "Samsung Galaxy S24", count: 172 },
-  { id: "4", name: "MacBook Air M3", count: 134 },
-  { id: "5", name: "iPad Pro 12.9", count: 98 },
-];
-
-const fallbackCustomers = [
-  { id: "1", name: "محمد علي يوسف", phone: "+964 770 123 4567", points: 61 },
-  { id: "2", name: "سارة أحمد", phone: "+964 780 234 5678", points: 54 },
-  { id: "3", name: "علي حسين", phone: "+964 790 345 6789", points: 48 },
-  { id: "4", name: "نور عبدالله", phone: "+964 750 456 7890", points: 42 },
-  { id: "5", name: "حسام كريم", phone: "+964 771 567 8901", points: 37 },
-];
-
-const fallbackSupportData = Array.from({ length: 12 }, (_, i) => ({
-  day: `${i + 1}`,
-  requests: [8, 12, 10, 15, 11, 18, 14, 16, 13, 19, 15, 17][i] ?? 12,
-  resolved: [6, 10, 9, 13, 10, 15, 12, 14, 11, 16, 13, 15][i] ?? 10,
-}));
-
-const fallbackCategories = [
-  { id: "1", name: "إلكترونيات", percent: 25 },
-  { id: "2", name: "أزياء", percent: 25 },
-  { id: "3", name: "منزل ومطبخ", percent: 25 },
-  { id: "4", name: "رياضة", percent: 25 },
-];
-
-const fallbackDiscounts = [
-  { id: "1", name: "SUMMER30", type: "30% نسبة مئوية", usageCount: 152, maxUsage: 200 },
-  { id: "2", name: "WELCOME10", type: "10,000 د.ع ثابت", usageCount: 152, maxUsage: 200 },
-  { id: "3", name: "VIP50", type: "50% نسبة مئوية", usageCount: 152, maxUsage: 200 },
-];
-
-const makeSparkline = (values: number[]) => values.map((value) => ({ value }));
+const makeSparkline = (values: number[]) =>
+  values.map((value) => ({ value }));
 
 const HomeDashboard = () => {
-  const { data: combinedStats, isLoading: loadingCombined } =
-    useFetchCombinedStats({ period: "1y" });
-  const { data: storeStats, isLoading: loadingStore } = useFetchStoreStats();
-
-  const monthlySales = combinedStats?.monthlySales ?? [];
-  const ordersStatusStats = combinedStats?.ordersStatusStats ?? [];
-  const mostBoughtProducts = combinedStats?.mostBoughtProducts ?? [];
+  const { data, isLoading, isError, error, refetch } = useFetchDashboardHome();
 
   const salesChartData = useMemo(() => {
-    if (monthlySales.length > 0) {
-      return monthlySales.map(
-        (item: { month: string; sales: number; orders: number }) => ({
-          month: item.month,
-          delivered: item.sales * 1_000_000,
-          pending: item.orders * 500_000,
-        }),
-      );
-    }
-    return fallbackSalesData;
-  }, [monthlySales]);
+    const months = data?.revenueCard.months ?? [];
+    const lineA = data?.revenueCard.lineA ?? [];
+    const lineB = data?.revenueCard.lineB ?? [];
 
-  const deliveredTotal = salesChartData.reduce(
-    (sum: number, d: { delivered: number }) => sum + d.delivered,
-    0,
-  );
-  const pendingTotal = salesChartData.reduce(
-    (sum: number, d: { pending: number }) => sum + d.pending,
-    0,
-  );
+    return months.map((month, i) => {
+      const total = lineA[i] ?? 0;
+      const delivered = lineB[i] ?? 0;
+      return {
+        month: toArabicMonth(month),
+        delivered,
+        pending: Math.max(total - delivered, 0),
+      };
+    });
+  }, [data?.revenueCard]);
 
-  const topProducts = useMemo(() => {
-    if (mostBoughtProducts.length > 0) {
-      return mostBoughtProducts.map(
-        (p: { name: string; count: number }, i: number) => ({
-          id: String(i),
-          name: p.name,
-          count: p.count,
-        }),
-      );
-    }
-    return fallbackTopProducts;
-  }, [mostBoughtProducts]);
+  const weeklyAccess = useMemo(() => {
+    const bars = data?.bestArrivalDay.bars ?? [0, 0, 0, 0, 0, 0, 0];
+    return AR_WEEKDAYS_SUNDAY_FIRST.map((day, i) => ({
+      day: day.slice(0, 3),
+      value: bars[i] ?? 0,
+    }));
+  }, [data?.bestArrivalDay.bars]);
+
+  const topProducts = useMemo(
+    () =>
+      (data?.topProducts ?? []).map((product) => ({
+        id: product.id,
+        name: product.name,
+        count: product.orders,
+        image: product.imageUrl ?? undefined,
+      })),
+    [data?.topProducts],
+  );
 
   const maxProductCount = Math.max(...topProducts.map((p) => p.count), 1);
 
-  const orderStatusItems = useMemo(() => {
-    if (ordersStatusStats.length > 0) {
-      return ordersStatusStats.map(
-        (item: { status: string; count: number }) => ({
-          status: item.status,
-          count: item.count,
-          color:
-            STATUS_COLORS[item.status.toLowerCase()] ?? CHART_COLORS.muted,
-        }),
-      );
+  const orderStatusItems = useMemo(
+    () =>
+      (data?.orderStatusPie ?? []).map((item) => ({
+        status: item.label,
+        count: item.value,
+        color: item.color,
+      })),
+    [data?.orderStatusPie],
+  );
+
+  const paymentMethods = useMemo(() => {
+    const types = data?.paymentTypes ?? [];
+    const total = types.reduce((sum, item) => sum + item.count, 0);
+
+    return types.map((item, index) => ({
+      name: item.label,
+      value:
+        total > 0
+          ? Math.round((item.count / total) * 100)
+          : types.length === 1
+            ? 100
+            : 0,
+      color: PAYMENT_METHOD_COLORS[index % PAYMENT_METHOD_COLORS.length]!,
+      key: item.key,
+    }));
+  }, [data?.paymentTypes]);
+
+  const electronicPercent = useMemo(() => {
+    const types = data?.paymentTypes ?? [];
+    const total = types.reduce((sum, item) => sum + item.count, 0);
+    if (total === 0) {
+      const nonCash = types.filter((t) => !isCashPayment(t.key, t.label));
+      if (types.length === 0) return 0;
+      return Math.round((nonCash.length / types.length) * 100);
     }
-    return [
-      { status: "مسلّم", count: 842, color: CHART_COLORS.green },
-      { status: "معلّق", count: 156, color: CHART_COLORS.orange },
-      { status: "ملغي", count: 43, color: CHART_COLORS.red },
-    ];
-  }, [ordersStatusStats]);
+    const electronic = types
+      .filter((t) => !isCashPayment(t.key, t.label))
+      .reduce((sum, item) => sum + item.count, 0);
+    return Math.round((electronic / total) * 100);
+  }, [data?.paymentTypes]);
 
-  const totalRevenue = deliveredTotal + pendingTotal;
-  const revenueSparkline = makeSparkline(
-    salesChartData.map((d: { delivered: number }) => d.delivered / 1_000_000),
-  );
-  const salesSparkline = makeSparkline(
-    salesChartData.map((d: { pending: number }) => d.pending / 500_000),
-  );
-  const orderCountFromStatus = orderStatusItems.reduce(
-    (sum, item) => sum + item.count,
-    0,
-  );
-  const totalOrdersCount =
-    storeStats?.totalOrders ??
-    (orderCountFromStatus > 0 ? orderCountFromStatus : 12_512);
+  const supportData = useMemo(() => {
+    const reports = data?.supportReports;
+    if (!reports) return [];
+    return reports.labels.map((day, i) => ({
+      day,
+      requests: reports.requests[i] ?? 0,
+      resolved: reports.solved[i] ?? 0,
+    }));
+  }, [data?.supportReports]);
 
-  const isLoading = loadingCombined || loadingStore;
+  const topCustomers = useMemo(
+    () =>
+      (data?.topCustomers ?? []).map((customer) => ({
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        orders: customer.orders,
+        avatar: customer.avatarUrl,
+      })),
+    [data?.topCustomers],
+  );
+
+  const topCategories = useMemo(
+    () =>
+      (data?.topCategories ?? []).map((category) => ({
+        id: category.id,
+        name: category.name,
+        percent: category.percent,
+      })),
+    [data?.topCategories],
+  );
+
+  const topCoupons = useMemo(
+    () =>
+      (data?.topCoupons ?? []).map((coupon) => ({
+        id: coupon.id,
+        name: coupon.title || coupon.code,
+        type: coupon.code,
+        usageCount: coupon.uses,
+        progress: coupon.progress,
+      })),
+    [data?.topCoupons],
+  );
 
   if (isLoading) {
     return <DashboardSkeleton />;
   }
+
+  if (isError || !data) {
+    return (
+      <div
+        className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-[28px] bg-surface p-6 text-center"
+        dir="rtl"
+      >
+        <p className="text-sm text-muted-foreground">
+          {(error as Error)?.message || "تعذر تحميل لوحة التحكم"}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+        >
+          إعادة المحاولة
+        </button>
+      </div>
+    );
+  }
+
+  const { revenueCard, ordersCard, storeRevenue, salesReading, subscription } =
+    data;
+
+  const revenueSparkline = makeSparkline(ordersCard.area);
+  const salesSparkline = makeSparkline(salesReading.wave);
 
   return (
     <div
       className="min-h-full space-y-3 rounded-[28px] bg-surface p-3 sm:space-y-3 sm:p-4 lg:gap-3 lg:space-y-3 lg:p-4"
       dir="rtl"
     >
-      {/* الصف 1 — Figma: Chart 793 | Peak+Orders 282 | Products 288 → 7 | 2 | 3 */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-3">
         <SalesOverviewChart
           data={salesChartData}
-          deliveredTotal={deliveredTotal}
-          pendingTotal={pendingTotal}
+          deliveredTotal={revenueCard.deliveredAmount}
+          pendingTotal={revenueCard.pendingAmount}
+          growthPercent={revenueCard.growthPercent}
         />
 
         <div className="flex flex-col gap-3 lg:col-span-2">
           <PeakAccessDayCard
-            peakDay="الجمعة"
-            weeklyData={defaultWeeklyAccess}
+            peakDay={data.bestArrivalDay.day}
+            weeklyData={weeklyAccess}
           />
           <TotalOrdersCard
-            total={totalOrdersCount}
-            changePercent={12.8}
+            total={ordersCard.totalOrders}
+            changePercent={revenueCard.growthPercent}
             sparkline={revenueSparkline}
             asOrderCount
           />
@@ -188,37 +209,40 @@ const HomeDashboard = () => {
         <TopProductsCard products={topProducts} maxCount={maxProductCount} />
       </div>
 
-      {/* الصف 2 — Figma: ColA 534 | ColB 355 | ColC 474 → 5 | 3 | 4 */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-3">
-        {/* العمود الأيمن: عملاء + دفع فوق، دعم تحت */}
         <div className="flex flex-col gap-3 lg:col-span-5">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.2fr_1fr]">
-            <TopCustomersCard customers={fallbackCustomers} />
+            <TopCustomersCard customers={topCustomers} />
             <PaymentMethodsCard
-              methods={defaultPaymentMethods}
-              electronicPercent={80}
+              methods={paymentMethods}
+              electronicPercent={electronicPercent}
             />
           </div>
-          <SupportReportsChart data={fallbackSupportData} />
+          <SupportReportsChart data={supportData} />
         </div>
 
-        {/* العمود الوسط: حالة الطلبات + الفئات */}
         <div className="flex flex-col gap-3 lg:col-span-3">
           <OrderStatusChart items={orderStatusItems} />
-          <TopCategoriesCard categories={fallbackCategories} />
+          <TopCategoriesCard categories={topCategories} />
         </div>
 
-        {/* العمود الأيسر: إيرادات + قراءة بيع، اشتراك، خصومات */}
         <div className="flex flex-col gap-3 lg:col-span-4">
           <RevenueTrendCard
-            revenue={totalRevenue || 98_500_000_000}
-            revenueTrend={revenueSparkline}
+            revenue={storeRevenue.amount}
+            lastMonthRevenue={storeRevenue.lastMonth}
+            progress={storeRevenue.progress}
             salesTrend={salesSparkline}
-            revenueChange={8.4}
-            salesChange={-12.8}
+            revenueChange={revenueCard.growthPercent}
+            salesChange={salesReading.trendPercent}
+            salesStatus={salesReading.status}
           />
-          <SubscriptionCard />
-          <TopDiscountsCard discounts={fallbackDiscounts} />
+          <SubscriptionCard
+            planCode={subscription.planCode}
+            planTitle={subscription.planTitle}
+            expiresAt={subscription.expiresAt}
+            daysLeft={subscription.daysLeft}
+          />
+          <TopDiscountsCard discounts={topCoupons} />
         </div>
       </div>
     </div>

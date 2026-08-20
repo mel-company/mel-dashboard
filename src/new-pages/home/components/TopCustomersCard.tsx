@@ -5,8 +5,8 @@ type TopCustomer = {
   id: string;
   name: string;
   phone: string;
-  points: number;
-  avatar?: string;
+  orders: number;
+  avatar?: string | null;
 };
 
 type TopCustomersCardProps = {
@@ -14,6 +14,18 @@ type TopCustomersCardProps = {
 };
 
 const TopCustomersCard = ({ customers }: TopCustomersCardProps) => {
+  if (customers.length === 0) {
+    return (
+      <DashboardCard
+        title="أفضل العملاء"
+        className="min-h-[280px]"
+        contentClassName="flex items-center justify-center"
+      >
+        <p className="text-sm text-muted-foreground">لا يوجد عملاء بعد</p>
+      </DashboardCard>
+    );
+  }
+
   return (
     <DashboardCard
       title="أفضل العملاء"
@@ -47,13 +59,10 @@ const TopCustomersCard = ({ customers }: TopCustomersCardProps) => {
           <span
             className={cn(
               "shrink-0 rounded-full px-2 py-0.5 text-xs font-bold",
-              customer.points >= 0
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
-                : "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400",
+              "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
             )}
           >
-            {customer.points >= 0 ? "+" : ""}
-            {customer.points}
+            {customer.orders} طلب
           </span>
         </div>
       ))}
