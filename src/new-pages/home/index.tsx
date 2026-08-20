@@ -58,7 +58,7 @@ const HomeDashboard = () => {
         id: product.id,
         name: product.name,
         count: product.orders,
-        image: product.imageUrl ?? undefined,
+        image: product.imageUrl,
       })),
     [data?.topProducts],
   );

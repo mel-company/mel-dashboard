@@ -1,10 +1,12 @@
 import DashboardCard from "./DashboardCard";
+import { AssetImage } from "@/components/AssetImage";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 
 type TopProduct = {
   id: string;
   name: string;
   count: number;
-  image?: string;
+  image?: string | null;
 };
 
 type TopProductsCardProps = {
@@ -13,6 +15,8 @@ type TopProductsCardProps = {
 };
 
 const TopProductsCard = ({ products, maxCount }: TopProductsCardProps) => {
+  const imageBaseUrl = useImageBaseUrl();
+
   if (products.length === 0) {
     return (
       <DashboardCard
@@ -36,15 +40,13 @@ const TopProductsCard = ({ products, maxCount }: TopProductsCardProps) => {
         return (
           <div key={product.id} className="flex items-center gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-xs font-bold text-slate-500 dark:bg-white/6 dark:text-white/50">
-              {product.image ? (
-                <img
-                  src={product.image}
-                  alt=""
-                  className="size-full object-cover"
-                />
-              ) : (
-                index + 1
-              )}
+              <AssetImage
+                image={product.image}
+                baseUrl={imageBaseUrl}
+                alt={product.name}
+                className="size-full object-cover"
+                fallback={<span>{index + 1}</span>}
+              />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-slate-800 dark:text-white/90">

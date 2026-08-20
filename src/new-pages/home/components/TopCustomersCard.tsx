@@ -1,5 +1,7 @@
 import DashboardCard from "./DashboardCard";
 import { cn } from "@/lib/utils";
+import { AssetImage } from "@/components/AssetImage";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 
 type TopCustomer = {
   id: string;
@@ -14,6 +16,8 @@ type TopCustomersCardProps = {
 };
 
 const TopCustomersCard = ({ customers }: TopCustomersCardProps) => {
+  const imageBaseUrl = useImageBaseUrl();
+
   if (customers.length === 0) {
     return (
       <DashboardCard
@@ -38,15 +42,13 @@ const TopCustomersCard = ({ customers }: TopCustomersCardProps) => {
           className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-2.5 dark:bg-white/3"
         >
           <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#5B8CFF] to-[#9139C4] text-xs font-bold text-white">
-            {customer.avatar ? (
-              <img
-                src={customer.avatar}
-                alt=""
-                className="size-full object-cover"
-              />
-            ) : (
-              customer.name.slice(0, 2)
-            )}
+            <AssetImage
+              image={customer.avatar}
+              baseUrl={imageBaseUrl}
+              alt={customer.name}
+              className="size-full object-cover"
+              fallback={<span>{customer.name.slice(0, 2)}</span>}
+            />
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-slate-800 dark:text-white/90">
