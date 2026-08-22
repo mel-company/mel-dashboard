@@ -311,7 +311,7 @@ const ProductImageDialog = ({ open, onOpenChange, productId }: Props) => {
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              PNG, JPG حتى 2MB لكل صورة
+              PNG, JPG حتى 50MB لكل صورة
             </p>
           </div>
 

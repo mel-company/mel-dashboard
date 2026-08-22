@@ -58,9 +58,9 @@ const EditCategory = ({}: Props) => {
         return;
       }
 
-      // Validate file size (2MB max)
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("حجم الملف يجب أن يكون أقل من 2MB");
+      // Validate file size (50MB max — matches API)
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error("حجم الملف يجب أن يكون أقل من 50MB");
         return;
       }
 
@@ -206,7 +206,7 @@ const EditCategory = ({}: Props) => {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    PNG, JPG حتى 2MB
+                    PNG, JPG حتى 50MB
                   </p>
                 </div>
               </div>

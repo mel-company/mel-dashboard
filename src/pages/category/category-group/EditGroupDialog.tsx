@@ -68,8 +68,8 @@ const EditGroupDialog = ({
         toast.error("الرجاء اختيار ملف صورة");
         return;
       }
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("حجم الملف يجب أن يكون أقل من 2MB");
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error("حجم الملف يجب أن يكون أقل من 50MB");
         return;
       }
       setImageFile(file);
@@ -240,7 +240,7 @@ const EditGroupDialog = ({
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  PNG, JPG حتى 2MB. اتركه فارغاً للاحتفاظ بالصورة الحالية.
+                  PNG, JPG حتى 50MB. اتركه فارغاً للاحتفاظ بالصورة الحالية.
                 </p>
               </div>
             </div>

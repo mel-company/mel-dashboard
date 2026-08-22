@@ -184,7 +184,7 @@ const DetailsSettings = ({}: Props) => {
                   اضغط على الشعار لإدارته
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  PNG, JPG حتى 2MB
+                  PNG, JPG حتى 50MB
                 </p>
               </div>
             </div>

@@ -49,9 +49,9 @@ const LogoDialog = ({ open, onOpenChange }: Props) => {
         return;
       }
 
-      // Validate file size (2MB max)
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("حجم الملف يجب أن يكون أقل من 2MB");
+      // Validate file size (50MB max — matches API)
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error("حجم الملف يجب أن يكون أقل من 50MB");
         return;
       }
 
@@ -186,7 +186,7 @@ const LogoDialog = ({ open, onOpenChange }: Props) => {
                 اختر صورة
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">PNG, JPG حتى 2MB</p>
+            <p className="text-xs text-muted-foreground">PNG, JPG حتى 50MB</p>
           </div>
 
           {/* Action Buttons */}

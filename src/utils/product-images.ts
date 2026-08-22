@@ -2,7 +2,8 @@ import { MAX_PRODUCT_IMAGES } from "@/api/types/product";
 import type { ProductImage, ProductListItem } from "@/api/types/product";
 import { coerceImagePath } from "@/utils/image-url";
 
-const MAX_FILE_BYTES = 2 * 1024 * 1024;
+/** Matches Multer / Express body limit on the API. */
+export const MAX_UPLOAD_FILE_BYTES = 50 * 1024 * 1024;
 
 export type ValidatedImageFilesResult = {
   files: File[];
@@ -24,8 +25,8 @@ export function mergeProductImageFiles(
     if (!file.type.startsWith("image/")) {
       return { files: current, error: "الرجاء اختيار ملفات صور فقط" };
     }
-    if (file.size > MAX_FILE_BYTES) {
-      return { files: current, error: "حجم كل صورة يجب أن يكون أقل من 2MB" };
+    if (file.size > MAX_UPLOAD_FILE_BYTES) {
+      return { files: current, error: "حجم كل صورة يجب أن يكون أقل من 50MB" };
     }
     if (next.length >= max) {
       return {
