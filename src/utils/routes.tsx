@@ -79,11 +79,11 @@ export const mainRoutes: RouteConfig[] = [
         path: "/tickets",
         children: [
             { path: "", element: <Tickets /> },
+            { path: "new", element: <CreateTicket /> },
             {
                 path: ":id",
                 children: [{ path: "", element: <TicketDetails /> }],
             },
-            { path: "new", element: <CreateTicket /> },
         ],
     },
     {

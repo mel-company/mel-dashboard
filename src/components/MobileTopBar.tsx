@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import melLogo from "@/assets/imgs/logo/mel-logo.svg";
 import { useTheme } from "@/components/theme-provider";
 import { useMe } from "@/api/wrappers/auth.wrappers";
+import { useFetchDashboardHome } from "@/api/wrappers/dashboard.wrappers";
 import { usePage } from "@/hooks/pages";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,10 @@ const MobileTopBar = ({ className, onMenuClick }: MobileTopBarProps) => {
   const { theme, setTheme } = useTheme();
   const [isDark, setIsDark] = useState(false);
   const unreadCount = me?.notificationsCount || 0;
+  const isHome = pathname === "/";
+  const { data: homeData } = useFetchDashboardHome(undefined, {
+    enabled: isHome,
+  });
 
   useEffect(() => {
     if (theme === "dark") {
@@ -72,9 +77,24 @@ const MobileTopBar = ({ className, onMenuClick }: MobileTopBarProps) => {
       : Object.keys(PAGE_SUBTITLES).find(
           (key) => key !== "/" && pathname.startsWith(key),
         );
-  const subtitle =
-    (matchedSubtitleKey ? PAGE_SUBTITLES[matchedSubtitleKey] : undefined) ??
-    (me?.store ? me.store : "يمكنك مراقبة جميع نشاطاتك في واجهة واحدة");
+
+  const homeCount =
+    homeData?.header?.unreadNotifications ||
+    homeData?.ordersCard?.totalOrders ||
+    0;
+  const homeListLabel =
+    (homeData?.header?.unreadNotifications ?? 0) > 0
+      ? "الإشعارات"
+      : "الطلبات";
+  const homeSubtitle =
+    homeCount > 0
+      ? `تمتلك ${homeCount} حركة جديدة في قائمة ${homeListLabel}`
+      : homeData?.header?.subtitle || PAGE_SUBTITLES["/"];
+
+  const subtitle = isHome
+    ? homeSubtitle
+    : (matchedSubtitleKey ? PAGE_SUBTITLES[matchedSubtitleKey] : undefined) ??
+      (me?.store ? me.store : PAGE_SUBTITLES["/"]);
 
   return (
     <header

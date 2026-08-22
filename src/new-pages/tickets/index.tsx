@@ -1,8 +1,10 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { BaseCard } from "@/components/table/top-cards";
 import TicketsContent from "./components/TicketsContent";
+import CreateTicketSheet from "./components/CreateTicketSheet";
 import PageTableHeader from "@/components/table/header";
 import { useTicketsPage } from "@/hooks/use-tickets-page";
 import TitleBar from "@/components/table/title-bar";
@@ -18,15 +20,25 @@ import {
 
 const TicketsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const actions = useTicketsPage();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  useEffect(() => {
+    const state = location.state as { openCreateTicket?: boolean } | null;
+    if (state?.openCreateTicket) {
+      setIsCreateOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="hidden md:block">
-        <TitleBar description="تمتلك حركات جديدة في قائمة الدعم الفني">
+        <TitleBar count={actions.tickets?.length ?? 0}>
           <Button
             className="h-11 w-full shrink-0 gap-2 rounded-full bg-violet-100 px-4 text-violet-700 shadow-sm hover:bg-violet-200 sm:w-auto sm:gap-2.5 sm:px-5 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20"
-            onClick={() => navigate("/tickets/new")}
+            onClick={() => setIsCreateOpen(true)}
           >
             <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-500/15 dark:bg-[#b282ff]/20">
               <Plus className="size-4" strokeWidth={2.5} />
@@ -39,7 +51,7 @@ const TicketsPage = () => {
       <div className="space-y-3 md:hidden">
         <Button
           className="h-12 w-full gap-2 rounded-full bg-violet-100 text-violet-700 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff]"
-          onClick={() => navigate("/tickets/new")}
+          onClick={() => setIsCreateOpen(true)}
         >
           <span className="flex size-7 items-center justify-center rounded-full bg-violet-500/15 dark:bg-[#b282ff]/20">
             <Plus className="size-4" strokeWidth={2.5} />
@@ -146,6 +158,8 @@ const TicketsPage = () => {
         onApply={actions.setFilters}
         onClear={actions.handleClearFilters}
       />
+
+      <CreateTicketSheet open={isCreateOpen} onOpenChange={setIsCreateOpen} />
     </div>
   );
 };

@@ -1,7 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 
-import { Plus } from "lucide-react";
 import { BaseCard } from "@/components/table/top-cards";
 import OrdersContent from "./components/OrdersContent";
 import PageTableHeader from "@/components/table/header";
@@ -17,8 +15,8 @@ const OrdersPage = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <TitleBar>
-                <Button
+            <TitleBar count={actions.orders?.length ?? 0}>
+                {/* <Button
                     className="h-11 shrink-0 gap-2.5 rounded-full bg-[#00b7ff] px-5 text-white shadow-sm hover:bg-[#00a3e6]"
                     onClick={() => navigate("/orders/add")}
                 >
@@ -26,7 +24,7 @@ const OrdersPage = () => {
                         <Plus className="size-4" strokeWidth={2.5} />
                     </span>
                     إضافة طلب جديد
-                </Button>
+                </Button> */}
             </TitleBar>
 
             <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

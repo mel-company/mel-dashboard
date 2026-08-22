@@ -45,11 +45,8 @@ const CategoriesPage = () => {
     <div className="space-y-4 sm:space-y-6">
       <div className="hidden md:block">
         <TitleBar
-          description={
-            showGroups
-              ? "تمتلك حركات جديدة في قائمة المجموعات"
-              : "تمتلك حركات جديدة في قائمة الفئات"
-          }
+          count={showGroups ? undefined : (actions.categories?.length ?? 0)}
+          listLabel={showGroups ? "المجموعات" : "الفئات"}
         >
           <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Button

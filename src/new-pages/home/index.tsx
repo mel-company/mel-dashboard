@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useFetchDashboardHome } from "@/api/wrappers/dashboard.wrappers";
 import SalesOverviewChart from "./components/SalesOverviewChart";
 import TotalOrdersCard from "./components/TotalOrdersCard";
@@ -13,11 +13,15 @@ import TopCategoriesCard from "./components/TopCategoriesCard";
 import SubscriptionCard from "./components/SubscriptionCard";
 import TopDiscountsCard from "./components/TopDiscountsCard";
 import DashboardSkeleton from "./components/DashboardSkeleton";
+import DashboardPeriodSelect from "./components/DashboardPeriodSelect";
 import {
   AR_WEEKDAYS_SUNDAY_FIRST,
   PAYMENT_METHOD_COLORS,
+  resolveDashboardDateRange,
   toArabicMonth,
+  type DashboardPeriod,
 } from "./utils";
+import TitleBar from "@/components/table/title-bar";
 
 const isCashPayment = (key: string, label: string) =>
   /cash|كاش|نقد|cod|استلام/i.test(`${key} ${label}`);
@@ -26,7 +30,10 @@ const makeSparkline = (values: number[]) =>
   values.map((value) => ({ value }));
 
 const HomeDashboard = () => {
-  const { data, isLoading, isError, error, refetch } = useFetchDashboardHome();
+  const [period, setPeriod] = useState<DashboardPeriod>("3m");
+  const dateRange = useMemo(() => resolveDashboardDateRange(period), [period]);
+  const { data, isLoading, isError, error, refetch } =
+    useFetchDashboardHome(dateRange);
 
   const salesChartData = useMemo(() => {
     const months = data?.revenueCard.months ?? [];
@@ -174,17 +181,36 @@ const HomeDashboard = () => {
     );
   }
 
-  const { revenueCard, ordersCard, storeRevenue, salesReading, subscription } =
+  const { revenueCard, ordersCard, storeRevenue, salesReading, subscription, header } =
     data;
 
   const revenueSparkline = makeSparkline(ordersCard.area);
   const salesSparkline = makeSparkline(salesReading.wave);
+  const homeCount = header?.unreadNotifications || ordersCard.totalOrders || 0;
+  const homeListLabel =
+    header?.unreadNotifications > 0 ? "الإشعارات" : "الطلبات";
+  const homeFallbackSubtitle =
+    header?.subtitle || "يمكنك مراقبة جميع نشاطاتك في واجهة واحدة";
 
   return (
     <div
       className="min-h-full space-y-3 rounded-[28px] bg-surface p-3 sm:space-y-3 sm:p-4 lg:gap-3 lg:space-y-3 lg:p-4"
       dir="rtl"
     >
+      <div className="hidden lg:block">
+        <TitleBar
+          count={homeCount}
+          listLabel={homeListLabel}
+          description={homeCount > 0 ? undefined : homeFallbackSubtitle}
+        >
+          <DashboardPeriodSelect value={period} onChange={setPeriod} />
+        </TitleBar>
+      </div>
+
+      <div className="lg:hidden">
+        <DashboardPeriodSelect value={period} onChange={setPeriod} />
+      </div>
+
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-3">
         <SalesOverviewChart
           data={salesChartData}

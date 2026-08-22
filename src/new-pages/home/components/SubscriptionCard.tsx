@@ -12,12 +12,32 @@ const formatExpiryDate = (dateString: string | null | undefined) => {
   return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 };
 
+const isSubscriptionExpired = (
+  daysLeft: number,
+  expiresAt?: string | null,
+) => {
+  if (daysLeft <= 0) return true;
+  if (!expiresAt) return false;
+  const expiry = new Date(expiresAt);
+  if (Number.isNaN(expiry.getTime())) return false;
+  return expiry.getTime() < Date.now();
+};
+
+const formatDaysLeftLabel = (daysLeft: number) => {
+  if (daysLeft === 1) return "متبقي يوم واحد";
+  if (daysLeft === 2) return "متبقي يومان";
+  if (daysLeft >= 3 && daysLeft <= 10) return `متبقي ${daysLeft} أيام`;
+  return `متبقي ${daysLeft} يوم`;
+};
+
 const SubscriptionCard = ({
   planCode,
   planTitle,
   expiresAt,
   daysLeft = 0,
 }: SubscriptionCardProps) => {
+  const expired = isSubscriptionExpired(daysLeft, expiresAt);
+
   return (
     <div className="relative min-h-[176px] overflow-hidden rounded-[18px] bg-linear-to-l from-[#33c5ff] to-[#b282ff] p-5 text-white">
       <div className="flex items-start justify-between gap-3">
@@ -37,8 +57,11 @@ const SubscriptionCard = ({
           {planTitle ?? "بدون خطة"}
         </p>
         <p className="mt-3 text-sm text-white/80">
-          متبقي{" "}
-          <span className="text-lg font-bold text-white">{daysLeft}</span> يوم
+          {expired ? (
+            <span className="text-lg font-bold text-white">انتهت الصلاحية</span>
+          ) : (
+            formatDaysLeftLabel(daysLeft)
+          )}
         </p>
       </div>
 

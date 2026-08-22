@@ -29,21 +29,16 @@ const NotificationsPage = () => {
       dir="rtl"
     >
       <div className="hidden items-start justify-between gap-4 md:flex">
-        <button
-          type="button"
-          onClick={actions.markAllAsRead}
-          disabled={actions.isMarkingAllRead || actions.unreadCount === 0}
-          className="inline-flex h-12 items-center gap-2 rounded-[14px] border border-[#7d26f726] bg-[#7d26f71a] px-4 text-sm font-bold text-[#7d26f7] transition-opacity hover:opacity-90 disabled:opacity-40"
-        >
-          {actions.isMarkingAllRead ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <HugeiconsIcon icon={TickDouble02Icon} size={20} />
-          )}
-          جعل الاشعارات مقروءة
-        </button>
+    
 
         <div className="flex items-center gap-2 text-right">
+        <div className="flex size-11 items-center justify-center rounded-xl text-foreground">
+            <HugeiconsIcon
+              icon={Notification01Icon}
+              size={24}
+              strokeWidth={1.5}
+            />
+          </div>
           <div>
             <h1
               className="text-[20px] font-normal leading-[28px] text-foreground"
@@ -52,17 +47,30 @@ const NotificationsPage = () => {
               الأشعارات
             </h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              تمتلك {actions.unreadCount} أشعار جديد في قائمة الاشعارات
+              {!actions.canMarkAllAsRead
+                ? "جميع الإشعارات مقروءة"
+                : `تمتلك ${actions.unreadCount} إشعار جديد في قائمة الاشعارات`}
             </p>
           </div>
-          <div className="flex size-11 items-center justify-center rounded-xl text-foreground">
-            <HugeiconsIcon
-              icon={Notification01Icon}
-              size={24}
-              strokeWidth={1.5}
-            />
-          </div>
+         
         </div>
+
+
+        <button
+          type="button"
+          onClick={actions.markAllAsRead}
+          disabled={actions.isMarkingAllRead || !actions.canMarkAllAsRead}
+          className="inline-flex h-12 items-center gap-2 rounded-[14px] border border-[#7d26f726] bg-[#7d26f71a] px-4 text-sm font-bold text-[#7d26f7] transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          {actions.isMarkingAllRead ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <HugeiconsIcon icon={TickDouble02Icon} size={20} />
+          )}
+          {actions.canMarkAllAsRead
+            ? "جعل الاشعارات مقروءة"
+            : "مقروءة"}
+        </button>
       </div>
 
       <div className="md:hidden">

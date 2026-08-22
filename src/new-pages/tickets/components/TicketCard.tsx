@@ -1,4 +1,10 @@
-import { AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete02Icon,
+  EyeIcon,
+  PencilEdit02Icon,
+} from "@hugeicons-pro/core-twotone-rounded";
 import { cn } from "@/lib/utils";
 import type { SupportTicketListItem } from "@/api/types/ticket";
 import { TICKET_DEPARTMENTS, TICKET_STATUSES, TICKET_TYPES } from "@/pages/support/TicketFilterDialog";
@@ -60,9 +66,16 @@ const TicketCard = ({ ticket, onClick, className }: TicketCardProps) => {
       ) : null}
 
       <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-4 text-slate-400 dark:text-[#8f9de8]">
-          <Trash2 className="size-[17px] text-red-500 dark:text-[#ff5a67]" />
-          <Pencil className="size-[17px]" />
+        <div className="flex items-center gap-3.5">
+          <span className="text-[#ff6b7a] dark:text-[#ff5a67]" aria-hidden>
+            <HugeiconsIcon icon={Delete02Icon} size={17} />
+          </span>
+          <span className="text-[#a89bc8] dark:text-[#b8a9e0]" aria-hidden>
+            <HugeiconsIcon icon={PencilEdit02Icon} size={17} />
+          </span>
+          <span className="text-[#a89bc8] dark:text-[#b8a9e0]" aria-hidden>
+            <HugeiconsIcon icon={EyeIcon} size={17} />
+          </span>
         </div>
         <p className="text-xs text-slate-400 dark:text-[#a4b1fa]">{getDepartmentLabel(ticket.department)}</p>
       </div>

@@ -2,7 +2,13 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import Badge from "@/components/table/badge";
-import { AlertTriangle, CheckCircle2, Clock3, Eye, Pencil, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete02Icon,
+  EyeIcon,
+  PencilEdit02Icon,
+} from "@hugeicons-pro/core-twotone-rounded";
 import type { SupportTicketListItem } from "@/api/types/ticket";
 import {
   TICKET_DEPARTMENTS,
@@ -100,15 +106,29 @@ const TicketRow = ({ ticket, rowIndex }: TicketRowProps) => {
         </Badge>
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2 text-slate-400 dark:text-[#8f9de8]">
-          <button type="button" aria-label="حذف التذكرة" className="text-red-500 dark:text-[#ff5a67]">
-            <Trash2 className="size-4" />
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            aria-label="حذف التذكرة"
+            className="text-[#ff6b7a] transition-opacity hover:opacity-80 dark:text-[#ff5a67]"
+          >
+            <HugeiconsIcon icon={Delete02Icon} size={18} />
           </button>
-          <button type="button" aria-label="تعديل التذكرة" onClick={() => navigate(`/tickets/${ticket.id}`)}>
-            <Pencil className="size-4" />
+          <button
+            type="button"
+            aria-label="تعديل التذكرة"
+            onClick={() => navigate(`/tickets/${ticket.id}`)}
+            className="text-[#a89bc8] transition-opacity hover:opacity-80 dark:text-[#b8a9e0]"
+          >
+            <HugeiconsIcon icon={PencilEdit02Icon} size={18} />
           </button>
-          <button type="button" aria-label="عرض التذكرة" onClick={() => navigate(`/tickets/${ticket.id}`)}>
-            <Eye className="size-4" />
+          <button
+            type="button"
+            aria-label="عرض التذكرة"
+            onClick={() => navigate(`/tickets/${ticket.id}`)}
+            className="text-[#a89bc8] transition-opacity hover:opacity-80 dark:text-[#b8a9e0]"
+          >
+            <HugeiconsIcon icon={EyeIcon} size={18} />
           </button>
         </div>
       </TableCell>

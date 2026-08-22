@@ -1,5 +1,4 @@
 import axiosInstance from "@/utils/AxiosInstance";
-import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 
 /** Auth phones are stored as digits (e.g. 9647701234560), not +964… */
 function toAuthPhone(phone: unknown): string {
@@ -187,32 +186,15 @@ export const authAPI = {
   },
 
   me: async (): Promise<any> => {
-    const tenantSubdomain = getTenantSubdomain();
-
-    const response = await fetch(
-      `${window.location.origin}/api/v1/store-user-auth/me`,
-      {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-        headers: {
-          Accept: "application/json",
-          "Cache-Control": "no-cache",
-          ...(tenantSubdomain
-            ? {
-                "x-tenant-subdomain": tenantSubdomain,
-                "domain-name": tenantSubdomain,
-              }
-            : {}),
-        },
+    // Uses axiosInstance baseURL (VITE_API_BASE_URL), e.g. http://localhost:3000/api/v1
+    // — do not hardcode window.location.origin (that always hits Vite :5173 + proxy).
+    const { data } = await axiosInstance.get<any>("/store-user-auth/me", {
+      headers: {
+        Accept: "application/json",
+        "Cache-Control": "no-cache",
       },
-    );
-
-    if (!response.ok) {
-      throw new Error(`ME request failed: ${response.status}`);
-    }
-
-    return response.json();
+    });
+    return data;
   },
 
   devMe: async (): Promise<any> => {

@@ -17,7 +17,7 @@ const EmployeesPage = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <TitleBar>
+            <TitleBar count={actions.employees?.length ?? 0}>
                 <Button
                     className="h-11 shrink-0 gap-2.5 rounded-full bg-[#00b7ff] px-5 text-white shadow-sm hover:bg-[#00a3e6]"
                     onClick={() => navigate("/employees/add")}

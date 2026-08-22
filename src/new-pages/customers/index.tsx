@@ -17,7 +17,13 @@ const CustomersPage = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <TitleBar description="تمتلك 46 حركة جديدة في قائمة العملاء" />
+      <TitleBar
+        count={
+          actions.stats?.newCustomers ??
+          actions.customers?.length ??
+          0
+        }
+      />
 
       <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">

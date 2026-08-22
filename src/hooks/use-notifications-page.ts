@@ -76,9 +76,17 @@ export function useNotificationsPage() {
     [rawNotifications, filters],
   );
 
-  const unreadCount =
-    me?.notificationsCount ??
-    rawNotifications.filter((n) => !isNotificationRead(n)).length;
+  const localUnreadCount = useMemo(
+    () => rawNotifications.filter((n) => !isNotificationRead(n)).length,
+    [rawNotifications],
+  );
+
+  // Prefer server badge count when available; fall back to loaded list.
+  const unreadCount = me?.notificationsCount ?? localUnreadCount;
+
+  // Mark-all only acts on loaded items — drive button state from the list,
+  // not a possibly-stale me.notificationsCount (avoids toast spam).
+  const canMarkAllAsRead = localUnreadCount > 0;
 
   const totalAvailable = notifications.length;
 
@@ -115,10 +123,7 @@ export function useNotificationsPage() {
 
   const markAllAsRead = useCallback(async () => {
     const unread = rawNotifications.filter((n) => !isNotificationRead(n));
-    if (!unread.length) {
-      toast.info("لا توجد إشعارات غير مقروءة");
-      return;
-    }
+    if (!unread.length) return;
 
     setIsMarkingAllRead(true);
     try {
@@ -136,6 +141,7 @@ export function useNotificationsPage() {
     notifications,
     totalAvailable,
     unreadCount,
+    canMarkAllAsRead,
     searchQuery,
     onSearchChange: setSearchQuery,
     filters,

@@ -28,17 +28,7 @@ const ProductsPage = () => {
     <div className="space-y-4 sm:space-y-6">
       {/* Desktop header */}
       <div className="hidden md:block">
-        <TitleBar
-          description={
-            <p>
-              تمتلك{" "}
-              <span className="font-semibold text-violet-500 dark:text-violet-300">
-                {actions.newProductsCount}
-              </span>{" "}
-              حركة جديدة في قائمة المنتجات
-            </p>
-          }
-        >
+        <TitleBar count={actions.newProductsCount}>
           <Button
             className="h-11 shrink-0 gap-2.5 rounded-full bg-violet-100 px-5 text-violet-700 shadow-sm hover:bg-violet-200 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20 dark:border dark:border-[#9a5cff]/15"
             onClick={() => navigate("/products/add")}
