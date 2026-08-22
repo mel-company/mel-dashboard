@@ -81,6 +81,7 @@ const CouponsContent = ({ actions }: CouponsContentProps) => {
                 key={coupon.id}
                 coupon={coupon}
                 onClick={() => navigate(`/coupons/${coupon.id}`)}
+                onToggleStatus={handleToggle}
               />
             ))}
           </div>
@@ -123,6 +124,7 @@ const CouponsContent = ({ actions }: CouponsContentProps) => {
                   key={coupon.id}
                   coupon={coupon}
                   onClick={() => navigate(`/coupons/${coupon.id}`)}
+                  onToggleStatus={handleToggle}
                 />
               ))}
             </div>

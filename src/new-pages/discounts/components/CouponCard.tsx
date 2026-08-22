@@ -1,63 +1,166 @@
-import type { ReactNode } from "react";
+import type { ReactNode, MouseEvent } from "react";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 import type { CouponListItem } from "@/api/types/coupon";
 import {
-  formatCouponUsage,
-  formatCouponValue,
+  getCouponBadgeValue,
+  getCouponCategoryCount,
+  getCouponProductCount,
+  getCouponStatusMeta,
+  getCouponTypeLabel,
+  getCouponUsageCount,
+  getCouponUsageProgress,
+  isCouponExpired,
 } from "../coupon-utils";
-import { formatTableDate, formatTableTime, shortText } from "../utils";
+import { formatTableDate, shortText } from "../utils";
 
 type CouponCardProps = {
   coupon: CouponListItem;
-  onClick: () => void;
+  onClick?: () => void;
+  onToggleStatus?: (coupon: CouponListItem) => void;
+  /** When set, replaces the default bottom meta row. Pass `null` to hide it. */
   footer?: ReactNode;
   className?: string;
+  /** Show status switch as display-only (e.g. delete preview). */
+  preview?: boolean;
 };
 
-const CouponCard = ({ coupon, onClick, footer, className }: CouponCardProps) => {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex h-full w-full flex-col gap-4 rounded-[20px] bg-white p-4 text-right dark:bg-[#0a0e27]",
-        className,
-      )}
-    >
-      <div className="flex items-center gap-3" dir="ltr">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-[#9a5cff]/10">
-          <span className="text-[11px] font-black text-amber-600 dark:text-[#b282ff]">
-            {formatCouponValue(coupon)}
+const CouponCard = ({
+  coupon,
+  onClick,
+  onToggleStatus,
+  footer,
+  className,
+  preview = false,
+}: CouponCardProps) => {
+  const status = getCouponStatusMeta(coupon);
+  const expired = isCouponExpired(coupon);
+  const usage = getCouponUsageCount(coupon);
+  const progress = getCouponUsageProgress(usage);
+  const products = getCouponProductCount(coupon);
+  const categories = getCouponCategoryCount(coupon);
+  const canToggle = !preview && !expired && !!onToggleStatus;
+
+  const handleToggleClick = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const content = (
+    <>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5">
+          <span className="rounded-lg bg-violet-100 px-2 py-1 text-[11px] font-bold text-violet-700 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]">
+            {getCouponBadgeValue(coupon)}
+          </span>
+          <span className="text-xs text-violet-600 dark:text-[#b282ff]">
+            {getCouponTypeLabel(coupon)}
           </span>
         </div>
-        <div className="min-w-0 flex-1 text-right" dir="rtl">
-          <h3 className="line-clamp-1 text-base font-bold text-slate-900 dark:text-[#e4e7fc]" dir="ltr">
+        <div onClick={handleToggleClick}>
+          {expired ? (
+            <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-[#ff5252]/15 dark:text-[#ff5252]">
+              منتهي
+            </span>
+          ) : (
+            <Switch
+              checked={status.switchChecked}
+              activeLabel="مُفعل"
+              disabledLabel="معطل"
+              disabled={!canToggle}
+              onToggle={canToggle ? () => onToggleStatus?.(coupon) : undefined}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-end gap-3">
+        <div className="min-w-0 flex-1 text-right">
+          <h3
+            className="line-clamp-1 text-[15px] font-bold text-slate-900 dark:text-[#f0f2ff]"
+            dir="ltr"
+          >
             {coupon.code}
           </h3>
-          <p className="mt-1 text-xs text-slate-400 dark:text-[#a4b1fa]">
-            استُخدم {formatCouponUsage(coupon)}
+          <p className="mt-1 line-clamp-2 text-xs leading-[17px] text-slate-400 dark:text-[#a4b1fa]">
+            {shortText(coupon.description, 90)}
+          </p>
+        </div>
+        <div className="shrink-0 space-y-1 text-right">
+          <p className="text-xs">
+            <span className="font-extrabold text-slate-900 dark:text-white">
+              {categories}{" "}
+            </span>
+            <span className="text-sky-600 dark:text-[#33c5ff]">فئة</span>
+          </p>
+          <p className="text-xs">
+            <span className="text-slate-800 dark:text-[#e4e7fc]">
+              {products}{" "}
+            </span>
+            <span className="text-sky-600 dark:text-[#33c5ff]">منتجاً</span>
           </p>
         </div>
       </div>
 
-      <p className="line-clamp-2 text-right text-[13px] leading-[19.5px] text-slate-400 dark:text-[#a4b1fa]">
-        {shortText(coupon.description, 120)}
-      </p>
+      <div className="h-px bg-slate-100 dark:bg-[#1f2448]" />
 
-      <div className="h-px bg-slate-100 dark:bg-[#1f2448]/40" />
-
-      {footer !== undefined ? footer : (
-        <div className="flex items-center justify-between gap-2" dir="ltr">
-          <p className="text-xs text-slate-400 dark:text-[#a4b1fa]" dir="rtl">
-            {formatTableDate(coupon.startsAt)} — {formatTableDate(coupon.expiresAt)}
-          </p>
-          <p className="text-xs font-light text-slate-400 dark:text-[#a4b1fa]">
-            {formatTableTime(coupon.expiresAt)}
-          </p>
+      {footer !== undefined ? (
+        footer
+      ) : (
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-right">
+            <p className="text-[10px] text-slate-400 dark:text-[#a4b1fa]">
+              مرات الاستخدام
+            </p>
+            <div className="mt-1 flex items-center justify-end gap-1">
+              <div className="h-1 w-8 overflow-hidden rounded-full bg-slate-200 dark:bg-[#12183b]">
+                <div
+                  className="ms-auto h-full rounded-full bg-emerald-500 dark:bg-[#00dfa8]"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-bold text-emerald-600 dark:text-[#00dfa8]">
+                {usage}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-[10px] text-slate-400 dark:text-[#a4b1fa]">
+                تاريخ البدء
+              </p>
+              <p className="mt-0.5 text-[11px] font-semibold text-slate-900 dark:text-white">
+                {formatTableDate(coupon.startsAt)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] text-slate-400 dark:text-[#a4b1fa]">
+                تاريخ النفاذ
+              </p>
+              <p className="mt-0.5 text-[11px] font-semibold text-slate-900 dark:text-white">
+                {formatTableDate(coupon.expiresAt)}
+              </p>
+            </div>
+          </div>
         </div>
       )}
-    </button>
+    </>
   );
+
+  const shellClass = cn(
+    "flex w-full flex-col gap-3 rounded-2xl bg-white p-4 text-right dark:bg-[#0a0e27]",
+    className,
+  );
+
+  if (onClick && !preview) {
+    return (
+      <button type="button" onClick={onClick} className={shellClass}>
+        {content}
+      </button>
+    );
+  }
+
+  return <div className={shellClass}>{content}</div>;
 };
 
 export default CouponCard;

@@ -91,6 +91,12 @@ export function getCouponUsageCount(coupon: CouponListItem): number {
   return coupon.usedCount ?? coupon._count?.redemptions ?? 0;
 }
 
+/** Soft visual fill for usage bars (design has no explicit max). */
+export function getCouponUsageProgress(usage: number, softMax = 100): number {
+  if (usage <= 0) return 0;
+  return Math.min(100, Math.round((usage / softMax) * 100));
+}
+
 export function formatCouponUsage(coupon: CouponListItem): string {
   const used = getCouponUsageCount(coupon);
   const limit = coupon.usageLimit;
@@ -100,9 +106,28 @@ export function formatCouponUsage(coupon: CouponListItem): string {
   return String(used);
 }
 
+export function getCouponProductCount(coupon: CouponListItem): number {
+  return coupon._count?.products ?? 0;
+}
+
+export function getCouponCategoryCount(coupon: CouponListItem): number {
+  return coupon._count?.categories ?? 0;
+}
+
+export function getCouponTypeLabel(coupon: CouponListItem): string {
+  return coupon.type === "FIXED" ? "مبلغ ثابت" : "نسبة مئوية";
+}
+
+export function getCouponBadgeValue(coupon: CouponListItem): string {
+  if (coupon.type === "FIXED") {
+    return coupon.value.toLocaleString("ar-IQ");
+  }
+  return `%${coupon.value}`;
+}
+
 export function getCouponScopeLabel(coupon: CouponListItem): string {
-  const products = coupon._count?.products ?? 0;
-  const categories = coupon._count?.categories ?? 0;
+  const products = getCouponProductCount(coupon);
+  const categories = getCouponCategoryCount(coupon);
   const applies = formatAppliesTo(coupon.appliesTo);
   if (products === 0 && categories === 0) return applies;
   return `${applies} • ${products} منتج • ${categories} فئة`;

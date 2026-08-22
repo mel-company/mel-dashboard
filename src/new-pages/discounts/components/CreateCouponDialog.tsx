@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { X, Loader2, Percent, Banknote } from "lucide-react";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Coupon02Icon } from "@hugeicons-pro/core-stroke-standard";
+import { Calendar, Loader2, Percent } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useCreateCoupon } from "@/api/wrappers/coupon.wrappers";
@@ -11,9 +9,8 @@ import {
   SettingsField,
   SettingsInput,
   SettingsTextarea,
+  settingsInputClassName,
 } from "@/new-pages/settings/components/SettingsField";
-
-type CouponType = "PERCENTAGE" | "FIXED";
 
 type CreateCouponDialogProps = {
   open: boolean;
@@ -21,10 +18,18 @@ type CreateCouponDialogProps = {
   onSuccess?: (id: string) => void;
 };
 
-const COUPON_TYPES: { value: CouponType; label: string; icon: typeof Percent }[] = [
-  { value: "PERCENTAGE", label: "نسبة مئوية", icon: Percent },
-  { value: "FIXED", label: "مبلغ ثابت", icon: Banknote },
-];
+const darkFieldClass =
+  "dark:border-0 dark:bg-[#0a0e27]/80 dark:text-[#e4e7fc] dark:placeholder:text-[#4a5596] dark:focus-visible:ring-[#00b7ff]/30";
+
+function getErrorMessage(err: unknown, fallback: string): string {
+  const message = (
+    err as { response?: { data?: { message?: string | string[] } } }
+  )?.response?.data?.message;
+
+  if (Array.isArray(message)) return message.join("، ");
+  if (typeof message === "string") return message;
+  return fallback;
+}
 
 const CreateCouponDialog = ({
   open,
@@ -33,31 +38,22 @@ const CreateCouponDialog = ({
 }: CreateCouponDialogProps) => {
   const [code, setCode] = useState("");
   const [description, setDescription] = useState("");
-  const [couponType, setCouponType] = useState<CouponType>("PERCENTAGE");
   const [value, setValue] = useState("");
-  const [maxDiscount, setMaxDiscount] = useState("");
+  const [minOrderTotal, setMinOrderTotal] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [isActive, setIsActive] = useState(true);
 
   const { mutate: createCoupon, isPending } = useCreateCoupon();
-  const isPercentage = couponType === "PERCENTAGE";
 
   const reset = () => {
     setCode("");
     setDescription("");
-    setCouponType("PERCENTAGE");
     setValue("");
-    setMaxDiscount("");
+    setMinOrderTotal("");
     setStartsAt("");
     setExpiresAt("");
     setIsActive(true);
-  };
-
-  const handleTypeChange = (type: CouponType) => {
-    setCouponType(type);
-    setValue("");
-    setMaxDiscount("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -67,20 +63,16 @@ const CreateCouponDialog = ({
     const numValue = Number.parseFloat(value);
 
     if (!trimmedCode || trimmedCode.length < 2) {
-      toast.error("يرجى إدخال عنوان كوبون صالح");
+      toast.error("يرجى إدخال رمز كوبون صالح");
       return;
     }
 
     if (!Number.isFinite(numValue) || numValue <= 0) {
-      toast.error(
-        isPercentage
-          ? "يرجى إدخال نسبة خصم صحيحة (1–100)"
-          : "يرجى إدخال مبلغ خصم صحيح",
-      );
+      toast.error("يرجى إدخال نسبة خصم صحيحة (1–100)");
       return;
     }
 
-    if (isPercentage && numValue > 100) {
+    if (numValue > 100) {
       toast.error("نسبة الخصم يجب أن تكون بين 1 و 100");
       return;
     }
@@ -93,17 +85,17 @@ const CreateCouponDialog = ({
     const payload: Record<string, unknown> = {
       code: trimmedCode,
       description: description.trim() || undefined,
-      type: couponType,
+      type: "PERCENTAGE",
       value: numValue,
       appliesTo: "ALL",
       isActive,
-      startsAt,
-      expiresAt,
+      startsAt: new Date(startsAt).toISOString(),
+      expiresAt: new Date(`${expiresAt}T23:59:59`).toISOString(),
     };
 
-    if (isPercentage && maxDiscount.trim()) {
-      const max = Number.parseFloat(maxDiscount);
-      if (Number.isFinite(max) && max > 0) payload.maxDiscount = max;
+    if (minOrderTotal.trim()) {
+      const min = Number.parseFloat(minOrderTotal);
+      if (Number.isFinite(min) && min > 0) payload.minOrderTotal = min;
     }
 
     createCoupon(payload as never, {
@@ -114,10 +106,7 @@ const CreateCouponDialog = ({
         onSuccess?.(data.id);
       },
       onError: (err: unknown) => {
-        const message = (err as { response?: { data?: { message?: string | string[] } } })
-          ?.response?.data?.message;
-        const msg = Array.isArray(message) ? message.join("، ") : message || "فشل في إنشاء الكوبون";
-        toast.error(msg);
+        toast.error(getErrorMessage(err, "فشل في إنشاء الكوبون"));
       },
     });
   };
@@ -130,34 +119,36 @@ const CreateCouponDialog = ({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-h-[92dvh] max-w-lg overflow-y-auto rounded-[2rem] border-0 p-0 dark:bg-[#12183b]" dir="rtl">
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="mb-5 flex items-start justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]"
-              aria-label="إغلاق"
-            >
-              <X className="size-5" />
-            </button>
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-blue-950 dark:text-[#e4e7fc]">إضافة كوبون جديد</h2>
-              <div className="flex size-11 items-center justify-center rounded-2xl bg-amber-100 dark:bg-[#9a5cff]/15">
-                <HugeiconsIcon icon={Coupon02Icon} size={24} className="text-amber-600 dark:text-[#b282ff]" />
-              </div>
+      <DialogContent
+        dir="rtl"
+        showCloseButton={false}
+        className="max-h-[92dvh] max-w-lg gap-0 overflow-y-auto rounded-[2rem] border-0 p-0 shadow-xl sm:max-w-[792px] dark:bg-[#12183b]"
+      >
+        <form onSubmit={handleSubmit} className="flex flex-col p-6 sm:p-6">
+          <div className="mb-6 flex items-start justify-end gap-3 border-b border-slate-100 pb-5 dark:border-[#1f2448]">
+            <div className="min-w-0 text-right">
+              <DialogTitle className="text-xl font-normal text-slate-900 dark:text-[#e4e7fc]">
+                اضافة كوبون جديد
+              </DialogTitle>
+              <p className="mt-0.5 text-sm text-slate-400 dark:text-[#a4b1fa]">
+                يرجى ادخال جميع الحقول لاتمام عملية الاضافة
+              </p>
+            </div>
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]">
+              <Percent className="size-5" strokeWidth={2.5} />
             </div>
           </div>
 
-          <div className="space-y-4">
-            <SettingsField label="عنوان الكوبون" htmlFor="couponCode">
+          <div className="space-y-6 [&_label]:dark:text-[#a4b1fa]">
+            <SettingsField label="رمز الكوبون" htmlFor="couponCode">
               <SettingsInput
                 id="couponCode"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="LIMITED25"
+                placeholder="اكتب رمز الكوبون"
                 dir="ltr"
                 disabled={isPending}
+                className={cn("h-12 rounded-[14px]", darkFieldClass)}
               />
             </SettingsField>
 
@@ -166,129 +157,132 @@ const CreateCouponDialog = ({
                 id="couponDesc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="اشرح تفاصيل الكوبون للعملاء..."
-                rows={3}
+                placeholder="اكتب وصف يوضح محتويات الكوبون"
+                rows={4}
                 disabled={isPending}
+                className={cn(
+                  "min-h-[136px] rounded-[14px] border-0 focus-visible:ring-0",
+                  darkFieldClass,
+                )}
               />
             </SettingsField>
 
-            <SettingsField label="نوع الكوبون">
-              <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-50 p-1.5">
-                {COUPON_TYPES.map(({ value: type, label, icon: Icon }) => {
-                  const selected = couponType === type;
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      disabled={isPending}
-                      onClick={() => handleTypeChange(type)}
-                      className={cn(
-                        "flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50",
-                        selected
-                          ? "bg-white text-sky-700 shadow-sm"
-                          : "text-slate-500 hover:text-slate-700",
-                      )}
-                    >
-                      <Icon className="size-4" />
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </SettingsField>
-
-            <div className={cn("grid gap-3", isPercentage ? "grid-cols-2" : "grid-cols-1")}>
-              <SettingsField
-                label={isPercentage ? "نسبة الخصم" : "مبلغ الخصم"}
-                htmlFor="couponValue"
-              >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+              <SettingsField label="نسبة الخصم" htmlFor="couponValue">
                 <div className="relative">
                   <SettingsInput
                     id="couponValue"
                     type="number"
                     min={1}
-                    max={isPercentage ? 100 : undefined}
+                    max={100}
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
-                    placeholder={isPercentage ? "25" : "10000"}
+                    placeholder="نسبة الخصم"
                     disabled={isPending}
-                    className="pe-12"
+                    className={cn("h-12 rounded-[14px] pl-12", darkFieldClass)}
                   />
-                  <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-sm text-slate-400">
-                    {isPercentage ? "%" : "د.ع"}
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400 dark:text-[#8e99f3]">
+                    %
                   </span>
                 </div>
               </SettingsField>
 
-              {isPercentage && (
-                <SettingsField label="الحد الأقصى لقيمة الخصم" htmlFor="couponMax">
+              <SettingsField label="الحد الأدنى للطلب" htmlFor="couponMinOrder">
+                <div className="relative">
                   <SettingsInput
-                    id="couponMax"
+                    id="couponMinOrder"
                     type="number"
                     min={0}
-                    value={maxDiscount}
-                    onChange={(e) => setMaxDiscount(e.target.value)}
-                    placeholder="50000"
+                    value={minOrderTotal}
+                    onChange={(e) => setMinOrderTotal(e.target.value)}
+                    placeholder="الحد الأدنى للطلب"
                     disabled={isPending}
+                    className={cn("h-12 rounded-[14px] pl-14", darkFieldClass)}
                   />
-                </SettingsField>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <SettingsField label="تاريخ البدء" htmlFor="couponStart">
-                <SettingsInput
-                  id="couponStart"
-                  type="datetime-local"
-                  value={startsAt}
-                  onChange={(e) => setStartsAt(e.target.value)}
-                  disabled={isPending}
-                />
-              </SettingsField>
-              <SettingsField label="تاريخ النفاذ" htmlFor="couponEnd">
-                <SettingsInput
-                  id="couponEnd"
-                  type="datetime-local"
-                  value={expiresAt}
-                  onChange={(e) => setExpiresAt(e.target.value)}
-                  disabled={isPending}
-                />
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400 dark:text-[#8e99f3]">
+                    د.ع
+                  </span>
+                </div>
               </SettingsField>
             </div>
 
-            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-              <span className="text-sm font-medium text-slate-700">حالة الكوبون</span>
-              <Switch
-                checked={isActive}
-                activeLabel="نشط"
-                disabledLabel="معطل"
-                onToggle={setIsActive}
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+              <SettingsField label="تاريخ البدء والنفاذ">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <Calendar className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400 dark:text-[#e4e7fc]/30" />
+                    <input
+                      id="couponStart"
+                      type="date"
+                      value={startsAt}
+                      onChange={(e) => setStartsAt(e.target.value)}
+                      disabled={isPending}
+                      aria-label="تاريخ البدء"
+                      className={cn(
+                        settingsInputClassName,
+                        "h-12 w-full rounded-[14px] pl-10 text-right",
+                        darkFieldClass,
+                      )}
+                    />
+                  </div>
+                  <div className="relative">
+                    <Calendar className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400 dark:text-[#e4e7fc]/30" />
+                    <input
+                      id="couponEnd"
+                      type="date"
+                      value={expiresAt}
+                      onChange={(e) => setExpiresAt(e.target.value)}
+                      disabled={isPending}
+                      aria-label="تاريخ النفاذ"
+                      className={cn(
+                        settingsInputClassName,
+                        "h-12 w-full rounded-[14px] pl-10 text-right",
+                        darkFieldClass,
+                      )}
+                    />
+                  </div>
+                </div>
+              </SettingsField>
+
+              <div className="flex flex-col gap-3">
+                <span className="text-sm font-medium text-slate-500 dark:text-[#a4b1fa]">
+                  حالة الكوبون
+                </span>
+                <div className="flex h-12 items-center">
+                  <Switch
+                    checked={isActive}
+                    onToggle={setIsActive}
+                    disabled={isPending}
+                    activeLabel="مُفعل"
+                    disabledLabel="معطل"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="mt-6 flex gap-3">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              disabled={isPending}
-              className="h-12 flex-1 rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50 dark:bg-transparent dark:text-[#4a5596] dark:hover:text-[#e4e7fc]"
-            >
-              إلغاء
-            </button>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row-reverse sm:items-center sm:justify-between">
             <button
               type="submit"
               disabled={isPending}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-sm font-semibold text-white disabled:opacity-50"
+              className="flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-lg font-bold text-white disabled:opacity-50 sm:w-[233px]"
             >
               {isPending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  جاري الإضافة...
+                  جاري الحفظ...
                 </>
               ) : (
-                "إضافة"
+                "أضافة الكوبون"
               )}
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+              className="flex h-[60px] w-full items-center justify-center rounded-2xl text-lg font-bold text-slate-400 hover:text-slate-600 disabled:opacity-50 sm:w-[166px] dark:bg-transparent dark:text-[#4a5596] dark:hover:text-[#e4e7fc]"
+            >
+              الغاء
             </button>
           </div>
         </form>

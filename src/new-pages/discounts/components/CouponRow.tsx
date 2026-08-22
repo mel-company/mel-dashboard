@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 import ActionBtnList from "@/components/table/action-btn-list";
 import type { CouponListItem } from "@/api/types/coupon";
 import {
-  formatCouponUsage,
   formatCouponValue,
   getCouponStatusMeta,
+  getCouponUsageCount,
+  getCouponUsageProgress,
   isCouponExpired,
 } from "../coupon-utils";
 import { formatTableDate, formatTableTime, shortText } from "../utils";
@@ -29,10 +30,12 @@ const CouponRow = ({
   const tdClass = "whitespace-normal px-3.5 py-3.5 text-right align-middle";
   const status = getCouponStatusMeta(coupon);
   const expired = isCouponExpired(coupon);
+  const usage = getCouponUsageCount(coupon);
+  const progress = getCouponUsageProgress(usage);
 
   return (
     <TableRow
-      className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-[#12183b] dark:hover:bg-white/[0.03]"
+      className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-[#12183b] dark:hover:bg-white/3"
       onClick={onView}
     >
       <TableCell className={tdClass}>
@@ -44,7 +47,10 @@ const CouponRow = ({
         </p>
       </TableCell>
       <TableCell
-        className={cn(tdClass, "font-bold tabular-nums text-amber-600 dark:text-[#b282ff]")}
+        className={cn(
+          tdClass,
+          "font-bold tabular-nums text-violet-600 dark:text-[#b282ff]",
+        )}
       >
         {formatCouponValue(coupon)}
       </TableCell>
@@ -64,10 +70,18 @@ const CouponRow = ({
           {formatTableTime(coupon.expiresAt)}
         </p>
       </TableCell>
-      <TableCell
-        className={cn(tdClass, "font-semibold tabular-nums text-slate-900 dark:text-[#f0f2ff]")}
-      >
-        {formatCouponUsage(coupon)}
+      <TableCell className={tdClass}>
+        <div className="flex flex-col items-end gap-1.5">
+          <span className="font-semibold tabular-nums text-slate-900 dark:text-[#00dfa8]">
+            {usage}
+          </span>
+          <div className="h-1 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-[#12183b]">
+            <div
+              className="h-full rounded-full bg-emerald-500 dark:bg-[#00dfa8]"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
         {expired ? (
@@ -84,7 +98,7 @@ const CouponRow = ({
         )}
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
-        <ActionBtnList onEdit={onEdit} onDelete={onDelete} />
+        <ActionBtnList onView={onView} onEdit={onEdit} onDelete={onDelete} />
       </TableCell>
     </TableRow>
   );
