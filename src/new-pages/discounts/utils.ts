@@ -99,14 +99,24 @@ export function shortText(text: string | null | undefined, max = 70) {
   return `${clean.slice(0, max)}…`;
 }
 
+export function getDiscountProductCount(discount: DiscountListItem): number {
+  return (
+    discount._count?.products ?? discount.discount_products?.length ?? 0
+  );
+}
+
+export function getDiscountCategoryCount(discount: DiscountListItem): number {
+  return (
+    discount._count?.categories ?? discount.discount_categories?.length ?? 0
+  );
+}
+
 export function getDiscountScope(discount: DiscountListItem): string {
-  const products =
-    discount._count?.products ?? discount.discount_products?.length ?? 0;
-  const categories =
-    discount._count?.categories ?? discount.discount_categories?.length ?? 0;
+  const products = getDiscountProductCount(discount);
+  const categories = getDiscountCategoryCount(discount);
 
   if (products === 0 && categories === 0) return "غير مخصص بعد";
-  return `${products} منتجاً • ${categories} فئة`;
+  return `${categories} فئة / ${products} منتجاً`;
 }
 
 export function getDiscountUsageCount(discount: DiscountListItem): number {
@@ -116,6 +126,12 @@ export function getDiscountUsageCount(discount: DiscountListItem): number {
     discount._count?.orders ??
     0
   );
+}
+
+/** Soft visual fill for usage bars (design has no explicit max). */
+export function getDiscountUsageProgress(usage: number, softMax = 100): number {
+  if (usage <= 0) return 0;
+  return Math.min(100, Math.round((usage / softMax) * 100));
 }
 
 export function formatPrice(value: number): string {

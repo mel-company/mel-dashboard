@@ -47,14 +47,14 @@ const DeleteDiscountDialog = ({
     if (!discount?.id) return;
     disableDiscount(discount.id, {
       onSuccess: () => {
-        toast.success("تم إخفاء الخصم — لن يظهر للعملاء");
+        toast.success("تم تعطيل الخصم — لن يظهر للعملاء");
         onOpenChange(false);
         onSuccess?.();
       },
       onError: (err: unknown) => {
         const msg =
           (err as { response?: { data?: { message?: string } } })?.response?.data
-            ?.message || "فشل في إخفاء الخصم";
+            ?.message || "فشل في تعطيل الخصم";
         toast.error(msg);
       },
     });
@@ -69,7 +69,7 @@ const DeleteDiscountDialog = ({
       >
         <div className="flex items-center justify-between">
           <DialogTitle className="text-xl font-bold text-[#ff5252] sm:text-2xl">
-            حذف الخصم
+            حذف خصم
           </DialogTitle>
           <button
             type="button"
@@ -86,8 +86,7 @@ const DeleteDiscountDialog = ({
           {discount ? (
             <DiscountCard
               discount={discount}
-              onClick={() => undefined}
-              footer={null}
+              preview
               className="w-full max-w-[310px] border border-slate-100 shadow-sm dark:border-transparent"
             />
           ) : null}
@@ -95,11 +94,11 @@ const DeleteDiscountDialog = ({
 
         <div className="space-y-3 text-center sm:space-y-4">
           <p className="text-lg font-bold text-slate-800 dark:text-[#e4e7fc] sm:text-[28px] sm:leading-8">
-            هل انت متأكد من حذف الخصم
+            هل انت متأكد من حذف خصم
           </p>
           <p className="mx-auto max-w-[34rem] text-xs leading-6 text-slate-400 dark:text-[#a4b1fa] sm:text-lg sm:leading-8">
-            سوف تقوم بحذف الخصم من النظام ولن تستطيع إعادته مرة أخرى، يمكنك إخفاء
-            الخصم من خيار الإخفاء ولن يظهر للعملاء
+            سوف تقوم بحذف الخصم من النظام ولن تستطيع إعادته مرة أخرى، يمكنك تعطيل
+            أو إخفاء الخصم ولن يظهر للعملاء
           </p>
         </div>
 
@@ -113,10 +112,10 @@ const DeleteDiscountDialog = ({
             {isHiding ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                جاري الإخفاء...
+                جاري التعطيل...
               </>
             ) : (
-              "أخفاء الخصم"
+              "تعطيل الخصم"
             )}
           </Button>
           <button

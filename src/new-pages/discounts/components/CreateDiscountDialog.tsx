@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Calendar, Loader2, Package, Plus, Upload, X } from "lucide-react";
+import { Calendar, Loader2, Percent, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
@@ -20,6 +20,9 @@ type CreateDiscountDialogProps = {
   onOpenChange: (open: boolean) => void;
   onSuccess?: (id: string) => void;
 };
+
+const darkFieldClass =
+  "dark:border-0 dark:bg-[#0a0e27]/80 dark:text-[#e4e7fc] dark:placeholder:text-[#4a5596] dark:focus-visible:ring-[#00b7ff]/30";
 
 function resolveStoreId(
   storeDetails?: { id?: string; storeId?: string } | null,
@@ -123,7 +126,7 @@ const CreateDiscountDialog = ({
       return;
     }
     if (!trimmedName) {
-      toast.error("يرجى إدخال عنوان الخيار");
+      toast.error("يرجى إدخال رمز الخصم");
       return;
     }
     if (!trimmedDesc) {
@@ -188,41 +191,32 @@ const CreateDiscountDialog = ({
       <DialogContent
         dir="rtl"
         showCloseButton={false}
-        className="max-h-[92dvh] max-w-lg gap-0 overflow-y-auto rounded-[2rem] border-0 p-0 shadow-xl dark:bg-[#12183b]"
+        className="max-h-[92dvh] max-w-lg gap-0 overflow-y-auto rounded-[2rem] border-0 p-0 shadow-xl sm:max-w-[792px] dark:bg-[#12183b]"
       >
-        <form onSubmit={handleSubmit} className="p-6">
-          {/* Header */}
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              disabled={isPending}
-              className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-[#1a2b5a] hover:bg-violet-200 disabled:opacity-50 dark:bg-[#9a5cff]/15 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/25"
-              aria-label="إغلاق"
-            >
-              <X className="size-4" />
-            </button>
-            <div className="flex items-center gap-2.5">
-              <DialogTitle className="text-lg font-bold text-[#1a2b5a] dark:text-[#e4e7fc]">
-                أضافة خصم جديد
+        <form onSubmit={handleSubmit} className="flex flex-col p-6 sm:p-6">
+          <div className="mb-6 flex items-start justify-end gap-3 border-b border-slate-100 pb-5 dark:border-[#1f2448]">
+            <div className="min-w-0 text-right">
+              <DialogTitle className="text-xl font-normal text-slate-900 dark:text-[#e4e7fc]">
+                اضافة خصم جديد
               </DialogTitle>
-              <div className="relative flex size-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]">
-                <Package className="size-5" strokeWidth={2} />
-                <span className="absolute -bottom-0.5 -left-0.5 flex size-4 items-center justify-center rounded-full bg-[#00b7ff] text-white">
-                  <Plus className="size-2.5" strokeWidth={3} />
-                </span>
-              </div>
+              <p className="mt-0.5 text-sm text-slate-400 dark:text-[#a4b1fa]">
+                يرجى ادخال جميع الحقول لاتمام عملية الاضافة
+              </p>
+            </div>
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]">
+              <Percent className="size-5" strokeWidth={2.5} />
             </div>
           </div>
 
-          <div className="space-y-4">
-            <SettingsField label="عنوان الخيار" htmlFor="discountName">
+          <div className="space-y-6 [&_label]:dark:text-[#a4b1fa]">
+            <SettingsField label="رمز الخصم" htmlFor="discountName">
               <SettingsInput
                 id="discountName"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="خصم نهاية السنة 75%"
+                placeholder="اكتب رمز الخصم"
                 disabled={isPending}
+                className={cn("h-12 rounded-[14px]", darkFieldClass)}
               />
             </SettingsField>
 
@@ -231,106 +225,49 @@ const CreateDiscountDialog = ({
                 id="discountDesc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="ودع السنة بقطعة جديدة وتوفير أكيد. خصوماتنا بدأت الآن!"
-                rows={3}
+                placeholder="اكتب وصف يوضح محتويات الفئة"
+                rows={4}
                 disabled={isPending}
-                className="min-h-[88px] border border-transparent focus-visible:border-[#00b7ff] focus-visible:ring-0"
+                className={cn(
+                  "min-h-[136px] rounded-[14px] border-0 focus-visible:ring-0",
+                  darkFieldClass,
+                )}
               />
             </SettingsField>
 
-            <SettingsField label="نسبة الخصم" htmlFor="discountPct">
-              <div className="relative">
-                <SettingsInput
-                  id="discountPct"
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={percentage}
-                  onChange={(e) => setPercentage(e.target.value)}
-                  placeholder="75"
-                  disabled={isPending}
-                  className="pl-10"
-                />
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">
-                  %
-                </span>
-              </div>
-            </SettingsField>
-
-            {/* حالة الخصم — يمين العنوان / يسار التبديل */}
-            <div className="flex items-center justify-between gap-3 py-1">
-              <span className="text-sm font-medium text-slate-500">
-                حالة الخصم
-              </span>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={isActive}
-                  onToggle={setIsActive}
-                  disabled={isPending}
-                />
-                <span
-                  className={cn(
-                    "text-sm font-semibold",
-                    isActive ? "text-teal-600" : "text-slate-400",
-                  )}
-                >
-                  {isActive ? "نشطة" : "معطلة"}
-                </span>
-              </div>
-            </div>
-
-            {/* التواريخ */}
-            <div className="grid grid-cols-2 gap-3">
-              <SettingsField label="تاريخ البدأ" htmlFor="discountStart">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+              <SettingsField label="نسبة الخصم" htmlFor="discountPct">
                 <div className="relative">
-                  <Calendar className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    id="discountStart"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                  <SettingsInput
+                    id="discountPct"
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={percentage}
+                    onChange={(e) => setPercentage(e.target.value)}
+                    placeholder="نسبة الخصم"
                     disabled={isPending}
-                    className={cn(
-                      settingsInputClassName,
-                      "w-full pl-10 text-right",
-                    )}
+                    className={cn("h-12 rounded-[14px] pl-12", darkFieldClass)}
                   />
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400 dark:text-[#8e99f3]">
+                    %
+                  </span>
                 </div>
               </SettingsField>
-              <SettingsField label="تاريخ النفاذ" htmlFor="discountEnd">
-                <div className="relative">
-                  <Calendar className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    id="discountEnd"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    disabled={isPending}
-                    placeholder="ادخل تاريخ نفاذ الخصم"
-                    className={cn(
-                      settingsInputClassName,
-                      "w-full pl-10 text-right",
-                    )}
-                  />
-                </div>
-              </SettingsField>
-            </div>
 
-            {/* صورة — مطلوبة للـ API وغير ظاهرة في الموكب بشكل بارز */}
-            <SettingsField label="صورة الخصم" htmlFor="discountImage">
-              <div className="flex items-center gap-3">
-                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt="معاينة"
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <Upload className="size-5 text-slate-300" />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-wrap gap-2">
+              <SettingsField label="صورة الخصم" htmlFor="discountImage">
+                <div className="flex h-12 items-center gap-2">
+                  <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-slate-100 dark:bg-[#0a0e27]/80">
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt="معاينة"
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <Upload className="size-4 text-slate-300 dark:text-[#4a5596]" />
+                    )}
+                  </div>
                   <input
                     ref={fileInputRef}
                     id="discountImage"
@@ -344,39 +281,84 @@ const CreateDiscountDialog = ({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isPending}
-                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-100 px-3 text-sm font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                    className="inline-flex h-12 flex-1 items-center justify-center rounded-[14px] bg-slate-100 px-3 text-sm font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50 dark:bg-[#0a0e27]/80 dark:text-[#a4b1fa] dark:hover:bg-[#0a0e27]"
                   >
                     {imageFile ? "تغيير الصورة" : "اختر صورة"}
                   </button>
-                  {imageFile && (
+                  {imageFile ? (
                     <button
                       type="button"
                       onClick={handleRemoveImage}
                       disabled={isPending}
-                      className="inline-flex h-10 items-center rounded-xl bg-rose-50 px-3 text-sm font-medium text-rose-600 hover:bg-rose-100 disabled:opacity-50"
+                      className="inline-flex h-12 items-center rounded-[14px] bg-rose-50 px-3 text-sm font-medium text-rose-600 hover:bg-rose-100 disabled:opacity-50 dark:bg-[#ff5252]/10 dark:text-[#ff5252]"
                     >
                       إزالة
                     </button>
-                  )}
+                  ) : null}
+                </div>
+              </SettingsField>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+              <SettingsField label="تاريخ البدء والنفاذ">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <Calendar className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400 dark:text-[#e4e7fc]/30" />
+                    <input
+                      id="discountStart"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      disabled={isPending}
+                      aria-label="تاريخ البدء"
+                      className={cn(
+                        settingsInputClassName,
+                        "h-12 w-full rounded-[14px] pl-10 text-right",
+                        darkFieldClass,
+                      )}
+                    />
+                  </div>
+                  <div className="relative">
+                    <Calendar className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400 dark:text-[#e4e7fc]/30" />
+                    <input
+                      id="discountEnd"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      disabled={isPending}
+                      aria-label="تاريخ النفاذ"
+                      className={cn(
+                        settingsInputClassName,
+                        "h-12 w-full rounded-[14px] pl-10 text-right",
+                        darkFieldClass,
+                      )}
+                    />
+                  </div>
+                </div>
+              </SettingsField>
+
+              <div className="flex flex-col gap-3">
+                <span className="text-sm font-medium text-slate-500 dark:text-[#a4b1fa]">
+                  حالة الخصم
+                </span>
+                <div className="flex h-12 items-center">
+                  <Switch
+                    checked={isActive}
+                    onToggle={setIsActive}
+                    disabled={isPending}
+                    activeLabel="مُفعل"
+                    disabledLabel="معطل"
+                  />
                 </div>
               </div>
-            </SettingsField>
+            </div>
           </div>
 
-          {/* Actions — يمين إلغاء / يسار حفظ */}
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              disabled={isPending}
-              className="h-12 rounded-2xl bg-slate-100 text-sm font-semibold text-[#1a2b5a] hover:bg-slate-200 disabled:opacity-50 dark:bg-transparent dark:text-[#4a5596] dark:hover:text-[#e4e7fc]"
-            >
-              الغاء
-            </button>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row-reverse sm:items-center sm:justify-between">
             <button
               type="submit"
               disabled={isPending}
-              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-sm font-semibold text-white disabled:opacity-50"
+              className="flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-lg font-bold text-white disabled:opacity-50 sm:w-[233px]"
             >
               {isPending ? (
                 <>
@@ -384,8 +366,16 @@ const CreateDiscountDialog = ({
                   جاري الحفظ...
                 </>
               ) : (
-                "حفظ"
+                "أضافة الخصم"
               )}
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+              className="flex h-[60px] w-full items-center justify-center rounded-2xl text-lg font-bold text-slate-400 hover:text-slate-600 disabled:opacity-50 sm:w-[166px] dark:bg-transparent dark:text-[#4a5596] dark:hover:text-[#e4e7fc]"
+            >
+              الغاء
             </button>
           </div>
         </form>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 
@@ -25,13 +25,18 @@ import { markAuthSession } from "@/utils/auth-session";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 
+type OtpLocationState = {
+  v_code?: string;
+};
+
 const OTP = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const phone = searchParams.get("phone") ?? "";
   const storeParam = searchParams.get("store") ?? "";
-  const v_code = searchParams.get("code") ?? "";
+  const locationCode = (location.state as OtpLocationState | null)?.v_code ?? "";
 
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -59,6 +64,19 @@ const OTP = () => {
       .replace(/\d/g, "•")}${tail}`;
   }, [phone]);
 
+  // Strip legacy ?code= from the address bar if present
+  useEffect(() => {
+    if (!searchParams.has("code")) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("code");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [searchParams, setSearchParams]);
+
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setInterval(() => setCooldown((v) => Math.max(0, v - 1)), 1000);
@@ -66,10 +84,10 @@ const OTP = () => {
   }, [cooldown]);
 
   useEffect(() => {
-    if ((tenantSubdomain === "fashion" || isAzyaaHost) && v_code) {
-      setCode(v_code.toString());
+    if ((tenantSubdomain === "fashion" || isAzyaaHost) && locationCode) {
+      setCode(locationCode.toString());
     }
-  }, [tenantSubdomain, isAzyaaHost, v_code]);
+  }, [tenantSubdomain, isAzyaaHost, locationCode]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,17 +174,8 @@ const OTP = () => {
         onSuccess: (data) => {
           setCooldown(30);
           toast.success("تمت إعادة إرسال رمز التحقق");
-          if ((v_code || isAzyaaHost) && data?.codeOnlyOnDev != null) {
-            const newCode = String(data.codeOnlyOnDev);
-            setCode(newCode);
-            setSearchParams(
-              (prev) => {
-                const next = new URLSearchParams(prev);
-                next.set("code", newCode);
-                return next;
-              },
-              { replace: true },
-            );
+          if ((locationCode || isAzyaaHost) && data?.codeOnlyOnDev != null) {
+            setCode(String(data.codeOnlyOnDev));
           }
         },
         onError: () => {

@@ -10,6 +10,7 @@ import {
   getDiscountScope,
   getDiscountStatusMeta,
   getDiscountUsageCount,
+  getDiscountUsageProgress,
   shortText,
 } from "../utils";
 
@@ -31,10 +32,12 @@ const DiscountRow = ({
   const tdClass = "whitespace-normal px-3.5 py-3.5 text-right align-middle";
   const status = getDiscountStatusMeta(discount.discount_status);
   const isExpired = discount.discount_status === DISCOUNT_STATUS.EXPIRED;
+  const usage = getDiscountUsageCount(discount);
+  const progress = getDiscountUsageProgress(usage);
 
   return (
     <TableRow
-      className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-[#12183b] dark:hover:bg-white/[0.03]"
+      className="cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-[#12183b] dark:hover:bg-white/3"
       onClick={onView}
     >
       <TableCell className={tdClass}>
@@ -69,10 +72,18 @@ const DiscountRow = ({
           {formatTableTime(discount.discount_end_date)}
         </p>
       </TableCell>
-      <TableCell
-        className={cn(tdClass, "font-semibold tabular-nums text-slate-900 dark:text-[#f0f2ff]")}
-      >
-        {getDiscountUsageCount(discount)}
+      <TableCell className={tdClass}>
+        <div className="flex flex-col items-end gap-1.5">
+          <span className="font-semibold tabular-nums text-slate-900 dark:text-[#00dfa8]">
+            {usage}
+          </span>
+          <div className="h-1 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-[#12183b]">
+            <div
+              className="h-full rounded-full bg-emerald-500 dark:bg-[#00dfa8]"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
         {isExpired ? (
@@ -89,7 +100,7 @@ const DiscountRow = ({
         )}
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
-        <ActionBtnList onEdit={onEdit} onDelete={onDelete} />
+        <ActionBtnList onView={onView} onEdit={onEdit} onDelete={onDelete} />
       </TableCell>
     </TableRow>
   );

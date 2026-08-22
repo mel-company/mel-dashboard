@@ -247,47 +247,13 @@ const StoreLogin = () => {
         {
           onSuccess: (data) => {
             const storeParam = storeDomain || selectedStore?.domain || "";
-            let url = `/otp?phone=${encodeURIComponent(normalized)}&store=${encodeURIComponent(storeParam)}`;
-            if (data?.codeOnlyOnDev) {
-              url += `&code=${data.codeOnlyOnDev}`;
-            }
+            const url = `/otp?phone=${encodeURIComponent(normalized)}&store=${encodeURIComponent(storeParam)}`;
 
-            navigate(url);
-            // navigate(
-            //   `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //     selectedStore.domain
-            //   }`,
-            //   {
-            //     state: {
-            //       v_code:
-            //         subdomain === "azyaa" ? data?.codeOnlyOnDev : undefined,
-            //     },
-            //   }
-            // );
-
-            // let url =
-            //   subdomain === "azyaa"
-            //     ? `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //         parsed.subdomain === "azyaa" ? "azyaa" : null
-            //       }&code=${data?.codeOnlyOnDev}`
-            //     : `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //         parsed.subdomain === "azyaa" ? "azyaa" : null
-            //       }`;
-
-            // navigate(url);
-
-            // OLD
-            // navigate(
-            //   `/otp?phone=${encodeURIComponent(normalized)}&store=${
-            //     selectedStore.domain
-            //   }`,
-            //   {
-            //     state: {
-            //       v_code:
-            //         subdomain === "azyaa" ? data?.codeOnlyOnDev : undefined,
-            //     },
-            //   }
-            // );
+            navigate(url, {
+              state: data?.codeOnlyOnDev
+                ? { v_code: String(data.codeOnlyOnDev) }
+                : undefined,
+            });
           },
           onError: (error: any) => {
             toast.error(

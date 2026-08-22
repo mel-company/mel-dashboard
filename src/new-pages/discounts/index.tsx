@@ -46,14 +46,14 @@ const DiscountsPage = () => {
         >
           <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Button
-              className="h-11 w-full shrink-0 gap-2 rounded-full bg-violet-100 px-4 text-violet-700 shadow-sm hover:bg-violet-200 sm:w-auto sm:gap-2.5 sm:px-5 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20"
+              className="h-12 w-full shrink-0 gap-2 rounded-[14px] bg-violet-100 px-4 text-violet-700 shadow-sm hover:bg-violet-200 sm:w-auto sm:gap-2.5 sm:px-5 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20"
               onClick={() => actions.setIsCreateDialogOpen(true)}
             >
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-500/15 dark:bg-[#b282ff]/20">
-                <Plus className="size-4" strokeWidth={2.5} />
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-violet-500/15 dark:bg-[#b282ff]/20">
+                <Plus className="size-3.5" strokeWidth={2.5} />
               </span>
               <span className="truncate">
-                {isDiscountsTab ? "إنشاء خصم جديد" : "إنشاء كوبون جديد"}
+                {isDiscountsTab ? "أضافة خصم جديد" : "أضافة كوبون جديد"}
               </span>
             </Button>
             <SwitchTab
@@ -74,13 +74,13 @@ const DiscountsPage = () => {
           options={tabOptions}
         />
         <Button
-          className="h-12 w-full gap-2 rounded-full bg-violet-100 text-violet-700 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff]"
+          className="h-12 w-full gap-2 rounded-[14px] bg-violet-100 text-violet-700 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff]"
           onClick={() => actions.setIsCreateDialogOpen(true)}
         >
-          <span className="flex size-7 items-center justify-center rounded-full bg-violet-500/15 dark:bg-[#b282ff]/20">
-            <Plus className="size-4" strokeWidth={2.5} />
+          <span className="flex size-6 items-center justify-center rounded-full bg-violet-500/15 dark:bg-[#b282ff]/20">
+            <Plus className="size-3.5" strokeWidth={2.5} />
           </span>
-          {isDiscountsTab ? "إنشاء خصم جديد" : "إنشاء كوبون جديد"}
+          {isDiscountsTab ? "أضافة خصم جديد" : "أضافة كوبون جديد"}
         </Button>
       </div>
 

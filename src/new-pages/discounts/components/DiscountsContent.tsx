@@ -107,6 +107,7 @@ const DiscountsContent = ({ actions, onCreateClick }: DiscountsContentProps) => 
                 key={discount.id}
                 discount={discount}
                 onClick={() => navigate(`/discounts/${discount.id}`)}
+                onToggleStatus={handleToggleStatus}
               />
             ))}
           </div>
@@ -149,6 +150,7 @@ const DiscountsContent = ({ actions, onCreateClick }: DiscountsContentProps) => 
                   key={discount.id}
                   discount={discount}
                   onClick={() => navigate(`/discounts/${discount.id}`)}
+                  onToggleStatus={handleToggleStatus}
                 />
               ))}
             </div>
