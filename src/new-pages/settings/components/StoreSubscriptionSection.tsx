@@ -7,7 +7,6 @@ import {
   useRenewSubscription,
 } from "@/api/wrappers/subscription.wrapper";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +14,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CheckCircle2, Loader2, Package, Rocket } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  Layers,
+  Loader2,
+  Package,
+  Rocket,
+} from "lucide-react";
 import SettingsCard from "./SettingsCard";
+import { cn } from "@/lib/utils";
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("ar-IQ", {
@@ -33,7 +40,16 @@ const formatDate = (dateString: string | undefined) => {
   });
 };
 
-const FEATURES_PREVIEW_COUNT = 3;
+const FEATURES_PREVIEW_COUNT = 6;
+
+const FALLBACK_FEATURES = [
+  "منتجات غير محدودة",
+  "لوحة تحليلات متقدمة",
+  "دعم ذو أولوية",
+  "تخصيص شامل",
+  "تقارير مفصلة",
+  "إمكانية الوصول عبر الأجهزة",
+];
 
 const StoreSubscriptionSection = () => {
   const navigate = useNavigate();
@@ -86,7 +102,7 @@ const StoreSubscriptionSection = () => {
 
   if (isLoading) {
     return (
-      <SettingsCard title="الاشتراك">
+      <SettingsCard title="معلومات الاشتراك">
         <div className="flex h-40 items-center justify-center">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
@@ -96,11 +112,14 @@ const StoreSubscriptionSection = () => {
 
   if (!subscription) {
     return (
-      <SettingsCard title="الاشتراك">
+      <SettingsCard title="معلومات الاشتراك">
         <div className="flex flex-col items-center py-10 text-center">
           <Package className="mb-3 size-12 text-muted-foreground" />
           <p className="text-muted-foreground">لا يوجد اشتراك نشط لهذا المتجر.</p>
-          <Button className="mt-4 rounded-full" onClick={() => navigate("/plans")}>
+          <Button
+            className="mt-4 rounded-full"
+            onClick={() => navigate("/plans")}
+          >
             عرض جميع الباقات
           </Button>
         </div>
@@ -115,122 +134,157 @@ const StoreSubscriptionSection = () => {
   const price = plan?.monthly_price ?? plan?.yearly_price ?? 0;
   const features = plan?.features ?? [];
   const previewFeatures = features.slice(0, FEATURES_PREVIEW_COUNT);
-  const remainingFeatures = Math.max(0, features.length - FEATURES_PREVIEW_COUNT);
+  const remainingFeatures = Math.max(
+    0,
+    features.length - FEATURES_PREVIEW_COUNT,
+  );
+  const remainingDays = Number(subscription.remainingDays ?? 0);
+  const progressPercent = Math.min(100, Math.max(8, (remainingDays / 365) * 100));
+  const featureLabels =
+    previewFeatures.length > 0
+      ? previewFeatures.map(
+          (feature: { feature?: { name?: string } }) =>
+            feature.feature?.name ?? "—",
+        )
+      : FALLBACK_FEATURES;
 
   return (
     <>
-      <SettingsCard title="الاشتراك">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* يمين: السعر والأزرار */}
-          <div className="space-y-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="space-y-1 text-right">
-                <p className="text-2xl font-bold text-blue-950">
-                  {formatCurrency(price)}
-                </p>
-                <p className="text-sm text-slate-500">
-                  تجديد في {formatDate(subscription.end_at)}
+      <SettingsCard title="معلومات الاشتراك">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[300px_1fr]">
+          <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-900">
+            <div className="flex h-full flex-col gap-3 rounded-[18px] px-5 py-[18px]">
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-500">
+                  {features.length || featureLabels.length}
+                </span>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
+                  المميزات الفعّالة
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge
-                  variant="secondary"
-                  className="rounded-full bg-slate-100 px-3 py-1 text-slate-700"
+
+              <ul className="space-y-[9px]">
+                {featureLabels.map((label: string) => (
+                  <li
+                    key={label}
+                    className="flex items-center justify-end gap-[7px] text-[13px] text-slate-900 dark:text-slate-100"
+                  >
+                    <span>{label}</span>
+                    <span className="flex size-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+                      <Check className="size-2.5 stroke-[3]" />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                type="button"
+                className="text-left text-xs text-sky-500 hover:underline"
+                onClick={() => navigate("/plans")}
+              >
+                + {remainingFeatures > 0 ? remainingFeatures : 6} مميزات أخرى
+              </button>
+
+              <div className="mt-auto rounded-xl bg-violet-500/5 px-4 py-3.5">
+                <div className="mb-2 flex items-center justify-end gap-1.5">
+                  <span className="text-[13px] font-medium text-violet-600">
+                    التطوير القادمة
+                  </span>
+                  <Rocket className="size-4 text-violet-600" />
+                </div>
+                <p className="text-right text-xs leading-[1.65] text-violet-600">
+                  رقّي للباقة المتقدمة: منتجات وفروع أكثر + تقارير موسّعة
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2.5 rounded-2xl bg-slate-50 p-6 dark:bg-slate-900">
+            <div className="flex flex-1 flex-col justify-between gap-3 rounded-[18px] px-5 py-2">
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-sky-500/15 px-3 py-1 text-xs font-medium text-sky-500">
+                  سنوي
+                </span>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-sky-500">
+                    {formatCurrency(price)}
+                  </p>
+                  <p className="text-xs text-slate-500">قيمة الاشتراك</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div
+                  className={cn(
+                    "flex items-center gap-1 rounded-xl px-[18px] py-2.5 text-lg font-medium text-white",
+                    isActive ? "bg-emerald-500" : "bg-slate-400",
+                  )}
                 >
-                  {subscription.remainingDays} يوم
-                </Badge>
-                {isActive && (
-                  <Badge className="rounded-full bg-emerald-500 px-3 py-1 text-white hover:bg-emerald-500">
-                    نشط
-                  </Badge>
-                )}
+                  <span>{isActive ? "نشط" : subscription.status}</span>
+                  <CheckCircle2 className="size-6" />
+                </div>
+                <p className="text-right">
+                  <span className="text-[38px] font-medium text-sky-400">
+                    {remainingDays}
+                  </span>{" "}
+                  <span className="text-[15px] text-indigo-300">يوم</span>
+                </p>
+              </div>
+
+              <div className="h-[7px] overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                <div
+                  className="h-full rounded-full bg-linear-to-l from-sky-500 to-violet-600"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[13px] text-slate-500">
+                <span>{formatDate(subscription.end_at)}</span>
+                <span>التجديد القادم</span>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-3">
               <Button
-                className="rounded-full px-5"
                 type="button"
+                variant="outline"
+                className="h-12 flex-1 gap-2 rounded-[14px] border-violet-500/15 bg-violet-500/10 text-[15px] font-bold text-violet-600 hover:bg-violet-500/15 hover:text-violet-700"
+                onClick={() => navigate("/plans")}
+              >
+                عرض جميع الباقات
+                <Layers className="size-5" />
+              </Button>
+              <Button
+                type="button"
+                className="h-12 flex-1 gap-2 rounded-[14px] bg-violet-600 text-[15px] font-bold text-white hover:bg-violet-700"
                 disabled={renewSubscription.isPending || !subscription.id}
                 onClick={handleRenew}
               >
                 {renewSubscription.isPending ? (
                   <>
-                    <Loader2 className="ml-2 size-4 animate-spin" />
                     جاري التجديد...
+                    <Loader2 className="size-5 animate-spin" />
                   </>
                 ) : (
-                  "تجديد الاشتراك"
+                  <>
+                    تجديد الاشتراك
+                    <CheckCircle2 className="size-5" />
+                  </>
                 )}
               </Button>
-              <Button
-                className="rounded-full px-5"
-                variant="secondary"
+            </div>
+
+            <p className="text-center text-[13px] text-slate-500">
+              يمكنك مراسلة الدعم اذا كنت تواجه اي مشاكل في الاشتراك او تريد{" "}
+              <button
                 type="button"
-                onClick={() => navigate("/plans")}
-              >
-                عرض جميع الباقات
-              </Button>
-              <Button
-                className="rounded-full px-5"
-                variant="outline"
-                type="button"
+                className="underline disabled:opacity-50"
                 disabled={!canCancel}
                 onClick={() => setCancelDialogOpen(true)}
               >
-                إيقاف الباقة
-              </Button>
-            </div>
-          </div>
-
-          {/* شمال: المميزات + التطوير القادم */}
-          <div className="flex flex-col gap-4">
-            {features.length > 0 && (
-              <div>
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="flex size-7 items-center justify-center rounded-full bg-cyan-500 text-xs font-bold text-white">
-                    {features.length}
-                  </span>
-                  <p className="text-sm font-bold text-blue-950">
-                    المميزات الفعالة
-                  </p>
-                </div>
-
-                <ul className="space-y-2.5">
-                  {previewFeatures.map((feature: any, index: number) => (
-                    <li
-                      key={feature.feature?.id || index}
-                      className="flex items-center justify-end gap-2 text-sm text-slate-700"
-                    >
-                      <span>{feature.feature?.name ?? "—"}</span>
-                      <CheckCircle2 className="size-4 shrink-0 fill-emerald-500 text-white" />
-                    </li>
-                  ))}
-                </ul>
-
-                {remainingFeatures > 0 && (
-                  <button
-                    type="button"
-                    className="mt-2 text-sm text-cyan-600 hover:underline"
-                    onClick={() => navigate("/plans")}
-                  >
-                    + {remainingFeatures} مميزات أخرى
-                  </button>
-                )}
-              </div>
-            )}
-
-            <div className="rounded-2xl bg-violet-50 px-4 py-3 text-right">
-              <div className="mb-1 flex items-center justify-end gap-2">
-                <span className="text-sm font-bold text-violet-800">
-                  التطوير القادمة
-                </span>
-                <Rocket className="size-4 text-violet-600" />
-              </div>
-              <p className="text-xs leading-relaxed text-violet-700/80">
-                رقي للباقة المتقدمة: منتجات وفروع أكثر + تقارير موسعة
-              </p>
-            </div>
+                الغاء الباقة
+              </button>
+            </p>
           </div>
         </div>
       </SettingsCard>
@@ -238,9 +292,9 @@ const StoreSubscriptionSection = () => {
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent className="text-right">
           <DialogHeader>
-            <DialogTitle className="text-right">إيقاف الباقة</DialogTitle>
+            <DialogTitle className="text-right">الغاء الباقة</DialogTitle>
             <DialogDescription className="text-right">
-              هل أنت متأكد من رغبتك في إيقاف اشتراكك؟ سيتم إيقاف الوصول إلى
+              هل أنت متأكد من رغبتك في الغاء اشتراكك؟ سيتم إيقاف الوصول إلى
               الخدمات في نهاية فترة الاشتراك الحالية.
             </DialogDescription>
           </DialogHeader>
@@ -250,9 +304,12 @@ const StoreSubscriptionSection = () => {
               disabled={cancelSubscription.isPending}
               onClick={handleConfirmCancel}
             >
-              {cancelSubscription.isPending ? "جاري الإيقاف..." : "تأكيد الإيقاف"}
+              {cancelSubscription.isPending ? "جاري الإلغاء..." : "تأكيد الإلغاء"}
             </Button>
-            <Button variant="secondary" onClick={() => setCancelDialogOpen(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => setCancelDialogOpen(false)}
+            >
               تراجع
             </Button>
           </div>

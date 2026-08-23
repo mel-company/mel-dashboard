@@ -17,25 +17,7 @@ const ProductsInventorySection = ({
 
   return (
     <SettingsCard title="المنتجات والمخزون">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-2">
-          <SettingsLabel>حالة المنتج الافتراضية</SettingsLabel>
-          <Switch
-            checked={isPublished}
-            activeLabel="نشر مباشر"
-            disabledLabel="مسودة"
-            onToggle={(checked) =>
-              updateStoreField(
-                "defaultProductStatus",
-                checked ? "PUBLISHED" : "DRAFT",
-              )
-            }
-          />
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            يتم نشر المنتج مباشرتا بعد حفظ
-          </p>
-        </div>
-
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_225px]">
         <SettingsField label="الحد الادنى للمنتجات" htmlFor="lowStockThreshold">
           <div className="relative">
             <SettingsInput
@@ -47,11 +29,31 @@ const ProductsInventorySection = ({
               onChange={handleStoreInputChange}
               className="pl-14 text-right"
             />
-            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-500">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-sky-500">
               قطع
             </span>
           </div>
         </SettingsField>
+
+        <div className="space-y-2">
+          <SettingsLabel>حالة المنتج الافتراضية</SettingsLabel>
+          <div className="flex flex-col items-end gap-2">
+            <Switch
+              checked={isPublished}
+              activeLabel="نشر مباشر"
+              disabledLabel="مسودة"
+              onToggle={(checked) =>
+                updateStoreField(
+                  "defaultProductStatus",
+                  checked ? "PUBLISHED" : "DRAFT",
+                )
+              }
+            />
+            <p className="text-[13px] text-slate-500 dark:text-slate-400">
+              يتم نشر المنتج مباشرتا بعد حفظ
+            </p>
+          </div>
+        </div>
       </div>
     </SettingsCard>
   );

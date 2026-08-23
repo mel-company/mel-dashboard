@@ -33,7 +33,9 @@ export const useFetchStoreDetails = () => {
     queryFn: () => storeAPI.fetchDetails(),
     enabled: isAuthSessionMarked(),
     retry: false,
+    staleTime: 60_000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
 

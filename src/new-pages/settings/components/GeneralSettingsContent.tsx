@@ -56,7 +56,7 @@ const GeneralSettingsContent = (props: Props) => {
           />
         </div>
 
-        <div className="flex min-h-0 flex-col gap-3 overflow-y-auto xl:col-span-7 xl:h-full xl:overflow-y-auto">
+        <div className="flex min-h-0 flex-col gap-[18px] overflow-y-auto xl:col-span-7 xl:h-full">
           <StoreAppearanceSection />
           <DeliveryNotesSection
             storeForm={storeForm}

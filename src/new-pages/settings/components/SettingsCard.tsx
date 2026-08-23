@@ -1,29 +1,43 @@
 import { cn } from "@/lib/utils";
 
 type SettingsCardProps = {
-  title: string;
+  title?: string;
+  titleAccessory?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   bodyClassName?: string;
+  headerClassName?: string;
 };
 
 const SettingsCard = ({
   title,
+  titleAccessory,
   children,
   className,
   bodyClassName,
+  headerClassName,
 }: SettingsCardProps) => {
   return (
     <section
       className={cn(
-        "rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5",
+        "rounded-[18px] border border-slate-100 bg-white p-[14px] shadow-sm sm:p-4",
         "dark:border-slate-800 dark:bg-slate-950 dark:shadow-none",
         className,
       )}
     >
-      <h2 className="mb-3 shrink-0 text-lg font-bold text-blue-950 dark:text-slate-50">
-        {title}
-      </h2>
+      {title ? (
+        <div
+          className={cn(
+            "mb-3 flex shrink-0 items-center justify-start gap-2.5",
+            headerClassName,
+          )}
+        >
+          {titleAccessory}
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
+            {title}
+          </h2>
+        </div>
+      ) : null}
       <div className={cn(bodyClassName)}>{children}</div>
     </section>
   );

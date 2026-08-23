@@ -1,6 +1,4 @@
-import { Package, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Badge from "@/components/table/badge";
+import { Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Product } from "../utils";
 import { formatPosPrice, getCategoryName, resolvePosImageUrl } from "../utils";
@@ -13,64 +11,68 @@ type POSProductCardProps = {
 
 const POSProductCard = ({ product, baseUrl, onAdd }: POSProductCardProps) => {
   const imageSrc = resolvePosImageUrl(product.image, baseUrl);
-  const categoryName =
-    product.categories && product.categories.length > 0
-      ? getCategoryName(product.categories[0])
-      : null;
+  const tags = (product.categories ?? [])
+    .slice(0, 3)
+    .map((c) => getCategoryName(c))
+    .filter(Boolean);
 
   return (
-    <article
+    <button
+      type="button"
+      onClick={() => onAdd(product)}
       className={cn(
-        "group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white",
+        "group flex flex-col overflow-hidden rounded-[18px] border border-slate-100 bg-white text-right",
         "transition-all hover:border-sky-200 hover:shadow-md",
+        "dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-500/40",
       )}
     >
-      <button
-        type="button"
-        className="flex flex-1 flex-col p-4 text-right"
-        onClick={() => onAdd(product)}
-      >
-        <div className="mb-3 flex h-36 items-center justify-center overflow-hidden rounded-xl bg-slate-50">
-          {imageSrc ? (
-            <img
-              src={imageSrc}
-              alt={product.title}
-              className="h-full w-full object-contain p-2 transition-transform group-hover:scale-105"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          ) : (
-            <Package className="size-10 text-slate-300" />
-          )}
-        </div>
+      <div className="relative flex h-[140px] items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-900">
+        {imageSrc ? (
+          <img
+            src={imageSrc}
+            alt={product.title}
+            className="h-full w-full object-contain p-3 transition-transform group-hover:scale-105"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        ) : (
+          <Package className="size-10 text-slate-300" />
+        )}
+      </div>
 
-        <h3 className="line-clamp-1 font-semibold text-slate-900">{product.title}</h3>
+      <div className="flex flex-1 flex-col gap-2 p-3.5">
+        <h3 className="line-clamp-1 text-sm font-bold text-slate-900 dark:text-slate-50">
+          {product.title}
+        </h3>
+
         {product.description ? (
-          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+          <p className="line-clamp-2 text-[11px] leading-4 text-slate-500">
             {product.description}
           </p>
         ) : null}
 
-        <div className="mt-3 flex items-center justify-between gap-2">
-          {categoryName ? <Badge color="purple">{categoryName}</Badge> : <span />}
-          <span className="text-base font-bold text-sky-600 tabular-nums">
-            {formatPosPrice(product.price)}
-          </span>
-        </div>
-      </button>
+        {tags.length > 0 ? (
+          <div className="flex flex-wrap justify-end gap-1">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-300"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
-      <div className="border-t border-slate-100 p-3">
-        <Button
-          type="button"
-          className="h-10 w-full gap-2 rounded-full bg-sky-500 text-white hover:bg-sky-600"
-          onClick={() => onAdd(product)}
-        >
-          <Plus className="size-4" />
-          إضافة للسلة
-        </Button>
+        <div className="mt-auto pt-1 text-right">
+          <p className="text-[11px] text-slate-400">السعر</p>
+          <p className="text-sm font-extrabold tabular-nums text-slate-900 dark:text-slate-50">
+            {formatPosPrice(product.price)}
+          </p>
+        </div>
       </div>
-    </article>
+    </button>
   );
 };
 

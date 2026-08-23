@@ -29,7 +29,7 @@ const StoreAppearanceSection = () => {
 
   return (
     <SettingsCard title="مظهر المتجر">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {templates.map((template) => {
           const isActive = activeTemplate === template.id;
 
@@ -37,39 +37,51 @@ const StoreAppearanceSection = () => {
             <div
               key={template.id}
               className={cn(
-                "rounded-2xl p-[2px] transition-shadow",
+                "rounded-[18px] p-[3px] transition-shadow",
                 isActive
-                  ? "bg-linear-to-r from-cyan-400 to-violet-500 shadow-md"
-                  : "bg-slate-200/60 dark:bg-slate-800",
+                  ? "bg-linear-to-br from-cyan-400 to-violet-500 shadow-md"
+                  : "bg-transparent",
               )}
             >
-              <div className="flex h-full flex-col rounded-[14px] bg-slate-50/80 p-3 dark:bg-slate-900/50">
-                <div className="relative mb-3">
-                  <div className="aspect-[4/3] w-full rounded-xl bg-white shadow-sm dark:bg-slate-800" />
+              <div
+                className={cn(
+                  "relative flex h-full flex-col items-center gap-2 rounded-[15px] p-2",
+                  isActive
+                    ? "bg-violet-500/5 dark:bg-violet-500/10"
+                    : "bg-transparent",
+                )}
+              >
+                <div className="relative w-full">
+                  <div className="h-[116px] w-full rounded-[10px] bg-white shadow-sm dark:bg-slate-800" />
                   <Button
                     type="button"
                     size="sm"
                     className={cn(
-                      "absolute bottom-2 left-1/2 -translate-x-1/2 rounded-lg px-3 text-xs font-medium",
+                      "absolute bottom-2 left-1/2 h-8 -translate-x-1/2 rounded-lg px-4 text-[13px] font-medium shadow-none",
                       isActive
-                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                        : "bg-sky-100 text-sky-600 hover:bg-sky-200",
+                        ? "w-[186px] bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10"
+                        : "bg-sky-500/10 text-sky-500 hover:bg-sky-500/20",
                     )}
                     onClick={() => setActiveTemplate(template.id)}
                   >
-                    {isActive ? "تم اختيار القالب" : "معاينة الشكل"}
+                    {isActive ? "القالب الحالي" : "معاينة الشكل"}
                   </Button>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setActiveTemplate(template.id)}
-                  className="space-y-1 text-right"
+                  className="w-full space-y-1 text-center"
                 >
-                  <p className="font-bold text-blue-950 dark:text-blue-100">
+                  <p
+                    className={cn(
+                      "text-[15px] text-slate-700 dark:text-slate-100",
+                      isActive ? "font-bold" : "font-normal",
+                    )}
+                  >
                     {template.name}
                   </p>
-                  <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  <p className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
                     {template.description}
                   </p>
                 </button>

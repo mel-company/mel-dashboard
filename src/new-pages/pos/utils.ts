@@ -1,3 +1,5 @@
+import { resolveAssetBaseUrl } from "@/utils/image-url";
+
 export type Product = {
   id: string;
   title: string;
@@ -83,8 +85,6 @@ export function getCategoryName(category: unknown): string {
 export function getDisplayName(name: unknown): string {
   return parseLocalizedName(name);
 }
-
-import { resolveAssetBaseUrl } from "@/utils/image-url";
 
 export function resolvePosImageUrl(
   image?: string | null,

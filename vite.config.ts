@@ -16,11 +16,11 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
-        // Same-origin /api/v1 in dev → upstream API (Gateway-like)
+        // Dev: /api/v1 → local backend (VITE_API_PROXY_TARGET) or remote API
         "/api/v1": {
-          target: env.VITE_API_PROXY_TARGET || "https://api.mel.iq",
+          target: env.VITE_API_PROXY_TARGET || "http://localhost:3000",
           changeOrigin: true,
-          secure: true,
+          secure: false,
         },
       },
     },

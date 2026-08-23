@@ -18,7 +18,7 @@ import {
   useFetchStorePaymentMethods,
 } from "@/api/wrappers/settings.wrappers";
 import { useFetchPaymentProviders } from "@/api/wrappers/payment.wrappers";
-import { Loader2 } from "lucide-react";
+import { Loader2, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -32,12 +32,19 @@ import TitleBar from "@/components/table/title-bar";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
 import POSFiltersBar from "@/new-pages/pos/components/POSFiltersBar";
 import POSProductGrid from "@/new-pages/pos/components/POSProductGrid";
-import POSCartPanel from "@/new-pages/pos/components/POSCartPanel";
+import POSInvoicePanel from "@/new-pages/pos/components/POSInvoicePanel";
 import POSDisabledView from "@/new-pages/pos/components/POSDisabledView";
 import POSCheckoutDialog, {
   type POSCheckoutForm,
 } from "@/new-pages/pos/components/POSCheckoutDialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { resolveAssetBaseUrl } from "@/utils/image-url";
+import { formatPosPrice } from "@/new-pages/pos/utils";
 
 // Product types matching API structure
 type Product = {
@@ -118,6 +125,9 @@ const POS = ({ }: Props) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isOptionDialogOpen, setIsOptionDialogOpen] = useState(false);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
+  const [isInvoiceSheetOpen, setIsInvoiceSheetOpen] = useState(false);
+  const [cashOnDelivery, setCashOnDelivery] = useState(false);
+  const [showCoupon, setShowCoupon] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<
     Record<string, string>
@@ -175,14 +185,14 @@ const POS = ({ }: Props) => {
 
   const { data: paymentProviders } = useFetchPaymentProviders(canAccessPos);
   const { data: storePaymentMethods, isLoading: isLoadingPaymentMethods } =
-    useFetchStorePaymentMethods(isCheckoutDialogOpen);
+    useFetchStorePaymentMethods(canAccessPos);
   const { data: states, isLoading: isLoadingStates } = useFetchStates(
     undefined,
-    isCheckoutDialogOpen,
+    canAccessPos,
   );
   const { data: regions, isLoading: isLoadingRegions } = useFetchRegionsByState(
     checkoutForm.stateId,
-    isCheckoutDialogOpen && !!checkoutForm.stateId,
+    canAccessPos && !!checkoutForm.stateId,
   );
 
   type PaymentMethodOption = { id: string; name: string };
@@ -247,7 +257,7 @@ const POS = ({ }: Props) => {
     useAddProductsToOrder();
 
   useEffect(() => {
-    if (!isCheckoutDialogOpen) return;
+    if (!canAccessPos) return;
 
     setCheckoutForm((prev) => ({
       ...prev,
@@ -258,7 +268,7 @@ const POS = ({ }: Props) => {
       paymentMethodId:
         prev.paymentMethodId || paymentMethods[0]?.id || "",
     }));
-  }, [isCheckoutDialogOpen, storeDetails?.location, paymentMethods]);
+  }, [canAccessPos, storeDetails?.location, paymentMethods]);
 
   // Variant finding hook
   const { mutateAsync: findVariantByOptions } = useFindVariantByOptions();
@@ -498,12 +508,14 @@ const POS = ({ }: Props) => {
 
   // Debounce coupon code for validation when user finishes typing
   const [debouncedCouponCode, setDebouncedCouponCode] = useState("");
+  const couponValidationEnabled =
+    isCheckoutDialogOpen || showCoupon || isInvoiceSheetOpen;
   useEffect(() => {
-    if (!isCheckoutDialogOpen) return;
+    if (!couponValidationEnabled) return;
     const trimmed = (checkoutForm.couponCode || "").trim();
     const timer = setTimeout(() => setDebouncedCouponCode(trimmed), 500);
     return () => clearTimeout(timer);
-  }, [checkoutForm.couponCode, isCheckoutDialogOpen]);
+  }, [checkoutForm.couponCode, couponValidationEnabled]);
 
   const validateCouponParams =
     debouncedCouponCode.length >= 2
@@ -513,7 +525,7 @@ const POS = ({ }: Props) => {
     data: couponValidation,
     isFetching: isValidatingCoupon,
     error: couponValidateError,
-  } = useValidateCoupon(validateCouponParams, isCheckoutDialogOpen);
+  } = useValidateCoupon(validateCouponParams, couponValidationEnabled);
 
   const couponValid = couponValidation?.valid === true;
   const couponValidationMessage =
@@ -521,12 +533,10 @@ const POS = ({ }: Props) => {
     (couponValidateError as any)?.response?.data?.message ??
     (couponValidateError as Error)?.message;
   const showCouponValidation = Boolean(
-    isCheckoutDialogOpen &&
+    couponValidationEnabled &&
       debouncedCouponCode.length >= 2 &&
       (isValidatingCoupon || couponValidation || couponValidateError),
   );
-
-  // Reset region when state changes - removed (POS in-store sale, no delivery address)
 
   // Handle checkout or add products to existing order
   const handleCheckout = (e: React.FormEvent) => {
@@ -567,6 +577,7 @@ const POS = ({ }: Props) => {
           onSuccess: () => {
             toast.success("تم إضافة المنتجات إلى الطلب بنجاح");
             setCart([]);
+            setIsInvoiceSheetOpen(false);
             // Navigate to order details
             navigate(`/orders/${orderId}`);
           },
@@ -616,6 +627,7 @@ const POS = ({ }: Props) => {
       onSuccess: (response) => {
         toast.success("تم إنشاء الطلب بنجاح");
         setIsCheckoutDialogOpen(false);
+        setIsInvoiceSheetOpen(false);
         setCart([]);
         setCheckoutForm({
           name: "",
@@ -645,6 +657,40 @@ const POS = ({ }: Props) => {
     });
   };
 
+  const handleInvoicePay = () => {
+    handleCheckout({ preventDefault: () => {} } as React.FormEvent);
+  };
+
+  const handleInvoiceCancel = () => {
+    setCart([]);
+    setIsInvoiceSheetOpen(false);
+  };
+
+  const invoicePanelProps = {
+    cart,
+    baseUrl,
+    total,
+    form: checkoutForm,
+    onFormChange: (patch: Partial<POSCheckoutForm>) =>
+      setCheckoutForm((prev) => ({ ...prev, ...patch })),
+    paymentMethods,
+    states: states as any[] | undefined,
+    regions: regions as any[] | undefined,
+    isLoadingPaymentMethods,
+    isLoadingStates,
+    isLoadingRegions,
+    cashOnDelivery,
+    onCashOnDeliveryChange: setCashOnDelivery,
+    showCoupon,
+    onToggleCoupon: () => setShowCoupon((prev) => !prev),
+    isCheckingOut,
+    isAddingProducts,
+    onPay: handleInvoicePay,
+    onCancel: handleInvoiceCancel,
+    onUpdateQuantity: updateQuantity,
+    onRemove: removeFromCart,
+  };
+
   if (!isLoadingStore && !isPhysicalStore && !orderId) {
     return <POSDisabledView />;
   }
@@ -658,7 +704,7 @@ const POS = ({ }: Props) => {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-6">
+    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4 pb-24 lg:gap-6 lg:pb-0">
       <TitleBar
         description={
           orderId
@@ -667,8 +713,9 @@ const POS = ({ }: Props) => {
         }
       />
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 xl:grid-cols-[1fr_380px]">
-        <div className="flex min-h-[70vh] flex-col gap-4 xl:min-h-0">
+      {/* Figma: products on the right (next to sidebar), invoice on the left */}
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="flex min-h-[60vh] flex-col gap-4 lg:col-span-7 lg:min-h-0">
           <POSFiltersBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -677,6 +724,7 @@ const POS = ({ }: Props) => {
             onCategorySelect={setSelectedCategoryId}
             isLoadingCategories={isLoadingCategories}
             imageBaseUrl={baseUrl}
+            productCount={filteredProducts.length}
           />
 
           <POSProductGrid
@@ -692,25 +740,44 @@ const POS = ({ }: Props) => {
           />
         </div>
 
-        <div className="xl:sticky xl:top-6 xl:self-start xl:max-h-[calc(100vh-8rem)]">
-          <POSCartPanel
-            cart={cart}
-            baseUrl={baseUrl}
-            total={total}
-            orderId={orderId}
-            isAddingProducts={isAddingProducts}
-            onCheckout={() => {
-              if (orderId) {
-                handleCheckout({ preventDefault: () => {} } as React.FormEvent);
-              } else {
-                setIsCheckoutDialogOpen(true);
-              }
-            }}
-            onUpdateQuantity={updateQuantity}
-            onRemove={removeFromCart}
-          />
+        <aside className="hidden min-h-0 lg:col-span-5 lg:block lg:max-h-[calc(100vh-8rem)] lg:sticky lg:top-6 lg:self-start lg:overflow-hidden">
+          <POSInvoicePanel {...invoicePanelProps} className="h-full" />
+        </aside>
+      </div>
+
+      {/* Mobile sticky invoice bar */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur lg:hidden dark:border-slate-800 dark:bg-slate-950/95">
+        <div className="mx-auto flex max-w-lg items-center gap-3">
+          <div className="min-w-0 flex-1 text-right">
+            <p className="text-xs text-slate-500">الإجمالي</p>
+            <p className="truncate text-lg font-extrabold tabular-nums text-slate-900 dark:text-white">
+              {formatPosPrice(total)}
+            </p>
+          </div>
+          <Button
+            type="button"
+            className="h-12 shrink-0 gap-2 rounded-2xl bg-sky-500 px-5 font-bold text-white hover:bg-sky-600"
+            onClick={() => setIsInvoiceSheetOpen(true)}
+          >
+            <Receipt className="size-4" />
+            تفاصيل الفاتورة
+          </Button>
         </div>
       </div>
+
+      <Sheet open={isInvoiceSheetOpen} onOpenChange={setIsInvoiceSheetOpen}>
+        <SheetContent
+          side="bottom"
+          className="flex h-[92vh] max-h-[92vh] flex-col gap-0 overflow-hidden rounded-t-3xl p-0 sm:max-w-none"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>تفاصيل الفاتورة</SheetTitle>
+          </SheetHeader>
+          <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-4">
+            <POSInvoicePanel {...invoicePanelProps} />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Option Selection Dialog */}
       <Dialog open={isOptionDialogOpen} onOpenChange={setIsOptionDialogOpen}>
@@ -748,13 +815,12 @@ const POS = ({ }: Props) => {
                 </div>
               ))}
 
-              {/* Show selected variant price */}
               {canAddToCart() && (
-                <div className="pt-4 border-t">
+                <div className="border-t pt-4">
                   {isFindingVariant ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground mr-2">
+                      <span className="mr-2 text-sm text-muted-foreground">
                         جاري البحث عن المتغير...
                       </span>
                     </div>
@@ -774,7 +840,7 @@ const POS = ({ }: Props) => {
                         </span>
                       </div>
                       {foundVariant?.stock !== undefined && (
-                        <div className="flex items-center justify-between mt-2">
+                        <div className="mt-2 flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">
                             المخزون:
                           </span>

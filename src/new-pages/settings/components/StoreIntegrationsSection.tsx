@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ChevronDown, Truck } from "lucide-react";
 import { toast } from "sonner";
 import SettingsCard from "./SettingsCard";
 import { SettingsInput } from "./SettingsField";
@@ -18,8 +17,22 @@ import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyD
 import DomainSettings from "@/pages/settings/DomainSettings";
 import PrimeIntegrationCard from "./PrimeIntegrationCard";
 import { isPrimeDelivery } from "@/api/types/store";
+import settingsGearIcon from "@/assets/settings/settings-gear.svg";
+import moneyIcon from "@/assets/settings/money.svg";
+import qiCardIcon from "@/assets/settings/qi-card.svg";
+import chevronIcon from "@/assets/settings/chevron.svg";
+import deliveryArrowIcon from "@/assets/settings/delivery-arrow.svg";
 
 type PaymentMethodOption = { id: string; name: string };
+
+const SectionGear = () => (
+  <div className="flex size-[35px] shrink-0 items-center justify-center rounded-[10px] bg-sky-500/10">
+    <img src={settingsGearIcon} alt="" className="size-5" />
+  </div>
+);
+
+const isQiMethod = (name: string) =>
+  /qi|كي|كي.?كارد|qicard/i.test(name);
 
 const StoreIntegrationsSection = () => {
   const { data: domainDetails } = useFindDomainDetails();
@@ -31,15 +44,12 @@ const StoreIntegrationsSection = () => {
   const updatePaymentMethodsMutation = useUpdatePaymentMethods();
   const upsertMutation = useUpsertStorePaymentMethod();
 
-  const [cashOnDelivery, setCashOnDelivery] = useState(false);
   const [domainDialogOpen, setDomainDialogOpen] = useState(false);
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
+  const [optimisticCod, setOptimisticCod] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    if (currentSettings) {
-      setCashOnDelivery(currentSettings.cash_on_delivery ?? false);
-    }
-  }, [currentSettings]);
+  const cashOnDelivery =
+    optimisticCod ?? currentSettings?.cash_on_delivery ?? false;
 
   const paymentMethods = useMemo(() => {
     if (!paymentProviders) return [] as PaymentMethodOption[];
@@ -58,12 +68,18 @@ const StoreIntegrationsSection = () => {
   };
 
   const handleCodToggle = (enabled: boolean) => {
-    setCashOnDelivery(enabled);
+    setOptimisticCod(enabled);
     updatePaymentMethodsMutation.mutate(
       { cash_on_delivery: enabled },
       {
-        onSuccess: () => toast.success("تم تحديث إعدادات الدفع"),
-        onError: () => toast.error("فشل تحديث إعدادات الدفع"),
+        onSuccess: () => {
+          toast.success("تم تحديث إعدادات الدفع");
+          setOptimisticCod(null);
+        },
+        onError: () => {
+          toast.error("فشل تحديث إعدادات الدفع");
+          setOptimisticCod(null);
+        },
       },
     );
   };
@@ -78,49 +94,83 @@ const StoreIntegrationsSection = () => {
     );
   };
 
-  const domainUrl = domainDetails?.domain
-    ? `${domainDetails.domain}.mel.iq`
-    : "azyaa.mel.iq";
+  const subdomain = domainDetails?.domain?.trim() || "azyaa";
 
   const deliveryCompany = storeDetails?.deliveryCompany;
   const deliveryCompanyName = deliveryCompany?.name ?? "لم يتم التحديد";
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <SettingsCard title="نطاق الموقع الالكتروني">
           <button
             type="button"
-            className="w-full text-right"
+            className="w-full space-y-2 text-right"
             onClick={() => setDomainDialogOpen(true)}
           >
+            <p className="px-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+              النطاق
+            </p>
             <SettingsInput
               readOnly
-              value={domainUrl}
+              value={subdomain}
               dir="ltr"
               className="cursor-pointer text-center"
             />
+            <p className="px-1 text-[13px] text-slate-500">
+              يمكنك تحديث النطاق الفرعي كل 30 يوم
+            </p>
           </button>
         </SettingsCard>
 
-        <SettingsCard title="أعدادات مزودين خدمات الدفع">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2.5">
-              <span className="text-sm">الدفع عند الاستلام</span>
+        <SettingsCard
+          title="أعدادات مزودين خدمات الدفع"
+          titleAccessory={<SectionGear />}
+        >
+          <div className="space-y-3">
+            <div className="flex h-12 items-center justify-between rounded-[14px] bg-slate-100 px-4 dark:bg-slate-900">
+              <div className="flex items-center gap-3">
+                <span className="relative size-6 shrink-0 overflow-hidden">
+                  <img
+                    src={moneyIcon}
+                    alt=""
+                    className="size-full object-contain"
+                  />
+                </span>
+                <span className="text-[13px] text-slate-900 dark:text-slate-100">
+                  الدفع عند الاستلام
+                </span>
+              </div>
               <Switch
                 checked={cashOnDelivery}
+                activeLabel="مفعل"
+                disabledLabel="معطل"
                 onToggle={handleCodToggle}
                 disabled={updatePaymentMethodsMutation.isPending}
               />
             </div>
+
             {paymentMethods.map((method: PaymentMethodOption) => (
               <div
                 key={method.id}
-                className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2.5"
+                className="flex h-12 items-center justify-between rounded-[14px] bg-slate-100 px-4 dark:bg-slate-900"
               >
-                <span className="text-sm">{method.name}</span>
+                <div className="flex items-center gap-3">
+                  {isQiMethod(method.name) ? (
+                    <img
+                      src={qiCardIcon}
+                      alt=""
+                      className="h-6 w-6 object-contain"
+                    />
+                  ) : null}
+                  <span className="text-[13px] text-slate-900 dark:text-slate-100">
+                    {method.name}
+                  </span>
+                </div>
                 <Switch
                   checked={isMethodEnabled(method.id)}
+                  activeLabel="مفعل"
+                  disabledLabel="معطل"
                   onToggle={(v) => handleMethodToggle(method.id, v)}
                   disabled={upsertMutation.isPending}
                 />
@@ -129,27 +179,37 @@ const StoreIntegrationsSection = () => {
           </div>
         </SettingsCard>
 
-        <SettingsCard title="أعدادات مزودين خدمات التوصيل">
+        <SettingsCard
+          title="أعدادات مزودين خدمات التوصيل"
+          titleAccessory={<SectionGear />}
+        >
+          <p className="mb-2 px-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+            اختيار شركة التوصيل
+          </p>
           <button
             type="button"
-            className="flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-100 px-4 py-3 text-right"
+            className="flex h-12 w-full items-center gap-3 rounded-[14px] bg-slate-100 px-4 text-right dark:bg-slate-900"
             onClick={() => setDeliveryDialogOpen(true)}
           >
-            <ChevronDown className="size-4 shrink-0 text-slate-400" />
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="flex min-w-0 flex-col items-end gap-0.5">
-                <span className="text-sm font-medium">{deliveryCompanyName}</span>
-                {deliveryCompany?.description && (
-                  <span className="line-clamp-1 text-[11px] leading-snug text-slate-500">
-                    {deliveryCompany.description}
-                  </span>
-                )}
-              </div>
-              <Truck className="size-4 shrink-0 text-slate-500" />
-            </div>
+            <img
+              src={deliveryArrowIcon}
+              alt=""
+              className="h-6 w-[21px] shrink-0 object-contain"
+            />
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+              {deliveryCompanyName}
+            </span>
+            <img src={chevronIcon} alt="" className="size-6 shrink-0" />
           </button>
+          <p className="mt-2 px-1 text-[13px] text-slate-500">
+            يمكنك تغيير شركة التوصيل كل 30 يوم
+          </p>
 
-          {isPrimeDelivery(storeDetails) && <PrimeIntegrationCard />}
+          {isPrimeDelivery(storeDetails) ? (
+            <div className="mt-3">
+              <PrimeIntegrationCard />
+            </div>
+          ) : null}
         </SettingsCard>
       </div>
 

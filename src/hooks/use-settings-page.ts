@@ -70,8 +70,11 @@ export function useSettingsPage() {
     ? "store"
     : "general";
 
-  const { data: storeDetails, isLoading: isLoadingStore } =
-    useFetchStoreDetails();
+  const {
+    data: storeDetails,
+    isLoading: isLoadingStore,
+    isError: isStoreError,
+  } = useFetchStoreDetails();
   const { data: currentSettings, isLoading: isLoadingSettings } =
     useFetchCurrentSettings();
 
@@ -98,7 +101,9 @@ export function useSettingsPage() {
   const hasInitializedGeneralRef = useRef(false);
 
   useEffect(() => {
-    if (isLoadingStore || isLoadingSettings) return;
+    if (isLoadingSettings) return;
+    // Don't block forever if store-details hangs/fails — fill what we have.
+    if (isLoadingStore && !isStoreError) return;
     if (hasInitializedStoreFormRef.current) return;
 
     const next: StoreFormData = {
@@ -142,7 +147,13 @@ export function useSettingsPage() {
     setStoreForm(next);
     originalStoreFormRef.current = JSON.parse(JSON.stringify(next));
     hasInitializedStoreFormRef.current = true;
-  }, [isLoadingStore, isLoadingSettings, storeDetails, currentSettings]);
+  }, [
+    isLoadingStore,
+    isLoadingSettings,
+    isStoreError,
+    storeDetails,
+    currentSettings,
+  ]);
 
   useEffect(() => {
     if (!currentSettings) return;
@@ -290,7 +301,10 @@ export function useSettingsPage() {
     }
   }, [generalSettings, updateGeneralSettingsMutation]);
 
-  const isLoading = isLoadingStore || isLoadingSettings;
+  // Store tab does not need store-details to render.
+  // General waits for settings; store-details only while still in-flight.
+  const isGeneralLoading =
+    isLoadingSettings || (isLoadingStore && !isStoreError);
   const isSaving =
     isSavingStore ||
     isSavingSettings ||
@@ -314,7 +328,7 @@ export function useSettingsPage() {
     hasGeneralChanges,
     saveStoreSettings,
     saveGeneralSettings,
-    isLoading,
+    isGeneralLoading,
     isSaving,
   };
 }

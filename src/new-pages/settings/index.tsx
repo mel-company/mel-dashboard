@@ -13,17 +13,9 @@ import {
 const SettingsPage = () => {
   const actions = useSettingsPage();
 
-  if (actions.isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-0 flex-col gap-4 pb-4">
-      <TitleBar description="يمكنك تعديل تفاصيل وإعدادات المتجر المخصص لك">
+      <TitleBar description="يمكنك تعديل تفاصيل واعدادات المتجر المخصص لك">
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <SwitchTab
@@ -46,8 +38,13 @@ const SettingsPage = () => {
           />
         </div>
       </TitleBar>
+
       {actions.activeTab === "store" ? (
         <StoreSettingsContent />
+      ) : actions.isGeneralLoading ? (
+        <div className="flex min-h-[400px] items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
       ) : (
         <GeneralSettingsContent
           storeForm={actions.storeForm}

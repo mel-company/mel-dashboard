@@ -7,21 +7,20 @@ type Props = Pick<
   "storeForm" | "handleStoreInputChange"
 >;
 
-const DeliveryNotesSection = ({ storeForm, handleStoreInputChange }: Props) => {
+const DeliveryNotesSection = ({
+  storeForm,
+  handleStoreInputChange,
+}: Props) => {
   return (
     <SettingsCard title="وقت التوصيل وملاحظات">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <SettingsField
-          label="ملاحظات التوصيل"
-          htmlFor="deliveryNotes"
-          className="md:col-span-2"
-        >
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_225px]">
+        <SettingsField label="ملاحظات التوصيل" htmlFor="deliveryNotes">
           <SettingsInput
             id="deliveryNotes"
             name="deliveryNotes"
             value={storeForm.deliveryNotes}
             onChange={handleStoreInputChange}
-            placeholder="معلومات إضافية حول التوصيل تظهر للعملاء (مثل: التوصيل من الساعة 9 صباحاً حتى 5 مساءً)"
+            placeholder="معلومات حول التوصيل تظهر للعملاء (مثل: التوصيل من الساعة 9 صباحاً حتى 5 مساءً)"
           />
         </SettingsField>
 
@@ -39,7 +38,7 @@ const DeliveryNotesSection = ({ storeForm, handleStoreInputChange }: Props) => {
               onChange={handleStoreInputChange}
               className="pl-14 text-right"
             />
-            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-500">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-sky-500">
               أيام
             </span>
           </div>

@@ -53,12 +53,12 @@ const BasicStoreInfoSection = ({
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
       <SettingsCard
-        title="معلومات المتجر الأساسية"
+        title="معلومات المتجر الاساسية"
         className="flex h-full min-h-0 w-full flex-col overflow-hidden"
-        bodyClassName="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden"
+        bodyClassName="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto"
       >
         <div
-          className="relative h-20 w-full shrink-0 overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-900/60"
+          className="relative h-[142px] w-full shrink-0 overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-900/60"
           role="button"
           tabIndex={0}
           onClick={() => setLogoDialogOpen(true)}
@@ -73,12 +73,12 @@ const BasicStoreInfoSection = ({
             <img
               src={storeLogoUrl}
               alt="شعار المتجر"
-              className="size-full object-contain p-3"
+              className="size-full object-contain p-4"
               onError={() => setLogoError(true)}
             />
           ) : (
             <div className="flex size-full items-center justify-center">
-              <Store className="size-10 text-orange-500 opacity-90" />
+              <Store className="size-16 text-orange-500 opacity-90" />
             </div>
           )}
 
@@ -86,7 +86,7 @@ const BasicStoreInfoSection = ({
             type="button"
             variant="secondary"
             size="sm"
-            className="absolute bottom-2 left-2 rounded-lg bg-sky-100 px-3 text-xs text-sky-600 hover:bg-sky-200"
+            className="absolute bottom-3 left-3 rounded-lg bg-sky-500/10 px-4 text-[13px] text-sky-500 hover:bg-sky-500/20"
             onClick={(e) => {
               e.stopPropagation();
               setLogoDialogOpen(true);
@@ -116,8 +116,8 @@ const BasicStoreInfoSection = ({
             name="storeDescription"
             value={storeForm.storeDescription}
             onChange={handleStoreInputChange}
-            rows={3}
-            className="min-h-[82px] max-h-[82px] resize-none text-xs leading-snug"
+            rows={4}
+            className="min-h-[112px] max-h-[112px] resize-none text-sm leading-snug"
           />
         </SettingsField>
 
@@ -146,12 +146,10 @@ const BasicStoreInfoSection = ({
         </div>
 
         <div className="shrink-0 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <SettingsLabel>متجر فعلي</SettingsLabel>
-              <p className="mt-1 text-xs text-muted-foreground">
-                عند التفعيل يظهر موقع المتجر على الخريطة وتُفعَّل نقطة البيع (POS)
-              </p>
+          <div className="flex items-center justify-between gap-2 px-0.5">
+            <div className="flex items-center gap-1.5">
+              <MapPin className="size-4 shrink-0 text-red-500" />
+              <SettingsLabel className="mb-0">موقع المتجر</SettingsLabel>
             </div>
             <Switch
               checked={storeForm.isPhysicalStore}
@@ -165,12 +163,8 @@ const BasicStoreInfoSection = ({
 
           {storeForm.isPhysicalStore && (
             <>
-              <div className="flex items-center gap-1.5">
-                <MapPin className="size-4 shrink-0 text-red-500" />
-                <SettingsLabel className="mb-0">موقع المتجر</SettingsLabel>
-              </div>
               <div
-                className="relative h-44 cursor-pointer overflow-hidden rounded-xl bg-slate-100 sm:h-48 dark:bg-slate-900 dark:ring-1 dark:ring-slate-800"
+                className="relative h-24 cursor-pointer overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900 dark:ring-1 dark:ring-slate-800"
                 role="button"
                 tabIndex={0}
                 onClick={openLocationDialog}
@@ -203,15 +197,15 @@ const BasicStoreInfoSection = ({
                 value={storeForm.physicalAddress}
                 onChange={handleStoreInputChange}
                 placeholder="أدخل عنوان المتجر"
-                rows={1}
-                className="min-h-10"
+                rows={2}
+                className="min-h-[48px]"
               />
             </>
           )}
         </div>
 
         <div className="grid shrink-0 grid-cols-2 gap-2">
-          <SettingsField label="وقت البدء بالعمل" htmlFor="workStartTime">
+          <SettingsField label="وقت بدء العمل" htmlFor="workStartTime">
             <SettingsInput
               id="workStartTime"
               name="workStartTime"
@@ -221,7 +215,7 @@ const BasicStoreInfoSection = ({
               className={compactInputClass}
             />
           </SettingsField>
-          <SettingsField label="وقت الانتهاء بالعمل" htmlFor="workEndTime">
+          <SettingsField label="وقت انتهاء العمل" htmlFor="workEndTime">
             <SettingsInput
               id="workEndTime"
               name="workEndTime"

@@ -20,7 +20,7 @@ const StorePlanSummaryCard = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[160px] items-center justify-center rounded-3xl bg-linear-to-r from-[#00b4d8] to-[#9b5de5]">
+      <div className="flex min-h-[176px] items-center justify-center rounded-[18px] bg-linear-to-br from-sky-500 to-violet-600">
         <Loader2 className="size-6 animate-spin text-white" />
       </div>
     );
@@ -31,34 +31,27 @@ const StorePlanSummaryCard = () => {
   const plan = subscription.plan;
 
   return (
-    <div
-      dir="ltr"
-      className="relative min-h-[160px] overflow-hidden rounded-3xl bg-linear-to-r from-[#00b4d8] to-[#9b5de5] p-5 text-white shadow-md"
-    >
+    <div className="relative min-h-[176px] overflow-hidden rounded-[18px] bg-linear-to-br from-sky-500 to-violet-600 p-5 text-white shadow-md">
       <div className="flex items-start justify-between gap-4">
-        {/* يسار البطاقة: تاريخ النفاذ */}
         <div>
-          <p className="text-sm font-light text-white/80">تاريخ النفاذ</p>
-          <p className="mt-1 text-sm font-semibold">
+          <p className="text-sm text-white/50">تاريخ النفاذ</p>
+          <p className="mt-0.5 text-sm font-bold">
             {formatExpiryDate(subscription.end_at)}
           </p>
         </div>
-
-        {/* يمين البطاقة: رقم الاشتراك */}
-        <div className="rounded-2xl bg-white/20 px-4 py-2 backdrop-blur-sm">
+        <div className="rounded-xl bg-white/15 px-[18px] py-[13px]">
           <p className="text-sm font-bold tracking-wide">
-            #{subscription.id.slice(0, 8)}
+            #{String(subscription.id).slice(0, 8)}
           </p>
         </div>
       </div>
 
-      {/* يمين البطاقة: اسم الباقة والوصف */}
-      <div className="mt-10 text-right" dir="rtl">
-        <p className="text-3xl font-bold leading-tight">
+      <div className="mt-8 text-right">
+        <p className="text-[32px] font-extrabold leading-8">
           {plan?.name ?? "—"}
         </p>
         {plan?.description && (
-          <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-white/80">
+          <p className="mt-1 line-clamp-2 text-xs leading-8 text-white">
             {plan.description}
           </p>
         )}
