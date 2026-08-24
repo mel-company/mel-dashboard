@@ -130,20 +130,35 @@ export function resolveDashboardDateRange(
 export const CHART_COLORS = {
   cyan: "#00B7FF",
   purple: "#9139C4",
+  /** Figma brand secondary (light ranks / peak day) */
+  brandPurple: "#7D26F7",
   purpleSoft: "#B282FF",
+  /** Dark-mode success */
   green: "#00DFA8",
+  /** Light-mode success (persian green) */
   greenLight: "#00B88A",
   orange: "#F97316",
-  red: "#FF6B6B",
+  red: "#FF0808",
+  redSoft: "#FF6B6B",
   pink: "#EC4899",
   muted: "#6C809D",
+  grayLabel: "#91A0B6",
 };
 
+/** Growth / status color that follows light vs dark tokens. */
+export function getTrendColor(positive: boolean) {
+  const isDark = document.documentElement.classList.contains("dark");
+  if (positive) {
+    return isDark ? CHART_COLORS.green : CHART_COLORS.greenLight;
+  }
+  return isDark ? CHART_COLORS.redSoft : CHART_COLORS.red;
+}
+
 export const PAYMENT_METHOD_COLORS = [
+  CHART_COLORS.brandPurple,
   CHART_COLORS.cyan,
   CHART_COLORS.orange,
-  CHART_COLORS.purple,
-  CHART_COLORS.green,
+  CHART_COLORS.greenLight,
   CHART_COLORS.pink,
   CHART_COLORS.muted,
 ] as const;

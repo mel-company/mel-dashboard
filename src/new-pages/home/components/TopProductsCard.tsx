@@ -1,26 +1,30 @@
 import DashboardCard from "./DashboardCard";
 import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
+import { cn } from "@/lib/utils";
+import { CHART_COLORS } from "../utils";
 
 type TopProduct = {
   id: string;
   name: string;
   count: number;
+  rank?: number;
+  trend?: "up" | "down" | "flat";
   image?: string | null;
 };
 
 type TopProductsCardProps = {
   products: TopProduct[];
-  maxCount: number;
+  maxCount?: number;
 };
 
-const TopProductsCard = ({ products, maxCount }: TopProductsCardProps) => {
+const TopProductsCard = ({ products }: TopProductsCardProps) => {
   const imageBaseUrl = useImageBaseUrl();
 
   if (products.length === 0) {
     return (
       <DashboardCard
-        title="أكثر المنتجات طلباً"
+        title="المنتجات الاكثر طلب"
         className="min-h-[320px] lg:col-span-3"
         contentClassName="flex items-center justify-center"
       >
@@ -31,37 +35,57 @@ const TopProductsCard = ({ products, maxCount }: TopProductsCardProps) => {
 
   return (
     <DashboardCard
-      title="أكثر المنتجات طلباً"
+      title="المنتجات الاكثر طلب"
       className="min-h-[320px] lg:col-span-3"
-      contentClassName="space-y-4"
+      contentClassName="space-y-0 px-3.5 py-1 sm:px-4"
     >
       {products.slice(0, 5).map((product, index) => {
-        const pct = maxCount > 0 ? (product.count / maxCount) * 100 : 0;
+        const rank = product.rank ?? index + 1;
+        const up = product.trend !== "down";
+        const trendColor = up ? "text-success" : "text-destructive";
+
         return (
-          <div key={product.id} className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-xs font-bold text-slate-500 dark:bg-white/6 dark:text-white/50">
+          <div
+            key={product.id}
+            className="flex h-[51px] items-center justify-end gap-2"
+          >
+            <div className="min-w-0 flex-1 text-right">
+              <p className="truncate text-[11px] leading-normal text-text-secondary dark:text-foreground">
+                {product.name}
+              </p>
+              <div className="mt-0.5 flex items-center justify-end gap-1 text-[11px]">
+                <span className={cn("inline-flex items-center gap-0.5 font-bold", trendColor)}>
+                  {product.count}
+                  <span aria-hidden className="text-[10px]">
+                    {up ? "↗" : "↘"}
+                  </span>
+                </span>
+                <span className="font-bold text-success/10 dark:text-success/20">|</span>
+                <span className="text-[#91a0b6]">أجمالي الطلبات</span>
+              </div>
+            </div>
+            <div className="flex size-[37px] shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-muted">
               <AssetImage
                 image={product.image}
                 baseUrl={imageBaseUrl}
                 alt={product.name}
-                className="size-full object-cover"
-                fallback={<span>{index + 1}</span>}
+                className="size-[31px] rounded-[6px] object-cover"
+                fallback={
+                  <span className="text-[10px] font-bold text-muted-foreground">
+                    {rank}
+                  </span>
+                }
               />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-slate-800 dark:text-white/90">
-                {product.name}
-              </p>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/8">
-                <div
-                  className="h-full rounded-full bg-gradient-to-l from-[#00AEEF] to-[#9139C4]"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-            </div>
-            <span className="shrink-0 text-xs font-semibold text-slate-500 dark:text-white/50">
-              {product.count}
-            </span>
+            <p className="shrink-0 text-xs text-[#d0d5dd]">
+              <span className="font-normal">#</span>
+              <span
+                className="font-bold"
+                style={{ color: CHART_COLORS.brandPurple }}
+              >
+                {rank}
+              </span>
+            </p>
           </div>
         );
       })}

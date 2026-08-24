@@ -96,23 +96,23 @@ const DateField = ({
       }}
       className={cn(
         "relative flex h-12 w-full min-w-0 cursor-pointer items-center justify-between gap-2 rounded-[14px] px-4 transition-colors",
-        "bg-black/[0.04] dark:bg-[#0a0e2780]",
-        isActive && "ring-1 ring-primary/40",
+        "bg-[#f5f6fa] dark:bg-[#0a0e2780]",
+        isActive && "ring-1 ring-[#00b7ff]/40",
       )}
     >
-      <span className="pointer-events-none text-sm text-muted-foreground">
+      <span className="pointer-events-none text-sm text-[#91a0b6] dark:text-muted-foreground">
         {placeholder}
       </span>
       <span className="pointer-events-none flex items-center gap-2">
         {value ? (
-          <span className="text-xs tabular-nums text-foreground" dir="ltr">
+          <span className="text-xs tabular-nums text-[#3b4656] dark:text-foreground" dir="ltr">
             {formatDisplayDate(value)}
           </span>
         ) : null}
         <HugeiconsIcon
           icon={Calendar03Icon}
           size={20}
-          className="text-muted-foreground"
+          className="text-[#91a0b6] dark:text-muted-foreground"
         />
       </span>
       <input
@@ -182,14 +182,14 @@ const NotificationFilterDialog = ({
         showCloseButton={false}
         className={cn(
           "z-[60] flex flex-col gap-0 border-0 p-0 text-foreground",
-          "bg-surface",
+          "bg-white dark:bg-surface",
           isMobile
             ? cn(
                 "inset-x-0 bottom-0 top-auto h-auto max-h-[92dvh] w-full max-w-none rounded-t-[32px]",
                 "data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom",
               )
             : cn(
-                "top-3 bottom-3 left-3 h-auto w-[min(100%,792px)] max-w-[792px] rounded-[32px]",
+                "top-3 bottom-3 left-3 h-auto w-[min(100%,792px)] max-w-[792px] rounded-[32px] shadow-[0_8px_40px_rgba(17,44,113,0.12)]",
                 "data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left",
               ),
         )}
@@ -200,18 +200,18 @@ const NotificationFilterDialog = ({
           </div>
         ) : null}
 
-        <SheetHeader className="relative shrink-0 space-y-1 overflow-hidden border-b border-border px-5 py-5 text-right sm:px-6">
+        <SheetHeader className="relative shrink-0 space-y-1 overflow-hidden border-b border-[#e7edf6] px-5 py-5 text-right sm:px-6 dark:border-border">
           <div
             aria-hidden
-            className="pointer-events-none absolute -top-40 -right-20 size-80 rounded-full bg-[#7d26f7]/15 blur-3xl"
+            className="pointer-events-none absolute -top-40 -right-20 size-80 rounded-full bg-[#7d26f7]/10 blur-3xl dark:bg-[#7d26f7]/15"
           />
-          <SheetTitle className="relative flex items-center justify-start gap-2 text-right text-xl font-normal text-foreground">
+          <SheetTitle className="relative flex items-center justify-start gap-2 text-right text-xl font-normal text-[#3b4656] dark:text-foreground">
             <HugeiconsIcon icon={FilterIcon} size={22} />
             تطبيق الفلاتر المتاحة
           </SheetTitle>
-          <SheetDescription className="relative text-right text-sm text-muted-foreground">
+          <SheetDescription className="relative text-right text-sm text-[#6c809d] dark:text-muted-foreground">
             تمتلك{" "}
-            <span className="font-semibold text-foreground">
+            <span className="font-semibold text-[#3b4656] dark:text-foreground">
               {AVAILABLE_FILTERS}
             </span>{" "}
             فلاتر متاحة في قائمة الفلاتر
@@ -221,7 +221,7 @@ const NotificationFilterDialog = ({
         <div className="custom-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
           <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:items-start">
             <div>
-              <p className="mb-2 text-right text-sm font-medium text-muted-foreground">
+              <p className="mb-2 text-right text-sm font-medium text-[#6c809d] dark:text-muted-foreground">
                 تاريخ الاشعار
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -259,21 +259,21 @@ const NotificationFilterDialog = ({
             </div>
 
             <div>
-              <p className="mb-2 text-right text-sm font-medium text-foreground">
+              <p className="mb-2 text-right text-sm font-medium text-[#3b4656] dark:text-foreground">
                 تاريخ الاشعار
               </p>
-              <div className="flex h-12 w-full items-center justify-between gap-3 rounded-[14px] bg-[#0a0e2780] bg-black/5 px-4 dark:bg-[#0a0e2780]">
+              <div className="flex h-12 w-full items-center justify-between gap-3 rounded-[14px] bg-[#f5f6fa] px-4 dark:bg-[#0a0e2780]">
                 <HugeiconsIcon
                   icon={ArrowDown01Icon}
                   size={20}
-                  className="text-muted-foreground"
+                  className="text-[#91a0b6] dark:text-muted-foreground"
                 />
                 <span
                   className={cn(
                     "min-w-0 flex-1 text-right text-sm font-medium tabular-nums",
                     localFilters.dateFrom || localFilters.dateTo
-                      ? "text-foreground"
-                      : "text-muted-foreground",
+                      ? "text-[#3b4656] dark:text-foreground"
+                      : "text-[#91a0b6] dark:text-muted-foreground",
                   )}
                   dir="ltr"
                 >
@@ -287,7 +287,7 @@ const NotificationFilterDialog = ({
           </div>
 
           <div className="space-y-2">
-            <p className="text-right text-sm font-medium text-muted-foreground">
+            <p className="text-right text-sm font-medium text-[#6c809d] dark:text-muted-foreground">
               النوع
             </p>
             <select
@@ -302,7 +302,7 @@ const NotificationFilterDialog = ({
                       : (value as NotificationFilterValues["type"]),
                 }));
               }}
-              className="h-12 w-full appearance-none rounded-[14px] bg-black/5 px-3.5 text-right text-foreground dark:bg-[#0a0e2780]"
+              className="h-12 w-full appearance-none rounded-[14px] bg-[#f5f6fa] px-3.5 text-right text-[#3b4656] dark:bg-[#0a0e2780] dark:text-foreground"
             >
               <option value="all">جميع الأنواع</option>
               <option value="warning">تحذير</option>
@@ -313,7 +313,7 @@ const NotificationFilterDialog = ({
           </div>
 
           <div className="space-y-2">
-            <p className="text-right text-sm font-medium text-muted-foreground">
+            <p className="text-right text-sm font-medium text-[#6c809d] dark:text-muted-foreground">
               الحالة
             </p>
             <select
@@ -328,7 +328,7 @@ const NotificationFilterDialog = ({
                       : (value as NotificationFilterValues["readStatus"]),
                 }));
               }}
-              className="h-12 w-full appearance-none rounded-[14px] bg-black/5 px-3.5 text-right text-foreground dark:bg-[#0a0e2780]"
+              className="h-12 w-full appearance-none rounded-[14px] bg-[#f5f6fa] px-3.5 text-right text-[#3b4656] dark:bg-[#0a0e2780] dark:text-foreground"
             >
               <option value="all">جميع الحالات</option>
               <option value="unread">غير مقروء</option>
@@ -339,7 +339,7 @@ const NotificationFilterDialog = ({
 
         <SheetFooter
           className={cn(
-            "relative shrink-0 border-t border-border px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6",
+            "relative shrink-0 border-t border-[#e7edf6] px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 dark:border-border",
             isMobile
               ? "flex-col gap-3 sm:flex-col"
               : "flex-row items-center justify-between gap-3 sm:flex-row sm:space-x-0",
@@ -349,7 +349,7 @@ const NotificationFilterDialog = ({
             type="button"
             onClick={handleApply}
             className={cn(
-              "h-[60px] rounded-2xl bg-linear-to-l from-[#33c5ff] to-[#b282ff] text-lg font-bold text-white",
+              "h-[60px] rounded-2xl bg-linear-to-l from-[#00b7ff] to-[#7d26f7] text-lg font-bold text-white dark:from-[#33c5ff] dark:to-[#b282ff]",
               isMobile ? "w-full" : "min-w-[225px] px-10",
             )}
           >
@@ -359,7 +359,7 @@ const NotificationFilterDialog = ({
             type="button"
             onClick={handleCancel}
             className={cn(
-              "text-lg font-bold text-[#4a5596] transition-colors hover:text-muted-foreground",
+              "text-lg font-bold text-[#6c809d] transition-colors hover:text-[#3b4656] dark:text-[#4a5596] dark:hover:text-muted-foreground",
               isMobile ? "h-auto w-full py-2 text-center" : "h-[60px] min-w-[166px]",
             )}
           >
@@ -368,7 +368,7 @@ const NotificationFilterDialog = ({
           <button
             type="button"
             onClick={handleClear}
-            className="w-full py-1 text-center text-sm font-medium text-primary md:absolute md:bottom-2 md:left-1/2 md:-translate-x-1/2 md:w-auto"
+            className="w-full py-1 text-center text-sm font-medium text-[#00b7ff] md:absolute md:bottom-2 md:left-1/2 md:-translate-x-1/2 md:w-auto dark:text-primary"
           >
             مسح الفلاتر
           </button>

@@ -49,7 +49,7 @@ const SwitchTab = ({
                 "flex w-full items-center justify-center self-center",
                 isViolet
                     ? "h-[58px] rounded-[14px] bg-white p-1.5 dark:bg-[#12183b] md:w-auto"
-                    : "rounded-xl border border-transparent bg-white p-1.5 dark:border-[#00b7ff]/20 dark:bg-transparent sm:w-auto sm:p-2",
+                    : "rounded-[16px] border border-[#00b7ff]/15 bg-white p-2 dark:border-[#00b7ff]/20 dark:bg-transparent sm:w-auto",
             )}
         >
             {options?.map((option) => (
@@ -65,10 +65,10 @@ const SwitchTab = ({
                         option.value === selectedOption
                             ? isViolet
                                 ? "bg-[#7d26f7] text-white dark:bg-[#b282ff] dark:text-white"
-                                : "bg-sky-700 text-sky-50 dark:bg-[#33c5ff]/10 dark:text-[#33c5ff]"
+                                : "bg-[#00b7ff]/5 text-[#00b7ff] dark:bg-[#33c5ff]/10 dark:text-[#33c5ff]"
                             : isViolet
                                 ? "text-slate-600 dark:text-white"
-                                : "text-slate-600 dark:text-[#a4b1fa]",
+                                : "text-[#6c809d] dark:text-[#a4b1fa]",
                     )}
                 >
                     {option.icon && <HugeiconsIcon size={18} icon={option.icon} />}

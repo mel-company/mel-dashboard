@@ -1,6 +1,6 @@
 import { Line, LineChart, ResponsiveContainer } from "recharts";
 import DashboardCard from "./DashboardCard";
-import { CHART_COLORS, formatIQD } from "../utils";
+import { formatIQD, getTrendColor } from "../utils";
 
 type TrendPoint = { value: number };
 
@@ -30,6 +30,9 @@ const RevenueTrendCard = ({
 }: RevenueTrendCardProps) => {
   const progressPct = Math.round(Math.min(Math.max(progress, 0), 1) * 100);
   const salesUp = salesChange >= 0;
+  const revenueUp = revenueChange >= 0;
+  const success = getTrendColor(true);
+  const salesStroke = getTrendColor(salesUp);
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.3fr_1fr]">
@@ -38,11 +41,10 @@ const RevenueTrendCard = ({
         contentClassName="flex flex-col justify-between"
       >
         <div className="text-right">
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-0.5">
             <span
-              className={`text-xs font-bold ${
-                revenueChange >= 0 ? "text-[#00dfa8]" : "text-[#ff5252]"
-              }`}
+              className="text-[11px] font-bold"
+              style={{ color: getTrendColor(revenueUp) }}
             >
               {formatChange(revenueChange)}
             </span>
@@ -54,15 +56,19 @@ const RevenueTrendCard = ({
             {formatIQD(revenue)}
           </p>
         </div>
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-            <span>{formatIQD(lastMonthRevenue)}</span>
-            <span>ايرادات الشهر الماضي</span>
+        <div className="mt-3 space-y-1">
+          <div className="text-right">
+            <p className="text-[10px] text-muted-foreground">
+              ايرادات الشهر الماضي
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {formatIQD(lastMonthRevenue)}
+            </p>
           </div>
           <div className="h-6 overflow-hidden rounded-lg bg-muted">
             <div
-              className="ms-auto h-full rounded-lg bg-[#00dfa8]"
-              style={{ width: `${progressPct}%` }}
+              className="ms-auto h-full rounded-lg"
+              style={{ width: `${progressPct}%`, backgroundColor: success }}
             />
           </div>
         </div>
@@ -81,7 +87,7 @@ const RevenueTrendCard = ({
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke={salesUp ? CHART_COLORS.green : CHART_COLORS.red}
+                stroke={salesStroke}
                 strokeWidth={2}
                 dot={false}
               />
@@ -92,9 +98,8 @@ const RevenueTrendCard = ({
           <p className="text-[11px] text-muted-foreground">الحالة العامة</p>
           <p className="mt-0.5 text-sm font-medium text-foreground">
             <span
-              className={`me-1 text-xs font-bold ${
-                salesUp ? "text-[#00dfa8]" : "text-[#ff5252]"
-              }`}
+              className="me-1 text-xs font-bold"
+              style={{ color: salesStroke }}
             >
               {formatChange(salesChange)}
             </span>

@@ -216,7 +216,7 @@ const ProductDeleteModal = ({
                 e.preventDefault();
                 handleDelete();
               }}
-              className="flex h-11 w-full items-center justify-center text-base font-semibold text-slate-700 transition-colors hover:text-rose-600 disabled:opacity-50 sm:h-[60px] dark:text-[#e4e7fc] dark:hover:text-[#ff5252]"
+              className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#f5f6fa] text-base font-semibold text-[#3b4656] transition-colors hover:bg-slate-200 disabled:opacity-50 sm:h-[60px] dark:bg-white/5 dark:text-[#e4e7fc] dark:hover:bg-[#ff5252]/10 dark:hover:text-[#ff5252]"
             >
               {isDeleting ? (
                 <>

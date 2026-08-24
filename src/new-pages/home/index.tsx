@@ -52,10 +52,14 @@ const HomeDashboard = () => {
   }, [data?.revenueCard]);
 
   const weeklyAccess = useMemo(() => {
+    // API bars are Sunday-first; Figma light chart is Mon→Sun (M T W T F S S).
     const bars = data?.bestArrivalDay.bars ?? [0, 0, 0, 0, 0, 0, 0];
-    return AR_WEEKDAYS_SUNDAY_FIRST.map((day, i) => ({
-      day: day.slice(0, 3),
-      value: bars[i] ?? 0,
+    const monFirstOrder = [1, 2, 3, 4, 5, 6, 0] as const;
+    const labels = ["M", "T", "W", "T", "F", "S", "S"] as const;
+    return monFirstOrder.map((apiIndex, i) => ({
+      day: AR_WEEKDAYS_SUNDAY_FIRST[apiIndex] ?? "",
+      label: labels[i],
+      value: bars[apiIndex] ?? 0,
     }));
   }, [data?.bestArrivalDay.bars]);
 
@@ -65,12 +69,12 @@ const HomeDashboard = () => {
         id: product.id,
         name: product.name,
         count: product.orders,
+        rank: product.rank,
+        trend: product.trend,
         image: product.imageUrl,
       })),
     [data?.topProducts],
   );
-
-  const maxProductCount = Math.max(...topProducts.map((p) => p.count), 1);
 
   const orderStatusItems = useMemo(
     () =>
@@ -94,6 +98,7 @@ const HomeDashboard = () => {
           : types.length === 1
             ? 100
             : 0,
+      count: item.count,
       color: PAYMENT_METHOD_COLORS[index % PAYMENT_METHOD_COLORS.length]!,
       key: item.key,
     }));
@@ -130,6 +135,7 @@ const HomeDashboard = () => {
         name: customer.name,
         phone: customer.phone,
         orders: customer.orders,
+        rank: customer.rank,
         avatar: customer.avatarUrl,
       })),
     [data?.topCustomers],
@@ -141,6 +147,10 @@ const HomeDashboard = () => {
         id: category.id,
         name: category.name,
         percent: category.percent,
+        orders: category.orders,
+        rank: category.rank,
+        trend: category.trend,
+        image: category.imageUrl,
       })),
     [data?.topCategories],
   );
@@ -216,6 +226,7 @@ const HomeDashboard = () => {
           data={salesChartData}
           deliveredTotal={revenueCard.deliveredAmount}
           pendingTotal={revenueCard.pendingAmount}
+          totalAmount={revenueCard.totalOrdersAmount}
           growthPercent={revenueCard.growthPercent}
         />
 
@@ -232,7 +243,7 @@ const HomeDashboard = () => {
           />
         </div>
 
-        <TopProductsCard products={topProducts} maxCount={maxProductCount} />
+        <TopProductsCard products={topProducts} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-3">
@@ -267,6 +278,7 @@ const HomeDashboard = () => {
             planTitle={subscription.planTitle}
             expiresAt={subscription.expiresAt}
             daysLeft={subscription.daysLeft}
+            progress={subscription.progress}
           />
           <TopDiscountsCard discounts={topCoupons} />
         </div>

@@ -31,7 +31,7 @@ const NotificationsContent = ({
 
   if (isLoading && !notifications.length) {
     return (
-      <div className="rounded-[24px] border border-transparent bg-card p-6">
+      <div className="rounded-[24px] border border-[#e7edf6] bg-white p-6 shadow-[0_2px_12px_rgba(17,44,113,0.05)] dark:border-transparent dark:bg-card dark:shadow-none">
         <NotificationsSkeleton count={8} showHeader={false} />
       </div>
     );
@@ -49,10 +49,10 @@ const NotificationsContent = ({
 
   if (!notifications.length) {
     return (
-      <div className="rounded-[24px] border border-transparent bg-card p-6">
+      <div className="rounded-[24px] border border-[#e7edf6] bg-white p-6 shadow-[0_2px_12px_rgba(17,44,113,0.05)] dark:border-transparent dark:bg-card dark:shadow-none">
         {toolbar ? <div className="mb-4 hidden md:block">{toolbar}</div> : null}
         <EmptyPage
-          icon={<Bell className="size-7 text-muted-foreground" />}
+          icon={<Bell className="size-7 text-[#91a0b6]" />}
           title={searchQuery.trim() ? "لا توجد نتائج" : "لا يوجد إشعارات"}
           description={
             searchQuery.trim()

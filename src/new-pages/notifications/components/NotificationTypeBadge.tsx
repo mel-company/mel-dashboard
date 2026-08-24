@@ -14,12 +14,16 @@ const iconMap = {
   order: MessageCircle,
 } as const;
 
-/** Soft tint chips like Figma Alerts */
+/** Soft tint chips — Figma Light Alerts */
 const colorMap = {
-  danger: "bg-[#ff52521a] text-[#ff5252]",
-  warning: "bg-[#ff9b3d1a] text-[#f57b00]",
-  success: "bg-[#00dfa81a] text-[#00b88a]",
-  purple: "bg-[#9a5cff1a] text-[#7d26f7]",
+  danger:
+    "bg-[rgba(255,8,8,0.08)] text-[#ff0808] dark:bg-[#ff52521a] dark:text-[#ff5252]",
+  warning:
+    "bg-[rgba(245,123,0,0.1)] text-[#f57b00] dark:bg-[#ff9b3d1a] dark:text-[#f57b00]",
+  success:
+    "bg-[rgba(0,184,138,0.1)] text-[#00b88a] dark:bg-[#00dfa81a] dark:text-[#00b88a]",
+  purple:
+    "bg-[rgba(125,38,247,0.08)] text-[#7d26f7] dark:bg-[#9a5cff1a] dark:text-[#b282ff]",
 } as const;
 
 type NotificationTypeBadgeProps = {

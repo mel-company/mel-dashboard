@@ -81,23 +81,25 @@ const NotificationTable = ({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-[24px] border border-transparent bg-card p-3 sm:p-4",
+        "w-full overflow-hidden rounded-[24px] border border-[#e7edf6] bg-white p-3 shadow-[0_2px_12px_rgba(17,44,113,0.05)] sm:p-4",
+        "dark:border-white/[0.06] dark:bg-[#0a0e27] dark:shadow-none",
       )}
     >
       <div className="mb-4 flex flex-col gap-4 sm:mb-5 md:flex-row md:items-center md:justify-between">
-        {toolbar ? <div className="hidden md:block">{toolbar}</div> : null}
-        <div className="text-right md:ms-auto">
-          <h2
-            className="text-base font-normal text-foreground sm:text-xl"
-            style={{ fontFamily: '"Setar XS", var(--font-family)' }}
-          >
-            جميع الأشعارات
+        <div className="order-1 text-right md:order-2">
+          <h2 className="text-base font-normal text-[#3b4656] sm:text-[20px] dark:text-foreground">
+            جميع الاشعارات
           </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+          <p className="mt-0.5 text-xs text-[#6c809d] sm:text-sm dark:text-muted-foreground">
             أجمالي العناصر المتاحة{" "}
-            <span className="font-bold text-foreground">{totalAvailable}</span>
+            <span className="font-bold text-[#3b4656] dark:text-foreground">
+              {totalAvailable}
+            </span>
           </p>
         </div>
+        {toolbar ? (
+          <div className="order-2 hidden md:order-1 md:block">{toolbar}</div>
+        ) : null}
       </div>
 
       <NotificationCards
@@ -120,10 +122,10 @@ const NotificationTable = ({
         </Table>
       </div>
 
-      <div className="mt-4 space-y-3 border-t border-border pt-4 md:block">
+      <div className="mt-4 space-y-3 border-t border-[#e7edf6] pt-4 dark:border-white/[0.06] md:block">
         <div className="hidden flex-wrap items-center justify-end gap-3 text-sm md:flex">
           <select
-            className="rounded-lg border border-[#7d26f726] bg-transparent px-3 py-1.5 font-bold text-[#7d26f7]"
+            className="rounded-lg border border-[rgba(125,38,247,0.15)] bg-transparent px-3 py-1.5 font-bold text-[#7d26f7] dark:border-[#9a5cff]/20 dark:text-[#b282ff]"
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}
             aria-label="الترتيب"
@@ -131,7 +133,9 @@ const NotificationTable = ({
             <option value="desc">تنازلي</option>
             <option value="asc">تصاعدي</option>
           </select>
-          <span className="text-muted-foreground">مرتبة بشكل</span>
+          <span className="text-[#6c809d] dark:text-muted-foreground">
+            مرتبة بشكل
+          </span>
         </div>
 
         <Pagination

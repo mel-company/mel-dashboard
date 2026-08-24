@@ -5,16 +5,17 @@
 }
 
 .base-card {
-    @apply bg-white border border-slate-100 text-slate-900
-        dark:bg-[#0a0e27]/80 dark:border-white/[0.06] dark:text-[#e4e7fc];
+    @apply bg-white border border-[#e7edf6] text-[#04111c] rounded-[28px]
+        shadow-[0_2px_12px_rgba(17,44,113,0.04)]
+        dark:bg-[#0a0e27]/80 dark:border-white/[0.06] dark:text-[#e4e7fc] dark:shadow-none;
 }
 
 .base-card .title {
-    @apply text-slate-600 dark:text-[#a4b1fa];
+    @apply text-[#3b4656] dark:text-[#a4b1fa];
 }
 
 .base-card .value {
-    @apply text-slate-900 dark:text-[#e4e7fc];
+    @apply text-[#3b4656] dark:text-[#e4e7fc];
 }
 
 .orange-card {
@@ -38,11 +39,11 @@
 }
 
 .growth {
-    @apply text-sm text-emerald-500 flex items-center gap-0.5 font-normal dark:text-[#00dfa8];
+    @apply text-sm text-[#00b88a] flex items-center gap-0.5 font-normal dark:text-[#00dfa8];
 }
 
 .growth.is-down {
-    @apply text-rose-500 dark:text-[#ff5252];
+    @apply text-[#ff0808] dark:text-[#ff5252];
 }
 
 
@@ -50,18 +51,18 @@
     @apply bg-violet-50 text-violet-500 dark:bg-violet-500/15 dark:text-violet-300;
 }
 
-.warning-card {
-    @apply bg-amber-50 text-amber-500 dark:bg-amber-500/15 dark:text-amber-300;
-}
-
-.danger-card {
-    @apply bg-rose-50 text-rose-500 dark:bg-rose-500/15 dark:text-rose-300;
-}
-
 .success-card {
-    @apply bg-teal-50 text-teal-500 dark:bg-teal-500/15 dark:text-teal-300;
+    @apply bg-[rgba(0,184,138,0.05)] text-[#00b88a] dark:bg-teal-500/15 dark:text-teal-300;
 }
 
 .default-card {
-    @apply bg-cyan-50 text-cyan-500 dark:bg-cyan-500/15 dark:text-cyan-300;
+    @apply bg-[rgba(0,183,255,0.05)] text-[#00b7ff] dark:bg-cyan-500/15 dark:text-cyan-300;
+}
+
+.warning-card {
+    @apply bg-[rgba(245,123,0,0.05)] text-[#f57b00] dark:bg-amber-500/15 dark:text-amber-300;
+}
+
+.danger-card {
+    @apply bg-[rgba(255,8,8,0.05)] text-[#ff0808] dark:bg-rose-500/15 dark:text-rose-300;
 }

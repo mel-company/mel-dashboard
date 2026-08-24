@@ -1,17 +1,23 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import DashboardCard from "./DashboardCard";
 import { CHART_COLORS } from "../utils";
+import { cn } from "@/lib/utils";
 
 type PaymentMethod = {
   name: string;
   value: number;
+  count?: number;
   color: string;
+  key?: string;
 };
 
 type PaymentMethodsCardProps = {
   methods: PaymentMethod[];
   electronicPercent: number;
 };
+
+const isCashish = (method: PaymentMethod) =>
+  /cash|كاش|نقد|cod|استلام|مباشر/i.test(`${method.key ?? ""} ${method.name}`);
 
 const PaymentMethodsCard = ({
   methods,
@@ -24,9 +30,10 @@ const PaymentMethodsCard = ({
 
   return (
     <DashboardCard
-      title="طرق الدفع"
+      title="نوع الدفع"
+      subtitle="احصائيات نوع عمليات الدفع"
       className="min-h-[280px]"
-      contentClassName="flex flex-col items-center"
+      contentClassName="flex flex-col items-center pt-2"
     >
       {methods.length === 0 ? (
         <p className="py-10 text-sm text-muted-foreground">لا توجد طرق دفع</p>
@@ -54,34 +61,52 @@ const PaymentMethodsCard = ({
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-x-0 bottom-2 text-center">
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-xl font-bold text-foreground sm:text-2xl">
                 {electronicPercent}%
               </p>
-              <p className="text-xs text-slate-500 dark:text-white/45">
-                دفع إلكتروني
+              <p
+                className="text-xs"
+                style={{ color: CHART_COLORS.brandPurple }}
+              >
+                دفع الكتروني
               </p>
             </div>
           </div>
-          <div className="mt-2 w-full space-y-2">
-            {methods.map((method) => (
-              <div
-                key={method.name}
-                className="flex items-center justify-between text-xs"
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className="size-2 rounded-full"
-                    style={{ backgroundColor: method.color }}
-                  />
-                  <span className="text-slate-600 dark:text-white/60">
-                    {method.name}
+          <div className="mt-3 w-full space-y-3">
+            {methods.map((method) => {
+              const cash = isCashish(method);
+              return (
+                <div
+                  key={method.name}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span className="text-sm font-semibold tabular-nums text-foreground">
+                    {(method.count ?? method.value).toLocaleString("ar-IQ")}
                   </span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="truncate text-center text-xs text-text-secondary">
+                      {method.name}
+                      <span
+                        className="ms-1 text-[10px]"
+                        style={{ color: CHART_COLORS.brandPurple }}
+                      >
+                        {cash ? "( كاش )" : "( دفع الكتروني )"}
+                      </span>
+                    </p>
+                    <span
+                      className={cn(
+                        "flex size-6 shrink-0 items-center justify-center rounded-lg bg-muted",
+                      )}
+                    >
+                      <span
+                        className="size-2 rounded-full"
+                        style={{ backgroundColor: method.color }}
+                      />
+                    </span>
+                  </div>
                 </div>
-                <span className="font-semibold text-slate-800 dark:text-white/80">
-                  {method.value}%
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
@@ -90,9 +115,9 @@ const PaymentMethodsCard = ({
 };
 
 export const defaultPaymentMethods = [
-  { name: "كي-كارد (إلكتروني)", value: 80, color: CHART_COLORS.cyan },
-  { name: "الدفع عند الاستلام", value: 12, color: CHART_COLORS.orange },
-  { name: "نقدي مباشر", value: 8, color: CHART_COLORS.purple },
+  { name: "كي-كارد", value: 80, count: 813, color: CHART_COLORS.cyan },
+  { name: "عند الاستلام", value: 12, count: 813, color: CHART_COLORS.orange },
+  { name: "دفع مباشر", value: 8, count: 1145, color: CHART_COLORS.purple },
 ];
 
 export default PaymentMethodsCard;

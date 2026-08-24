@@ -47,7 +47,7 @@ function MobileStatCard({
   growth?: number;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-3.5 py-3 shadow-sm dark:border-white/[0.06] dark:bg-[#0a0e27]">
+    <div className="flex items-center gap-3 rounded-2xl border border-[#e7edf6] bg-white px-3.5 py-3 shadow-[0_2px_12px_rgba(17,44,113,0.04)] dark:border-white/[0.06] dark:bg-[#0a0e27] dark:shadow-none">
       <div
         className={cn(
           "flex size-11 shrink-0 items-center justify-center rounded-2xl",
@@ -93,61 +93,61 @@ const ProductStatsCards = () => {
     <>
       <div className="flex flex-col gap-2.5 md:hidden">
         <MobileStatCard
-          title="إجمالي أسعار المنتجات"
+          title="أجمالي اسعار المنتجات"
           value={`${stats.totalValue.toLocaleString("ar-IQ")} د.ع`}
           icon={<Banknote className="size-5" />}
-          iconWrapClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"
+          iconWrapClass="bg-[rgba(0,184,138,0.08)] text-[#00b88a] dark:bg-emerald-500/15 dark:text-emerald-300"
           growth={12.6}
         />
         <MobileStatCard
-          title="إجمالي المنتجات"
+          title="أجمالي المنتجات"
           value={stats.totalProducts.toLocaleString("ar-IQ")}
           icon={<ShoppingBag className="size-5" />}
-          iconWrapClass="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"
-          growth={12.6}
+          iconWrapClass="bg-[rgba(0,183,255,0.08)] text-[#00b7ff] dark:bg-sky-500/15 dark:text-sky-300"
+          growth={stats.trends?.totalProducts ?? 12.6}
         />
         <MobileStatCard
           title="قريبة على النفاذ"
           value={stats.lowStock.toLocaleString("ar-IQ")}
           icon={<AlertTriangle className="size-5" />}
-          iconWrapClass="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300"
-          growth={-12.6}
+          iconWrapClass="bg-[rgba(245,123,0,0.08)] text-[#f57b00] dark:bg-amber-500/15 dark:text-amber-300"
+          growth={stats.trends?.lowStock ?? -12.6}
         />
         <MobileStatCard
           title="نفذت الكمية"
           value={stats.outOfStock.toLocaleString("ar-IQ")}
           icon={<Package className="size-5" />}
-          iconWrapClass="bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"
-          growth={12.6}
+          iconWrapClass="bg-[rgba(255,8,8,0.08)] text-[#ff0808] dark:bg-rose-500/15 dark:text-rose-300"
+          growth={stats.trends?.outOfStock ?? 12.6}
         />
       </div>
 
       <div className="hidden grid-cols-2 gap-3 md:grid lg:grid-cols-4">
         <BaseCard
           icon={Money04Icon}
-          title="إجمالي أسعار المنتجات"
+          title="أجمالي اسعار المنتجات"
           value={`${stats.totalValue.toLocaleString("ar-IQ")} د.ع`}
           color="success"
         />
         <BaseCard
           icon={PackageDeliveredIcon}
-          title="إجمالي المنتجات"
+          title="أجمالي المنتجات"
           value={stats.totalProducts.toLocaleString("ar-IQ")}
-          growth={12.6}
+          growth={stats.trends?.totalProducts ?? 12.6}
           color="default"
         />
         <BaseCard
           icon={PackageProcessIcon}
           title="قريبة على النفاذ"
           value={stats.lowStock.toLocaleString("ar-IQ")}
-          growth={-12.6}
+          growth={stats.trends?.lowStock ?? -12.6}
           color="warning"
         />
         <BaseCard
           icon={PackageOpenIcon}
           title="نفذت الكمية"
           value={stats.outOfStock.toLocaleString("ar-IQ")}
-          growth={12.6}
+          growth={stats.trends?.outOfStock ?? 12.6}
           color="danger"
         />
       </div>

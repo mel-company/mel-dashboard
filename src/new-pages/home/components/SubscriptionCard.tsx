@@ -3,6 +3,7 @@ type SubscriptionCardProps = {
   planTitle?: string | null;
   expiresAt?: string | null;
   daysLeft?: number;
+  progress?: number;
 };
 
 const formatExpiryDate = (dateString: string | null | undefined) => {
@@ -35,11 +36,16 @@ const SubscriptionCard = ({
   planTitle,
   expiresAt,
   daysLeft = 0,
+  progress = 0,
 }: SubscriptionCardProps) => {
   const expired = isSubscriptionExpired(daysLeft, expiresAt);
+  const progressPct = Math.round(
+    Math.min(Math.max(progress || (daysLeft > 0 ? Math.min(daysLeft / 30, 1) : 0), 0), 1) *
+      100,
+  );
 
   return (
-    <div className="relative min-h-[176px] overflow-hidden rounded-[18px] bg-linear-to-l from-[#33c5ff] to-[#b282ff] p-5 text-white">
+    <div className="relative min-h-[176px] overflow-hidden rounded-[18px] bg-[#00b7ff] p-5 text-white dark:bg-linear-to-l dark:from-[#33c5ff] dark:to-[#b282ff]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm text-white/75">تاريخ النفاذ</p>
@@ -52,11 +58,11 @@ const SubscriptionCard = ({
         </div>
       </div>
 
-      <div className="mt-8">
-        <p className="text-4xl font-bold leading-none">
+      <div className="mt-6">
+        <p className="text-2xl font-bold leading-snug sm:text-3xl">
           {planTitle ?? "بدون خطة"}
         </p>
-        <p className="mt-3 text-sm text-white/80">
+        <p className="mt-2 text-sm text-white/80">
           {expired ? (
             <span className="text-lg font-bold text-white">انتهت الصلاحية</span>
           ) : (
@@ -64,6 +70,15 @@ const SubscriptionCard = ({
           )}
         </p>
       </div>
+
+      {!expired ? (
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/25">
+          <div
+            className="ms-auto h-full rounded-full bg-white"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+      ) : null}
 
       <div
         aria-hidden

@@ -1,13 +1,14 @@
 import DashboardCard from "./DashboardCard";
-import { cn } from "@/lib/utils";
 import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
+import { CHART_COLORS } from "../utils";
 
 type TopCustomer = {
   id: string;
   name: string;
   phone: string;
   orders: number;
+  rank?: number;
   avatar?: string | null;
 };
 
@@ -34,40 +35,62 @@ const TopCustomersCard = ({ customers }: TopCustomersCardProps) => {
     <DashboardCard
       title="أفضل العملاء"
       className="min-h-[280px]"
-      contentClassName="space-y-3"
+      contentClassName="space-y-0 px-3.5 py-1 sm:px-4"
     >
-      {customers.slice(0, 5).map((customer) => (
-        <div
-          key={customer.id}
-          className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-2.5 dark:bg-white/3"
-        >
-          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#5B8CFF] to-[#9139C4] text-xs font-bold text-white">
-            <AssetImage
-              image={customer.avatar}
-              baseUrl={imageBaseUrl}
-              alt={customer.name}
-              className="size-full object-cover"
-              fallback={<span>{customer.name.slice(0, 2)}</span>}
-            />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-800 dark:text-white/90">
-              {customer.name}
-            </p>
-            <p className="truncate text-xs text-slate-500 dark:text-white/40" dir="ltr">
-              {customer.phone}
-            </p>
-          </div>
-          <span
-            className={cn(
-              "shrink-0 rounded-full px-2 py-0.5 text-xs font-bold",
-              "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
-            )}
+      {customers.slice(0, 5).map((customer, index) => {
+        const rank = customer.rank ?? index + 1;
+        return (
+          <div
+            key={customer.id}
+            className="flex h-[51px] items-center justify-between gap-2"
           >
-            {customer.orders} طلب
-          </span>
-        </div>
-      ))}
+            <span
+              className="shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-normal"
+              style={{
+                backgroundColor: "rgba(125, 38, 247, 0.05)",
+                color: CHART_COLORS.brandPurple,
+              }}
+            >
+              +{customer.orders}
+            </span>
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="min-w-0 text-right">
+                <p className="truncate text-[11px] leading-normal text-text-secondary dark:text-foreground">
+                  {customer.name}
+                </p>
+                <p
+                  className="truncate text-[9px] leading-normal text-[#666] dark:text-muted-foreground"
+                  dir="ltr"
+                >
+                  {customer.phone}
+                </p>
+              </div>
+              <div className="flex size-[37px] shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-muted">
+                <AssetImage
+                  image={customer.avatar}
+                  baseUrl={imageBaseUrl}
+                  alt={customer.name}
+                  className="size-[31px] rounded-[6px] object-cover"
+                  fallback={
+                    <span className="text-[10px] font-bold text-muted-foreground">
+                      {customer.name.slice(0, 2)}
+                    </span>
+                  }
+                />
+              </div>
+              <p className="shrink-0 text-xs text-[#d0d5dd]">
+                <span className="font-normal">#</span>
+                <span
+                  className="font-bold"
+                  style={{ color: CHART_COLORS.brandPurple }}
+                >
+                  {rank}
+                </span>
+              </p>
+            </div>
+          </div>
+        );
+      })}
     </DashboardCard>
   );
 };
