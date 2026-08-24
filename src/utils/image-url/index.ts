@@ -12,7 +12,9 @@ export function resolveAssetBaseUrl(explicitBase?: string | null): string {
 
   const apiBase = cleanEnvUrl(import.meta.env.VITE_API_BASE_URL);
   if (apiBase) {
-    return apiBase.replace(/\/api\/v1\/?$/, "").replace(/\/+$/, "");
+    // Relative proxies like "/api/v1" strip to "" — not a usable asset host.
+    const stripped = apiBase.replace(/\/api\/v1\/?$/, "").replace(/\/+$/, "");
+    if (stripped && !stripped.startsWith("/")) return stripped;
   }
 
   return "https://api.mel.iq";

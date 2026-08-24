@@ -23,8 +23,8 @@ import {
   useFetchProduct,
   useSetPrimaryProductImage,
 } from "@/api/wrappers/product.wrappers";
-import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
-import { getImageUrl } from "@/utils/image-url";
+import { AssetImage } from "@/components/AssetImage";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import { MAX_PRODUCT_IMAGES } from "@/api/types/product";
 import {
   mergeProductImageFiles,
@@ -43,7 +43,7 @@ const ProductImageDialog = ({ open, onOpenChange, productId }: Props) => {
     productId,
     open && !!productId,
   );
-  const { data: storeDetails } = useFetchStoreDetails();
+  const imageBaseUrl = useImageBaseUrl();
   const { mutate: addImages, isPending: isAdding } = useAddProductImages();
   const { mutate: setPrimary, isPending: isSettingPrimary } =
     useSetPrimaryProductImage();
@@ -202,7 +202,6 @@ const ProductImageDialog = ({ open, onOpenChange, productId }: Props) => {
             {gallery.length > 0 ? (
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {gallery.map((img: any) => {
-                  const url = getImageUrl(img.url, storeDetails?.baseUrl);
                   const canManage = Boolean(img.id);
                   return (
                     <div
@@ -212,17 +211,17 @@ const ProductImageDialog = ({ open, onOpenChange, productId }: Props) => {
                         img.isPrimary && "border-sky-400 ring-1 ring-sky-400",
                       )}
                     >
-                      {url ? (
-                        <img
-                          src={url}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <Package className="size-8 text-muted-foreground" />
-                        </div>
-                      )}
+                      <AssetImage
+                        image={img}
+                        baseUrl={imageBaseUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        fallback={
+                          <div className="flex h-full items-center justify-center">
+                            <Package className="size-8 text-muted-foreground" />
+                          </div>
+                        }
+                      />
                       {img.isPrimary && (
                         <span className="absolute bottom-1 right-1 rounded bg-sky-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                           رئيسية
