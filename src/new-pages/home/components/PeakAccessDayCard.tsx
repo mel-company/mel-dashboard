@@ -1,5 +1,4 @@
 import DashboardCard from "./DashboardCard";
-import { CHART_COLORS } from "../utils";
 import { cn } from "@/lib/utils";
 
 type PeakAccessDayCardProps = {
