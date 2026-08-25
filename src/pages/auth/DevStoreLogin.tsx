@@ -21,13 +21,6 @@ import {
 } from "@/components/ui/card";
 import { useFetchDevStores } from "@/api/wrappers/store.wrappers";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
@@ -205,11 +198,11 @@ const DevStoreLogin = () => {
     }
 
     if (!subdomain && !selectedStoreId) {
-      toast.error("يرجى اختيار المتجر");
+      toast.error("يرجى إدخال رقم المتجر");
       return;
     }
     if (!isProduction && !selectedStore) {
-      toast.error("لم يتم العثور على المتجر المختار");
+      toast.error("لم يتم العثور على المتجر بهذا الرقم");
       return;
     }
 
@@ -279,33 +272,28 @@ const DevStoreLogin = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Dev Only */}
 
-            {isProduction ? null : isLoadingStores ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-              </div>
-            ) : (
-              <div className="flex gap-x-2 items-center justify-center">
-                <Select
-                  value={selectedStoreId}
-                  onValueChange={setSelectedStoreId}
+            {isProduction ? null : (
+              <div className="space-y-2">
+                <label
+                  htmlFor="storeId"
+                  className="text-sm font-medium text-foreground"
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر المتجر" />
-                    {!selectedStoreId && (
-                      <p className="text-sm font-medium text-foreground">
-                        اختر المتجر
-                      </p>
-                    )}
-                    <Store className="w-4 h-4 ml-2" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stores?.data?.map((store: any) => (
-                      <SelectItem key={store.id} value={String(store.id)}>
-                        {store.name} - {store.domain}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  رقم المتجر
+                </label>
+                <div className="relative">
+                  <Input
+                    id="storeId"
+                    type="text"
+                    inputMode="text"
+                    placeholder="أدخل رقم المتجر"
+                    value={selectedStoreId}
+                    onChange={(e) => setSelectedStoreId(e.target.value.trim())}
+                    className="pr-10"
+                    dir="ltr"
+                    disabled={isLoadingStores}
+                  />
+                  <Store className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                </div>
               </div>
             )}
 
