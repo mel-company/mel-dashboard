@@ -1,8 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  platformPaymentAPI,
-  PlatformPaymentInitPayload,
-} from "../endpoints/platform-payment.endpoint";
+import { platformPaymentAPI } from "../endpoints/platform-payment.endpoint";
+import type { PlatformPaymentInitPayload } from "../endpoints/platform-payment.endpoint";
 
 export const platformPaymentKeys = {
   all: ["platform-payments"] as const,
