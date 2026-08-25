@@ -10,7 +10,12 @@ export default function PaymentReturn() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [params] = useSearchParams();
-  const paymentId = params.get("paymentId");
+  const paymentIdFromQuery = params.get("paymentId");
+  const paymentIdFromStorage =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem("mel_last_platform_payment_id")
+      : null;
+  const paymentId = paymentIdFromQuery || paymentIdFromStorage;
   const result = params.get("result");
 
   const { data, isLoading, isError } = useStorePlatformPaymentStatus(
@@ -29,6 +34,7 @@ export default function PaymentReturn() {
 
     if (result === "failure" || status === "FAILED" || status === "EXPIRED") {
       toast.error("فشلت عملية الدفع. حاول مرة أخرى.");
+      sessionStorage.removeItem("mel_last_platform_payment_id");
       navigate("/settings/store", { replace: true });
       return;
     }
@@ -37,6 +43,7 @@ export default function PaymentReturn() {
       queryClient.invalidateQueries({
         queryKey: subscriptionKeys.detail("store"),
       });
+      sessionStorage.removeItem("mel_last_platform_payment_id");
       toast.success("تم الدفع بنجاح وتم تحديث الاشتراك");
       navigate("/settings/store", { replace: true });
     }

@@ -88,6 +88,12 @@ const StoreSubscriptionSection = () => {
             toast.error("لم يتم استلام رابط الدفع من زين كاش");
             return;
           }
+          if (data?.id) {
+            sessionStorage.setItem(
+              "mel_last_platform_payment_id",
+              String(data.id),
+            );
+          }
           window.location.href = data.redirectUrl;
         },
         onError: (error) => {
