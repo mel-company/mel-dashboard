@@ -9,6 +9,7 @@ import NotFoundPage from "./pages/miscellaneous/NotFoundPage";
 import OrderInvoicePreview from "./pages/order/OrderInvoicePreview";
 import SettingsLayout from "./layout/SettingsLayout";
 import Payment from "./pages/payment/Payment";
+import PaymentReturn from "./pages/payment/PaymentReturn";
 import { useConsumeBridge } from "./api/wrappers/auth.wrappers";
 import { markAuthSession } from "./utils/auth-session";
 import AuthLoadingScreen from "./components/AuthLoadingScreen";
@@ -63,6 +64,7 @@ function App() {
             </Route>
 
             <Route path="/payment/:planId" element={<Payment />} />
+            <Route path="/payment/return" element={<PaymentReturn />} />
           </Route>
           <Route
             path="/order-invoice-preview"

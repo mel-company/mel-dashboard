@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { useFetchPlan } from "@/api/wrappers/plan.wrappers";
 import {
   Card,
@@ -10,66 +8,26 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  CreditCard,
-  Calendar,
-  Lock,
   Package,
   Loader2,
-  CheckCircle2,
-  Settings,
-  Star,
   ArrowRight,
-  Download,
-  FileText,
+  Star,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import { Badge } from "@/components/ui/badge";
-import {
-  useChangePlan,
-  useFetchStoreSubscription,
-  subscriptionKeys,
-} from "@/api/wrappers/subscription.wrapper";
+import { useInitStorePlatformPayment } from "@/api/wrappers/platform-payment.wrapper";
 import { toast } from "sonner";
-import { pdf } from "@react-pdf/renderer";
-import {
-  SubscriptionInvoicePDF,
-  type SubscriptionInvoiceData,
-} from "@/utils/files/invoice/subscription.invoice";
 
-type Props = {};
-
-const Payment = ({}: Props) => {
+const Payment = () => {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: plan, isLoading, error } = useFetchPlan(planId ?? "");
+  const initPayment = useInitStorePlatformPayment();
 
-  useFetchStoreSubscription();
-  const { mutate: changePlan, isPending } = useChangePlan();
-
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [cvc, setCvc] = useState("");
-  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
-  const [successSubscription, setSuccessSubscription] =
-    useState<SubscriptionInvoiceData | null>(null);
-  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
-
-  // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ar-IQ", {
       style: "currency",
@@ -78,105 +36,41 @@ const Payment = ({}: Props) => {
     }).format(amount);
   };
 
-  // Format card number with spaces
-  const formatCardNumber = (value: string) => {
-    const cleaned = value.replace(/\s/g, "");
-    const match = cleaned.match(/.{1,4}/g);
-    return match ? match.join(" ") : cleaned;
-  };
-
-  // Handle card number input
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "").slice(0, 16);
-    setCardNumber(formatCardNumber(value));
-  };
-
-  // Handle expiry date input (MM/YY)
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "");
-    if (value.length >= 2) {
-      value = value.slice(0, 2) + "/" + value.slice(2, 4);
-    }
-    setExpiryDate(value);
-  };
-
-  // Handle CVC input
-  const handleCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "").slice(0, 3);
-    setCvc(value);
-  };
-
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handlePay = () => {
     if (!planId) {
       toast.error("لا يمكن تغيير الخطة. لا يوجد خطة محددة.");
       return;
     }
 
-    changePlan(planId, {
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({
-          queryKey: subscriptionKeys.detail("store"),
-        });
-        toast.success("تم تغيير الخطة بنجاح");
-        const invoiceData: SubscriptionInvoiceData = {
-          ...data,
-          plan: plan
-            ? {
-                id: plan.id,
-                name: plan.name,
-                description: plan.description ?? null,
-                monthly_price: plan.monthly_price,
-                yearly_price: plan.yearly_price,
-                features: plan.features,
-                modules: plan.modules,
-              }
-            : undefined,
-        };
-        setSuccessSubscription(invoiceData);
-        setSuccessDialogOpen(true);
-      },
-      onError: (err: any) => {
-        toast.error(
-          err?.response?.data?.message || "فشل في تغيير الخطة. حاول مرة أخرى."
-        );
-      },
-    });
-  };
-
-  const handleSuccessDialogOpenChange = (open: boolean) => {
-    setSuccessDialogOpen(open);
-    if (!open) {
+    if (plan?.is_free) {
+      toast.info("الباقة المجانية لا تحتاج دفع");
       navigate("/settings/store");
+      return;
     }
-  };
 
-  const handleDownloadInvoice = async () => {
-    if (!successSubscription) return;
-    setIsDownloadingInvoice(true);
-    try {
-      const blob = await pdf(
-        <SubscriptionInvoicePDF subscription={successSubscription} />
-      ).toBlob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `subscription-invoice-${String(
-        successSubscription.id
-      ).slice(0, 8)}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-      toast.success("تم تحميل الفاتورة");
-    } finally {
-      setIsDownloadingInvoice(false);
-    }
-  };
-
-  const handleContinue = () => {
-    setSuccessDialogOpen(false);
-    navigate("/settings/store");
+    initPayment.mutate(
+      {
+        type: "CHANGE_PLAN",
+        planId,
+        billingPeriod: "MONTHLY",
+        returnBaseUrl: `${window.location.origin}/payment/return`,
+      },
+      {
+        onSuccess: (data) => {
+          if (!data?.redirectUrl) {
+            toast.error("لم يتم استلام رابط الدفع من زين كاش");
+            return;
+          }
+          window.location.href = data.redirectUrl;
+        },
+        onError: (err: any) => {
+          toast.error(
+            err?.response?.data?.message ||
+              "فشل بدء الدفع عبر زين كاش. حاول مرة أخرى.",
+          );
+        },
+      },
+    );
   };
 
   if (isLoading) {
@@ -227,264 +121,71 @@ const Payment = ({}: Props) => {
           العودة
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-right">إتمام الدفع</h1>
-          <p className="text-muted-foreground text-right mt-1">
-            أكمل عملية الدفع للاشتراك في الخطة
+          <h1 className="text-2xl font-bold">الدفع عبر زين كاش</h1>
+          <p className="text-muted-foreground">
+            أكمل الدفع لتفعيل الباقة الجديدة
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Payment Form */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-right flex items-center gap-2">
-                <CreditCard className="size-5" />
-                معلومات الدفع
-              </CardTitle>
-              <CardDescription className="text-right">
-                أدخل معلومات بطاقتك الائتمانية
+              <CardTitle>تأكيد الدفع</CardTitle>
+              <CardDescription>
+                سيتم تحويلك إلى صفحة زين كاش لإتمام العملية بأمان
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Card Number */}
-                <div className="space-y-2">
-                  <Label htmlFor="cardNumber" className="text-right">
-                    رقم البطاقة
-                  </Label>
-                  <div className="relative">
-                    <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-                    <Input
-                      id="cardNumber"
-                      type="text"
-                      value={cardNumber}
-                      onChange={handleCardNumberChange}
-                      placeholder="1234 5678 9012 3456"
-                      maxLength={19}
-                      required
-                      className="text-right pr-10"
-                    />
-                  </div>
-                </div>
-
-                {/* Expiry and CVC */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expiryDate" className="text-right">
-                      تاريخ الانتهاء
-                    </Label>
-                    <div className="relative">
-                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-                      <Input
-                        id="expiryDate"
-                        type="text"
-                        value={expiryDate}
-                        onChange={handleExpiryChange}
-                        placeholder="MM/YY"
-                        maxLength={5}
-                        required
-                        className="text-right pr-10"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="cvc" className="text-right">
-                      رمز الأمان (CVC)
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-                      <Input
-                        id="cvc"
-                        type="text"
-                        value={cvc}
-                        onChange={handleCvcChange}
-                        placeholder="123"
-                        maxLength={3}
-                        required
-                        className="text-right pr-10"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full gap-2"
-                  size="lg"
-                  disabled={isPending || !cardNumber || !expiryDate || !cvc}
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      جاري المعالجة...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="size-4" />
-                      إتمام الدفع
-                    </>
-                  )}
-                </Button>
-              </form>
+            <CardContent className="space-y-4">
+              <Button
+                className="w-full h-12 text-base"
+                onClick={handlePay}
+                disabled={initPayment.isPending}
+              >
+                {initPayment.isPending ? (
+                  <>
+                    جاري التحضير...
+                    <Loader2 className="ms-2 size-5 animate-spin" />
+                  </>
+                ) : (
+                  `ادفع ${formatCurrency(plan.monthly_price)} عبر زين كاش`
+                )}
+              </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Plan Details */}
-        <div className="space-y-6">
+        <div>
           <Card>
             <CardHeader>
-              <CardTitle className="text-right flex items-center gap-2">
-                <Package className="size-5" />
-                تفاصيل الخطة
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">{plan.name}</CardTitle>
+                {plan.most_popular && (
+                  <Badge className="gap-1">
+                    <Star className="size-3" />
+                    الأكثر شيوعاً
+                  </Badge>
+                )}
+              </div>
+              <CardDescription>{plan.description}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Plan Name */}
-              <div>
-                <h3 className="text-xl font-bold text-right mb-1">
-                  {plan.name}
-                </h3>
-                <p className="text-sm text-muted-foreground text-right">
-                  {plan.description}
-                </p>
+              <div className="text-3xl font-bold">
+                {formatCurrency(plan.monthly_price)}
+                <span className="text-sm font-normal text-muted-foreground">
+                  {" "}
+                  / شهرياً
+                </span>
               </div>
-
               <Separator />
-
-              {/* Pricing */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">السعر الشهري</p>
-                  <div className="text-right">
-                    <p className="text-lg font-bold">
-                      {formatCurrency(plan.monthly_price)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">السعر السنوي</p>
-                  <div className="text-right">
-                    <p className="text-lg font-bold">
-                      {formatCurrency(plan.yearly_price)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Modules */}
-              {plan.modules && plan.modules.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-right">
-                      <Settings className="size-4" />
-                      <span>الوحدات ({plan.modules.length})</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {plan.modules.slice(0, 6).map((module: any) => (
-                        <Badge
-                          key={module.id}
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          {module.name}
-                        </Badge>
-                      ))}
-                      {plan.modules.length > 6 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{plan.modules.length - 6} أكثر
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Features */}
-              {plan.features && plan.features.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-right">
-                      <Star className="size-4" />
-                      <span>المميزات ({plan.features.length})</span>
-                    </div>
-                    <div className="space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
-                      {plan.features.map((feature: any) => (
-                        <div
-                          key={feature.feature?.id}
-                          className="flex items-start gap-2 text-sm text-right"
-                        >
-                          <CheckCircle2 className="size-4 text-green-600 mt-0.5 shrink-0" />
-                          <span className="text-muted-foreground">
-                            {feature.feature?.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
+              <p className="text-sm text-muted-foreground">
+                بعد إتمام الدفع يتم تحديث باقة المتجر تلقائياً.
+              </p>
             </CardContent>
           </Card>
         </div>
       </div>
-
-      {/* Success dialog after plan change */}
-      <Dialog
-        open={successDialogOpen}
-        onOpenChange={handleSuccessDialogOpenChange}
-      >
-        <DialogContent className="text-right sm:max-w-md" dir="rtl">
-          <DialogHeader>
-            <div className="flex justify-center mb-2">
-              <div className="rounded-full bg-green-100 p-3">
-                <CheckCircle2 className="size-10 text-green-600" />
-              </div>
-            </div>
-            <DialogTitle className="text-center">
-              تم تحديث الاشتراك بنجاح
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              تم تغيير خطتك بنجاح. يمكنك تحميل فاتورة الاشتراك أو متابعة إلى
-              صفحة الاشتراك.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col gap-2 pt-4">
-            <Button
-              type="button"
-              className="gap-2"
-              onClick={handleDownloadInvoice}
-              disabled={isDownloadingInvoice}
-            >
-              {isDownloadingInvoice ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Download className="size-4" />
-              )}
-              {isDownloadingInvoice
-                ? "جاري التحميل..."
-                : "تحميل فاتورة الاشتراك"}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              className="gap-2"
-              onClick={handleContinue}
-            >
-              <FileText className="size-4" />
-              متابعة إلى الاشتراك
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

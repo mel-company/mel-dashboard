@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import {
   useFetchStoreSubscription,
   useCancelSubscription,
-  useRenewSubscription,
 } from "@/api/wrappers/subscription.wrapper";
+import { useInitStorePlatformPayment } from "@/api/wrappers/platform-payment.wrapper";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -61,20 +61,34 @@ const StoreSubscriptionSection = () => {
     refetch,
   } = useFetchStoreSubscription();
   const cancelSubscription = useCancelSubscription();
-  const renewSubscription = useRenewSubscription();
+  const initPayment = useInitStorePlatformPayment();
 
   const handleRenew = () => {
-    if (!subscription?.id) {
-      toast.error("لا يمكن تجديد الاشتراك — معرّف الاشتراك غير موجود");
+    const planId = subscription?.planId || subscription?.plan?.id;
+    if (!planId) {
+      toast.error("لا يمكن تجديد الاشتراك — معرّف الباقة غير موجود");
       return;
     }
 
-    renewSubscription.mutate(
-      { id: subscription.id },
+    if (subscription?.plan?.is_free) {
+      toast.info("الباقة المجانية لا تحتاج دفع للتجديد");
+      return;
+    }
+
+    initPayment.mutate(
       {
-        onSuccess: () => {
-          toast.success("تم تجديد الاشتراك بنجاح");
-          refetch();
+        type: "RENEWAL",
+        planId,
+        billingPeriod: "MONTHLY",
+        returnBaseUrl: `${window.location.origin}/payment/return`,
+      },
+      {
+        onSuccess: (data) => {
+          if (!data?.redirectUrl) {
+            toast.error("لم يتم استلام رابط الدفع من زين كاش");
+            return;
+          }
+          window.location.href = data.redirectUrl;
         },
         onError: (error) => {
           const apiError = error as Error & {
@@ -84,7 +98,7 @@ const StoreSubscriptionSection = () => {
           toast.error(
             Array.isArray(message)
               ? message.join(" — ")
-              : message || "فشل تجديد الاشتراك",
+              : message || "فشل بدء الدفع عبر زين كاش",
           );
         },
       },
@@ -257,17 +271,17 @@ const StoreSubscriptionSection = () => {
               <Button
                 type="button"
                 className="h-12 flex-1 gap-2 rounded-[14px] bg-violet-600 text-[15px] font-bold text-white hover:bg-violet-700"
-                disabled={renewSubscription.isPending || !subscription.id}
+                disabled={initPayment.isPending || !subscription?.plan?.id}
                 onClick={handleRenew}
               >
-                {renewSubscription.isPending ? (
+                {initPayment.isPending ? (
                   <>
-                    جاري التجديد...
+                    جاري التحويل لزين كاش...
                     <Loader2 className="size-5 animate-spin" />
                   </>
                 ) : (
                   <>
-                    تجديد الاشتراك
+                    تجديد عبر زين كاش
                     <CheckCircle2 className="size-5" />
                   </>
                 )}
