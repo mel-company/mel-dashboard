@@ -15,6 +15,7 @@ import { useMe } from "@/api/wrappers/auth.wrappers";
 // import { toast } from "sonner";
 import EditProfileDialog from "./EditProfileDialog";
 import LogoutDialog from "./LogoutDialog";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const UserProfile = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-IQ", {
+    return date.toLocaleDateString(AR_LATN_LOCALE, {
       year: "numeric",
       month: "long",
       day: "numeric",

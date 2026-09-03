@@ -38,7 +38,7 @@ import {
   TruckIcon,
   Ticket,
 } from "lucide-react";
-import { formatCurrency } from "@/utils/format-currency";
+import { AR_LATN_LOCALE, formatCount, formatCurrency } from "@/utils/format-currency";
 import {
   useFetchOrder,
   useUpdateOrder,
@@ -144,7 +144,7 @@ const OrderDetails = () => {
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "—";
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-IQ", {
+    return date.toLocaleDateString(AR_LATN_LOCALE, {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -658,7 +658,9 @@ const OrderDetails = () => {
                                     الكمية:
                                   </span>
                                   <span className="text-xs font-medium">
-                                    {product.quantity?.toLocaleString() ?? "—"}{" "}
+                                    {product.quantity != null
+                                      ? formatCount(product.quantity)
+                                      : "—"}{" "}
                                   </span>
                                 </div>
 

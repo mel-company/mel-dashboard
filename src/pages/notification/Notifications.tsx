@@ -5,6 +5,7 @@ import {
   useSearchNotificationsCursor,
   useUpdateNotificationReadStatus,
 } from "@/api/wrappers/notification.wrappers";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 import {
   Table,
   TableBody,
@@ -124,7 +125,7 @@ const Notifications = ({}: Props) => {
   // Format date to Arabic format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat("ar-SA", {
+    return new Intl.DateTimeFormat(AR_LATN_LOCALE, {
       year: "numeric",
       month: "long",
       day: "numeric",

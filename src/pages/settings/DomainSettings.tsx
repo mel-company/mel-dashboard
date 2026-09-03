@@ -20,6 +20,7 @@ import {
   XCircle,
   Loader2,
 } from "lucide-react";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 import {
   useCheckDomainAvailability,
   useFindDomainDetails,
@@ -62,7 +63,7 @@ const DomainSettings = ({}: Props) => {
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "لم يتم التحديث";
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-IQ", {
+    return date.toLocaleDateString(AR_LATN_LOCALE, {
       year: "numeric",
       month: "long",
       day: "numeric",

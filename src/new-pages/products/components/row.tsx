@@ -13,6 +13,7 @@ import {
 import Badge from "@/components/table/badge";
 import ActionBtnList from "@/components/table/action-btn-list";
 import type { ProductListItem } from "@/api/types/product";
+import { formatCount } from "@/utils/format-currency";
 
 function renderCategories(product: ProductListItem) {
   const cats = getProductCategories(product);
@@ -105,7 +106,7 @@ const ProductRow = ({
           "font-medium tabular-nums text-[#04111c] dark:text-[#e4e7fc]",
         )}
       >
-        {quantity != null ? quantity.toLocaleString("ar-IQ") : "—"}
+        {quantity != null ? formatCount(quantity) : "—"}
       </TableCell>
       <TableCell
         className={cn(

@@ -1,6 +1,6 @@
 import { DISCOUNT_STATUS } from "@/utils/constants";
 import type { DiscountListItem } from "@/api/types/discount";
-import { formatCurrency } from "@/utils/format-currency";
+import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 
 export function getDiscountStatusMeta(status?: string) {
   switch (status) {
@@ -47,7 +47,7 @@ export function formatDiscountDate(dateString?: string | null): string {
   if (!dateString) return "—";
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("ar-IQ", {
+  return date.toLocaleDateString(AR_LATN_LOCALE, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -58,12 +58,12 @@ export function formatDiscountDateTime(dateString?: string | null): string {
   if (!dateString) return "—";
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return "—";
-  const datePart = date.toLocaleDateString("ar-IQ", {
+  const datePart = date.toLocaleDateString(AR_LATN_LOCALE, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   });
-  const timePart = date.toLocaleTimeString("ar-IQ", {
+  const timePart = date.toLocaleTimeString(AR_LATN_LOCALE, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,

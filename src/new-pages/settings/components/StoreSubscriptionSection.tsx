@@ -23,12 +23,13 @@ import {
   Rocket,
 } from "lucide-react";
 import SettingsCard from "./SettingsCard";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/utils/format-currency";
 
 const formatDate = (dateString: string | undefined) => {
   if (!dateString) return "—";
-  return new Date(dateString).toLocaleDateString("ar-IQ", {
+  return new Date(dateString).toLocaleDateString(AR_LATN_LOCALE, {
     year: "numeric",
     month: "long",
     day: "numeric",

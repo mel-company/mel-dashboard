@@ -23,6 +23,7 @@ import TicketFilterDialog, {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 
 const CURSOR_LIMIT = 10;
 
@@ -94,7 +95,7 @@ const Tickets = () => {
 
   const formatDate = (dateString: string) => {
     const d = new Date(dateString);
-    return d.toLocaleDateString("ar-IQ", {
+    return d.toLocaleDateString(AR_LATN_LOCALE, {
       year: "numeric",
       month: "short",
       day: "numeric",

@@ -11,6 +11,7 @@ import SwitchTab from "@/components/table/switch-tab";
 import ProductDeleteModal from "./components/delete-modal";
 import FilterSlidersIcon from "@/components/icons/FilterSlidersIcon";
 import { cn } from "@/lib/utils";
+import { formatCount } from "@/utils/format-currency";
 
 const ProductsPage = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const ProductsPage = () => {
     actions.stats?.totalProducts ?? actions.products?.length ?? 0;
   const listSubtitle = activeSearch
     ? `قمت بالبحث عن : "${activeSearch}"`
-    : `أجمالي العناصر المتاحة ${listCount.toLocaleString("ar-IQ")}`;
+    : `أجمالي العناصر المتاحة ${formatCount(listCount)}`;
 
   return (
     <div

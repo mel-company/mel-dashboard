@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { pdf } from "@react-pdf/renderer";
 import { Download } from "lucide-react";
 import { OrderInvoicePDF, type OrderInvoiceData } from "@/utils/files/invoice/order.invoice";
-import { formatCurrency } from "@/utils/format-currency";
+import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 
 const STORAGE_KEY = "order-invoice-preview-data";
 
@@ -88,7 +88,7 @@ export default function OrderInvoicePreview() {
   ].filter(Boolean);
   const deliveryAddress = addressParts.join("، ") || "—";
   const createdDate = order.createdAt
-    ? new Date(order.createdAt).toLocaleDateString("ar-IQ")
+    ? new Date(order.createdAt).toLocaleDateString(AR_LATN_LOCALE)
     : "—";
 
   return (

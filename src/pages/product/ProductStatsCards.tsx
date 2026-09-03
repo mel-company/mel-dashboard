@@ -17,7 +17,7 @@ import {
   Package,
   ShoppingBag,
 } from "lucide-react";
-import { formatCurrency } from "@/utils/format-currency";
+import { formatCount, formatCurrency } from "@/utils/format-currency";
 
 function mergeWithStoreFallback(
   stats: ProductStatsSummary | undefined,
@@ -102,21 +102,21 @@ const ProductStatsCards = () => {
         />
         <MobileStatCard
           title="أجمالي المنتجات"
-          value={stats.totalProducts.toLocaleString("ar-IQ")}
+          value={formatCount(stats.totalProducts)}
           icon={<ShoppingBag className="size-5" />}
           iconWrapClass="bg-[rgba(0,183,255,0.08)] text-[#00b7ff] dark:bg-sky-500/15 dark:text-sky-300"
           growth={stats.trends?.totalProducts ?? 12.6}
         />
         <MobileStatCard
           title="قريبة على النفاذ"
-          value={stats.lowStock.toLocaleString("ar-IQ")}
+          value={formatCount(stats.lowStock)}
           icon={<AlertTriangle className="size-5" />}
           iconWrapClass="bg-[rgba(245,123,0,0.08)] text-[#f57b00] dark:bg-amber-500/15 dark:text-amber-300"
           growth={stats.trends?.lowStock ?? -12.6}
         />
         <MobileStatCard
           title="نفذت الكمية"
-          value={stats.outOfStock.toLocaleString("ar-IQ")}
+          value={formatCount(stats.outOfStock)}
           icon={<Package className="size-5" />}
           iconWrapClass="bg-[rgba(255,8,8,0.08)] text-[#ff0808] dark:bg-rose-500/15 dark:text-rose-300"
           growth={stats.trends?.outOfStock ?? 12.6}
@@ -133,21 +133,21 @@ const ProductStatsCards = () => {
         <BaseCard
           icon={PackageDeliveredIcon}
           title="أجمالي المنتجات"
-          value={stats.totalProducts.toLocaleString("ar-IQ")}
+          value={formatCount(stats.totalProducts)}
           growth={stats.trends?.totalProducts ?? 12.6}
           color="default"
         />
         <BaseCard
           icon={PackageProcessIcon}
           title="قريبة على النفاذ"
-          value={stats.lowStock.toLocaleString("ar-IQ")}
+          value={formatCount(stats.lowStock)}
           growth={stats.trends?.lowStock ?? -12.6}
           color="warning"
         />
         <BaseCard
           icon={PackageOpenIcon}
           title="نفذت الكمية"
-          value={stats.outOfStock.toLocaleString("ar-IQ")}
+          value={formatCount(stats.outOfStock)}
           growth={stats.trends?.outOfStock ?? 12.6}
           color="danger"
         />

@@ -1,6 +1,7 @@
 import { Area, AreaChart, Dot, ResponsiveContainer } from "recharts";
 import DashboardCard from "./DashboardCard";
 import { formatIQD, getTrendColor } from "../utils";
+import { formatCount } from "@/utils/format-currency";
 
 type TotalOrdersCardProps = {
   total: number;
@@ -38,7 +39,7 @@ const TotalOrdersCard = ({
         </div>
         <p className="mt-1 text-right text-2xl font-bold leading-tight text-foreground">
           {asOrderCount
-            ? `${Math.round(total).toLocaleString("ar-IQ")} طلب`
+            ? `${formatCount(Math.round(total))} طلب`
             : formatIQD(total)}
         </p>
       </div>

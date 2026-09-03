@@ -18,6 +18,7 @@ import {
   User,
   HeadphonesIcon,
 } from "lucide-react";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 import {
   useFetchTicketStore,
   useFetchMessagesStoreCursor,
@@ -180,7 +181,7 @@ const TicketDetails = () => {
 
   const formatDate = (dateString: string) => {
     const d = new Date(dateString);
-    return d.toLocaleDateString("ar-IQ", {
+    return d.toLocaleDateString(AR_LATN_LOCALE, {
       year: "numeric",
       month: "short",
       day: "numeric",

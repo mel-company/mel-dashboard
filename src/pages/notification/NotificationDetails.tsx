@@ -23,6 +23,7 @@ import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import { useDeleteNotification } from "@/api/wrappers/notification.wrappers";
 import { toast } from "sonner";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 
 const NotificationDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -81,7 +82,7 @@ const NotificationDetails = () => {
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-IQ", {
+    return date.toLocaleDateString(AR_LATN_LOCALE, {
       year: "numeric",
       month: "long",
       day: "numeric",

@@ -26,7 +26,7 @@ import CouponFilterDialog, {
 } from "./CouponFilterDialog";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
-import { formatCurrency } from "@/utils/format-currency";
+import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 
 const CURSOR_LIMIT = 20;
 
@@ -122,7 +122,7 @@ const Coupons = () => {
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "—";
     try {
-      return new Date(dateString).toLocaleDateString("ar-EG", {
+      return new Date(dateString).toLocaleDateString(AR_LATN_LOCALE, {
         year: "numeric",
         month: "short",
         day: "numeric",

@@ -48,7 +48,7 @@ import { Link } from "react-router-dom";
 import EnableCouponDialog from "./EnableCouponDialog";
 import DisableCouponDialog from "./DisableCouponDialog";
 import EditCouponDialog from "./EditCouponDialog";
-import { formatCurrency } from "@/utils/format-currency";
+import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 
 const CouponDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -159,7 +159,7 @@ const CouponDetails = () => {
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "—";
     try {
-      return new Date(dateString).toLocaleDateString("ar-EG", {
+      return new Date(dateString).toLocaleDateString(AR_LATN_LOCALE, {
         year: "numeric",
         month: "long",
         day: "numeric",

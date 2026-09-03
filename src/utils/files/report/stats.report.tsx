@@ -8,7 +8,7 @@ import {
 } from "@react-pdf/renderer";
 import CairoRegular from "../../../assets/fonts/Cairo-Regular.ttf";
 import CairoBold from "../../../assets/fonts/Cairo-Bold.ttf";
-import { formatCurrency } from "@/utils/format-currency";
+import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 
 Font.register({ family: "Cairo", fonts: [
   { src: CairoRegular, fontWeight: 400 },
@@ -197,7 +197,7 @@ export const StatsReportPDF = ({ data }: { data: StatsReportData }) => {
   const { storeStats, monthlySales, ordersStatusStats, mostBoughtProducts } =
     data;
   const now = new Date();
-  const dateStr = now.toLocaleDateString("ar-IQ");
+  const dateStr = now.toLocaleDateString(AR_LATN_LOCALE);
   const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
   const generatedAt = `${dateStr} ${timeStr}`;
 

@@ -15,6 +15,7 @@ import {
   TICKET_STATUSES,
   TICKET_TYPES,
 } from "@/pages/support/TicketFilterDialog";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 
 type TicketRowProps = {
   ticket: SupportTicketListItem;
@@ -23,7 +24,7 @@ type TicketRowProps = {
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return "—";
-  return new Date(dateString).toLocaleDateString("ar-IQ", {
+  return new Date(dateString).toLocaleDateString(AR_LATN_LOCALE, {
     year: "numeric",
     month: "short",
     day: "numeric",

@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { useFilterOrdersCursor } from "@/api/wrappers/order.wrappers";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 import OrderFilterDialog, { type OrderFilterValues } from "./OrderFilterDialog";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
@@ -108,7 +109,7 @@ const Orders = () => {
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-IQ", {
+    return date.toLocaleDateString(AR_LATN_LOCALE, {
       year: "numeric",
       month: "short",
       day: "numeric",

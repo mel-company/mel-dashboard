@@ -1,4 +1,5 @@
 import { phone } from "phone";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 
 /**
  * Validates a domain name based on the following rules:
@@ -191,9 +192,9 @@ export function formatDate(dateString: string) {
     }
 
     const date = dateObj.toISOString().split("T")[0];
-    const formatter = new Intl.DateTimeFormat("ar-IQ", { weekday: "long" });
+    const formatter = new Intl.DateTimeFormat(AR_LATN_LOCALE, { weekday: "long" });
     const day = formatter.format(dateObj);
-    const time = dateObj.toLocaleTimeString();
+    const time = dateObj.toLocaleTimeString(AR_LATN_LOCALE);
     return { date, day, time };
   } catch (error) {
     console.warn("Invalid date format:", dateString, error);

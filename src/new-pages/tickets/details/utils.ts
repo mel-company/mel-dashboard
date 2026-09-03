@@ -3,6 +3,7 @@ import {
   TICKET_STATUSES,
   TICKET_TYPES,
 } from "@/pages/support/TicketFilterDialog";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 
 export const getTicketTypeLabel = (type?: string) =>
   TICKET_TYPES.find((t) => t.value === type)?.label ?? type ?? "—";
@@ -40,7 +41,7 @@ export const getStatusBannerText = (status?: string) => {
 
 export const formatMessageTime = (dateString?: string) => {
   if (!dateString) return "";
-  return new Date(dateString).toLocaleTimeString("ar-IQ", {
+  return new Date(dateString).toLocaleTimeString(AR_LATN_LOCALE, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,

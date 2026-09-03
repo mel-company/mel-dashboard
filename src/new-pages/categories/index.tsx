@@ -21,6 +21,7 @@ import {
   GitBranchIcon,
   GitCommitVerticalIcon,
 } from "@hugeicons-pro/core-bulk-rounded";
+import { formatCount } from "@/utils/format-currency";
 
 const tabOptions = [
   { label: "الفئات", value: "categories", icon: ShapeCollectionIcon },
@@ -34,9 +35,9 @@ const CategoriesPage = () => {
   const [isAddGroupOpen, setIsAddGroupOpen] = useState(false);
 
   const listTitle = showGroups ? "جميع المجموعات" : "جميع الفئات";
-  const listCount =
-    actions.stats?.totalCategories?.toLocaleString("ar-IQ") ??
-    actions.categories.length;
+  const listCount = formatCount(
+    actions.stats?.totalCategories ?? actions.categories.length,
+  );
   const listSubtitle = showGroups
     ? undefined
     : `أجمالي العناصر المتاحة ${listCount}`;

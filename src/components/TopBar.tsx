@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@/lib/utils";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { useEffect, useRef, useState } from "react";
 import { useLogout, useMe } from "@/api/wrappers/auth.wrappers";
@@ -80,7 +81,7 @@ const TopBar = ({ onMenuClick, hideSidebar }: Props) => {
   // Format date for notification
   const formatNotificationDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-IQ", {
+    return date.toLocaleDateString(AR_LATN_LOCALE, {
       month: "short",
       day: "numeric",
       hour: "2-digit",

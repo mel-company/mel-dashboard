@@ -2,6 +2,7 @@ import {
   useFetchStoreSubscription,
   useCancelSubscription,
 } from "@/api/wrappers/subscription.wrapper";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 import {
   Card,
   CardContent,
@@ -57,7 +58,7 @@ const SubscriptionSettings = ({}: Props) => {
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "—";
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-IQ", {
+    return date.toLocaleDateString(AR_LATN_LOCALE, {
       year: "numeric",
       month: "long",
       day: "numeric",

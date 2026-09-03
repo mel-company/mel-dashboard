@@ -2,6 +2,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import DashboardCard from "./DashboardCard";
 import { CHART_COLORS } from "../utils";
 import { cn } from "@/lib/utils";
+import { formatCount } from "@/utils/format-currency";
 
 type PaymentMethod = {
   name: string;
@@ -81,7 +82,7 @@ const PaymentMethodsCard = ({
                   className="flex items-center justify-between gap-2"
                 >
                   <span className="text-sm font-semibold tabular-nums text-foreground">
-                    {(method.count ?? method.value).toLocaleString("ar-IQ")}
+                    {formatCount(method.count ?? method.value)}
                   </span>
                   <div className="flex min-w-0 items-center gap-2">
                     <p className="truncate text-center text-xs text-text-secondary">

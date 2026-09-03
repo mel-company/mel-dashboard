@@ -23,6 +23,7 @@ import {
   useUpdateCurrentSettings,
 } from "@/api/wrappers/settings.wrappers";
 import SelectDeliveryCompanyDialog from "./SelectDeliveryCompanyDialog";
+import { AR_LATN_LOCALE } from "@/utils/format-currency";
 
 type Props = {};
 
@@ -70,7 +71,7 @@ const DeliverySettings = ({}: Props) => {
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "لم يتم التحديث";
     const date = new Date(dateString);
-    return date.toLocaleDateString("ar-IQ", {
+    return date.toLocaleDateString(AR_LATN_LOCALE, {
       year: "numeric",
       month: "long",
       day: "numeric",
