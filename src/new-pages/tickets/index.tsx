@@ -34,7 +34,7 @@ const TicketsPage = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <TitleBar count={actions.tickets?.length ?? 0}>
           <Button
             className="h-11 w-full shrink-0 gap-2 rounded-full bg-violet-100 px-4 text-violet-700 shadow-sm hover:bg-violet-200 sm:w-auto sm:gap-2.5 sm:px-5 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20"
@@ -48,7 +48,7 @@ const TicketsPage = () => {
         </TitleBar>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         <Button
           className="h-12 w-full gap-2 rounded-full bg-violet-100 text-violet-700 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff]"
           onClick={() => setIsCreateOpen(true)}
@@ -61,7 +61,7 @@ const TicketsPage = () => {
       </div>
 
       <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         <BaseCard
           icon={CustomerSupportIcon}
           title="إجمالي التذاكر"
@@ -93,7 +93,7 @@ const TicketsPage = () => {
       </div>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         <div className="flex items-center gap-2">
           <div
             className={cn(
@@ -136,7 +136,7 @@ const TicketsPage = () => {
         </div>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <PageTableHeader
           title="جميع التذاكر"
           subtitle={`أجمالي العناصر المتاحة ${actions.tickets.length}`}

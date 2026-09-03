@@ -71,8 +71,10 @@ const Layout = () => {
         <main className="custom-scrollbar relative z-10 flex-1 overflow-x-hidden overflow-y-auto">
           <div
             className={cn(
-              "w-full",
-              isPosPage ? "p-3 lg:p-5" : "p-3 sm:p-6 lg:p-8",
+              "mx-auto w-full",
+              isPosPage
+                ? "max-w-none p-3 lg:p-5"
+                : "max-w-[1600px] p-3 sm:p-5 md:p-6 lg:p-7 xl:p-8 2xl:px-10",
             )}
           >
             <Outlet />

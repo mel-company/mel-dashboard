@@ -92,7 +92,7 @@ const ProductStatsCards = () => {
 
   return (
     <>
-      <div className="flex flex-col gap-2.5 md:hidden">
+      <div className="flex flex-col gap-2.5 lg:hidden">
         <MobileStatCard
           title="أجمالي اسعار المنتجات"
           value={formatCurrency(stats.totalValue)}
@@ -123,7 +123,7 @@ const ProductStatsCards = () => {
         />
       </div>
 
-      <div className="hidden grid-cols-2 gap-3 md:grid lg:grid-cols-4">
+      <div className="hidden grid-cols-2 gap-3 lg:grid xl:grid-cols-4">
         <BaseCard
           icon={Money04Icon}
           title="أجمالي اسعار المنتجات"

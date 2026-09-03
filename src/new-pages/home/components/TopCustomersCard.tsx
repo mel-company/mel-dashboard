@@ -2,6 +2,7 @@ import DashboardCard from "./DashboardCard";
 import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import { CHART_COLORS } from "../utils";
+import { formatCount } from "@/utils/format-currency";
 
 type TopCustomer = {
   id: string;
@@ -23,7 +24,7 @@ const TopCustomersCard = ({ customers }: TopCustomersCardProps) => {
     return (
       <DashboardCard
         title="أفضل العملاء"
-        className="min-h-[280px]"
+        className="min-h-[200px]"
         contentClassName="flex items-center justify-center"
       >
         <p className="text-sm text-muted-foreground">لا يوجد عملاء بعد</p>
@@ -35,42 +36,45 @@ const TopCustomersCard = ({ customers }: TopCustomersCardProps) => {
     <DashboardCard
       title="أفضل العملاء"
       className="min-h-[280px]"
-      contentClassName="space-y-0 px-3.5 py-1 sm:px-4"
+      contentClassName="space-y-0 px-3 py-1 sm:px-4"
     >
       {customers.slice(0, 5).map((customer, index) => {
         const rank = customer.rank ?? index + 1;
         return (
           <div
             key={customer.id}
-            className="flex h-[51px] items-center justify-between gap-2"
+            className="flex h-[52px] items-center gap-2"
           >
             <span
-              className="shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-normal"
+              className="shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-normal tabular-nums"
+              lang="en"
               style={{
                 backgroundColor: "rgba(125, 38, 247, 0.05)",
                 color: CHART_COLORS.brandPurple,
               }}
             >
-              +{customer.orders}
+              +{formatCount(customer.orders)}
             </span>
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="min-w-0 text-right">
+
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+              <div className="min-w-0 flex-1 text-right">
                 <p className="truncate text-[11px] leading-normal text-text-secondary dark:text-foreground">
                   {customer.name}
                 </p>
                 <p
-                  className="truncate text-[9px] leading-normal text-[#666] dark:text-muted-foreground"
+                  className="truncate text-[9px] leading-normal tabular-nums text-[#666] dark:text-muted-foreground"
                   dir="ltr"
+                  lang="en"
                 >
                   {customer.phone}
                 </p>
               </div>
-              <div className="flex size-[37px] shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-muted">
+              <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-muted">
                 <AssetImage
                   image={customer.avatar}
                   baseUrl={imageBaseUrl}
                   alt={customer.name}
-                  className="size-[31px] rounded-[6px] object-cover"
+                  className="size-8 rounded-[6px] object-cover"
                   fallback={
                     <span className="text-[10px] font-bold text-muted-foreground">
                       {customer.name.slice(0, 2)}
@@ -78,13 +82,16 @@ const TopCustomersCard = ({ customers }: TopCustomersCardProps) => {
                   }
                 />
               </div>
-              <p className="shrink-0 text-xs text-[#d0d5dd]">
+              <p
+                className="w-6 shrink-0 text-center text-xs tabular-nums text-[#d0d5dd]"
+                lang="en"
+              >
                 <span className="font-normal">#</span>
                 <span
                   className="font-bold"
                   style={{ color: CHART_COLORS.brandPurple }}
                 >
-                  {rank}
+                  {formatCount(rank)}
                 </span>
               </p>
             </div>

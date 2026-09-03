@@ -18,7 +18,7 @@ const NotificationCards = ({
   onCardClick,
 }: NotificationCardsProps) => {
   return (
-    <div className="flex flex-col gap-3 md:hidden">
+    <div className="flex flex-col gap-3 xl:hidden">
       {notifications.map((notification) => {
         const meta = getNotificationTypeMeta(notification);
         const isRead = isNotificationRead(notification);

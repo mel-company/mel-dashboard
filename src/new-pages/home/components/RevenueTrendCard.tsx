@@ -35,7 +35,7 @@ const RevenueTrendCard = ({
   const salesStroke = getTrendColor(salesUp);
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.3fr_1fr]">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.3fr_1fr]">
       <DashboardCard
         className="min-h-[164px]"
         contentClassName="flex flex-col justify-between"

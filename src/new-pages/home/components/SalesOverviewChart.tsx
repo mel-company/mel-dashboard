@@ -14,6 +14,7 @@ import {
   getChartTheme,
   getTrendColor,
 } from "../utils";
+import { formatNumber } from "@/utils/format-currency";
 
 type SalesPoint = {
   month: string;
@@ -36,9 +37,9 @@ const formatGrowth = (value: number) => {
 };
 
 const formatYTick = (value: number) => {
-  if (value >= 1_000_000) return `${Math.round(value / 1_000_000)} مليون`;
-  if (value >= 1_000) return `${Math.round(value / 1_000)} الف`;
-  return String(value);
+  if (value >= 1_000_000) return `${formatNumber(Math.round(value / 1_000_000))}M`;
+  if (value >= 1_000) return formatNumber(value);
+  return formatNumber(value);
 };
 
 const SalesOverviewChart = ({
@@ -84,7 +85,7 @@ const SalesOverviewChart = ({
 
   return (
     <DashboardCard
-      className="min-h-[320px] lg:col-span-7"
+      className="min-h-[320px] md:col-span-2 xl:col-span-6"
       contentClassName="flex flex-col pt-2"
     >
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
@@ -146,11 +147,11 @@ const SalesOverviewChart = ({
               tick={{ fill: theme.tick, fontSize: 10 }}
             />
             <YAxis
-              width={44}
+              width={48}
               axisLine={false}
               tickLine={false}
               tickFormatter={formatYTick}
-              tick={{ fill: theme.tick, fontSize: 8 }}
+              tick={{ fill: theme.tick, fontSize: 10 }}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area

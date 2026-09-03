@@ -204,8 +204,9 @@ const HomeDashboard = () => {
 
   return (
     <div
-      className="min-h-full space-y-3 rounded-[28px] bg-surface p-3 sm:space-y-3 sm:p-4 lg:gap-3 lg:space-y-3 lg:p-4"
+      className="min-h-full space-y-3 rounded-[28px] bg-surface p-3 sm:space-y-3 sm:p-4 lg:gap-3 lg:space-y-3 lg:p-4 [&_.recharts-cartesian-axis-tick-value]:[font-variant-numeric:lining-nums_tabular-nums]"
       dir="rtl"
+      lang="ar"
     >
       <div className="hidden lg:block">
         <TitleBar
@@ -221,7 +222,7 @@ const HomeDashboard = () => {
         <DashboardPeriodSelect value={period} onChange={setPeriod} />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12 xl:gap-3">
         <SalesOverviewChart
           data={salesChartData}
           deliveredTotal={revenueCard.deliveredAmount}
@@ -230,7 +231,7 @@ const HomeDashboard = () => {
           growthPercent={revenueCard.growthPercent}
         />
 
-        <div className="flex flex-col gap-3 lg:col-span-2">
+        <div className="flex flex-col gap-3 xl:col-span-3">
           <PeakAccessDayCard
             peakDay={data.bestArrivalDay.day}
             weeklyData={weeklyAccess}
@@ -246,9 +247,9 @@ const HomeDashboard = () => {
         <TopProductsCard products={topProducts} />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-3">
-        <div className="flex flex-col gap-3 lg:col-span-5">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.2fr_1fr]">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12 xl:gap-3">
+        <div className="flex flex-col gap-3 md:col-span-2 xl:col-span-5">
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.2fr_1fr]">
             <TopCustomersCard customers={topCustomers} />
             <PaymentMethodsCard
               methods={paymentMethods}
@@ -258,12 +259,12 @@ const HomeDashboard = () => {
           <SupportReportsChart data={supportData} />
         </div>
 
-        <div className="flex flex-col gap-3 lg:col-span-3">
+        <div className="flex flex-col gap-3 xl:col-span-3">
           <OrderStatusChart items={orderStatusItems} />
           <TopCategoriesCard categories={topCategories} />
         </div>
 
-        <div className="flex flex-col gap-3 lg:col-span-4">
+        <div className="flex flex-col gap-3 md:col-span-2 xl:col-span-4">
           <RevenueTrendCard
             revenue={storeRevenue.amount}
             lastMonthRevenue={storeRevenue.lastMonth}

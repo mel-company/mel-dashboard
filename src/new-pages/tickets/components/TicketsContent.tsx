@@ -67,7 +67,7 @@ const TicketsContent = ({ actions }: TicketsContentProps) => {
 
   return (
     <>
-      <div className="md:hidden">
+      <div className="xl:hidden">
         <div className="rounded-[28px] bg-slate-50 p-3 dark:bg-[#12183b]">
           <div className="mb-2 px-2 pt-1 text-right">
             <h2 className="text-base text-slate-900 dark:text-[#e4e7fc]">جميع الفئات</h2>
@@ -83,7 +83,7 @@ const TicketsContent = ({ actions }: TicketsContentProps) => {
           </div>
         </div>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden xl:block">
         <TicketTable tickets={actions.tickets} />
       </div>
       <div ref={actions.loadMoreRef} className="flex justify-center py-4">

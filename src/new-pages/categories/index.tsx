@@ -44,7 +44,7 @@ const CategoriesPage = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <TitleBar
           count={showGroups ? undefined : (actions.categories?.length ?? 0)}
           listLabel={showGroups ? "المجموعات" : "الفئات"}
@@ -73,7 +73,7 @@ const CategoriesPage = () => {
         </TitleBar>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         <SwitchTab
           selected={showGroups ? "groups" : "categories"}
           onChange={(value) => setShowGroups(value === "groups")}
@@ -103,7 +103,7 @@ const CategoriesPage = () => {
       ) : (
         <>
           <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
               <BaseCard
                 icon={Fire03Icon}
                 title="الفئات الأعلى طلباً"
@@ -126,7 +126,7 @@ const CategoriesPage = () => {
             </div>
           </div>
 
-          <div className="space-y-3 md:hidden">
+          <div className="space-y-3 lg:hidden">
             <div className="flex items-center gap-2">
               <div
                 className={cn(
@@ -169,7 +169,7 @@ const CategoriesPage = () => {
             </div>
           </div>
 
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <PageTableHeader
               {...actions}
               title={listTitle}

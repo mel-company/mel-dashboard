@@ -61,7 +61,7 @@ const TopCategoriesCard = ({ categories }: TopCategoriesCardProps) => {
     return (
       <DashboardCard
         title="الاقسام الاعلئ طلبا"
-        className="min-h-[280px] flex-1"
+        className="min-h-[200px] flex-1"
         contentClassName="flex items-center justify-center"
       >
         <p className="text-sm text-muted-foreground">لا توجد فئات بعد</p>

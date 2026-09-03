@@ -98,7 +98,7 @@ const NotificationTable = ({
           </p>
         </div>
         {toolbar ? (
-          <div className="order-2 hidden md:order-1 md:block">{toolbar}</div>
+          <div className="order-2 hidden lg:order-1 lg:block">{toolbar}</div>
         ) : null}
       </div>
 
@@ -107,7 +107,7 @@ const NotificationTable = ({
         onCardClick={onRowClick}
       />
 
-      <div className="hidden overflow-x-auto md:block">
+      <div className="hidden overflow-x-auto xl:block">
         <Table>
           <NotificationTableHeader />
           <TableBody>
@@ -122,8 +122,8 @@ const NotificationTable = ({
         </Table>
       </div>
 
-      <div className="mt-4 space-y-3 border-t border-[#e7edf6] pt-4 dark:border-white/[0.06] md:block">
-        <div className="hidden flex-wrap items-center justify-end gap-3 text-sm md:flex">
+      <div className="mt-4 space-y-3 border-t border-[#e7edf6] pt-4 dark:border-white/[0.06]">
+        <div className="hidden flex-wrap items-center justify-end gap-3 text-sm xl:flex">
           <select
             className="rounded-lg border border-[rgba(125,38,247,0.15)] bg-transparent px-3 py-1.5 font-bold text-[#7d26f7] dark:border-[#9a5cff]/20 dark:text-[#b282ff]"
             value={sortOrder}

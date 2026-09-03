@@ -1,3 +1,5 @@
+import { formatCount } from "@/utils/format-currency";
+
 type SubscriptionCardProps = {
   planCode?: string | null;
   planTitle?: string | null;
@@ -10,7 +12,10 @@ const formatExpiryDate = (dateString: string | null | undefined) => {
   if (!dateString) return "—";
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return "—";
-  return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  const d = String(date.getDate()).padStart(2, "0");
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const y = String(date.getFullYear());
+  return `${d}/${m}/${y}`;
 };
 
 const isSubscriptionExpired = (
@@ -25,10 +30,11 @@ const isSubscriptionExpired = (
 };
 
 const formatDaysLeftLabel = (daysLeft: number) => {
+  const n = formatCount(daysLeft);
   if (daysLeft === 1) return "متبقي يوم واحد";
   if (daysLeft === 2) return "متبقي يومان";
-  if (daysLeft >= 3 && daysLeft <= 10) return `متبقي ${daysLeft} أيام`;
-  return `متبقي ${daysLeft} يوم`;
+  if (daysLeft >= 3 && daysLeft <= 10) return `متبقي ${n} أيام`;
+  return `متبقي ${n} يوم`;
 };
 
 const SubscriptionCard = ({
@@ -53,7 +59,7 @@ const SubscriptionCard = ({
             {formatExpiryDate(expiresAt)}
           </p>
         </div>
-        <div className="rounded-2xl bg-white/20 px-3 py-1.5 text-sm font-bold backdrop-blur-sm">
+        <div className="rounded-2xl bg-white/20 px-3 py-1.5 text-sm font-bold backdrop-blur-sm tabular-nums" lang="en">
           {planCode ?? "—"}
         </div>
       </div>
@@ -62,7 +68,7 @@ const SubscriptionCard = ({
         <p className="text-2xl font-bold leading-snug sm:text-3xl">
           {planTitle ?? "بدون خطة"}
         </p>
-        <p className="mt-2 text-sm text-white/80">
+        <p className="mt-2 text-sm text-white/80 tabular-nums" lang="en">
           {expired ? (
             <span className="text-lg font-bold text-white">انتهت الصلاحية</span>
           ) : (

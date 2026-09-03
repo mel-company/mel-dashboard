@@ -25,7 +25,7 @@ const TopProductsCard = ({ products }: TopProductsCardProps) => {
     return (
       <DashboardCard
         title="المنتجات الاكثر طلب"
-        className="min-h-[320px] lg:col-span-3"
+        className="min-h-[200px] xl:col-span-3"
         contentClassName="flex items-center justify-center"
       >
         <p className="text-sm text-muted-foreground">لا توجد منتجات بعد</p>
@@ -36,7 +36,7 @@ const TopProductsCard = ({ products }: TopProductsCardProps) => {
   return (
     <DashboardCard
       title="المنتجات الاكثر طلب"
-      className="min-h-[320px] lg:col-span-3"
+      className="min-h-[320px] xl:col-span-3"
       contentClassName="space-y-0 px-3.5 py-1 sm:px-4"
     >
       {products.slice(0, 5).map((product, index) => {

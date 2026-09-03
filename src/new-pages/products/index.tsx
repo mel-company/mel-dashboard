@@ -30,7 +30,7 @@ const ProductsPage = () => {
       className="min-h-full space-y-4 rounded-[28px] bg-surface p-3 sm:space-y-6 sm:p-4 lg:p-5"
       dir="rtl"
     >
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <TitleBar count={actions.newProductsCount} listLabel="المنتجات">
           <Button
             className="h-12 shrink-0 gap-2 rounded-[14px] bg-violet-100 px-4 text-violet-700 shadow-sm hover:bg-violet-200 sm:gap-2.5 sm:px-5 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20"
@@ -44,7 +44,7 @@ const ProductsPage = () => {
         </TitleBar>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         <Button
           className="h-12 w-full gap-2 rounded-[14px] bg-violet-100 text-violet-700 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff]"
           onClick={() => navigate("/products/add")}
@@ -60,7 +60,7 @@ const ProductsPage = () => {
         <ProductStatsCards />
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         <div className="flex items-center gap-2.5">
           <div
             className={cn(
@@ -113,7 +113,7 @@ const ProductsPage = () => {
         </div>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <PageTableHeader
           {...actions}
           title={listTitle}

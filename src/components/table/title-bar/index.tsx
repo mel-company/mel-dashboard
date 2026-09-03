@@ -1,6 +1,7 @@
 import { usePage } from "@/hooks/pages"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { cn } from "@/lib/utils"
+import { formatCount } from "@/utils/format-currency"
 
 
 const TitleBar = ({
@@ -45,7 +46,7 @@ const TitleBar = ({
 
   const countSubtitle =
     typeof count === "number" && count > 0
-      ? `تمتلك ${count} حركة جديدة في قائمة ${listLabel}`
+      ? `تمتلك ${formatCount(count)} حركة جديدة في قائمة ${listLabel}`
       : null;
 
   const subtitle =
@@ -57,17 +58,17 @@ const TitleBar = ({
   return (
     <div
       className={cn(
-        "flex w-full flex-col gap-3 text-blue-950 sm:flex-row sm:items-center sm:justify-between dark:text-[#e4e7fc]",
+        "flex w-full flex-col gap-3 text-blue-950 sm:flex-row sm:items-center sm:justify-between lg:gap-4 dark:text-[#e4e7fc]",
         className,
       )}
     >
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
           <HugeiconsIcon icon={currentPage?.icon?.normal} className="size-6 shrink-0 sm:size-7" />
-          <h1 className="truncate text-xl font-bold sm:text-2xl">{currentPage?.label}</h1>
+          <h1 className="truncate text-xl font-bold sm:text-2xl xl:text-[28px] xl:leading-tight">{currentPage?.label}</h1>
         </div>
         {subtitle ? (
-          <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground/80 sm:line-clamp-none">
+          <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground/80 sm:line-clamp-none sm:text-sm">
             {subtitle}
           </div>
         ) : null}

@@ -29,7 +29,7 @@ const EmployeesPage = () => {
                 </Button>
             </TitleBar>
 
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
                 <BaseCard 
                     icon={User02Icon} 
                     title="إجمالي الموظفين" 

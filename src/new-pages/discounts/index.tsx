@@ -40,7 +40,7 @@ const DiscountsPage = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <TitleBar
           count={listCount}
           listLabel={isDiscountsTab ? "الخصومات" : "الكوبونات"}
@@ -67,7 +67,7 @@ const DiscountsPage = () => {
         </TitleBar>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         <SwitchTab
           selected={actions.activeTab}
           onChange={(v) => actions.setActiveTab(v as "discounts" | "coupons")}
@@ -86,7 +86,7 @@ const DiscountsPage = () => {
       </div>
 
       <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {isDiscountsTab ? (
             <>
               <FeaturedCard
@@ -155,7 +155,7 @@ const DiscountsPage = () => {
         </div>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         <div className="flex items-center gap-2">
           <div
             className={cn(
@@ -198,7 +198,7 @@ const DiscountsPage = () => {
         </div>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <PageTableHeader
           title={listTitle}
           subtitle={`أجمالي العناصر المتاحة ${listCount}`}

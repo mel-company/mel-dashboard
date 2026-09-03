@@ -34,7 +34,7 @@ const CustomersContent = ({ actions }: CustomersContentProps) => {
 
   return (
     <>
-      <div className="md:hidden">
+      <div className="xl:hidden">
         <div className="rounded-[28px] bg-slate-50 p-3 dark:bg-[#12183b]">
           <div className="mb-2 px-2 pt-1 text-right">
             <h2 className="text-base text-slate-900 dark:text-[#e4e7fc]">جميع العملاء</h2>
@@ -77,7 +77,7 @@ const CustomersContent = ({ actions }: CustomersContentProps) => {
         </div>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden xl:block">
         <CustomerTable
           customers={actions.customers}
           onDelete={actions.setDeleteId}

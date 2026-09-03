@@ -17,16 +17,18 @@ const CustomersPage = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <TitleBar
-        count={
-          actions.stats?.newCustomers ??
-          actions.customers?.length ??
-          0
-        }
-      />
+      <div className="hidden lg:block">
+        <TitleBar
+          count={
+            actions.stats?.newCustomers ??
+            actions.customers?.length ??
+            0
+          }
+        />
+      </div>
 
       <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
           <BaseCard
             icon={UserGroup03Icon}
             title="إجمالي العملاء"
@@ -51,7 +53,7 @@ const CustomersPage = () => {
         </div>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         <div
           className={cn(
             "flex min-h-12 min-w-0 items-center justify-between gap-2 rounded-[14px] border px-2",
@@ -75,7 +77,7 @@ const CustomersPage = () => {
         </div>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <PageTableHeader
           title="جميع العملاء"
           subtitle={`أجمالي العناصر المتاحة ${actions.customers.length}`}

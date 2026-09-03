@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import DashboardCard from "./DashboardCard";
 import { CHART_COLORS, getChartTheme } from "../utils";
+import { formatNumber } from "@/utils/format-currency";
 
 type SupportPoint = {
   day: string;
@@ -68,6 +69,7 @@ const SupportReportsChart = ({ data }: SupportReportsChartProps) => {
               width={28}
               axisLine={false}
               tickLine={false}
+              tickFormatter={(v) => formatNumber(Number(v))}
               tick={{ fill: theme.tick, fontSize: 10 }}
             />
             <Tooltip

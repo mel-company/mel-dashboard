@@ -45,7 +45,7 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
 
   return (
     <>
-      <div className="rounded-[28px] bg-slate-50 p-3 dark:bg-[#12183b] md:hidden">
+      <div className="rounded-[28px] bg-slate-50 p-3 dark:bg-[#12183b] xl:hidden">
         <div className="mb-2 px-2 pt-1 text-right">
           <h2 className="text-base text-slate-900 dark:text-[#e4e7fc]">
             جميع الفئات
@@ -59,7 +59,7 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
         </div>
         {cards}
       </div>
-      <div className="hidden md:block">
+      <div className="hidden xl:block">
         {actions.viewMode === "table" ? (
           <CategoryTable
             categories={actions.categories}

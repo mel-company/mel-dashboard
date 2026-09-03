@@ -176,7 +176,7 @@ const TicketDetailsPage = () => {
         onClose={() => navigate("/tickets")}
       />
 
-      <div className="mt-4 md:hidden">
+      <div className="mt-4 lg:hidden">
         <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1 dark:bg-[#0f1433]">
           <button
             type="button"
@@ -206,10 +206,10 @@ const TicketDetailsPage = () => {
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-5 lg:gap-6">
-        <div className={cn("lg:col-span-2", mobileTab !== "details" && "hidden md:block")}>
+        <div className={cn("lg:col-span-2", mobileTab !== "details" && "hidden lg:block")}>
           <TicketInfoSidebar ticket={ticket} />
         </div>
-        <div className={cn("lg:col-span-3", mobileTab !== "chat" && "hidden md:block")}>
+        <div className={cn("lg:col-span-3", mobileTab !== "chat" && "hidden lg:block")}>
           <TicketChatPanel
             messages={messages}
             reply={reply}

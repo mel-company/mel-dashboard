@@ -28,7 +28,7 @@ const NotificationsPage = () => {
       className="min-h-full space-y-3 rounded-[28px] bg-surface p-3 sm:space-y-4 sm:p-4 lg:p-5"
       dir="rtl"
     >
-      <div className="hidden items-start justify-between gap-4 md:flex">
+      <div className="hidden items-start justify-between gap-4 lg:flex">
         <div className="flex items-center gap-2.5 text-right">
           <div className="flex size-11 items-center justify-center rounded-xl text-[#3b4656] dark:text-foreground">
             <HugeiconsIcon
@@ -64,7 +64,7 @@ const NotificationsPage = () => {
         </button>
       </div>
 
-      <div className="md:hidden">
+      <div className="lg:hidden">
         <NotificationsToolbar
           searchQuery={actions.searchQuery}
           onSearchChange={actions.onSearchChange}

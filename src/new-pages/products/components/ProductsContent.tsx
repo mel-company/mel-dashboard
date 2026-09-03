@@ -46,10 +46,10 @@ const ProductsContent = ({ actions }: ProductsContentProps) => {
   return (
     <>
       {/* Mobile always uses card list */}
-      <div className="md:hidden">{cards}</div>
+      <div className="xl:hidden">{cards}</div>
 
       {/* Desktop respects table/cards toggle */}
-      <div className="hidden md:block">
+      <div className="hidden xl:block">
         {actions.viewMode === "table" ? (
           <ProductTable
             products={actions.products}

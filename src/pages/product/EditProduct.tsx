@@ -59,7 +59,7 @@ import EditVariantDialog from "./EditVariantDialog";
 import RemoveCategoryFromProductDialog from "./RemoveCategoryFromProductDialog";
 import AddCategoryToProductDialog from "./AddCategoryToProductDialog";
 import ProductImageDialog from "./ProductImageDialog";
-import { formatCurrency } from "@/utils/format-currency";
+import { formatCurrency, sanitizeDecimalInput } from "@/utils/format-currency";
 
 type Props = {};
 
@@ -67,6 +67,11 @@ const PRODUCT_DESCRIPTION_MAX = 300;
 
 const fieldClass =
   "w-full rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-right text-sm text-slate-800 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:ring-sky-900/30";
+
+const numberFieldClass = cn(
+  fieldClass,
+  "ps-11 text-start tabular-nums [font-variant-numeric:lining-nums]",
+);
 
 const purpleIconBtn =
   "flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600 transition-colors hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-300";
@@ -373,12 +378,12 @@ const EditProduct = ({}: Props) => {
 
       <div
         dir="rtl"
-        className="flex flex-col gap-4 md:flex-row md:items-start"
+        className="flex flex-col gap-4 xl:flex-row xl:items-start"
       >
         <div className="min-w-0 flex-1 space-y-4">
           {/* Info + Images */}
           <div className="overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-950">
-            <div className="grid grid-cols-1 gap-8 xl:grid-cols-2 xl:gap-10">
+            <div className="grid grid-cols-1 gap-8 2xl:grid-cols-2 2xl:gap-10">
               <div className="min-w-0 space-y-4 text-right">
                 <h2 className="text-xl font-bold tracking-tight text-[#1a2b5a] dark:text-blue-100">
                   معلومات المنتج الأساسية
@@ -414,7 +419,7 @@ const EditProduct = ({}: Props) => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
                     <FieldLabel
                       htmlFor="price"
@@ -431,14 +436,17 @@ const EditProduct = ({}: Props) => {
                     <div className="relative">
                       <input
                         id="price"
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
+                        lang="en"
+                        dir="ltr"
                         value={price}
-                        onChange={(e) => setPrice(e.target.value)}
+                        onChange={(e) =>
+                          setPrice(sanitizeDecimalInput(e.target.value))
+                        }
                         placeholder="0"
                         required
-                        min="0"
-                        step="1"
-                        className={cn(fieldClass, "ps-11 text-start")}
+                        className={numberFieldClass}
                       />
                       <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
                         د.ع
@@ -457,13 +465,16 @@ const EditProduct = ({}: Props) => {
                     <div className="relative">
                       <input
                         id="costToProduct"
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
+                        lang="en"
+                        dir="ltr"
                         value={costToProduct}
-                        onChange={(e) => setCostToProduct(e.target.value)}
+                        onChange={(e) =>
+                          setCostToProduct(sanitizeDecimalInput(e.target.value))
+                        }
                         placeholder="0"
-                        min="0"
-                        step="1"
-                        className={cn(fieldClass, "ps-11 text-start")}
+                        className={numberFieldClass}
                       />
                       <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
                         د.ع
@@ -471,7 +482,7 @@ const EditProduct = ({}: Props) => {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="sm:col-span-2 lg:col-span-1">
                     <FieldLabel
                       htmlFor="rate"
                       hint="اختياري"
@@ -482,14 +493,16 @@ const EditProduct = ({}: Props) => {
                     <div className="relative">
                       <input
                         id="rate"
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
+                        lang="en"
+                        dir="ltr"
                         value={rate}
-                        onChange={(e) => setRate(e.target.value)}
+                        onChange={(e) =>
+                          setRate(sanitizeDecimalInput(e.target.value))
+                        }
                         placeholder="0.0"
-                        min="0"
-                        max="5"
-                        step="0.1"
-                        className={cn(fieldClass, "ps-10 text-start")}
+                        className={cn(numberFieldClass, "ps-10")}
                       />
                       <Star className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 fill-amber-400 text-amber-400" />
                     </div>
@@ -799,7 +812,7 @@ const EditProduct = ({}: Props) => {
         </div>
 
         {/* Side */}
-        <aside className="w-full shrink-0 space-y-4 md:sticky md:top-4 md:w-[300px] lg:w-[320px]">
+        <aside className="w-full shrink-0 space-y-4 xl:sticky xl:top-4 xl:w-[300px] 2xl:w-[320px]">
           <ProductSectionCard
             title="أصناف المنتج الأساسي"
             label="أختيار الاصناف"
