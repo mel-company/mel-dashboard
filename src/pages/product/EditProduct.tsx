@@ -91,17 +91,17 @@ function FieldLabel({
   hintTone?: "muted" | "optional" | "special";
 }) {
   return (
-    <div className="mb-1.5 flex items-center justify-between gap-2">
+    <div className="mb-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
       <label
         htmlFor={htmlFor}
-        className="block text-[13px] font-medium text-slate-500 dark:text-slate-300"
+        className="shrink-0 text-[13px] font-medium text-slate-500 dark:text-slate-300"
       >
         {children}
       </label>
       {hint ? (
         <span
           className={cn(
-            "inline-flex items-center gap-1 text-[11px] font-medium",
+            "inline-flex max-w-full items-center gap-1 truncate text-[10px] font-medium sm:text-[11px]",
             hintTone === "optional" && "text-emerald-500",
             hintTone === "special" && "text-amber-500",
             hintTone === "muted" && "text-muted-foreground",
@@ -112,6 +112,18 @@ function FieldLabel({
       ) : null}
     </div>
   );
+}
+
+function formatMoneyInput(raw: string): string {
+  const cleaned = sanitizeDecimalInput(raw);
+  if (!cleaned) return "";
+  const [intPart, decPart] = cleaned.split(".");
+  const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decPart != null ? `${withCommas}.${decPart}` : withCommas;
+}
+
+function parseMoneyInput(display: string): string {
+  return sanitizeDecimalInput(display.replace(/,/g, ""));
 }
 
 function SortHeader({ children }: { children: React.ReactNode }) {
@@ -419,8 +431,8 @@ const EditProduct = ({}: Props) => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="min-w-0">
                     <FieldLabel
                       htmlFor="price"
                       hintTone="special"
@@ -440,9 +452,9 @@ const EditProduct = ({}: Props) => {
                         inputMode="decimal"
                         lang="en"
                         dir="ltr"
-                        value={price}
+                        value={formatMoneyInput(price)}
                         onChange={(e) =>
-                          setPrice(sanitizeDecimalInput(e.target.value))
+                          setPrice(parseMoneyInput(e.target.value))
                         }
                         placeholder="0"
                         required
@@ -454,7 +466,7 @@ const EditProduct = ({}: Props) => {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <FieldLabel
                       htmlFor="costToProduct"
                       hint="اختياري"
@@ -469,9 +481,9 @@ const EditProduct = ({}: Props) => {
                         inputMode="decimal"
                         lang="en"
                         dir="ltr"
-                        value={costToProduct}
+                        value={formatMoneyInput(costToProduct)}
                         onChange={(e) =>
-                          setCostToProduct(sanitizeDecimalInput(e.target.value))
+                          setCostToProduct(parseMoneyInput(e.target.value))
                         }
                         placeholder="0"
                         className={numberFieldClass}
@@ -482,7 +494,7 @@ const EditProduct = ({}: Props) => {
                     </div>
                   </div>
 
-                  <div className="sm:col-span-2 lg:col-span-1">
+                  <div className="min-w-0 sm:col-span-2 xl:col-span-1">
                     <FieldLabel
                       htmlFor="rate"
                       hint="اختياري"
