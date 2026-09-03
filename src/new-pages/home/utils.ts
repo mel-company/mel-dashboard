@@ -1,5 +1,7 @@
+import { formatCurrency } from "@/utils/format-currency";
+
 export const formatIQD = (value: number) =>
-  `${Math.round(value).toLocaleString("ar-IQ")} د.ع`;
+  formatCurrency(Math.round(value), "0 د.ع");
 
 export const formatCompactIQD = (value: number) => {
   if (value >= 1_000_000_000) {

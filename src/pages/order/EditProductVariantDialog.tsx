@@ -19,6 +19,7 @@ import {
 } from "@/api/wrappers/product.wrappers";
 import { useUpdateOrderProduct } from "@/api/wrappers/order.wrappers";
 import { toast } from "sonner";
+import { formatCurrency } from "@/utils/format-currency";
 
 type OrderProduct = {
   id: string;
@@ -435,7 +436,7 @@ const EditProductVariantDialog = ({
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">السعر:</span>
                   <span className="text-sm font-semibold">
-                    {(foundVariant.price ?? 0).toLocaleString()} د.ع
+                    {formatCurrency(foundVariant.price ?? 0)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

@@ -8,6 +8,7 @@ import {
 } from "@react-pdf/renderer";
 import CairoRegular from "../../../assets/fonts/Cairo-Regular.ttf";
 import CairoBold from "../../../assets/fonts/Cairo-Bold.ttf";
+import { formatCurrency } from "@/utils/format-currency";
 
 Font.register({ family: "Cairo", fonts: [
   { src: CairoRegular, fontWeight: 400 },
@@ -175,10 +176,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 });
-
-const formatCurrency = (value: number) => {
-  return value?.toLocaleString() + " د.ع";
-};
 
 const statCardStyles = [
   styles.statCardBlue,

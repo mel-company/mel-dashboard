@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { pdf } from "@react-pdf/renderer";
 import { Download } from "lucide-react";
 import { OrderInvoicePDF, type OrderInvoiceData } from "@/utils/files/invoice/order.invoice";
+import { formatCurrency } from "@/utils/format-currency";
 
 const STORAGE_KEY = "order-invoice-preview-data";
 
@@ -11,10 +12,6 @@ const STATUS_LABELS: Record<string, string> = {
   SHIPPED: "تم الشحن",
   DELIVERED: "تم التسليم",
   CANCELLED: "ملغي",
-};
-
-const formatCurrency = (amount: number) => {
-  return (amount ?? 0).toLocaleString() + " د.ع";
 };
 
 const DELIVERY_FEE = 5000;

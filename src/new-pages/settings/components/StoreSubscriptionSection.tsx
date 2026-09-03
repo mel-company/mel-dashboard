@@ -24,12 +24,7 @@ import {
 } from "lucide-react";
 import SettingsCard from "./SettingsCard";
 import { cn } from "@/lib/utils";
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("ar-IQ", {
-    style: "decimal",
-    minimumFractionDigits: 0,
-  }).format(amount) + " د.ع";
+import { formatCurrency } from "@/utils/format-currency";
 
 const formatDate = (dateString: string | undefined) => {
   if (!dateString) return "—";

@@ -1,5 +1,6 @@
 import { coerceImagePath, getImageUrl } from "@/utils/image-url";
 import { getProductCoverImage } from "@/utils/product-images";
+import { formatCurrency } from "@/utils/format-currency";
 
 export type OrderStatusKey =
   | "PENDING"
@@ -85,8 +86,7 @@ export function formatOrderDateParts(dateString?: string | null) {
 }
 
 export function formatOrderAmount(amount?: number | null) {
-  if (amount == null || Number.isNaN(Number(amount))) return "—";
-  return `${Number(amount).toLocaleString("en-US")} د.ع`;
+  return formatCurrency(amount);
 }
 
 export function getOrderTotal(order: any, fallbackCalculate?: (products: any[]) => number) {

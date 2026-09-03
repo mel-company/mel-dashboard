@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { formatCurrency } from "@/utils/format-currency";
 import {
   Dialog,
   DialogContent,
@@ -213,7 +214,7 @@ const AddDiscountProductDialog = ({
                       </p>
                       {product.price && (
                         <p className="text-sm text-muted-foreground">
-                          {product.price.toFixed(2)} د.ع
+                          {formatCurrency(product.price)}
                         </p>
                       )}
                     </div>

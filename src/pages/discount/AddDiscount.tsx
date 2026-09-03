@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "@/utils/format-currency";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -491,7 +492,7 @@ const AddDiscount = ({}: Props) => {
                                 {product.title}
                               </h3>
                               <p className="text-xs text-muted-foreground">
-                                {product.price?.toFixed(2) ?? "—"} د.ع
+                                {product.price != null ? formatCurrency(product.price) : "—"}
                               </p>
                             </div>
                             <div

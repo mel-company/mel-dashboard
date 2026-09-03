@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ProductSectionCard } from "@/components/product/tags";
 import type { ProductOption } from "@/components/product/ProductOptionsCard";
+import { formatCurrency } from "@/utils/format-currency";
 
 export type VariantDraft = {
   selectedOptionValues: Array<{ optionName: string; value: string }>;
@@ -41,7 +42,7 @@ function formatMoney(value?: string) {
   if (!value?.trim()) return "";
   const n = Number(value);
   if (Number.isNaN(n)) return value;
-  return `${n.toLocaleString("en-US")} د.ع`;
+  return formatCurrency(n, "");
 }
 
 function optionValue(

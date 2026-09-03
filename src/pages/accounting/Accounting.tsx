@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/utils/format-currency";
 
 const Accounting = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -230,7 +231,7 @@ const Accounting = () => {
                         )}
                       >
                         {transaction.type === "إيراد" ? "+" : "-"}
-                        {transaction.amount.toLocaleString()} دينار
+                        {formatNumber(transaction.amount)} دينار
                       </td>
                       <td className="py-3 px-4 text-sm text-muted-foreground">
                         {transaction.date}

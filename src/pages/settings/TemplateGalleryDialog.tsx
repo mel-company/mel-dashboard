@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Eye, Layout, Loader2, Plus, Search } from "lucide-react";
 import { useSearchTemplatesCursor } from "@/api/wrappers/template.wrappers";
 import TemplatePurchaseDialog from "./TemplatePurchaseDialog";
+import { formatCurrency } from "@/utils/format-currency";
 
 const TEMPLATE_LIMIT = 12;
 const GRADIENT_PRESETS = [
@@ -77,10 +78,6 @@ function mapApiTemplateToDisplay(
     isActive: api.is_active ?? false,
   };
 }
-
-const formatIqd = (amount: number) => {
-  return `${amount.toLocaleString()} د.ع`;
-};
 
 interface TemplateGalleryDialogProps {
   open: boolean;
@@ -211,7 +208,7 @@ const TemplateGalleryDialog = ({
                         </h4>
                         <Badge variant="outline" className="text-xs">
                           {template.price ? (
-                            formatIqd(template.price)
+                            formatCurrency(template.price)
                           ) : (
                             <span className="text-muted-foreground">مجاني</span>
                           )}

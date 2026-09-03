@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/sheet";
 import { resolveAssetBaseUrl } from "@/utils/image-url";
 import { formatPosPrice } from "@/new-pages/pos/utils";
+import { formatCurrency } from "@/utils/format-currency";
 
 // Product types matching API structure
 type Product = {
@@ -831,12 +832,11 @@ const POS = ({ }: Props) => {
                           السعر:
                         </span>
                         <span className="text-lg font-bold text-primary">
-                          {(
+                          {formatCurrency(
                             foundVariant?.price ??
-                            selectedProduct.price ??
-                            0
-                          ).toLocaleString()}{" "}
-                          د.ع
+                              selectedProduct.price ??
+                              0,
+                          )}
                         </span>
                       </div>
                       {foundVariant?.stock !== undefined && (

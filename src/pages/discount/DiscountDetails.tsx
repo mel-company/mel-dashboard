@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { DISCOUNT_STATUS } from "@/utils/constants";
+import { formatCurrency } from "@/utils/format-currency";
 import {
   Card,
   CardContent,
@@ -298,7 +299,7 @@ const DiscountDetails = () => {
                           </p>
                           {product.product.price && (
                             <p className="text-sm text-muted-foreground">
-                              {product.product.price.toFixed(2)} د.ع
+                              {formatCurrency(product.product.price)}
                             </p>
                           )}
                         </div>

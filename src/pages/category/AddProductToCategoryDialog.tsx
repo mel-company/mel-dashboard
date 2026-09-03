@@ -14,6 +14,7 @@ import { useFetchAvailableProductsSearchCursor } from "@/api/wrappers/category.w
 import { useAddProductsToCategory } from "@/api/wrappers/category.wrappers";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/utils/format-currency";
 
 const PAGE_SIZE = 20;
 
@@ -222,7 +223,7 @@ const AddProductToCategoryDialog = ({
                         <div className="flex items-center gap-1 mt-1">
                           <DollarSign className="size-3 text-muted-foreground" />
                           <span className="text-sm font-medium">
-                            {product.price.toLocaleString()} د.ع
+                            {formatCurrency(product.price)}
                           </span>
                         </div>
                       )}

@@ -20,6 +20,7 @@ import ErrorPage from "../miscellaneous/ErrorPage";
 import { Badge } from "@/components/ui/badge";
 import { useInitStorePlatformPayment } from "@/api/wrappers/platform-payment.wrapper";
 import { toast } from "sonner";
+import { formatCurrency } from "@/utils/format-currency";
 
 const Payment = () => {
   const { planId } = useParams<{ planId: string }>();
@@ -27,14 +28,6 @@ const Payment = () => {
 
   const { data: plan, isLoading, error } = useFetchPlan(planId ?? "");
   const initPayment = useInitStorePlatformPayment();
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ar-IQ", {
-      style: "currency",
-      currency: "IQD",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const handlePay = () => {
     if (!planId) {

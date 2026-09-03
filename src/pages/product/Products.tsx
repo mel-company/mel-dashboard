@@ -61,6 +61,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 import { getImageUrl } from "@/utils/image-url";
+import { formatCurrency } from "@/utils/format-currency";
 
 const CURSOR_LIMIT = 10;
 
@@ -86,7 +87,7 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
 }
 
 function formatPrice(value: number) {
-  return `${value.toLocaleString("ar-IQ")} د.ع`;
+  return formatCurrency(value, "0 د.ع");
 }
 
 function shortDescription(text: string | null | undefined, max = 45) {

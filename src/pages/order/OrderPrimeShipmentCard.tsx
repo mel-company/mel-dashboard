@@ -39,6 +39,7 @@ import {
 } from "@/utils/prime/lookups";
 import { getPrimeApiError } from "@/utils/prime/errors";
 import { extractSenderIdFromShops } from "@/utils/prime/setup";
+import { formatCurrency } from "@/utils/format-currency";
 import {
   buildPrimeShipmentFromOrder,
   formatPrimeShipmentStatus,
@@ -245,7 +246,7 @@ const OrderPrimeShipmentCard = ({ order, onUpdated }: Props) => {
             {primeShipment.shippingFee != null && (
               <div className="flex justify-between gap-3">
                 <span className="text-muted-foreground">رسوم الشحن</span>
-                <span>{primeShipment.shippingFee.toLocaleString()} د.ع</span>
+                <span>{formatCurrency(primeShipment.shippingFee)}</span>
               </div>
             )}
             {primeShipment.receiptNumber && (

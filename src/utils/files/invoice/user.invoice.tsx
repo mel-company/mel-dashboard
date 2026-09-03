@@ -8,6 +8,7 @@ import {
 } from "@react-pdf/renderer";
 import Almarai from "../../assets/fonts/Almarai-Regular.ttf";
 import { formatDate } from "../../helpers";
+import { formatCurrency } from "@/utils/format-currency";
 
 Font.register({ family: "Almarai", src: Almarai });
 
@@ -159,10 +160,6 @@ const styles = StyleSheet.create({
     width: "48%",
   },
 });
-
-const formatCurrency = (amount: number) => {
-  return amount?.toLocaleString() + " د.ع";
-};
 
 export const InvoicePDF = ({
   invoice,

@@ -38,6 +38,7 @@ import {
   TruckIcon,
   Ticket,
 } from "lucide-react";
+import { formatCurrency } from "@/utils/format-currency";
 import {
   useFetchOrder,
   useUpdateOrder,
@@ -125,7 +126,7 @@ const OrderDetails = () => {
   ) => {
     if (type === "PERCENTAGE" && value != null) return `نسبة مئوية (${value}%)`;
     if (type === "FIXED" && value != null)
-      return `مبلغ ثابت (${value?.toLocaleString()} د.ع)`;
+      return `مبلغ ثابت (${formatCurrency(value)})`;
     return type ?? "—";
   };
 
@@ -461,15 +462,15 @@ const OrderDetails = () => {
       return (
         <div className="flex items-center gap-2">
           <span>
-            {(price - (price * discountPercentage) / 100).toLocaleString()} د.ع
+            {formatCurrency(price - (price * discountPercentage) / 100)}
           </span>
           <span className="line-through text-sm text-muted-foreground">
-            {price.toLocaleString()} د.ع
+            {formatCurrency(price)}
           </span>
         </div>
       );
     }
-    return <span>{price.toLocaleString()} د.ع</span>;
+    return <span>{formatCurrency(price)}</span>;
   };
 
   return (
@@ -523,8 +524,9 @@ const OrderDetails = () => {
                       المبلغ الإجمالي
                     </p>
                     <p className="text-lg font-bold">
-                      {order.pricing?.subtotalAfterProductDiscounts?.toLocaleString()}{" "}
-                      د.ع
+                      {formatCurrency(
+                        order.pricing?.subtotalAfterProductDiscounts,
+                      )}
                     </p>
                   </div>
                 </div>
@@ -537,7 +539,7 @@ const OrderDetails = () => {
                           خصم الكوبونات
                         </p>
                         <p className="text-lg font-bold text-green-600">
-                          -{totalDiscount.toLocaleString()} د.ع
+                          -{formatCurrency(totalDiscount)}
                         </p>
                       </div>
                     </div>
@@ -549,7 +551,7 @@ const OrderDetails = () => {
                         </p>
                         <p className="text-lg font-bold">
                           {/* {totalAfterDiscount.toLocaleString()} د.ع */}
-                          {order.pricing?.totalPrice?.toLocaleString()} د.ع
+                          {formatCurrency(order.pricing?.totalPrice)}
                         </p>
                       </div>
                     </div>
@@ -560,7 +562,7 @@ const OrderDetails = () => {
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">التوصيل</p>
                       <p className="text-lg font-bold">
-                        {(5000).toLocaleString()} د.ع
+                        {formatCurrency(5000)}
                       </p>
                     </div>
                   </div>
@@ -759,7 +761,7 @@ const OrderDetails = () => {
                           </Badge>
                           {discountAmount > 0 && (
                             <span className="text-sm font-semibold text-green-600">
-                              خصم: {Number(discountAmount).toLocaleString()} د.ع
+                              خصم: {formatCurrency(Number(discountAmount))}
                             </span>
                           )}
                           {coupon.description && (
@@ -783,7 +785,7 @@ const OrderDetails = () => {
                                 الحد الأدنى للطلب
                               </span>
                               <span>
-                                {coupon.minOrderTotal?.toLocaleString()} د.ع
+                                {formatCurrency(coupon.minOrderTotal)}
                               </span>
                             </div>
                           )}
@@ -1016,7 +1018,7 @@ const OrderDetails = () => {
                   المبلغ الإجمالي
                 </span>
                 <span className="text-lg font-bold text-primary">
-                  {total.toLocaleString()} د.ع
+                  {formatCurrency(total)}
                 </span>
               </div>
             </CardContent>

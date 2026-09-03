@@ -26,6 +26,7 @@ import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import OrdersSkeleton from "./OrdersSkeleton";
 import PageTableHeader from "@/components/table/header";
+import { formatCurrency } from "@/utils/format-currency";
 
 const CURSOR_LIMIT = 20;
 
@@ -293,7 +294,7 @@ const Orders = () => {
                       </TableCell>
                       <TableCell>
                         <span className="font-semibold">
-                          {total ? `${total.toFixed(2)} د.ع` : "—"}
+                          {total ? formatCurrency(total) : "—"}
                         </span>
                       </TableCell>
                       <TableCell>

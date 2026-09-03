@@ -1,8 +1,9 @@
 import type { CouponListItem } from "@/api/types/coupon";
+import { formatCurrency, formatNumber } from "@/utils/format-currency";
 
 export function formatCouponValue(coupon: CouponListItem): string {
   if (coupon.type === "FIXED") {
-    return `${coupon.value.toLocaleString("ar-IQ")} د.ع`;
+    return formatCurrency(coupon.value, "0 د.ع");
   }
   return `${coupon.value}%`;
 }
@@ -120,7 +121,7 @@ export function getCouponTypeLabel(coupon: CouponListItem): string {
 
 export function getCouponBadgeValue(coupon: CouponListItem): string {
   if (coupon.type === "FIXED") {
-    return coupon.value.toLocaleString("ar-IQ");
+    return formatNumber(coupon.value);
   }
   return `%${coupon.value}`;
 }

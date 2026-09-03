@@ -26,6 +26,7 @@ import CouponFilterDialog, {
 } from "./CouponFilterDialog";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
+import { formatCurrency } from "@/utils/format-currency";
 
 const CURSOR_LIMIT = 20;
 
@@ -104,7 +105,7 @@ const Coupons = () => {
     if (coupon.type === "PERCENTAGE") {
       return `${coupon.value}%`;
     } else if (coupon.type === "FIXED") {
-      return `${coupon.value} د.ع`;
+      return formatCurrency(coupon.value, "0 د.ع");
     }
     return coupon.value;
   };
@@ -301,7 +302,7 @@ const Coupons = () => {
                     <div className="flex flex-wrap gap-2">
                       {coupon.minOrderTotal ? (
                         <Badge variant="outline" className="text-xs">
-                          حد أدنى: {coupon.minOrderTotal} د.ع
+                          حد أدنى: {formatCurrency(coupon.minOrderTotal)}
                         </Badge>
                       ) : null}
                       {coupon.usageLimit ? (

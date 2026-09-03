@@ -1,5 +1,6 @@
 import { DISCOUNT_STATUS } from "@/utils/constants";
 import type { DiscountListItem } from "@/api/types/discount";
+import { formatCurrency } from "@/utils/format-currency";
 
 export function getDiscountStatusMeta(status?: string) {
   switch (status) {
@@ -135,7 +136,7 @@ export function getDiscountUsageProgress(usage: number, softMax = 100): number {
 }
 
 export function formatPrice(value: number): string {
-  return `${value.toLocaleString("ar-IQ")} د.ع`;
+  return formatCurrency(value, "0 د.ع");
 }
 
 /** Junction rows from GET /discount/:id use nested product/category objects. */

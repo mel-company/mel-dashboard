@@ -48,6 +48,7 @@ import { Link } from "react-router-dom";
 import EnableCouponDialog from "./EnableCouponDialog";
 import DisableCouponDialog from "./DisableCouponDialog";
 import EditCouponDialog from "./EditCouponDialog";
+import { formatCurrency } from "@/utils/format-currency";
 
 const CouponDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -174,7 +175,7 @@ const CouponDetails = () => {
     if (data.type === "PERCENTAGE") {
       return `${data.value}%`;
     } else if (data.type === "FIXED") {
-      return `${data.value} د.ع`;
+      return formatCurrency(data.value, "0 د.ع");
     }
     return data.value;
   };
@@ -392,7 +393,7 @@ const CouponDetails = () => {
                       </span>
                     </div>
                     <span className="text-sm font-medium">
-                      {data.minOrderTotal} د.ع
+                      {formatCurrency(data.minOrderTotal)}
                     </span>
                   </div>
                 )}
@@ -619,7 +620,7 @@ const CouponDetails = () => {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">
-                            خصم: {redemption.discount} د.ع
+                            خصم: {formatCurrency(redemption.discount)}
                           </span>
                         </div>
                         <span className="text-xs text-muted-foreground">

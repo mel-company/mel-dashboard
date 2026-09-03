@@ -19,6 +19,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, Loader2, MapPin, XCircle } from "lucide-react";
 import { getDisplayName } from "../utils";
+import { formatCurrency } from "@/utils/format-currency";
 
 export type POSCheckoutForm = {
   name: string;
@@ -295,7 +296,7 @@ const POSCheckoutDialog = ({
             <div className="flex justify-between">
               <span className="text-muted-foreground">المجموع</span>
               <span className="text-lg font-bold text-sky-600 tabular-nums">
-                {total.toLocaleString("ar-IQ")} د.ع
+                {formatCurrency(total)}
               </span>
             </div>
           </div>

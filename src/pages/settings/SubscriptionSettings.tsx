@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { formatCurrency } from "@/utils/format-currency";
 
 type Props = {};
 
@@ -63,15 +64,6 @@ const SubscriptionSettings = ({}: Props) => {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ar-IQ", {
-      style: "currency",
-      currency: "IQD",
-      minimumFractionDigits: 0,
-    }).format(amount);
   };
 
   // Get status badge

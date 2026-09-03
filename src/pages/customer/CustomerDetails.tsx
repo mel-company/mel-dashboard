@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { formatCurrency } from "@/utils/format-currency";
 import {
   Card,
   CardContent,
@@ -295,7 +296,7 @@ const CustomerDetails = () => {
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-lg font-bold text-primary">
-                  {totalSpent > 0 ? `${totalSpent.toFixed(2)} د.ع` : "—"}
+                  {totalSpent > 0 ? formatCurrency(totalSpent) : "—"}
                 </span>
                 <span className="text-sm font-medium text-muted-foreground text-right">
                   إجمالي المشتريات

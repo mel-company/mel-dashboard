@@ -25,6 +25,7 @@ import {
 import PlansSkeleton from "./PlansSkeleton";
 import ErrorPage from "../miscellaneous/ErrorPage";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "@/utils/format-currency";
 
 type Props = {};
 
@@ -38,15 +39,6 @@ const Plans = ({}: Props) => {
     refetch,
     isFetching,
   } = useFetchPlans();
-
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ar-IQ", {
-      style: "currency",
-      currency: "IQD",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   if (isLoading) {
     return <PlansSkeleton />;

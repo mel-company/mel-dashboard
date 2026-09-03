@@ -13,10 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CreditCard, Calendar, Lock, Loader2, Layout } from "lucide-react";
 import type { WebsiteTemplate } from "./TemplateGalleryDialog";
-
-const formatIqd = (amount: number) => {
-  return `${amount.toLocaleString()} د.ع`;
-};
+import { formatCurrency } from "@/utils/format-currency";
 
 interface TemplatePurchaseDialogProps {
   open: boolean;
@@ -120,7 +117,7 @@ const TemplatePurchaseDialog = ({
           <div className="flex items-center justify-between pt-2 border-t">
             <span className="text-sm text-muted-foreground">المبلغ</span>
             <span className="text-lg font-bold">
-              {isFree ? formatIqd(0) : formatIqd(price)}
+              {isFree ? formatCurrency(0, "0 د.ع") : formatCurrency(price)}
             </span>
           </div>
         </div>

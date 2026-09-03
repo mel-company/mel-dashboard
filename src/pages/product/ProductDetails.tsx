@@ -54,9 +54,10 @@ import {
   PurpleAddButton,
 } from "@/components/product/tags";
 import ProductDeleteModal from "@/new-pages/products/components/delete-modal";
+import { formatCurrency, formatNumber } from "@/utils/format-currency";
 
 const formatPrice = (value?: number | null) =>
-  typeof value === "number" ? `${value.toLocaleString("en-US")} د.ع` : "—";
+  typeof value === "number" ? formatCurrency(value) : "—";
 
 function FieldLabel({
   children,
@@ -304,7 +305,7 @@ const ProductDetails = () => {
                     <div className="relative rounded-2xl border border-slate-200/90 ps-11 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
                       <span className="text-slate-800 dark:text-slate-100">
                         {typeof data.price === "number"
-                          ? data.price.toLocaleString("en-US")
+                          ? formatNumber(data.price)
                           : "—"}
                       </span>
                       <span className="absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
@@ -319,7 +320,7 @@ const ProductDetails = () => {
                     <div className="relative rounded-2xl border border-slate-200/90 ps-11 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
                       <span className="text-slate-800 dark:text-slate-100">
                         {typeof data.cost_to_produce === "number"
-                          ? data.cost_to_produce.toLocaleString("en-US")
+                          ? formatNumber(data.cost_to_produce)
                           : "—"}
                       </span>
                       <span className="absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">

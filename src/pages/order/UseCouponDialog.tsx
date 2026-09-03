@@ -15,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { orderKeys } from "@/api/wrappers/order.wrappers";
 import { toast } from "sonner";
 import { Ticket, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { formatCurrency } from "@/utils/format-currency";
 
 type Props = {
   open: boolean;
@@ -119,7 +120,7 @@ const UseCouponDialog = ({
           <DialogDescription className="text-right">
             أدخل رمز الكوبون لتطبيق الخصم على الطلب. المبلغ الإجمالي الحالي:{" "}
             <span className="font-semibold">
-              {orderTotal.toLocaleString()} د.ع
+              {formatCurrency(orderTotal)}
             </span>
           </DialogDescription>
         </DialogHeader>

@@ -9,6 +9,7 @@ import {
 import CairoRegular from "../../../assets/fonts/Cairo-Regular.ttf";
 import CairoBold from "../../../assets/fonts/Cairo-Bold.ttf";
 import { formatDate } from "../../helpers";
+import { formatCurrency } from "@/utils/format-currency";
 
 Font.register({
   family: "Cairo",
@@ -192,10 +193,6 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
   },
 });
-
-const formatCurrency = (amount: number) => {
-  return (amount ?? 0).toLocaleString() + " د.ع";
-};
 
 const getStatusStyle = (status: string) => {
   const s = (status || "").toUpperCase();

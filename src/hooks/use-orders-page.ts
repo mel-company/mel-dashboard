@@ -5,6 +5,7 @@ import {
   useFetchOrdersStatusStats,
   useFetchStoreStats,
 } from "@/api/wrappers/stats.wrappers";
+import { formatNumber } from "@/utils/format-currency";
 
 const CURSOR_LIMIT = 20;
 
@@ -146,7 +147,7 @@ export function useOrdersPage() {
       completedOrders,
       totalOrders,
       totalAmount,
-      totalAmountLabel: totalAmount.toLocaleString("en-US"),
+      totalAmountLabel: formatNumber(totalAmount),
       ordersGrowth: actions.stats?.trends?.orders ?? actions.stats?.ordersGrowth,
       amountGrowth:
         actions.stats?.trends?.revenue ?? actions.stats?.amountGrowth,

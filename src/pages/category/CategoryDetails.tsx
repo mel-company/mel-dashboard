@@ -46,6 +46,7 @@ import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import { getProductCoverImage } from "@/utils/product-images";
 import { toast } from "sonner";
+import { formatCurrency } from "@/utils/format-currency";
 
 const CategoryDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -253,7 +254,7 @@ const CategoryDetails = () => {
                             </p>
                             {product.product.price && (
                               <p className="text-sm text-muted-foreground">
-                                {product.product.price.toLocaleString()} د.ع
+                                {formatCurrency(product.product.price)}
                               </p>
                             )}
                           </div>

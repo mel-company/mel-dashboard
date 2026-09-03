@@ -22,6 +22,7 @@ import CreateDiscountDialog from "./components/CreateDiscountDialog";
 import CreateCouponDialog from "./components/CreateCouponDialog";
 import FilterSlidersIcon from "@/components/icons/FilterSlidersIcon";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/utils/format-currency";
 
 const tabOptions = [
   { label: "الخصومات", value: "discounts", icon: DiscountTag01Icon },
@@ -92,14 +93,14 @@ const DiscountsPage = () => {
                 icon={Money04Icon}
                 strokedIcon={Money04IconStroked}
                 title="سعر الخصم الكلي"
-                value={actions.discountStats.totalUsageAmount.toLocaleString("ar-IQ")}
+                value={formatNumber(actions.discountStats.totalUsageAmount)}
                 suffix="د.ع"
                 color="orange"
               />
               <BaseCard
                 icon={TrendingUp}
                 title="إجمالي مبالغ الخصومات"
-                value={actions.discountStats.totalUsageAmount.toLocaleString("ar-IQ")}
+                value={formatNumber(actions.discountStats.totalUsageAmount)}
                 growth={12.6}
                 color="success"
               />
@@ -124,7 +125,7 @@ const DiscountsPage = () => {
                 icon={Money04Icon}
                 strokedIcon={Money04IconStroked}
                 title="إجمالي المبالغ المخصومة"
-                value={actions.couponStats.totalDiscountedAmount.toLocaleString("ar-IQ")}
+                value={formatNumber(actions.couponStats.totalDiscountedAmount)}
                 suffix="د.ع"
                 color="orange"
               />

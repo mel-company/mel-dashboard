@@ -1,4 +1,5 @@
 import { resolveAssetBaseUrl } from "@/utils/image-url";
+import { formatCurrency } from "@/utils/format-currency";
 
 export type Product = {
   id: string;
@@ -72,7 +73,7 @@ export function parseLocalizedName(name: unknown): string {
 }
 
 export function formatPosPrice(value: number | null | undefined) {
-  return `${(value ?? 0).toLocaleString("ar-IQ")} د.ع`;
+  return formatCurrency(value ?? 0, "0 د.ع");
 }
 
 export function getCategoryName(category: unknown): string {

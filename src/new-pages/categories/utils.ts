@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/utils/format-currency";
+
 export function formatDateTime(value?: string | null) {
   if (!value) return "—";
   const date = new Date(value);
@@ -35,7 +37,7 @@ export function formatTime(value?: string | null) {
 }
 
 export function formatIQD(value: number) {
-  return `${value.toLocaleString("ar-IQ")} د.ع`;
+  return formatCurrency(value, "0 د.ع");
 }
 
 export function shortText(text: string | null | undefined, max = 70) {

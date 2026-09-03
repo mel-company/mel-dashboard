@@ -59,6 +59,7 @@ import EditVariantDialog from "./EditVariantDialog";
 import RemoveCategoryFromProductDialog from "./RemoveCategoryFromProductDialog";
 import AddCategoryToProductDialog from "./AddCategoryToProductDialog";
 import ProductImageDialog from "./ProductImageDialog";
+import { formatCurrency } from "@/utils/format-currency";
 
 type Props = {};
 
@@ -71,7 +72,7 @@ const purpleIconBtn =
   "flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600 transition-colors hover:bg-violet-200 dark:bg-violet-500/20 dark:text-violet-300";
 
 const formatPrice = (value?: number | null) =>
-  typeof value === "number" ? `${value.toLocaleString("en-US")} د.ع` : "—";
+  typeof value === "number" ? formatCurrency(value) : "—";
 
 function FieldLabel({
   htmlFor,

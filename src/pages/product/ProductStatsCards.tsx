@@ -17,6 +17,7 @@ import {
   Package,
   ShoppingBag,
 } from "lucide-react";
+import { formatCurrency } from "@/utils/format-currency";
 
 function mergeWithStoreFallback(
   stats: ProductStatsSummary | undefined,
@@ -94,7 +95,7 @@ const ProductStatsCards = () => {
       <div className="flex flex-col gap-2.5 md:hidden">
         <MobileStatCard
           title="أجمالي اسعار المنتجات"
-          value={`${stats.totalValue.toLocaleString("ar-IQ")} د.ع`}
+          value={formatCurrency(stats.totalValue)}
           icon={<Banknote className="size-5" />}
           iconWrapClass="bg-[rgba(0,184,138,0.08)] text-[#00b88a] dark:bg-emerald-500/15 dark:text-emerald-300"
           growth={12.6}
@@ -126,7 +127,7 @@ const ProductStatsCards = () => {
         <BaseCard
           icon={Money04Icon}
           title="أجمالي اسعار المنتجات"
-          value={`${stats.totalValue.toLocaleString("ar-IQ")} د.ع`}
+          value={formatCurrency(stats.totalValue)}
           color="success"
         />
         <BaseCard
