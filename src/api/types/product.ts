@@ -22,6 +22,11 @@ export type ProductListItem = {
   description: string | null;
   price: number;
   cost_to_produce: number;
+  /** Shipping dimensions — grams and whole centimetres. Null when unmeasured. */
+  weightGrams?: number | null;
+  lengthCm?: number | null;
+  widthCm?: number | null;
+  heightCm?: number | null;
   /** Primary cover image (kept for backward compatibility) */
   image: string | null;
   /** Full gallery when returned by detail/list endpoints */

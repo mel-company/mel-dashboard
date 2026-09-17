@@ -4,6 +4,7 @@ import {
     Home12Icon as Home12IconNormal,
     Package02Icon as Package02IconNormal,
     GridViewIcon as GridViewIconNormal,
+    Layers01Icon as Layers01IconNormal,
     Coupon02Icon as Coupon02IconNormal,
     CustomerSupportIcon as CustomerSupportIconNormal,
     ShippingLoadingIcon as ShippingLoadingIconNormal,
@@ -18,6 +19,7 @@ import {
     Home12Icon as Home12IconActive,
     Package02Icon as Package02IconActive,
     GridViewIcon as GridViewIconActive,
+    Layers01Icon as Layers01IconActive,
     Coupon02Icon as Coupon02IconActive,
     CustomerSupportIcon as CustomerSupportIconActive,
     ShippingLoadingIcon as ShippingLoadingIconActive,
@@ -80,6 +82,23 @@ export const pages: PageType[] = [{
     icon: {
         normal: GridViewIconNormal,
         active: GridViewIconActive
+    },
+},
+{
+    // A collection is the merchant's own curated set — "صيفي", "شتوي" — as
+    // opposed to a category, which is a taxonomy. Directly under the
+    // categories because the two are the store's browse axes.
+    //
+    // This entry is not optional decoration: `useTableData` reads
+    // `usePage().currentPage.apiEndpoint` off this list, so without it the
+    // list page's query never runs.
+    label: "المجموعات",
+    slug: "/collections",
+    apiEndpoint: "collection/filter-cursor",
+    group: "إدارة المتجر",
+    icon: {
+        normal: Layers01IconNormal,
+        active: Layers01IconActive
     },
 },
 {

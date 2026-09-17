@@ -104,6 +104,13 @@ const AddProduct = () => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [costToProduct, setCostToProduct] = useState("");
+  // Shipping dimensions. Grams and whole centimetres — kept as strings so an
+  // empty field stays empty rather than becoming a zero the courier prices on.
+  const [weightGrams, setWeightGrams] = useState("");
+  const [lengthCm, setLengthCm] = useState("");
+  const [widthCm, setWidthCm] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+
   const [categorySearchQuery, setCategorySearchQuery] = useState("");
   const loadMoreCategoriesRef = useRef<HTMLDivElement>(null);
   const debouncedCategoryQuery = useDebouncedValue(
@@ -408,6 +415,10 @@ const AddProduct = () => {
     formData.append("price", price);
     formData.append("enabled", "true");
     if (costToProduct) formData.append("cost_to_produce", costToProduct);
+    if (weightGrams) formData.append("weightGrams", weightGrams);
+    if (lengthCm) formData.append("lengthCm", lengthCm);
+    if (widthCm) formData.append("widthCm", widthCm);
+    if (heightCm) formData.append("heightCm", heightCm);
     if (rate) formData.append("rate", rate);
     imageFiles.forEach((file) => formData.append("images", file));
     if (imageFiles[0]) formData.append("image", imageFiles[0]);
@@ -653,6 +664,101 @@ const AddProduct = () => {
                       />
                       <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
                         د.ع
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 sm:col-span-2 xl:col-span-3">
+                    <p className="text-xs font-medium text-slate-500">
+                      أبعاد الشحن — تُستخدم لحساب أجور التوصيل. اتركها فارغة إذا لم
+                      تكن معروفة؛ لن يُضاف أي رسم إضافي عندها.
+                    </p>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="weightGrams" hint="اختياري" hintTone="optional">
+                      الوزن
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="weightGrams"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={weightGrams}
+                        onChange={(e) => setWeightGrams(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="750"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        غرام
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="lengthCm" hint="اختياري" hintTone="optional">
+                      الطول
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="lengthCm"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={lengthCm}
+                        onChange={(e) => setLengthCm(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="30"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        سم
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="widthCm" hint="اختياري" hintTone="optional">
+                      العرض
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="widthCm"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={widthCm}
+                        onChange={(e) => setWidthCm(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="20"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        سم
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="heightCm" hint="اختياري" hintTone="optional">
+                      الارتفاع
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="heightCm"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={heightCm}
+                        onChange={(e) => setHeightCm(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="10"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        سم
                       </span>
                     </div>
                   </div>

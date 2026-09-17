@@ -159,6 +159,13 @@ const EditProduct = ({}: Props) => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [costToProduct, setCostToProduct] = useState("");
+  // Shipping dimensions. Grams and whole centimetres — kept as strings so an
+  // empty field stays empty rather than becoming a zero the courier prices on.
+  const [weightGrams, setWeightGrams] = useState("");
+  const [lengthCm, setLengthCm] = useState("");
+  const [widthCm, setWidthCm] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+
   const [existingImages, setExistingImages] = useState<
     Array<{ id?: string; url: string; isPrimary?: boolean }>
   >([]);
@@ -216,6 +223,10 @@ const EditProduct = ({}: Props) => {
       );
       setPrice(product.price?.toString() ?? "");
       setCostToProduct(product.cost_to_produce?.toString() ?? "");
+      setWeightGrams(product.weightGrams?.toString() ?? "");
+      setLengthCm(product.lengthCm?.toString() ?? "");
+      setWidthCm(product.widthCm?.toString() ?? "");
+      setHeightCm(product.heightCm?.toString() ?? "");
       setRate(product.rate?.toString() ?? "");
       const gallery =
         Array.isArray(product.images) && product.images.length > 0
@@ -284,6 +295,12 @@ const EditProduct = ({}: Props) => {
       "cost_to_produce",
       parseFloat(costToProduct || "0").toString(),
     );
+    // Sent as "" when cleared, which the API reads as "unset this measurement"
+    // rather than "it weighs nothing".
+    formData.append("weightGrams", weightGrams);
+    formData.append("lengthCm", lengthCm);
+    formData.append("widthCm", widthCm);
+    formData.append("heightCm", heightCm);
     formData.append("rate", parseFloat(rate || "0").toString());
 
     selectedImageFiles.forEach((file) => formData.append("images", file));
@@ -490,6 +507,101 @@ const EditProduct = ({}: Props) => {
                       />
                       <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
                         د.ع
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 sm:col-span-2 xl:col-span-3">
+                    <p className="text-xs font-medium text-slate-500">
+                      أبعاد الشحن — تُستخدم لحساب أجور التوصيل. اتركها فارغة إذا لم
+                      تكن معروفة؛ لن يُضاف أي رسم إضافي عندها.
+                    </p>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="weightGrams" hint="اختياري" hintTone="optional">
+                      الوزن
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="weightGrams"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={weightGrams}
+                        onChange={(e) => setWeightGrams(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="750"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        غرام
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="lengthCm" hint="اختياري" hintTone="optional">
+                      الطول
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="lengthCm"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={lengthCm}
+                        onChange={(e) => setLengthCm(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="30"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        سم
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="widthCm" hint="اختياري" hintTone="optional">
+                      العرض
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="widthCm"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={widthCm}
+                        onChange={(e) => setWidthCm(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="20"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        سم
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="heightCm" hint="اختياري" hintTone="optional">
+                      الارتفاع
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="heightCm"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={heightCm}
+                        onChange={(e) => setHeightCm(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="10"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        سم
                       </span>
                     </div>
                   </div>

@@ -13,6 +13,8 @@ import EmployeeDetails from "../pages/employee/EmployeeDetails";
 import AddProduct from "../pages/product/AddProduct";
 import Categories from "../new-pages/categories";
 import CategoryDetails from "../pages/category/CategoryDetails";
+import Collections from "../new-pages/collections";
+import CollectionDetails from "../pages/collection/CollectionDetails";
 import AddCategory from "../pages/category/AddCategory";
 import AddEmployee from "../pages/employee/AddEmployee";
 import AddCustomer from "../pages/customer/AddCustomer";
@@ -133,6 +135,16 @@ export const mainRoutes: RouteConfig[] = [
                 ],
             },
             { path: "add", element: <AddCategory /> },
+        ],
+    },
+    {
+        // A collection's name is its only editable field and the detail page
+        // edits it in place, so there is no `/edit` route here — unlike
+        // categories, which have a description and an image to manage.
+        path: "/collections",
+        children: [
+            { path: "", element: <Collections /> },
+            { path: ":id", element: <CollectionDetails /> },
         ],
     },
     {

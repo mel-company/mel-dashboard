@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -13,6 +13,16 @@ import {
   useUpsertStorePaymentMethod,
 } from "@/api/wrappers/settings.wrappers";
 import { useFetchPaymentProviders } from "@/api/wrappers/payment.wrappers";
+import { useUpdateStoreDetails } from "@/api/wrappers/settings.wrappers";
+import { useFetchStates } from "@/api/wrappers/state.wrappers";
+import { useFetchRegions } from "@/api/wrappers/region.wrappers";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyDialog";
 import DomainSettings from "@/pages/settings/DomainSettings";
 import PrimeIntegrationCard from "./PrimeIntegrationCard";
@@ -47,6 +57,50 @@ const StoreIntegrationsSection = () => {
   const [domainDialogOpen, setDomainDialogOpen] = useState(false);
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
   const [optimisticCod, setOptimisticCod] = useState<boolean | null>(null);
+
+  /**
+   * Where the store ships from.
+   *
+   * Half of what decides an Iraqi delivery price is whether the parcel leaves
+   * the province, and nothing recorded the store's own province — the address
+   * was free text. Kept as the platform's province and city rather than a
+   * courier's code, so it survives changing courier.
+   */
+  const updateStoreDetails = useUpdateStoreDetails();
+  const [originStateId, setOriginStateId] = useState("");
+  const [originRegionId, setOriginRegionId] = useState("");
+
+  const { data: statesData } = useFetchStates();
+  const { data: regionsData } = useFetchRegions(originStateId, !!originStateId);
+
+  const asList = (value: unknown): any[] =>
+    Array.isArray(value) ? value : ((value as any)?.data ?? []);
+
+  const states = useMemo(() => asList(statesData), [statesData]);
+  const regions = useMemo(() => asList(regionsData), [regionsData]);
+
+  useEffect(() => {
+    setOriginStateId((storeDetails as any)?.originStateId ?? "");
+    setOriginRegionId((storeDetails as any)?.originRegionId ?? "");
+  }, [storeDetails]);
+
+  /** Names come back as `{ ar, en }` JSON, or a bare string on older rows. */
+  const placeName = (name: unknown): string => {
+    if (!name) return "";
+    if (typeof name === "string") return name;
+    const n = name as Record<string, string | undefined>;
+    return n.ar || n.en || n.arabic || n.english || "";
+  };
+
+  const saveOrigin = (stateId: string, regionId: string) => {
+    updateStoreDetails.mutate(
+      { originStateId: stateId || null, originRegionId: regionId || null },
+      {
+        onSuccess: () => toast.success("تم حفظ موقع الفرع"),
+        onError: () => toast.error("فشل حفظ موقع الفرع"),
+      },
+    );
+  };
 
   const cashOnDelivery =
     optimisticCod ?? currentSettings?.cash_on_delivery ?? false;
@@ -204,6 +258,59 @@ const StoreIntegrationsSection = () => {
           <p className="mt-2 px-1 text-[13px] text-slate-500">
             يمكنك تغيير شركة التوصيل كل 30 يوم
           </p>
+
+          <div className="mt-4 space-y-2">
+            <p className="px-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+              موقع الفرع
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Select
+                value={originStateId}
+                onValueChange={(value) => {
+                  setOriginStateId(value);
+                  // The city list follows the province; keeping the previous
+                  // selection would save a city in a different province.
+                  setOriginRegionId("");
+                  saveOrigin(value, "");
+                }}
+              >
+                <SelectTrigger className="h-12 rounded-[14px] bg-slate-100 dark:bg-slate-900">
+                  <SelectValue placeholder="المحافظة" />
+                </SelectTrigger>
+                <SelectContent>
+                  {states.map((state: any) => (
+                    <SelectItem key={state.id} value={state.id}>
+                      {placeName(state.name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={originRegionId}
+                onValueChange={(value) => {
+                  setOriginRegionId(value);
+                  saveOrigin(originStateId, value);
+                }}
+                disabled={!originStateId}
+              >
+                <SelectTrigger className="h-12 rounded-[14px] bg-slate-100 dark:bg-slate-900">
+                  <SelectValue placeholder="المدينة" />
+                </SelectTrigger>
+                <SelectContent>
+                  {regions.map((region: any) => (
+                    <SelectItem key={region.id} value={region.id}>
+                      {placeName(region.name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="px-1 text-[13px] text-slate-500">
+              تُستخدم لحساب أجور التوصيل — التوصيل داخل نفس المحافظة يُحسب بسعر
+              مختلف.
+            </p>
+          </div>
 
           {isPrimeDelivery(storeDetails) ? (
             <div className="mt-3">

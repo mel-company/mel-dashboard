@@ -1,5 +1,6 @@
 import {
   Package,
+  Layers,
   List,
   Percent,
   ShoppingCart,
@@ -82,6 +83,14 @@ const baseApps: AppItem[] = [
     icon: List,
     gradient: "from-violet-500 to-violet-600",
     description: "إدارة الفئات",
+  },
+  {
+    label: "المجموعات",
+    enLabel: "Collections",
+    path: "/collections",
+    icon: Layers,
+    gradient: "from-violet-500 to-violet-600",
+    description: "تشكيلات مثل صيفي وشتوي",
   },
   {
     label: "الخصومات",

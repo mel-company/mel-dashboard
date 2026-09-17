@@ -36,6 +36,7 @@ const TitleBar = ({
     "/customers": "العملاء",
     "/employees": "الموظفين",
     "/categories": "الفئات",
+    "/collections": "المجموعات",
     "/discounts": "الخصومات والكوبونات",
     "/tickets": "الدعم الفني",
     "/notifications": "الإشعارات",
