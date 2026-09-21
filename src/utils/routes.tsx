@@ -38,6 +38,7 @@ import CategoryGroupDetails from "../pages/category/category-group/CategoryGroup
 import EditCategoryGroup from "../pages/category/category-group/EditCategoryGroup";
 import Plans from "../pages/plan/Plans";
 import POS from "../new-pages/pos";
+import EditorPage from "../new-pages/editor";
 import Coupons from "../pages/coupone/Coupons";
 import CouponDetails from "../pages/coupone/CouponDetails";
 import EditCoupon from "../pages/coupone/EditCoupon";
@@ -62,6 +63,7 @@ export const mainRoutes: RouteConfig[] = [
     { path: "/app-store", element: <AppStore /> },
     { path: "/accounting", element: <Accounting /> },
     { path: "/pos", element: <POS /> },
+    { path: "/editor", element: <EditorPage /> },
     { path: "/prime-test", element: <PrimeTestPage /> },
     {
         path: "/products",

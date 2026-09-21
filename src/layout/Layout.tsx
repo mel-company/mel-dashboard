@@ -9,7 +9,9 @@ const Layout = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const isPosPage = location.pathname === "/pos";
-  const showMobileChrome = !isPosPage;
+  const isEditorPage = location.pathname === "/editor";
+  const isFullscreenTool = isPosPage || isEditorPage;
+  const showMobileChrome = !isFullscreenTool;
 
   // Close drawer on route change
   useEffect(() => {
@@ -51,7 +53,7 @@ const Layout = () => {
           "flex",
         )}
         onNavigate={() => setMobileSidebarOpen(false)}
-        {...(isPosPage && { collapsed: true })}
+        {...(isFullscreenTool && { collapsed: true })}
       />
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -68,13 +70,20 @@ const Layout = () => {
           <MobileTopBar onMenuClick={() => setMobileSidebarOpen(true)} />
         )}
 
-        <main className="custom-scrollbar relative z-10 flex-1 overflow-x-hidden overflow-y-auto">
+        <main
+          className={cn(
+            "custom-scrollbar relative z-10 flex-1 overflow-x-hidden",
+            isEditorPage ? "flex min-h-0 flex-col overflow-hidden" : "overflow-y-auto",
+          )}
+        >
           <div
             className={cn(
               "mx-auto w-full",
-              isPosPage
-                ? "max-w-none p-3 lg:p-5"
-                : "max-w-[1600px] p-3 sm:p-5 md:p-6 lg:p-7 xl:p-8 2xl:px-10",
+              isEditorPage
+                ? "flex min-h-0 max-w-none flex-1 flex-col p-0"
+                : isPosPage
+                  ? "max-w-none p-3 lg:p-5"
+                  : "max-w-[1600px] p-3 sm:p-5 md:p-6 lg:p-7 xl:p-8 2xl:px-10",
             )}
           >
             <Outlet />

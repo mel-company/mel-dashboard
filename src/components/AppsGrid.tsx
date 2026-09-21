@@ -18,6 +18,7 @@ import {
   Ticket,
   MessageCircle,
   Keyboard,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,13 @@ const baseApps: AppItem[] = [
     gradient: "from-emerald-500 to-emerald-600",
     description: "إدارة المنتجات",
     // badge: "جديد",
+  },
+  {
+    label: "محرر الموقع",
+    path: "/editor",
+    icon: Palette,
+    gradient: "from-sky-500 to-violet-600",
+    description: "تصميم وتخصيص موقع المتجر",
   },
   {
     label: "الفئات",

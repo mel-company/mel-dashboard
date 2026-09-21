@@ -14,6 +14,7 @@ import {
   Bell,
   MessageCircle,
   Ticket,
+  Palette,
 } from "lucide-react";
 import {
   Dialog,
@@ -75,6 +76,14 @@ const baseApps: AppItem[] = [
     gradient: "from-emerald-500 to-emerald-600",
     description: "إدارة المنتجات",
     // badge: "جديد",
+  },
+  {
+    label: "محرر الموقع",
+    enLabel: "Editor",
+    path: "/editor",
+    icon: Palette,
+    gradient: "from-sky-500 to-violet-600",
+    description: "تصميم وتخصيص موقع المتجر",
   },
   {
     label: "الفئات",

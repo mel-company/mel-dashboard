@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SettingsCard from "./SettingsCard";
@@ -25,10 +27,30 @@ const templates = [
 ];
 
 const StoreAppearanceSection = () => {
+  const navigate = useNavigate();
   const [activeTemplate, setActiveTemplate] = useState("classic");
 
   return (
     <SettingsCard title="مظهر المتجر">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-slate-100 px-4 py-3 dark:bg-slate-900">
+        <div className="min-w-0 text-right">
+          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            محرر الموقع
+          </p>
+          <p className="text-[13px] text-slate-500">
+            خصّص صفحات متجرك من داخل لوحة التحكم
+          </p>
+        </div>
+        <Button
+          type="button"
+          className="gap-2 shrink-0"
+          onClick={() => navigate("/editor")}
+        >
+          <ExternalLink className="size-4" />
+          فتح المحرر
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {templates.map((template) => {
           const isActive = activeTemplate === template.id;
