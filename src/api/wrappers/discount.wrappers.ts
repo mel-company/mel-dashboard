@@ -256,8 +256,12 @@ export const useDeleteDiscount = () => {
   return useMutation<any, Error, string>({
     mutationFn: (id: string) => discountAPI.delete(id),
     onSuccess: (_, deletedId) => {
-      // Invalidate and refetch discounts list
-      queryClient.invalidateQueries({ queryKey: discountKeys.lists() });
+      // `all`, not `lists()`. The discounts page is a cursor query, whose key
+      // `lists()` does not match — so deleting from the detail page left the
+      // list showing the discount until something else refetched. The list
+      // dialog papered over it with an explicit refetch; the detail page had
+      // no such fallback.
+      queryClient.invalidateQueries({ queryKey: discountKeys.all });
       // Remove the deleted discount from cache
       queryClient.removeQueries({ queryKey: discountKeys.detail(deletedId) });
     },

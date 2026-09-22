@@ -112,7 +112,7 @@ const GroupDeleteModal = ({
 
         <div className="space-y-3 text-center sm:space-y-4">
           <p className="text-lg font-bold text-slate-800 dark:text-[#e4e7fc] sm:text-[28px] sm:leading-8">
-            هل انت متأكد من حذف المجموعة
+            هل أنت متأكد من حذف المجموعة
           </p>
           <p className="mx-auto max-w-[34rem] text-xs leading-6 text-slate-400 dark:text-[#a4b1fa] sm:text-lg sm:leading-8">
             سوف تقوم بحذف المجموعة من النظام ولن تستطيع إعادتها مرة أخرى، يمكنك
@@ -133,7 +133,7 @@ const GroupDeleteModal = ({
                 جاري الإخفاء...
               </>
             ) : (
-              "أخفاء المجموعة"
+              "إخفاء المجموعة"
             )}
           </Button>
           <button

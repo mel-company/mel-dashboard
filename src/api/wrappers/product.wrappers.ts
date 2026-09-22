@@ -7,6 +7,10 @@ import {
 } from "@tanstack/react-query";
 import { productAPI } from "../endpoints/product.endpoints";
 import { statsAPI } from "../endpoints/stats.endpoints";
+import { categoryKeys } from "./category.wrappers";
+import { collectionKeys } from "./collection.wrappers";
+import { couponKeys } from "./coupon.wrappers";
+import { discountKeys } from "./discount.wrappers";
 
 /**
  * Query key factory for products
@@ -444,6 +448,13 @@ export const useDeleteProduct = () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
       // Remove the deleted product from cache
       queryClient.removeQueries({ queryKey: productKeys.detail(deletedId) });
+      // Deleting a product now detaches it from its categories, collections,
+      // coupons and discounts server-side, so every one of those lists is
+      // showing a stale membership count until it refetches.
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+      queryClient.invalidateQueries({ queryKey: collectionKeys.all });
+      queryClient.invalidateQueries({ queryKey: couponKeys.all });
+      queryClient.invalidateQueries({ queryKey: discountKeys.all });
     },
   });
 };

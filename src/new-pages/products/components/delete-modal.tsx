@@ -184,11 +184,13 @@ const ProductDeleteModal = ({
 
           <div className="space-y-2 text-center">
             <p className="text-lg font-bold text-slate-800 dark:text-[#e4e7fc] sm:text-[28px] sm:leading-8">
-              هل انت متأكد من حذف المنتج
+              هل أنت متأكد من حذف المنتج
             </p>
             <p className="mx-auto max-w-[34rem] text-xs leading-6 text-slate-400 dark:text-[#a4b1fa] sm:text-lg sm:leading-8">
-              سوف تقوم بحذف المنتج من النظام ولن تستطيع أعادته مرة اخرى، يمكنك
-              اخفاء المنتج من خيار الاخفاء في بيانات المنتج ولن يظهر للمستخدمين
+              سيتم حذف المنتج وإزالته من متجرك ومن كل الفئات والمجموعات
+              والكوبونات والخصومات، ولن تستطيع إعادته. لن تتأثر الطلبات
+              السابقة. وإن كنت تريد إخفاءه عن العملاء مع الاحتفاظ به، استخدم
+              خيار الإخفاء.
             </p>
           </div>
 
@@ -205,7 +207,7 @@ const ProductDeleteModal = ({
                   جاري الإخفاء...
                 </>
               ) : (
-                "أخفاء المنتج"
+                "إخفاء المنتج"
               )}
             </Button>
 
