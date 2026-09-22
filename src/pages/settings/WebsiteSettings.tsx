@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -27,8 +28,6 @@ import {
 } from "lucide-react";
 import TemplateGalleryDialog from "./TemplateGalleryDialog";
 import { cn } from "@/lib/utils";
-import { useValidateUserToEditor } from "@/api/wrappers/auth.wrappers";
-import { toast } from "sonner";
 
 // Mock data types
 interface WebsiteTemplate {
@@ -81,6 +80,7 @@ const libraryTemplates: WebsiteTemplate[] = [
 type Props = {};
 
 const WebsiteSettings = ({}: Props) => {
+  const navigate = useNavigate();
   const [addTemplatesOpen, setAddTemplatesOpen] = useState(false);
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(
     null,
@@ -109,21 +109,6 @@ const WebsiteSettings = ({}: Props) => {
     );
   };
 
-  const { mutate: validateUserToEditor } = useValidateUserToEditor();
-
-  const handleValidateUserToEditor = () => {
-    validateUserToEditor(undefined, {
-      onSuccess: (data) => {
-        console.log("data", data);
-        toast.success("تم التحقق من المستخدم");
-      },
-      onError: (error) => {
-        console.log("error", error);
-        toast.error("حدث خطأ أثناء التحقق من المستخدم");
-      },
-    });
-  };
-
   return (
     <div className="space-y-6 min-h-screen pb-6">
       <div className="flex items-center justify-between">
@@ -134,12 +119,14 @@ const WebsiteSettings = ({}: Props) => {
           </p>
         </div>
         <div>
-          {/* <Link to="#"> */}
-          <Button onClick={handleValidateUserToEditor} variant={"default"}>
-            <ExternalLink size={10} />
-            زيارة الموقع
+          <Button
+            onClick={() => navigate("/editor")}
+            variant={"default"}
+            className="gap-2"
+          >
+            <ExternalLink size={16} />
+            محرر الموقع
           </Button>
-          {/* </Link> */}
         </div>
       </div>
 

@@ -13,6 +13,7 @@ import {
     UserMultiple03Icon as UserMultiple03IconNormal,
     Settings01Icon as Settings01IconNormal,
     Notification01Icon as Notification01IconNormal,
+    WebDesign01Icon as WebDesign01IconNormal,
 } from '@hugeicons-pro/core-stroke-rounded';
 
 import {
@@ -28,6 +29,7 @@ import {
     UserMultiple03Icon as UserMultiple03IconActive,
     Settings01Icon as Settings01IconActive,
     Notification01Icon as Notification01IconActive,
+    WebDesign01Icon as WebDesign01IconActive,
 } from '@hugeicons-pro/core-solid-rounded';
 
 
@@ -73,6 +75,16 @@ export const pages: PageType[] = [{
     icon: {
         normal: Package02IconNormal,
         active: Package02IconActive
+    },
+},
+{
+    label: "محرر الموقع",
+    slug: "/editor",
+    apiEndpoint: "",
+    group: "إدارة المتجر",
+    icon: {
+        normal: WebDesign01IconNormal,
+        active: WebDesign01IconActive
     },
 }, {
     label: "الفئات",
