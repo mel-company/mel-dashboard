@@ -24,7 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyDialog";
-import DomainSettings from "@/pages/settings/DomainSettings";
+import DomainSettingsSection from "./DomainSettingsSection";
+import DomainStatusBadge from "./DomainStatusBadge";
 import PrimeIntegrationCard from "./PrimeIntegrationCard";
 import { isPrimeDelivery } from "@/api/types/store";
 import settingsGearIcon from "@/assets/settings/settings-gear.svg";
@@ -115,8 +116,8 @@ const StoreIntegrationsSection = () => {
   const isMethodEnabled = (methodId: string) => {
     const storePm = (
       storePaymentMethods as
-        | { paymentMethodId: string; isEnabled: boolean }[]
-        | undefined
+      | { paymentMethodId: string; isEnabled: boolean }[]
+      | undefined
     )?.find((s) => s.paymentMethodId === methodId);
     return storePm?.isEnabled ?? false;
   };
@@ -148,7 +149,8 @@ const StoreIntegrationsSection = () => {
     );
   };
 
-  const subdomain = domainDetails?.domain?.trim() || "azyaa";
+  const subdomain = domainDetails?.domain?.trim() || "";
+  const customDomain = domainDetails?.customDomain?.trim() || "";
 
   const deliveryCompany = storeDetails?.deliveryCompany;
   const deliveryCompanyName = deliveryCompany?.name ?? "لم يتم التحديد";
@@ -167,13 +169,14 @@ const StoreIntegrationsSection = () => {
             </p>
             <SettingsInput
               readOnly
-              value={subdomain}
+              value={subdomain ? `${subdomain}.mel.iq` : "—"}
               dir="ltr"
               className="cursor-pointer text-center"
             />
-            <p className="px-1 text-[13px] text-slate-500">
-              يمكنك تحديث النطاق الفرعي كل 30 يوم
-            </p>
+
+
+
+
           </button>
         </SettingsCard>
 
@@ -321,8 +324,11 @@ const StoreIntegrationsSection = () => {
       </div>
 
       <Dialog open={domainDialogOpen} onOpenChange={setDomainDialogOpen}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-          <DomainSettings />
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-3xl border-0 p-0 sm:max-w-4xl"
+        >
+          <DomainSettingsSection onClose={() => setDomainDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 

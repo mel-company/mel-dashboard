@@ -1,11 +1,22 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
+export type PlatformPaymentProvider = "QI_CARD" | "ZAIN_CASH";
+
 export type PlatformPaymentInitPayload = {
-  type: "INITIAL_SUBSCRIPTION" | "RENEWAL" | "CHANGE_PLAN";
-  planId: string;
+  type:
+    | "INITIAL_SUBSCRIPTION"
+    | "RENEWAL"
+    | "CHANGE_PLAN"
+    | "DOMAIN_REGISTRATION";
+  /** Required for every type except DOMAIN_REGISTRATION. */
+  planId?: string;
   billingPeriod?: "MONTHLY" | "YEARLY";
   durationMonths?: number;
   returnBaseUrl?: string;
+  /** FQDN to register — DOMAIN_REGISTRATION only. */
+  domain?: string;
+  /** Defaults to the server's configured gateway when omitted. */
+  provider?: PlatformPaymentProvider;
 };
 
 export const platformPaymentAPI = {
