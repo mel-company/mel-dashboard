@@ -63,7 +63,7 @@ const DomainBrandPanel = ({ onClose, className }: DomainBrandPanelProps) => (
     </div>
 
     <div>
-      <h3 className="text-2xl leading-snug font-bold text-slate-900 dark:text-slate-50">
+      <h3 className="text-3xl leading-snug font-black text-slate-800 dark:text-slate-50">
         اجعل علامتك أقرب إلى عملائك
       </h3>
       <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">

@@ -38,7 +38,7 @@ const OrdersSection = ({
 
         <div className="space-y-2">
           <SettingsLabel>السماح بتعديل الطلبات</SettingsLabel>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-start gap-2">
             <Switch
               checked={storeForm.allowOrderEditing}
               activeLabel="مفعل"
@@ -55,7 +55,7 @@ const OrdersSection = ({
 
         <div className="space-y-2">
           <SettingsLabel>تفعيل الدفع عند الاستلام</SettingsLabel>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-start gap-2">
             <Switch
               checked={storeForm.cashOnDelivery}
               activeLabel="مفعل"

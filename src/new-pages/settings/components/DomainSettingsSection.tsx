@@ -268,7 +268,7 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
     </div>
   ) : (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <CurrentValue
           label="نطاق المنصة الحالي"
           value={platformSlug ? `${platformSlug}.mel.iq` : "—"}

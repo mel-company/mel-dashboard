@@ -62,7 +62,7 @@ const DomainPathPicker = ({
             "flex flex-col items-start justify-center gap-1.5",
             disabled && "cursor-not-allowed opacity-60",
             selected
-              ? "border-blue-500 bg-blue-50/70 shadow-sm dark:border-blue-400 dark:bg-blue-500/10"
+              ? "border-blue-300 bg-blue-50/70 shadow-sm dark:border-blue-800 dark:bg-blue-500/10"
               : "border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700",
           )}
         >

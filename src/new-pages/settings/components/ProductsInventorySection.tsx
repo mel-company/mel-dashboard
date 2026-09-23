@@ -17,7 +17,7 @@ const ProductsInventorySection = ({
 
   return (
     <SettingsCard title="المنتجات والمخزون">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_225px]">
+      <div className="grid grid-cols-1 gap-4 md:gap-8 md:grid-cols-[1fr_225px]">
         <SettingsField label="الحد الادنى للمنتجات" htmlFor="lowStockThreshold">
           <div className="relative">
             <SettingsInput
@@ -37,7 +37,7 @@ const ProductsInventorySection = ({
 
         <div className="space-y-2">
           <SettingsLabel>حالة المنتج الافتراضية</SettingsLabel>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-start gap-2">
             <Switch
               checked={isPublished}
               activeLabel="نشر مباشر"
