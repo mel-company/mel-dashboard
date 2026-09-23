@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/select";
 import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyDialog";
 import DomainSettingsSection from "./DomainSettingsSection";
-import DomainStatusBadge from "./DomainStatusBadge";
 import PrimeIntegrationCard from "./PrimeIntegrationCard";
 import { isPrimeDelivery } from "@/api/types/store";
 import settingsGearIcon from "@/assets/settings/settings-gear.svg";
@@ -150,7 +149,6 @@ const StoreIntegrationsSection = () => {
   };
 
   const subdomain = domainDetails?.domain?.trim() || "";
-  const customDomain = domainDetails?.customDomain?.trim() || "";
 
   const deliveryCompany = storeDetails?.deliveryCompany;
   const deliveryCompanyName = deliveryCompany?.name ?? "لم يتم التحديد";

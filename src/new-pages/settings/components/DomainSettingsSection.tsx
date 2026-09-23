@@ -4,7 +4,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowLeft01Icon,
   Cancel01Icon,
-  GlobeIcon,
   Loading03Icon,
 } from "@hugeicons-pro/core-stroke-rounded";
 import { cn } from "@/lib/utils";
