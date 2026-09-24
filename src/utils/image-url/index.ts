@@ -1,3 +1,21 @@
+/**
+ * True when the value *is* the image rather than a pointer to one.
+ *
+ * The AI store generator seeds a product or category whose photograph could not
+ * be generated with an inline `data:image/svg+xml` tile, and several read
+ * endpoints hand that value through untouched. Everything below assumes a key
+ * or a url, so a placeholder came out as
+ * `https://api.mel.iq/data%3Aimage/svg%2Bxml%3Bbase64%2C…` — encoded once per
+ * candidate, retried twice by `AssetImage`, and broken both times.
+ *
+ * Matches the guard the editor and the storefront already use
+ * (`/^(https?:|data:|\/\/)/`), so all three surfaces agree about what an image
+ * source can be.
+ */
+function isInlineAssetSource(value: string): boolean {
+  return /^data:/i.test(value.trim());
+}
+
 function cleanEnvUrl(value?: string): string | undefined {
   if (!value?.trim()) return undefined;
   return value.trim().replace(/^["']|["']$/g, "").replace(/\/+$/, "");
@@ -128,6 +146,8 @@ function normalizeAssetHost(url: string, baseUrl?: string | null): string {
 }
 
 function buildAssetUrl(image: string, baseUrl?: string | null): string {
+  if (isInlineAssetSource(image)) return image;
+
   if (image.startsWith("http://") || image.startsWith("https://")) {
     return normalizeAssetHost(image, baseUrl);
   }
@@ -154,6 +174,9 @@ export function buildAssetUrlCandidates(
 ): string[] {
   const trimmed = coerceImagePath(image);
   if (!trimmed) return [];
+  // Nothing to try variants of: it is the image. Returning it alone is what
+  // stops `AssetImage` cycling two mangled urls before giving up.
+  if (isInlineAssetSource(trimmed)) return [trimmed];
 
   const out: string[] = [];
   const push = (url: string) => {
