@@ -159,9 +159,9 @@ const StoreSubscriptionSection = () => {
   const featureLabels =
     previewFeatures.length > 0
       ? previewFeatures.map(
-          (feature: { feature?: { name?: string } }) =>
-            feature.feature?.name ?? "—",
-        )
+        (feature: { feature?: { name?: string } }) =>
+          feature.feature?.name ?? "—",
+      )
       : FALLBACK_FEATURES;
 
   return (
@@ -171,12 +171,13 @@ const StoreSubscriptionSection = () => {
           <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-900">
             <div className="flex h-full flex-col gap-3 rounded-[18px] px-5 py-[18px]">
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-500">
-                  {features.length || featureLabels.length}
-                </span>
+
                 <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
                   المميزات الفعّالة
                 </p>
+                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-500">
+                  {features.length || featureLabels.length}
+                </span>
               </div>
 
               <ul className="space-y-[9px]">
@@ -185,30 +186,30 @@ const StoreSubscriptionSection = () => {
                     key={label}
                     className="flex items-center justify-end gap-[7px] text-[13px] text-slate-900 dark:text-slate-100"
                   >
-                    <span>{label}</span>
                     <span className="flex size-4 items-center justify-center rounded-full bg-emerald-500 text-white">
-                      <Check className="size-2.5 stroke-[3]" />
+                      <Check className="size-2.5 stroke-3" />
                     </span>
+                    <span className="w-full">{label}</span>
                   </li>
                 ))}
               </ul>
 
               <button
                 type="button"
-                className="text-left text-xs text-sky-500 hover:underline"
+                className="text-start text-xs text-sky-500 hover:underline"
                 onClick={() => navigate("/plans")}
               >
                 + {remainingFeatures > 0 ? remainingFeatures : 6} مميزات أخرى
               </button>
 
               <div className="mt-auto rounded-xl bg-violet-500/5 px-4 py-3.5">
-                <div className="mb-2 flex items-center justify-end gap-1.5">
+                <div className="mb-2 flex items-center justify-start gap-1.5">
+                  <Rocket className="size-4 text-violet-600" />
                   <span className="text-[13px] font-medium text-violet-600">
                     التطوير القادمة
                   </span>
-                  <Rocket className="size-4 text-violet-600" />
                 </div>
-                <p className="text-right text-xs leading-[1.65] text-violet-600">
+                <p className="text-start text-xs leading-[1.65] text-violet-600">
                   رقّي للباقة المتقدمة: منتجات وفروع أكثر + تقارير موسّعة
                 </p>
               </div>
