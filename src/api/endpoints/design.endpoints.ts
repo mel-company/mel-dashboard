@@ -17,7 +17,8 @@ export interface StoreDesign {
   /** Signed R2 URL of the captured screenshot, or null if none exists yet. */
   thumbnail: string | null;
   /**
-   * Public, browsable demo of this design.
+   * Public, browsable preview of this design, on a hostname of its own:
+   * `https://<id>-demo-store.<root>`.
    *
    * Renders an invented catalogue and makes no API call, so the link is safe
    * to open anywhere and safe to send to anyone.
@@ -68,17 +69,18 @@ export const designAPI = {
 };
 
 /**
- * Where to actually open a design's demo from this dashboard.
+ * Where to actually open a design's preview from this dashboard.
  *
- * The server returns the API's own public address, which is right for a link
- * being sent to someone and wrong for a developer on localhost — there
- * `API_BASE_URL` is unset, so it falls back to the production host, and that
- * host does not have this build. It cannot simply be pointed at localhost
- * either: the deployer hands the same value to every storefront it ships.
+ * The server returns `https://<id>-demo-store.mel.iq` — a hostname per design,
+ * which is the point: this is the one link a merchant hands to someone outside
+ * the platform, it should not be a path on the API, and at its own root the
+ * storefront's in-app routes are real paths that survive a reload.
  *
- * On localhost the path is taken same-origin instead, which Vite proxies to
- * the local API. In production the dashboard is served same-origin with the
- * API anyway, so both resolve to the same place.
+ * That address is right for sharing and wrong for a developer on localhost,
+ * where no such hostname resolves to this build. On localhost the API route is
+ * taken same-origin instead, which Vite proxies to the local API — the Worker
+ * is a proxy onto exactly that route, so the two render the same page. Only
+ * the asset base differs, and the server picks it per host.
  */
 export function resolveDemoUrl(design: Pick<StoreDesign, "id" | "demoUrl">): string {
   const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(
