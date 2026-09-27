@@ -65,7 +65,9 @@ function ThemeFallback({ theme }: { theme: StoreDesign["theme"] }) {
   return (
     <div
       className="flex h-full w-full items-center justify-center"
-      style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}
+      style={{
+        background: `linear-gradient(135deg, ${primary}, ${secondary})`,
+      }}
     >
       <Sparkles className="size-7 text-white/80" />
     </div>
@@ -105,7 +107,10 @@ const StoreAppearanceSection = () => {
       {isLoading ? (
         <div className="flex gap-4">
           {[0, 1, 2].map((i) => (
-            <div key={i} className={cn("shrink-0 grow-0 space-y-2", ITEM_BASIS)}>
+            <div
+              key={i}
+              className={cn("shrink-0 grow-0 space-y-2", ITEM_BASIS)}
+            >
               <Skeleton className="h-[116px] w-full rounded-[10px]" />
               <Skeleton className="mx-auto h-4 w-2/3" />
               <Skeleton className="mx-auto h-3 w-5/6" />
@@ -129,7 +134,7 @@ const StoreAppearanceSection = () => {
         // The arrows sit inside the padding rather than outside it: this card
         // lives in a narrow settings column with no room to hang them off the
         // edge the way the carousel defaults to.
-        <Carousel dir="rtl" opts={CAROUSEL_OPTIONS} >
+        <Carousel dir="rtl" opts={CAROUSEL_OPTIONS}>
           <CarouselContent>
             {items.map((design) => (
               <CarouselItem key={design.id} className={ITEM_BASIS}>
@@ -149,7 +154,16 @@ const StoreAppearanceSection = () => {
                         : "bg-transparent",
                     )}
                   >
-                    <div className="relative w-full group overflow-hidden">
+                    {/* The picture is the obvious thing to press, so it is
+                        the control. The hint over it is decoration for a
+                        pointer and nothing else — `pointer-events-none` so it
+                        can never sit between a tap and this button. */}
+                    <button
+                      type="button"
+                      onClick={() => setPreviewDesign(design)}
+                      aria-label={`معاينة ${design.storeName || "التصميم"}`}
+                      className="group relative w-full cursor-pointer overflow-hidden rounded-[10px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-sky-400"
+                    >
                       <div className="h-[116px] w-full overflow-hidden rounded-[10px] bg-white shadow-sm dark:bg-slate-800">
                         {design.thumbnail ? (
                           <img
@@ -163,17 +177,13 @@ const StoreAppearanceSection = () => {
                         )}
                       </div>
 
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setPreviewDesign(design)}
-                        className="absolute opacity-0 group-hover:opacity-100 duration-300 bottom-1/2 translate-y-4/3 group-hover:translate-y-1/2 left-1/2 h-8 -translate-x-1/2 gap-1 rounded-lg bg-white/90 px-3 text-[13px] font-medium text-slate-700 shadow-sm backdrop-blur-sm hover:bg-white dark:bg-slate-900/90 dark:text-slate-100"
-                      >
-                        <Eye className="size-3.5" />
-                        معاينة حيّة
-                      </Button>
-                    </div>
+                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-[10px] bg-slate-900/0 opacity-0 transition duration-300 group-hover:bg-slate-900/25 group-hover:opacity-100">
+                        <span className="flex items-center gap-1 rounded-lg bg-white/90 px-3 py-1.5 text-[13px] font-medium text-slate-700 shadow-sm backdrop-blur-sm dark:bg-slate-900/90 dark:text-slate-100">
+                          <Eye className="size-3.5" />
+                          معاينة حيّة
+                        </span>
+                      </span>
+                    </button>
 
                     <div className="w-full space-y-1 text-center">
                       <p
@@ -192,20 +202,36 @@ const StoreAppearanceSection = () => {
                       </p>
                     </div>
 
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={design.isActive}
-                      onClick={() => setDesignToApply(design)}
-                      className={cn(
-                        "mt-auto h-8 w-full rounded-lg text-[13px] font-medium shadow-none",
-                        design.isActive
-                          ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 disabled:opacity-100"
-                          : "bg-sky-500/10 text-sky-500 hover:bg-sky-500/20",
-                      )}
-                    >
-                      {design.isActive ? "التصميم الحالي" : "استخدام التصميم"}
-                    </Button>
+                    {/* Preview above apply, because that is the order the
+                        decision is made in: a merchant looks at the design
+                        running before putting it on their shop. */}
+                    <div className="mt-auto flex w-full flex-col gap-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPreviewDesign(design)}
+                        className="h-8 w-full gap-1.5 rounded-lg border-slate-200 text-[13px] font-medium text-slate-600 shadow-none hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                      >
+                        <Eye className="size-3.5" />
+                        معاينة حيّة
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={design.isActive}
+                        onClick={() => setDesignToApply(design)}
+                        className={cn(
+                          "h-8 w-full rounded-lg text-[13px] font-medium shadow-none",
+                          design.isActive
+                            ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 disabled:opacity-100"
+                            : "bg-sky-500/10 text-sky-500 hover:bg-sky-500/20",
+                        )}
+                      >
+                        {design.isActive ? "التصميم الحالي" : "استخدام التصميم"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CarouselItem>
