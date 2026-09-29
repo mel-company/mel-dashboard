@@ -2,17 +2,51 @@ import { useEffect, useState } from "react";
 import { ExternalLink, RefreshCw } from "lucide-react";
 import { useValidateUserToEditor } from "@/api/wrappers/auth.wrappers";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
+import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 import { Button } from "@/components/ui/button";
 
 type EditorHandoff = {
   redirectUrl?: string;
   jwt?: string;
   token?: string;
+  /** The store's platform slug, which the handoff URL has to carry. */
+  subdomain?: string;
 };
 
 const EDITOR_BASE = (
   import.meta.env.VITE_EDITOR_URL || "https://editor.mel.iq"
 ).replace(/\/$/, "");
+
+/**
+ * Which store this session belongs to.
+ *
+ * The handoff URL has to say so. The editor's fallback for a link that does
+ * not is to read the tenant off its own hostname, and `editor.mel.iq` parses
+ * as the store "editor" — so the merchant is signed in correctly and then
+ * every request the editor makes is scoped to a store that does not exist,
+ * which reads as an editor that loaded empty rather than as an error.
+ *
+ * The server answers with it; `redirectUrl` is read second so a server that
+ * has not shipped that field yet still works, and the hostname
+ * (`dash.<slug>.mel.iq`) is the last resort.
+ */
+function resolveStoreSlug(data: EditorHandoff): string {
+  if (data.subdomain) return data.subdomain;
+
+  if (data.redirectUrl) {
+    try {
+      const fromRedirect = new URL(
+        data.redirectUrl,
+        window.location.origin,
+      ).searchParams.get("store");
+      if (fromRedirect) return fromRedirect;
+    } catch {
+      // A redirectUrl we cannot parse tells us nothing; fall through.
+    }
+  }
+
+  return getTenantSubdomain();
+}
 
 /**
  * The editor runs on its own origin, so it can read neither this app's
@@ -27,37 +61,36 @@ const EDITOR_BASE = (
  * makes the two agree when the OS is light and the editor's own default is
  * dark.
  */
-function withTheme(href: string, theme: "light" | "dark"): string {
-  const url = new URL(href);
-  url.searchParams.set("theme", theme);
-  return url.toString();
-}
-
 function resolveEditorHandoffUrl(
   data: EditorHandoff,
   theme: "light" | "dark",
 ): string | null {
   const token = data.jwt || data.token;
-  // Prefer the known production auth entry so we never iframe the dashboard
-  // into itself when EDITOR_URL is misconfigured.
-  if (token) {
-    return withTheme(
-      `${EDITOR_BASE}/auth/token/${encodeURIComponent(token)}`,
-      theme,
-    );
-  }
+  if (!token) return null;
 
-  if (!data.redirectUrl) return null;
+  // `/editor/bridge` is the editor's one sign-in entry point, and the same
+  // one the AI generator hands out — so both handoffs go through a single
+  // route rather than two shapes that drift. The older
+  // `/auth/token/:token` form this used to build is still routed there, but
+  // it has nowhere to put the store, and it lands the merchant on the
+  // editor's own dashboard rather than the editor.
+  //
+  // Deliberately no `generation=`: that tells the bridge to overwrite the
+  // merchant's pages with a generation result. Right once, immediately after
+  // generating — wrong on a button they press every day.
+  //
+  // The origin comes from this app's own config rather than the server's
+  // `redirectUrl`, so a misconfigured EDITOR_URL can never iframe the
+  // dashboard into itself.
+  const url = new URL(`${EDITOR_BASE}/editor/bridge`);
+  url.searchParams.set("token", token);
+  url.searchParams.set("next", "/editor");
 
-  try {
-    const url = new URL(data.redirectUrl, window.location.origin);
-    if (url.origin === window.location.origin) {
-      return null;
-    }
-    return withTheme(url.toString(), theme);
-  } catch {
-    return null;
-  }
+  const store = resolveStoreSlug(data);
+  if (store) url.searchParams.set("store", store);
+
+  url.searchParams.set("theme", theme);
+  return url.toString();
 }
 
 const EditorPage = () => {
@@ -76,9 +109,10 @@ const EditorPage = () => {
       onSuccess: (data: EditorHandoff) => {
         const url = resolveEditorHandoffUrl(data, theme);
         if (!url) {
-          setError(
-            "رابط المحرر غير صحيح. تأكد أن EDITOR_URL يشير إلى https://editor.mel.iq",
-          );
+          // The only way to get here now: the response carried no token.
+          // The editor cannot sign anyone in on its own, so there is nothing
+          // to open.
+          setError("تعذر إنشاء جلسة للمحرر. حاول مرة أخرى.");
           return;
         }
         setRedirectUrl(url);
