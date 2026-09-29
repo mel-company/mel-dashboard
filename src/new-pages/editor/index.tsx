@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ExternalLink, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { useValidateUserToEditor } from "@/api/wrappers/auth.wrappers";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
@@ -16,6 +17,28 @@ type EditorHandoff = {
 const EDITOR_BASE = (
   import.meta.env.VITE_EDITOR_URL || "https://editor.mel.iq"
 ).replace(/\/$/, "");
+
+/**
+ * The exact origin the editor is allowed to be posted to.
+ *
+ * Never `"*"`: the iframe can navigate itself, and a wildcard target would
+ * keep delivering to wherever it ended up. A misconfigured EDITOR_URL that
+ * will not parse means no channel rather than a broken page.
+ */
+const EDITOR_ORIGIN = (() => {
+  try {
+    return new URL(EDITOR_BASE).origin;
+  } catch {
+    return null;
+  }
+})();
+
+/**
+ * The message the editor listens for. Its own copy of the string, since the
+ * two apps are separate deployments with no shared package — the editor pins
+ * it as `THEME_MESSAGE` in `editor-theme.ts`.
+ */
+const THEME_MESSAGE = "mel:editor-theme";
 
 /**
  * Which store this session belongs to.
@@ -95,10 +118,88 @@ function resolveEditorHandoffUrl(
 
 const EditorPage = () => {
   const { mutate: validateUserToEditor, isPending } = useValidateUserToEditor();
+  // A second instance on purpose — see `openInNewTab`.
+  const { mutate: mintTabSession, isPending: isMintingTab } =
+    useValidateUserToEditor();
   const theme = useResolvedTheme();
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [iframeBlocked, setIframeBlocked] = useState(false);
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+
+  /**
+   * Keep the embedded editor on our theme after it has opened.
+   *
+   * `?theme=` settles the first paint and nothing after it — the URL is
+   * baked into `redirectUrl` once, and rebuilding it to push a change would
+   * reload the iframe, re-running the token exchange and throwing away
+   * whatever the merchant was in the middle of. A colour should not cost a
+   * page load.
+   *
+   * Sent on every theme change and again on each `load`, because the frame
+   * navigates internally (bridge → `/editor`) and a message posted while it
+   * was still loading reaches a document that is on its way out. `setTheme`
+   * on the other side ignores a value it already holds, so the repeats are
+   * free.
+   */
+  const postTheme = useCallback(() => {
+    if (!EDITOR_ORIGIN) return;
+    frameRef.current?.contentWindow?.postMessage(
+      { type: THEME_MESSAGE, theme },
+      EDITOR_ORIGIN,
+    );
+  }, [theme]);
+
+  useEffect(() => {
+    postTheme();
+  }, [postTheme, redirectUrl]);
+
+  /**
+   * Open the editor in a tab of its own.
+   *
+   * This cannot reuse `redirectUrl`. A handoff token is **single use**: the
+   * bridge exchanges it through `/auth/refresh-dual`, which mints a
+   * replacement and writes it over `storeUserSession.jwt`, and the session is
+   * looked up by that exact column. The iframe beside this button has already
+   * spent the one in `redirectUrl`, so following the same link a second time
+   * lands on the editor's "تعذر تسجيل الدخول" screen. From the merchant's
+   * side the button simply does not work.
+   *
+   * So it mints a fresh one per click, on its own mutation instance — sharing
+   * the one `openEditor` uses would flip `isPending`, swap the page for the
+   * spinner and tear down the iframe the merchant is still working in.
+   *
+   * The tab is opened empty *inside the click* and navigated when the token
+   * arrives. Opening it after the await instead loses the user activation and
+   * the browser blocks it as a popup.
+   */
+  const openInNewTab = () => {
+    const tab = window.open("about:blank", "_blank");
+    if (!tab) {
+      toast.error("المتصفح منع فتح تبويب جديد.");
+      return;
+    }
+    // `noopener` on window.open would return null and leave nothing to
+    // navigate, so the reference is severed by hand instead.
+    tab.opener = null;
+
+    mintTabSession(undefined, {
+      onSuccess: (data: EditorHandoff) => {
+        const url = resolveEditorHandoffUrl(data, theme);
+        if (!url) {
+          tab.close();
+          toast.error("تعذر إنشاء جلسة للمحرر.");
+          return;
+        }
+        // `replace`, so Back in the new tab does not return to about:blank.
+        tab.location.replace(url);
+      },
+      onError: () => {
+        tab.close();
+        toast.error("تعذر فتح المحرر في تبويب جديد.");
+      },
+    });
+  };
 
   const openEditor = () => {
     setError(null);
@@ -153,11 +254,15 @@ const EditorPage = () => {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-3 py-2">
         <p className="text-sm font-medium text-foreground">محرر الموقع</p>
-        <Button variant="secondary" size="sm" className="gap-2" asChild>
-          <a href={redirectUrl!} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="size-4" />
-            فتح في تبويب جديد
-          </a>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="gap-2"
+          onClick={openInNewTab}
+          disabled={isMintingTab}
+        >
+          <ExternalLink className="size-4" />
+          فتح في تبويب جديد
         </Button>
       </div>
 
@@ -166,19 +271,23 @@ const EditorPage = () => {
           <p className="max-w-md text-sm text-muted-foreground">
             المتصفح منع عرض المحرر داخل الصفحة. افتحه في تبويب جديد.
           </p>
-          <Button asChild className="gap-2">
-            <a href={redirectUrl!} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="size-4" />
-              فتح المحرر
-            </a>
+          <Button
+            className="gap-2"
+            onClick={openInNewTab}
+            disabled={isMintingTab}
+          >
+            <ExternalLink className="size-4" />
+            فتح المحرر
           </Button>
         </div>
       ) : (
         <iframe
+          ref={frameRef}
           title="محرر الموقع"
           src={redirectUrl!}
           className="min-h-0 w-full flex-1 border-0 bg-background"
           allow="clipboard-read; clipboard-write; fullscreen"
+          onLoad={postTheme}
           onError={() => setIframeBlocked(true)}
         />
       )}
