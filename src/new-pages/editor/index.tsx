@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink, RefreshCw } from "lucide-react";
 import { useValidateUserToEditor } from "@/api/wrappers/auth.wrappers";
+import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { Button } from "@/components/ui/button";
 
 type EditorHandoff = {
@@ -13,12 +14,37 @@ const EDITOR_BASE = (
   import.meta.env.VITE_EDITOR_URL || "https://editor.mel.iq"
 ).replace(/\/$/, "");
 
-function resolveEditorHandoffUrl(data: EditorHandoff): string | null {
+/**
+ * The editor runs on its own origin, so it can read neither this app's
+ * `localStorage` nor the class on this document — an iframe is a separate
+ * document with a separate storage partition. The query string is the only
+ * channel the handoff has, and `?theme=` is what the editor reads it from,
+ * before it paints. Without it, opening the editor from a light dashboard
+ * puts a dark panel inside a light page.
+ *
+ * `system` is resolved to a concrete value here rather than passed through:
+ * the editor has no `system` setting, and resolving it on this side is what
+ * makes the two agree when the OS is light and the editor's own default is
+ * dark.
+ */
+function withTheme(href: string, theme: "light" | "dark"): string {
+  const url = new URL(href);
+  url.searchParams.set("theme", theme);
+  return url.toString();
+}
+
+function resolveEditorHandoffUrl(
+  data: EditorHandoff,
+  theme: "light" | "dark",
+): string | null {
   const token = data.jwt || data.token;
   // Prefer the known production auth entry so we never iframe the dashboard
   // into itself when EDITOR_URL is misconfigured.
   if (token) {
-    return `${EDITOR_BASE}/auth/token/${encodeURIComponent(token)}`;
+    return withTheme(
+      `${EDITOR_BASE}/auth/token/${encodeURIComponent(token)}`,
+      theme,
+    );
   }
 
   if (!data.redirectUrl) return null;
@@ -28,7 +54,7 @@ function resolveEditorHandoffUrl(data: EditorHandoff): string | null {
     if (url.origin === window.location.origin) {
       return null;
     }
-    return url.toString();
+    return withTheme(url.toString(), theme);
   } catch {
     return null;
   }
@@ -36,6 +62,7 @@ function resolveEditorHandoffUrl(data: EditorHandoff): string | null {
 
 const EditorPage = () => {
   const { mutate: validateUserToEditor, isPending } = useValidateUserToEditor();
+  const theme = useResolvedTheme();
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [iframeBlocked, setIframeBlocked] = useState(false);
@@ -47,7 +74,7 @@ const EditorPage = () => {
 
     validateUserToEditor(undefined, {
       onSuccess: (data: EditorHandoff) => {
-        const url = resolveEditorHandoffUrl(data);
+        const url = resolveEditorHandoffUrl(data, theme);
         if (!url) {
           setError(
             "رابط المحرر غير صحيح. تأكد أن EDITOR_URL يشير إلى https://editor.mel.iq",
@@ -116,7 +143,7 @@ const EditorPage = () => {
         <iframe
           title="محرر الموقع"
           src={redirectUrl!}
-          className="min-h-0 w-full flex-1 border-0 bg-white"
+          className="min-h-0 w-full flex-1 border-0 bg-background"
           allow="clipboard-read; clipboard-write; fullscreen"
           onError={() => setIframeBlocked(true)}
         />
