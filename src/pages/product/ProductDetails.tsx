@@ -55,6 +55,7 @@ import {
 } from "@/components/product/tags";
 import ProductDeleteModal from "@/new-pages/products/components/delete-modal";
 import { formatCurrency, formatNumber } from "@/utils/format-currency";
+import PagePanel from "@/components/PagePanel";
 
 const formatPrice = (value?: number | null) =>
   typeof value === "number" ? formatCurrency(value) : "—";
@@ -218,7 +219,7 @@ const ProductDetails = () => {
   };
 
   return (
-    <div className="space-y-6 pb-4">
+    <PagePanel className="space-y-6 pb-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3 text-right">
           <button
@@ -256,7 +257,7 @@ const ProductDetails = () => {
           <Button
             onClick={() => setIsDeleteDialogOpen(true)}
             className="gap-2 rounded-full px-5"
-            variant="destructive"
+            variant="destructive-outline"
             disabled={isDeleting}
           >
             {isDeleting ? (
@@ -873,7 +874,7 @@ const ProductDetails = () => {
           productId={id}
         />
       )}
-    </div>
+    </PagePanel>
   );
 };
 
