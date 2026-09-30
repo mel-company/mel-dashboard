@@ -47,6 +47,7 @@ import { resolveAssetBaseUrl } from "@/utils/image-url";
 import { formatPosPrice } from "@/new-pages/pos/utils";
 import { formatCurrency } from "@/utils/format-currency";
 import PagePanel from "@/components/PagePanel";
+import POSAddItemDialog from "@/new-pages/pos/components/POSAddItemDialog";
 
 // Product types matching API structure
 type Product = {
@@ -130,6 +131,7 @@ const POS = ({ }: Props) => {
   const [isInvoiceSheetOpen, setIsInvoiceSheetOpen] = useState(false);
   const [cashOnDelivery, setCashOnDelivery] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<
     Record<string, string>
@@ -379,8 +381,10 @@ const POS = ({ }: Props) => {
       setSelectedOptions({});
       setIsOptionDialogOpen(true);
     } else {
-      // No options, add directly to cart
-      addToCart(product, undefined, {});
+      // Figma puts a confirm with a quantity stepper between the tap and
+      // the cart, so a merchant can set the count once instead of tapping
+      // the product five times.
+      setPendingProduct(product);
     }
   };
 
@@ -389,6 +393,7 @@ const POS = ({ }: Props) => {
     product: Product,
     variant: ProductVariant | undefined,
     options: Record<string, string>,
+    quantity = 1,
   ) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => {
@@ -403,7 +408,7 @@ const POS = ({ }: Props) => {
       if (existingItem) {
         return prevCart.map((item) =>
           item === existingItem
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + quantity }
             : item,
         );
       }
@@ -414,7 +419,7 @@ const POS = ({ }: Props) => {
           product,
           variant,
           selectedOptions: options,
-          quantity: 1,
+          quantity,
         },
       ];
     });
@@ -900,6 +905,16 @@ const POS = ({ }: Props) => {
         isLoadingStates={isLoadingStates}
         isLoadingRegions={isLoadingRegions}
       />
+      <POSAddItemDialog
+        product={pendingProduct}
+        baseUrl={baseUrl}
+        onOpenChange={(open) => !open && setPendingProduct(null)}
+        onConfirm={(product, quantity) => {
+          addToCart(product, undefined, {}, quantity);
+          setPendingProduct(null);
+        }}
+      />
+
     </PagePanel>
   );
 };
