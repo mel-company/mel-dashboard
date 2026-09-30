@@ -46,6 +46,7 @@ import {
 import { resolveAssetBaseUrl } from "@/utils/image-url";
 import { formatPosPrice } from "@/new-pages/pos/utils";
 import { formatCurrency } from "@/utils/format-currency";
+import PagePanel from "@/components/PagePanel";
 
 // Product types matching API structure
 type Product = {
@@ -705,7 +706,7 @@ const POS = ({ }: Props) => {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4 pb-24 lg:gap-6 lg:pb-0">
+    <PagePanel className="flex min-h-[calc(100vh-6rem)] flex-col gap-4 pb-24 lg:gap-6 lg:pb-0">
       <TitleBar
         description={
           orderId
@@ -899,7 +900,7 @@ const POS = ({ }: Props) => {
         isLoadingStates={isLoadingStates}
         isLoadingRegions={isLoadingRegions}
       />
-    </div>
+    </PagePanel>
   );
 };
 

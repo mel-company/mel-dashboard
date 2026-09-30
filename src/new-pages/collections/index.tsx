@@ -14,6 +14,7 @@ import { useCollectionsPage } from "@/hooks/use-collections-page";
 import AddCollectionDialog from "@/components/dialogs/AddCollectionDialog";
 import CollectionFilterDialog from "@/pages/collection/CollectionFilterDialog";
 import CollectionsContent from "./components/CollectionsContent";
+import PagePanel from "@/components/PagePanel";
 
 /**
  * `/collections` — the merchant's curated sets.
@@ -27,7 +28,7 @@ const CollectionsPage = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
         <TitleBar listLabel="المجموعات">
           <Button
@@ -156,7 +157,7 @@ const CollectionsPage = () => {
         onApply={actions.setFilters}
         onClear={actions.handleClearFilters}
       />
-    </div>
+    </PagePanel>
   );
 };
 

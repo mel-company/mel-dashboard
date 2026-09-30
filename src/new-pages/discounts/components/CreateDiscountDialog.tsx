@@ -1,8 +1,16 @@
 import { useRef, useState } from "react";
 import { Calendar, Loader2, Percent, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useCreateDiscount } from "@/api/wrappers/discount.wrappers";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import { useFetchCurrentSettings } from "@/api/wrappers/settings.wrappers";
@@ -70,6 +78,8 @@ const CreateDiscountDialog = ({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isMobile = useIsMobile();
 
   const { data: storeDetails } = useFetchStoreDetails();
   const { data: currentSettings } = useFetchCurrentSettings(open);
@@ -181,34 +191,57 @@ const CreateDiscountDialog = ({
   };
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(v) => {
         if (!v) reset();
         onOpenChange(v);
       }}
     >
-      <DialogContent
+      {/* Figma presents every create form as a full-height edge drawer, the
+          same shape CreateTicketSheet already uses — not a centred dialog. */}
+      <SheetContent
+        side={isMobile ? "bottom" : "left"}
         dir="rtl"
         showCloseButton={false}
-        className="max-h-[92dvh] max-w-lg gap-0 overflow-y-auto rounded-[2rem] border-0 p-0 shadow-xl sm:max-w-[792px] dark:bg-[#12183b]"
+        className={cn(
+          "z-[60] flex flex-col gap-0 border-0 p-0 text-foreground",
+          "bg-white dark:bg-[#12183b]",
+          isMobile
+            ? cn(
+                "inset-x-0 bottom-0 top-auto h-auto max-h-[92dvh] w-full max-w-none rounded-t-[32px]",
+                "data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom",
+              )
+            : cn(
+                "top-3 bottom-3 left-3 h-auto w-[min(100%,792px)] max-w-[792px] rounded-[32px]",
+                "data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left",
+              ),
+        )}
       >
-        <form onSubmit={handleSubmit} className="flex flex-col p-6 sm:p-6">
-          <div className="mb-6 flex items-start justify-end gap-3 border-b border-slate-100 pb-5 dark:border-[#1f2448]">
-            <div className="min-w-0 text-right">
-              <DialogTitle className="text-xl font-normal text-slate-900 dark:text-[#e4e7fc]">
-                اضافة خصم جديد
-              </DialogTitle>
-              <p className="mt-0.5 text-sm text-slate-400 dark:text-[#a4b1fa]">
-                يرجى ادخال جميع الحقول لاتمام عملية الاضافة
-              </p>
-            </div>
+        {isMobile ? (
+          <div className="flex shrink-0 justify-center pt-3">
+            <span className="h-1.5 w-12 rounded-full bg-border" />
+          </div>
+        ) : null}
+
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          {/* RTL: the first child sits rightmost, so the badge leads on the
+              right as it does in Figma. */}
+          <SheetHeader className="shrink-0 flex-row items-start gap-3 space-y-0 border-b border-slate-100 px-5 py-5 text-right sm:px-6 dark:border-[#1f2448]">
             <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-[#9a5cff]/15 dark:text-[#b282ff]">
               <Percent className="size-5" strokeWidth={2.5} />
             </div>
-          </div>
+            <div className="min-w-0 text-right">
+              <SheetTitle className="text-xl font-normal text-slate-900 dark:text-[#e4e7fc]">
+                اضافة خصم جديد
+              </SheetTitle>
+              <SheetDescription className="mt-0.5 text-sm text-slate-400 dark:text-[#a4b1fa]">
+                يرجى ادخال جميع الحقول لاتمام عملية الاضافة
+              </SheetDescription>
+            </div>
+          </SheetHeader>
 
-          <div className="space-y-6 [&_label]:dark:text-[#a4b1fa]">
+          <div className="custom-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-6 sm:px-6 [&_label]:dark:text-[#a4b1fa]">
             <SettingsField label="رمز الخصم" htmlFor="discountName">
               <SettingsInput
                 id="discountName"
@@ -354,11 +387,24 @@ const CreateDiscountDialog = ({
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row-reverse sm:items-center sm:justify-between">
+          {/* RTL: `flex-row` puts the first child rightmost, so the primary
+              action lands on the right and الغاء on the far left, as drawn.
+              `flex-row-reverse` was swapping them. */}
+          <SheetFooter
+            className={cn(
+              "shrink-0 border-t border-slate-100 px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 dark:border-[#1f2448]",
+              isMobile
+                ? "flex-col gap-3 sm:flex-col"
+                : "flex-row items-center justify-between gap-3 sm:flex-row sm:space-x-0",
+            )}
+          >
             <button
               type="submit"
               disabled={isPending}
-              className="flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-lg font-bold text-white disabled:opacity-50 sm:w-[233px]"
+              className={cn(
+                "flex h-[60px] items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-lg font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50",
+                isMobile ? "w-full" : "min-w-[233px] px-10",
+              )}
             >
               {isPending ? (
                 <>
@@ -373,14 +419,19 @@ const CreateDiscountDialog = ({
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="flex h-[60px] w-full items-center justify-center rounded-2xl text-lg font-bold text-slate-400 hover:text-slate-600 disabled:opacity-50 sm:w-[166px] dark:bg-transparent dark:text-[#4a5596] dark:hover:text-[#e4e7fc]"
+              className={cn(
+                "text-lg font-bold text-slate-400 transition-colors hover:text-slate-600 disabled:opacity-50 dark:text-[#4a5596] dark:hover:text-[#e4e7fc]",
+                isMobile
+                  ? "h-auto w-full py-2 text-center"
+                  : "h-[60px] min-w-[166px]",
+              )}
             >
               الغاء
             </button>
-          </div>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };
 

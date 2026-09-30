@@ -8,6 +8,7 @@ import NotificationsContent from "./components/NotificationsContent";
 import NotificationFilterDialog from "./components/NotificationFilterDialog";
 import NotificationsToolbar from "./components/NotificationsToolbar";
 import { useNotificationsPage } from "@/hooks/use-notifications-page";
+import PagePanel from "@/components/PagePanel";
 
 const NotificationsPage = () => {
   const actions = useNotificationsPage();
@@ -24,10 +25,7 @@ const NotificationsPage = () => {
   );
 
   return (
-    <div
-      className="min-h-full space-y-3 rounded-[28px] bg-surface p-3 sm:space-y-4 sm:p-4 lg:p-5"
-      dir="rtl"
-    >
+    <PagePanel className="space-y-3 sm:space-y-4">
       <div className="hidden items-start justify-between gap-4 lg:flex">
         <div className="flex items-center gap-2.5 text-right">
           <div className="flex size-11 items-center justify-center rounded-xl text-[#3b4656] dark:text-foreground">
@@ -83,7 +81,7 @@ const NotificationsPage = () => {
         onApply={actions.setFilters}
         onClear={actions.handleClearFilters}
       />
-    </div>
+    </PagePanel>
   );
 };
 

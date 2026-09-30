@@ -12,6 +12,7 @@ import ProductDeleteModal from "./components/delete-modal";
 import FilterSlidersIcon from "@/components/icons/FilterSlidersIcon";
 import { cn } from "@/lib/utils";
 import { formatCount } from "@/utils/format-currency";
+import PagePanel from "@/components/PagePanel";
 
 const ProductsPage = () => {
   const navigate = useNavigate();
@@ -26,10 +27,7 @@ const ProductsPage = () => {
     : `أجمالي العناصر المتاحة ${formatCount(listCount)}`;
 
   return (
-    <div
-      className="min-h-full space-y-4 rounded-[28px] bg-surface p-3 sm:space-y-6 sm:p-4 lg:p-5"
-      dir="rtl"
-    >
+    <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
         <TitleBar count={actions.newProductsCount} listLabel="المنتجات">
           <Button
@@ -140,7 +138,7 @@ const ProductsPage = () => {
         onClear={actions.handleClearFilters}
       />
       <ProductDeleteModal {...actions} />
-    </div>
+    </PagePanel>
   );
 };
 

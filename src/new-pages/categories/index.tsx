@@ -22,6 +22,7 @@ import {
   GitCommitVerticalIcon,
 } from "@hugeicons-pro/core-bulk-rounded";
 import { formatCount } from "@/utils/format-currency";
+import PagePanel from "@/components/PagePanel";
 
 const tabOptions = [
   { label: "الفئات", value: "categories", icon: ShapeCollectionIcon },
@@ -43,7 +44,7 @@ const CategoriesPage = () => {
     : `أجمالي العناصر المتاحة ${listCount}`;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
         <TitleBar
           count={showGroups ? undefined : (actions.categories?.length ?? 0)}
@@ -203,7 +204,7 @@ const CategoriesPage = () => {
         onApply={actions.setFilters}
         onClear={actions.handleClearFilters}
       />
-    </div>
+    </PagePanel>
   );
 };
 

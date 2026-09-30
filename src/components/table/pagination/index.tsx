@@ -8,15 +8,22 @@ type Props = {
     viewCount: number;
     onPageChange: (page: number) => void;
     onViewCountChange: (count: number) => void;
+    /** Extra control shown beside the page-size select, e.g. a sort order. */
+    trailing?: React.ReactNode;
 }
 
 
 const Pagination = (props: Props) => {
 
+    // RTL: the first child sits rightmost. Figma puts the page-size (and sort)
+    // selects on the right and the page numbers on the left.
     return (
-        <div className="flex items-center justify-between w-full gap-1 text-sm">
+        <div className="flex flex-wrap items-center justify-between w-full gap-3 text-sm">
+            <div className="flex flex-wrap items-center gap-3">
+                <ViewCountSelector  {...props} />
+                {props.trailing}
+            </div>
             <NumberList  {...props} />
-            <ViewCountSelector  {...props} />
         </div>
     )
 }

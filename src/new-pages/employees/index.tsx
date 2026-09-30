@@ -8,6 +8,7 @@ import PageTableHeader from "@/components/table/header";
 import { useEmployeesPage } from "@/hooks/use-employees-page";
 import TitleBar from "@/components/table/title-bar";
 import { User02Icon, TrendingUpDownIcon, AiPhone01Icon, Briefcase01Icon } from "@hugeicons-pro/core-stroke-standard";
+import PagePanel from "@/components/PagePanel";
 
 const EmployeesPage = () => {
     const navigate = useNavigate();
@@ -15,7 +16,7 @@ const EmployeesPage = () => {
     const actions = useEmployeesPage();
 
     return (
-        <div className="space-y-6">
+        <PagePanel className="space-y-6">
             {/* Header */}
             <TitleBar count={actions.employees?.length ?? 0}>
                 <Button
@@ -65,7 +66,7 @@ const EmployeesPage = () => {
             {/* Content */}
             <EmployeesContent actions={actions} navigate={navigate} />
 
-        </div>
+        </PagePanel>
     );
 };
 
