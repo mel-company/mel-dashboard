@@ -200,17 +200,20 @@ const POSInvoicePanel = ({
         <div className="custom-scrollbar min-h-0 flex-1 overflow-auto">
           <table className="w-full min-w-[520px] text-sm">
             <thead className="sticky top-0 z-[1] bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-300">
+              {/* RTL: the first cell sits rightmost. Every other table in the
+                  app (and Figma) starts with الصورة and ends with العمليات;
+                  this one was authored in the opposite order. */}
               <tr className="border-b border-slate-100 dark:border-slate-800">
-                <th className="px-3 py-3.5 text-center font-medium">العمليات</th>
-                <th className="px-3 py-3.5 text-center font-medium">
-                  أجمالي السعر
-                </th>
-                <th className="px-3 py-3.5 text-center font-medium">سعر مفرد</th>
-                <th className="px-3 py-3.5 text-center font-medium">عدد</th>
+                <th className="px-3 py-3.5 text-center font-medium">الصورة</th>
                 <th className="px-3 py-3.5 text-right font-medium">
                   معلومات الفئة
                 </th>
-                <th className="px-3 py-3.5 text-center font-medium">الصورة</th>
+                <th className="px-3 py-3.5 text-center font-medium">عدد</th>
+                <th className="px-3 py-3.5 text-center font-medium">سعر مفرد</th>
+                <th className="px-3 py-3.5 text-center font-medium">
+                  أجمالي السعر
+                </th>
+                <th className="px-3 py-3.5 text-center font-medium">العمليات</th>
               </tr>
             </thead>
             <tbody>
@@ -241,20 +244,24 @@ const POSInvoicePanel = ({
                       key={`${item.product.id}-${item.variant?.id ?? "d"}-${index}`}
                       className="border-b border-slate-50 dark:border-slate-900"
                     >
-                      <td className="px-3 py-3 text-center">
-                        <button
-                          type="button"
-                          className="inline-flex size-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500"
-                          onClick={() => onRemove(index)}
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
+                      <td className="px-3 py-3">
+                        <div className="mx-auto flex size-12 items-center justify-center overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-900">
+                          {imageSrc ? (
+                            <img
+                              src={imageSrc}
+                              alt=""
+                              className="size-full object-contain p-1"
+                            />
+                          ) : (
+                            <Package className="size-5 text-slate-300" />
+                          )}
+                        </div>
                       </td>
-                      <td className="px-3 py-3 text-center font-medium tabular-nums">
-                        {formatPosPrice(lineTotal)}
-                      </td>
-                      <td className="px-3 py-3 text-center tabular-nums text-slate-600">
-                        {formatPosPrice(unit)}
+                      <td className="px-3 py-3 text-right">
+                        <p className="font-bold text-slate-900 dark:text-slate-50">
+                          {item.product.title}
+                        </p>
+                        <p className="text-xs text-slate-500">{category}</p>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-1 dark:bg-slate-900">
@@ -277,24 +284,20 @@ const POSInvoicePanel = ({
                           </button>
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-right">
-                        <p className="font-bold text-slate-900 dark:text-slate-50">
-                          {item.product.title}
-                        </p>
-                        <p className="text-xs text-slate-500">{category}</p>
+                      <td className="px-3 py-3 text-center tabular-nums text-slate-600">
+                        {formatPosPrice(unit)}
                       </td>
-                      <td className="px-3 py-3">
-                        <div className="mx-auto flex size-12 items-center justify-center overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-900">
-                          {imageSrc ? (
-                            <img
-                              src={imageSrc}
-                              alt=""
-                              className="size-full object-contain p-1"
-                            />
-                          ) : (
-                            <Package className="size-5 text-slate-300" />
-                          )}
-                        </div>
+                      <td className="px-3 py-3 text-center font-medium tabular-nums">
+                        {formatPosPrice(lineTotal)}
+                      </td>
+                      <td className="px-3 py-3 text-center">
+                        <button
+                          type="button"
+                          className="inline-flex size-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500"
+                          onClick={() => onRemove(index)}
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
                       </td>
                     </tr>
                   );

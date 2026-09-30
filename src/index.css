@@ -283,6 +283,33 @@ html {
   --cyan: #00b7ff;
   --purple: #9139c4;
   --dark-blue: #141b34;
+
+  /* Figma "Alert/Chilean Fire", "brand/thirdy", "Gray/Disable color".
+     The Figma file only draws the dark page, so the dark block below
+     carries the exact values; these are the light-mode counterparts. */
+  --warning: #f57b00;
+  --brand-tertiary: #5c7be3;
+  --disabled: #bac3cf;
+
+  /* Figma "Shadow- op/*": translucent brand and alert tints. These are what
+     give icon badges, chips and buttons their coloured bloom — without them
+     every badge renders as a flat fill. Suffix = the opacity Figma names. */
+  --glow-primary-5: #33c5ff0d;
+  --glow-primary-15: #00b7ff26;
+  --glow-primary-25: #00b7ff40;
+  --glow-secondary-5: #9a5cff0d;
+  --glow-secondary-10: #9a5cff1a;
+  --glow-secondary-15: #9a5cff26;
+  --glow-success-5: #00dfa80d;
+  --glow-success-10: #00dfa81a;
+  --glow-success-25: #00dfa840;
+  --glow-warning-5: #ff9b3d0d;
+  --glow-warning-10: #ff9b3d1a;
+  --glow-warning-25: #ff9b3d40;
+  --glow-danger-5: #ff52520d;
+  --glow-danger-10: #ff52521a;
+  --glow-danger-20: #ff525233;
+  --glow-danger-25: #ff525240;
 }
 
 @theme inline {
@@ -331,6 +358,27 @@ html {
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
   --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-brand-tertiary: var(--brand-tertiary);
+  --color-disabled: var(--disabled);
+
+  /* Figma "Shadow- op/*" — usable as bg-glow-*, shadow-glow-* etc. */
+  --color-glow-primary-5: var(--glow-primary-5);
+  --color-glow-primary-15: var(--glow-primary-15);
+  --color-glow-primary-25: var(--glow-primary-25);
+  --color-glow-secondary-5: var(--glow-secondary-5);
+  --color-glow-secondary-10: var(--glow-secondary-10);
+  --color-glow-secondary-15: var(--glow-secondary-15);
+  --color-glow-success-5: var(--glow-success-5);
+  --color-glow-success-10: var(--glow-success-10);
+  --color-glow-success-25: var(--glow-success-25);
+  --color-glow-warning-5: var(--glow-warning-5);
+  --color-glow-warning-10: var(--glow-warning-10);
+  --color-glow-warning-25: var(--glow-warning-25);
+  --color-glow-danger-5: var(--glow-danger-5);
+  --color-glow-danger-10: var(--glow-danger-10);
+  --color-glow-danger-20: var(--glow-danger-20);
+  --color-glow-danger-25: var(--glow-danger-25);
 
   --font-diatype: "ABC Diatype Arabic", sans-serif;
 }
@@ -345,7 +393,10 @@ html {
   --card-foreground: #f0f2ff;
   --popover: #12183b;
   --popover-foreground: #f0f2ff;
-  --primary: #00b7ff;
+  /* Figma "brand/primary" (dark). #00b7ff is the *light* brand and was being
+     used in both themes; Figma keeps #00b7ff only for borders and the
+     Shadow-op tints below. */
+  --primary: #33c5ff;
   --primary-foreground: #0a0e27;
   --secondary: #12183b;
   --secondary-foreground: #e4e7fc;
@@ -353,10 +404,10 @@ html {
   --muted-foreground: #a4b1fa;
   --accent: #12183b;
   --accent-foreground: #e4e7fc;
-  --destructive: #ff4d6d;
+  --destructive: #ff5252; /* Figma "Alert/Light Cadmium Red" */
   --border: #12183b;
   --input: #12183b;
-  --ring: #00b7ff;
+  --ring: #33c5ff;
   --chart-1: #33c5ff;
   --chart-2: #b282ff;
   --chart-3: #00dfa8;
@@ -364,21 +415,30 @@ html {
   --chart-5: #ff6b6b;
   --sidebar: #0a0e27;
   --sidebar-foreground: #e4e7fc;
-  --sidebar-primary: #00b7ff;
+  --sidebar-primary: #33c5ff;
   --sidebar-primary-foreground: #0a0e27;
   --sidebar-accent: #12183b;
   --sidebar-accent-foreground: #e4e7fc;
   --sidebar-border: #12183b;
-  --sidebar-ring: #00b7ff;
+  --sidebar-ring: #33c5ff;
 
   --surface: #12183b;
   --surface-elevated: #0a0e27;
   --text-secondary: #e4e7fc;
   --text-muted: #a4b1fa;
   --success: #00dfa8;
+  /* Figma keeps #00b7ff as "border/border brand" in the dark set — it is the
+     border/shadow hue, not the brand fill (that is --primary above). */
   --cyan: #00b7ff;
   --purple: #b282ff;
   --dark-blue: #0a0e27;
+
+  --warning: #ff9b3d; /* Figma "Alert/Chilean Fire" */
+  --brand-tertiary: #5c7be3; /* Figma "brand/thirdy" */
+  --disabled: #31396e; /* Figma "Gray/Disable color/gray-6" */
+
+  /* Figma "Shadow- op/only dark theme/*" overrides the shared tints. */
+  --glow-secondary-15: #7d26f726;
 
   /* Remap slate → Figma navy so dark:bg-slate-* matches design */
   --color-slate-50: #e4e7fc;
@@ -535,12 +595,16 @@ html {
   margin: 2em 0;
 }
 
+/* `.dark` remaps slate-* onto the Figma navy ramp, but not neutral-*, so a
+   `dark:bg-neutral-900` here escaped the remap and painted every table header
+   grey inside an indigo UI. Figma's header band is "Colors/Shiny White"
+   (#12183b) — the same token as --surface. */
 table thead tr {
-  @apply border-slate-200 bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900;
+  @apply border-slate-200 bg-slate-50 dark:border-white/[0.06] dark:bg-surface;
 }
 
 table thead {
-  @apply bg-slate-50 dark:bg-neutral-900;
+  @apply bg-slate-50 dark:bg-surface;
 }
 
 table thead tr th:first-child {

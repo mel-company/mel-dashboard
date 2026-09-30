@@ -22,6 +22,7 @@ import {
   type DashboardPeriod,
 } from "./utils";
 import TitleBar from "@/components/table/title-bar";
+import PagePanel from "@/components/PagePanel";
 
 const isCashPayment = (key: string, label: string) =>
   /cash|كاش|نقد|cod|استلام/i.test(`${key} ${label}`);
@@ -203,11 +204,7 @@ const HomeDashboard = () => {
     header?.subtitle || "يمكنك مراقبة جميع نشاطاتك في واجهة واحدة";
 
   return (
-    <div
-      className="min-h-full space-y-3 rounded-[28px] bg-surface p-3 sm:space-y-3 sm:p-4 lg:gap-3 lg:space-y-3 lg:p-4 [&_.recharts-cartesian-axis-tick-value]:[font-variant-numeric:lining-nums_tabular-nums]"
-      dir="rtl"
-      lang="ar"
-    >
+    <PagePanel lang="ar" className="space-y-3 lg:gap-3 [&_.recharts-cartesian-axis-tick-value]:[font-variant-numeric:lining-nums_tabular-nums]">
       <div className="hidden lg:block">
         <TitleBar
           count={homeCount}
@@ -284,7 +281,7 @@ const HomeDashboard = () => {
           <TopDiscountsCard discounts={topCoupons} />
         </div>
       </div>
-    </div>
+    </PagePanel>
   );
 };
 

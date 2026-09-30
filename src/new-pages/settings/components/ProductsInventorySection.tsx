@@ -17,24 +17,9 @@ const ProductsInventorySection = ({
 
   return (
     <SettingsCard title="المنتجات والمخزون">
-      <div className="grid grid-cols-1 gap-4 md:gap-8 md:grid-cols-[1fr_225px]">
-        <SettingsField label="الحد الادنى للمنتجات" htmlFor="lowStockThreshold">
-          <div className="relative">
-            <SettingsInput
-              id="lowStockThreshold"
-              name="lowStockThreshold"
-              type="number"
-              min={1}
-              value={storeForm.lowStockThreshold}
-              onChange={handleStoreInputChange}
-              className="pl-14 text-right"
-            />
-            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-sky-500">
-              قطع
-            </span>
-          </div>
-        </SettingsField>
-
+      {/* RTL: the first child sits rightmost. Figma puts the default-status
+          toggle on the right and the threshold field on the left. */}
+      <div className="grid grid-cols-1 gap-4 md:gap-8 md:grid-cols-[225px_1fr]">
         <div className="space-y-2">
           <SettingsLabel>حالة المنتج الافتراضية</SettingsLabel>
           <div className="flex flex-col items-start gap-2">
@@ -54,6 +39,23 @@ const ProductsInventorySection = ({
             </p>
           </div>
         </div>
+
+        <SettingsField label="الحد الادنى للمنتجات" htmlFor="lowStockThreshold">
+          <div className="relative">
+            <SettingsInput
+              id="lowStockThreshold"
+              name="lowStockThreshold"
+              type="number"
+              min={1}
+              value={storeForm.lowStockThreshold}
+              onChange={handleStoreInputChange}
+              className="pl-14 text-right"
+            />
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-sky-500">
+              قطع
+            </span>
+          </div>
+        </SettingsField>
       </div>
     </SettingsCard>
   );

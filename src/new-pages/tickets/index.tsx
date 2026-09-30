@@ -11,6 +11,7 @@ import TitleBar from "@/components/table/title-bar";
 import TicketFilterDialog from "@/pages/support/TicketFilterDialog";
 import FilterSlidersIcon from "@/components/icons/FilterSlidersIcon";
 import { cn } from "@/lib/utils";
+import PagePanel from "@/components/PagePanel";
 import {
   CustomerSupportIcon,
   TrendingUp,
@@ -33,7 +34,7 @@ const TicketsPage = () => {
   }, [location.pathname, location.state, navigate]);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
         <TitleBar count={actions.tickets?.length ?? 0}>
           <Button
@@ -160,7 +161,7 @@ const TicketsPage = () => {
       />
 
       <CreateTicketSheet open={isCreateOpen} onOpenChange={setIsCreateOpen} />
-    </div>
+    </PagePanel>
   );
 };
 

@@ -28,7 +28,10 @@ const PeakAccessDayCard = ({ peakDay, weeklyData }: PeakAccessDayCardProps) => {
         </p>
       </div>
 
-      <div className="flex w-full min-w-0 flex-col items-stretch">
+      {/* The axis is Mon→Sun and its labels are Latin (M T W T F S S), so it
+          reads left-to-right. Inside the RTL document these rows would
+          otherwise paint in reverse and put Friday third instead of fifth. */}
+      <div dir="ltr" className="flex w-full min-w-0 flex-col items-stretch">
         <div className="flex h-[56px] w-full items-end justify-between gap-1 sm:h-[64px] sm:gap-1.5">
           {weeklyData.map((item, index) => {
             const height = Math.max((item.value / max) * 56, 6);

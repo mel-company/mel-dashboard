@@ -13,17 +13,9 @@ const DeliveryNotesSection = ({
 }: Props) => {
   return (
     <SettingsCard title="وقت التوصيل وملاحظات">
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_225px]">
-        <SettingsField label="ملاحظات التوصيل" htmlFor="deliveryNotes">
-          <SettingsInput
-            id="deliveryNotes"
-            name="deliveryNotes"
-            value={storeForm.deliveryNotes}
-            onChange={handleStoreInputChange}
-            placeholder="معلومات حول التوصيل تظهر للعملاء (مثل: التوصيل من الساعة 9 صباحاً حتى 5 مساءً)"
-          />
-        </SettingsField>
-
+      {/* RTL: the first child sits rightmost. Figma puts the narrow
+          expected-days field on the right and the notes field on the left. */}
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[225px_1fr]">
         <SettingsField
           label="عدد أيام التوصيل المتوقعة"
           htmlFor="estimatedDeliveryDays"
@@ -42,6 +34,16 @@ const DeliveryNotesSection = ({
               أيام
             </span>
           </div>
+        </SettingsField>
+
+        <SettingsField label="ملاحظات التوصيل" htmlFor="deliveryNotes">
+          <SettingsInput
+            id="deliveryNotes"
+            name="deliveryNotes"
+            value={storeForm.deliveryNotes}
+            onChange={handleStoreInputChange}
+            placeholder="معلومات حول التوصيل تظهر للعملاء (مثل: التوصيل من الساعة 9 صباحاً حتى 5 مساءً)"
+          />
         </SettingsField>
       </div>
     </SettingsCard>

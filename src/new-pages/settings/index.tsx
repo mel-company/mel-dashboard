@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useSettingsPage } from "@/hooks/use-settings-page";
 import StoreSettingsContent from "./components/StoreSettingsContent";
 import GeneralSettingsContent from "./components/GeneralSettingsContent";
+import PagePanel from "@/components/PagePanel";
 import {
   Settings01Icon,
   Store01Icon,
@@ -14,7 +15,7 @@ const SettingsPage = () => {
   const actions = useSettingsPage();
 
   return (
-    <div className="flex min-h-0 flex-col gap-4 pb-4">
+    <PagePanel className="flex min-h-0 flex-col gap-4">
       <TitleBar description="يمكنك تعديل تفاصيل واعدادات المتجر المخصص لك">
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -61,7 +62,7 @@ const SettingsPage = () => {
           isSaving={actions.isSaving}
         />
       )}
-    </div>
+    </PagePanel>
   );
 };
 

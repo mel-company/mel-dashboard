@@ -5,6 +5,7 @@ import PageTableHeader from "@/components/table/header";
 import { useOrdersPage } from "@/hooks/use-orders-page";
 import TitleBar from "@/components/table/title-bar";
 import { cn } from "@/lib/utils";
+import PagePanel from "@/components/PagePanel";
 import {
   ShoppingCart01Icon,
   Package01Icon,
@@ -16,7 +17,7 @@ const OrdersPage = () => {
   const actions = useOrdersPage();
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
         <TitleBar count={actions.stats?.totalOrders ?? actions.orders?.length ?? 0} />
       </div>
@@ -103,7 +104,7 @@ const OrdersPage = () => {
       </div>
 
       <OrdersContent actions={actions} />
-    </div>
+    </PagePanel>
   );
 };
 

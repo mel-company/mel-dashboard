@@ -23,6 +23,7 @@ import CreateCouponDialog from "./components/CreateCouponDialog";
 import FilterSlidersIcon from "@/components/icons/FilterSlidersIcon";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/utils/format-currency";
+import PagePanel from "@/components/PagePanel";
 
 const tabOptions = [
   { label: "الخصومات", value: "discounts", icon: DiscountTag01Icon },
@@ -39,7 +40,7 @@ const DiscountsPage = () => {
     : actions.coupons.length;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
         <TitleBar
           count={listCount}
@@ -254,7 +255,7 @@ const DiscountsPage = () => {
         onOpenChange={actions.setIsCreateDialogOpen}
         onSuccess={(id) => navigate(`/coupons/${id}`)}
       />
-    </div>
+    </PagePanel>
   );
 };
 

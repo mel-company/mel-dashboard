@@ -6,6 +6,7 @@ import PageTableHeader from "@/components/table/header";
 import { useCustomersPage } from "@/hooks/use-customers-page";
 import TitleBar from "@/components/table/title-bar";
 import { cn } from "@/lib/utils";
+import PagePanel from "@/components/PagePanel";
 import {
   UserGroup03Icon,
   UserAdd01Icon,
@@ -16,7 +17,7 @@ const CustomersPage = () => {
   const actions = useCustomersPage();
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
         <TitleBar
           count={
@@ -95,7 +96,7 @@ const CustomersPage = () => {
         isDeleting={actions.isDeleting}
         handleDelete={actions.handleDelete}
       />
-    </div>
+    </PagePanel>
   );
 };
 
