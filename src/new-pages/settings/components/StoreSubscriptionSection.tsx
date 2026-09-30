@@ -47,6 +47,19 @@ const FALLBACK_FEATURES = [
   "إمكانية الوصول عبر الأجهزة",
 ];
 
+/** The chip printed the raw enum for every state except ACTIVE. */
+const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "نشط",
+  PAUSED: "متوقف مؤقتاً",
+  EXPIRED: "منتهي",
+  CANCELLED: "ملغي",
+  PENDING: "قيد الانتظار",
+  TRIAL: "تجريبي",
+};
+
+const subscriptionStatusLabel = (status?: string | null) =>
+  (status && SUBSCRIPTION_STATUS_LABELS[status.toUpperCase()]) || "غير معروف";
+
 const StoreSubscriptionSection = () => {
   const navigate = useNavigate();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -167,6 +180,8 @@ const StoreSubscriptionSection = () => {
   return (
     <>
       <SettingsCard title="معلومات الاشتراك">
+        {/* RTL: the first child sits rightmost — Figma leads with the
+            feature list and puts the plan summary on the left. */}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[300px_1fr]">
           <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-900">
             <div className="flex h-full flex-col gap-3 rounded-[18px] px-5 py-[18px]">
@@ -237,7 +252,7 @@ const StoreSubscriptionSection = () => {
                     isActive ? "bg-emerald-500" : "bg-slate-400",
                   )}
                 >
-                  <span>{isActive ? "نشط" : subscription.status}</span>
+                  <span>{subscriptionStatusLabel(subscription.status)}</span>
                   <CheckCircle2 className="size-6" />
                 </div>
                 <p className="text-right">

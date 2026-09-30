@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { useFetchStoreSubscription } from "@/api/wrappers/subscription.wrapper";
+import Ltr from "@/components/Ltr";
 
 const formatExpiryDate = (dateString: string | undefined) => {
   if (!dateString) return "—";
@@ -41,7 +42,11 @@ const StorePlanSummaryCard = () => {
         </div>
         <div className="rounded-xl bg-white/15 px-[18px] py-[13px]">
           <p className="text-sm font-bold tracking-wide">
-            #{String(subscription.id).slice(0, 8)}
+            {/* bidi: a leading # on a Latin id is reordered to the end
+                inside an RTL block. */}
+            <Ltr>
+              #{String(subscription.id).slice(0, 8)}
+            </Ltr>
           </p>
         </div>
       </div>

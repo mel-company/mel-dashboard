@@ -10,6 +10,7 @@ import ActionBtnList from "@/components/table/action-btn-list";
 import { useToggleCategoryEnabled } from "@/api/wrappers/category.wrappers";
 import { toast } from "sonner";
 import CategoryTypeLabel from "./CategoryTypeLabel";
+import Ltr from "@/components/Ltr";
 import {
   formatDate,
   formatIQD,
@@ -77,7 +78,7 @@ const CategoryRow = ({
           className="font-mono text-sm text-slate-600 dark:text-[#a4b1fa]"
           dir="ltr"
         >
-          {shortId(data.id)}
+          <Ltr>{shortId(data.id)}</Ltr>
         </span>
       </TableCell>
       <TableCell className={tdClass}>

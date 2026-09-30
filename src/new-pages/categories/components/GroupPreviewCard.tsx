@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import { formatDate, formatTime, getGroupCategories, shortId, shortText } from "../utils";
+import Ltr from "@/components/Ltr";
 
 export const GroupCategoryTags = ({
   group,
@@ -71,7 +72,7 @@ const GroupPreviewCard = ({
             {group.name}
           </h3>
           <p className="mt-1 font-mono text-xs text-slate-400 dark:text-[#a4b1fa]" dir="ltr">
-            {shortId(group.id)}
+            <Ltr>{shortId(group.id)}</Ltr>
           </p>
         </div>
       </div>

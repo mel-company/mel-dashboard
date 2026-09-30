@@ -1,7 +1,15 @@
 import { useState, useRef } from "react";
 import { ChevronDown, CloudUpload, Loader2, Package } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Switch } from "@/components/ui/switch";
 import { useCreateCategory } from "@/api/wrappers/category.wrappers";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
@@ -20,6 +28,7 @@ const labelClass =
   "block text-right text-sm font-medium text-slate-500 dark:text-[#a4b1fa]";
 
 const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
+  const isMobile = useIsMobile();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [enabled, setEnabled] = useState(true);
@@ -93,27 +102,47 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
   };
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(v) => {
         if (!v) reset();
         onOpenChange(v);
       }}
     >
-      <DialogContent
+      {/* Figma presents every create form as a full-height edge drawer. */}
+      <SheetContent
+        side={isMobile ? "bottom" : "left"}
         dir="rtl"
         showCloseButton={false}
-        className="max-h-[92dvh] gap-0 overflow-y-auto rounded-[2rem] border-0 bg-white p-0 text-right shadow-2xl sm:max-w-md dark:bg-[#12183b]"
+        className={cn(
+          "z-[60] flex flex-col gap-0 border-0 p-0 text-right text-foreground",
+          "bg-white dark:bg-[#12183b]",
+          isMobile
+            ? cn(
+                "inset-x-0 bottom-0 top-auto h-auto max-h-[92dvh] w-full max-w-none rounded-t-[32px]",
+                "data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom",
+              )
+            : cn(
+                "top-3 bottom-3 left-3 h-auto w-[min(100%,560px)] max-w-[560px] rounded-[32px]",
+                "data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left",
+              ),
+        )}
       >
-        <form onSubmit={handleSubmit} className="px-6 pb-6 pt-6">
-          <div className="mb-6 flex items-start justify-between gap-3 border-b border-slate-100 pb-5 dark:border-[#1f2448]">
+        {isMobile ? (
+          <div className="flex shrink-0 justify-center pt-3">
+            <span className="h-1.5 w-12 rounded-full bg-border" />
+          </div>
+        ) : null}
+
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <SheetHeader className="shrink-0 flex-row-reverse items-start justify-between gap-3 space-y-0 border-b border-slate-100 px-5 py-5 text-right sm:px-6 dark:border-[#1f2448]">
             <div className="min-w-0 text-right">
-              <DialogTitle className="text-xl font-normal text-slate-900 dark:text-[#e4e7fc]">
+              <SheetTitle className="text-xl font-normal text-slate-900 dark:text-[#e4e7fc]">
                 أضافة فئة جديدة
-              </DialogTitle>
-              <p className="mt-0.5 text-sm text-slate-400 dark:text-[#a4b1fa]">
+              </SheetTitle>
+              <SheetDescription className="mt-0.5 text-sm text-slate-400 dark:text-[#a4b1fa]">
                 يرجى ادخال جميع الحقول لاتمام عملية الاضافة
-              </p>
+              </SheetDescription>
             </div>
             <div className="relative flex size-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 dark:bg-[#9a5cff]/15">
               <Package className="size-5 text-violet-600 dark:text-[#b282ff]" />
@@ -121,9 +150,9 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
                 +
               </span>
             </div>
-          </div>
+          </SheetHeader>
 
-          <div className="space-y-6">
+          <div className="custom-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-6 sm:px-6">
             <div className="space-y-1">
               <label htmlFor="category-name" className={labelClass}>
                 اسم الفئة
@@ -237,11 +266,21 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col gap-3">
+          <SheetFooter
+            className={cn(
+              "shrink-0 border-t border-slate-100 px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 dark:border-[#1f2448]",
+              isMobile
+                ? "flex-col gap-3 sm:flex-col"
+                : "flex-row items-center justify-between gap-3 sm:flex-row sm:space-x-0",
+            )}
+          >
             <button
               type="submit"
               disabled={isPending}
-              className="flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-lg font-bold text-white disabled:opacity-50"
+              className={cn(
+                "flex h-[60px] items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-lg font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50",
+                isMobile ? "w-full" : "min-w-[200px] px-10",
+              )}
             >
               {isPending ? (
                 <>
@@ -256,14 +295,17 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
               type="button"
               disabled={isPending}
               onClick={() => onOpenChange(false)}
-              className="flex h-[60px] w-full items-center justify-center text-lg font-bold text-slate-400 dark:text-[#4a5596]"
+              className={cn(
+                "text-lg font-bold text-slate-400 transition-colors hover:text-slate-600 disabled:opacity-50 dark:text-[#4a5596] dark:hover:text-[#e4e7fc]",
+                isMobile ? "h-auto w-full py-2 text-center" : "h-[60px] min-w-[140px]",
+              )}
             >
               الغاء
             </button>
-          </div>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };
 

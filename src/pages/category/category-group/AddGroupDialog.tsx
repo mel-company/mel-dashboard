@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { ChevronDown, CloudUpload, Layers, Loader2, Search, X } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Switch } from "@/components/ui/switch";
 import { useCreateGroup, useAddCategoriesToGroup } from "@/api/wrappers/group.wrappers";
 import { useFetchCategories } from "@/api/wrappers/category.wrappers";
@@ -32,6 +33,7 @@ function normalizeCategories(data: any): CategoryOption[] {
 }
 
 const AddGroupDialog = ({ open, onOpenChange }: Props) => {
+  const isMobile = useIsMobile();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [enabled, setEnabled] = useState(true);
@@ -142,24 +144,44 @@ const AddGroupDialog = ({ open, onOpenChange }: Props) => {
   };
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(v) => {
         if (!v) reset();
         onOpenChange(v);
       }}
     >
-      <DialogContent
+      {/* Figma presents every create form as a full-height edge drawer. */}
+      <SheetContent
+        side={isMobile ? "bottom" : "left"}
         dir="rtl"
         showCloseButton={false}
-        className="max-h-[92dvh] gap-0 overflow-y-auto rounded-[2rem] border-0 bg-white p-0 text-right shadow-2xl sm:max-w-[792px] dark:bg-[#12183b]"
+        className={cn(
+          "z-[60] flex flex-col gap-0 border-0 p-0 text-right text-foreground",
+          "bg-white dark:bg-[#12183b]",
+          isMobile
+            ? cn(
+                "inset-x-0 bottom-0 top-auto h-auto max-h-[92dvh] w-full max-w-none rounded-t-[32px]",
+                "data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom",
+              )
+            : cn(
+                "top-3 bottom-3 left-3 h-auto w-[min(100%,640px)] max-w-[640px] rounded-[32px]",
+                "data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left",
+              ),
+        )}
       >
-        <form onSubmit={handleSubmit} className="px-6 pb-6 pt-6">
+        {isMobile ? (
+          <div className="flex shrink-0 justify-center pt-3">
+            <span className="h-1.5 w-12 rounded-full bg-border" />
+          </div>
+        ) : null}
+
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="mb-6 flex items-start justify-between gap-3 border-b border-slate-100 pb-5 dark:border-[#1f2448]">
             <div className="min-w-0 text-right">
-              <DialogTitle className="text-xl font-normal text-slate-900 dark:text-[#e4e7fc]">
+              <SheetTitle className="text-xl font-normal text-slate-900 dark:text-[#e4e7fc]">
                 أضافة مجموعة جديدة
-              </DialogTitle>
+              </SheetTitle>
               <p className="mt-0.5 text-sm text-slate-400 dark:text-[#a4b1fa]">
                 يرجى ادخال جميع الحقول لاتمام عملية الاضافة
               </p>
@@ -352,8 +374,8 @@ const AddGroupDialog = ({ open, onOpenChange }: Props) => {
             </button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };
 

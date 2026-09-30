@@ -5,6 +5,7 @@ import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import CategoryTypeLabel from "./CategoryTypeLabel";
 import { shortId, shortText } from "../utils";
+import Ltr from "@/components/Ltr";
 
 type CategoryPreviewCardProps = {
   category: any;
@@ -44,7 +45,7 @@ const CategoryPreviewCard = ({
             className="font-mono text-xs text-slate-400 dark:text-[#a4b1fa]"
             dir="ltr"
           >
-            {shortId(category.id)}
+            <Ltr>{shortId(category.id)}</Ltr>
           </p>
           <h3 className="mt-0.5 line-clamp-1 text-[15px] font-bold leading-snug text-slate-900 dark:text-[#e4e7fc]">
             {category.name}

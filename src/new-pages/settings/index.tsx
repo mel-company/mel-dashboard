@@ -1,7 +1,6 @@
 import { Loader2 } from "lucide-react";
 import TitleBar from "@/components/table/title-bar";
 import SwitchTab from "@/components/table/switch-tab";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useSettingsPage } from "@/hooks/use-settings-page";
 import StoreSettingsContent from "./components/StoreSettingsContent";
 import GeneralSettingsContent from "./components/GeneralSettingsContent";
@@ -18,7 +17,6 @@ const SettingsPage = () => {
     <PagePanel className="flex min-h-0 flex-col gap-4">
       <TitleBar description="يمكنك تعديل تفاصيل واعدادات المتجر المخصص لك">
         <div className="flex items-center gap-2">
-          <ThemeToggle />
           <SwitchTab
             accent="violet"
             selected={actions.activeTab}
