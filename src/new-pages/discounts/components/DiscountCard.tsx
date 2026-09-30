@@ -153,9 +153,20 @@ const DiscountCard = ({
 
   if (onClick && !preview) {
     return (
-      <button type="button" onClick={onClick} className={shellClass}>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className={shellClass}
+      >
         {content}
-      </button>
+      </div>
     );
   }
 

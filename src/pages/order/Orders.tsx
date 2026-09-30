@@ -127,8 +127,8 @@ const Orders = () => {
         text: "قيد المعالجة",
       },
       SHIPPED: { className: "bg-purple-600 text-white", text: "تم الشحن" },
-      DELIVERED: { className: "bg-green-600 text-white", text: "تم التسليم" },
-      CANCELLED: { className: "bg-red-600 text-white", text: "ملغي" },
+      DELIVERED: { className: "bg-emerald-500/12 text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8] text-white", text: "تم التسليم" },
+      CANCELLED: { className: "bg-rose-500/12 text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252] text-white", text: "ملغي" },
     };
     return (
       statusMap[status] || { className: "bg-gray-600 text-white", text: status }

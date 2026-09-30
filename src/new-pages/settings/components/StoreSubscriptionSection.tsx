@@ -181,9 +181,9 @@ const StoreSubscriptionSection = () => {
               </div>
 
               <ul className="space-y-[9px]">
-                {featureLabels.map((label: string) => (
+                {featureLabels.map((label: string, index: number) => (
                   <li
-                    key={label}
+                    key={`${label}-${index}`}
                     className="flex items-center justify-end gap-[7px] text-[13px] text-slate-900 dark:text-slate-100"
                   >
                     <span className="flex size-4 items-center justify-center rounded-full bg-emerald-500 text-white">

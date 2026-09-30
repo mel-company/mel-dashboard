@@ -47,6 +47,7 @@ import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import { getProductCoverImage } from "@/utils/product-images";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/format-currency";
+import PagePanel from "@/components/PagePanel";
 
 const CategoryDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -118,7 +119,7 @@ const CategoryDetails = () => {
   const resolvedBaseUrl = imageBaseUrl || category.baseUrl || "";
 
   return (
-    <div className="space-y-6">
+    <PagePanel className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Category Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -132,7 +133,7 @@ const CategoryDetails = () => {
                 {category.enabled ? (
                   <Badge
                     variant="default"
-                    className="bg-green-600 gap-1 text-sm"
+                    className="gap-1 border-0 bg-emerald-500/12 text-sm text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8]"
                   >
                     <CheckCircle2 className="size-3" />
                     مفعّل
@@ -140,7 +141,7 @@ const CategoryDetails = () => {
                 ) : (
                   <Badge
                     variant="outline"
-                    className="text-sm bg-red-600 text-white"
+                    className="border-0 bg-rose-500/12 text-sm text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252]"
                   >
                     <XCircle className="size-3" />
                     معطّل
@@ -327,7 +328,7 @@ const CategoryDetails = () => {
                 {category.enabled ? (
                   <Badge
                     variant="default"
-                    className="bg-green-600 gap-1 text-sm"
+                    className="gap-1 border-0 bg-emerald-500/12 text-sm text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8]"
                   >
                     <CheckCircle2 className="size-3" />
                     مفعّل
@@ -335,7 +336,7 @@ const CategoryDetails = () => {
                 ) : (
                   <Badge
                     variant="outline"
-                    className="text-sm bg-red-600 text-white"
+                    className="border-0 bg-rose-500/12 text-sm text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252]"
                   >
                     <XCircle className="size-3" />
                     معطّل
@@ -499,7 +500,7 @@ const CategoryDetails = () => {
           categoryId={id}
         />
       )}
-    </div>
+    </PagePanel>
   );
 };
 

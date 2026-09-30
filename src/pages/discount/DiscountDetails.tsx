@@ -47,6 +47,7 @@ import RemoveProductFromDiscountDialog from "./RemoveProductFromDiscountDialog";
 import RemoveCategoryFromDiscountDialog from "./RemoveCategoryFromDiscountDialog";
 import DiscountImageDialog from "./DiscountImageDialog";
 import { toast } from "sonner";
+import PagePanel from "@/components/PagePanel";
 import {
   extractDiscountCategoryIds,
   extractDiscountProductIds,
@@ -136,7 +137,7 @@ const DiscountDetails = () => {
     switch (status) {
       case DISCOUNT_STATUS.ACTIVE:
         return {
-          className: "bg-green-600 text-white",
+          className: "bg-emerald-500/12 text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8] text-white",
           text: "نشط",
         };
       case DISCOUNT_STATUS.INACTIVE:
@@ -146,7 +147,7 @@ const DiscountDetails = () => {
         };
       case DISCOUNT_STATUS.EXPIRED:
         return {
-          className: "bg-red-600 text-white",
+          className: "bg-rose-500/12 text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252] text-white",
           text: "منتهي",
         };
       default:
@@ -161,7 +162,7 @@ const DiscountDetails = () => {
   const isActive = discount?.discount_status === DISCOUNT_STATUS.ACTIVE;
 
   return (
-    <div className="space-y-6">
+    <PagePanel className="space-y-6">
       {/* Header with Back Button */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -273,7 +274,14 @@ const DiscountDetails = () => {
             <CardContent>
               {discount?.products && discount.products.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {discount.products.map((product: any) => (
+                  {discount.products.map((row: any) => {
+                    // Junction rows nest the entity, but a flat row (or one
+                    // whose entity was deleted) also occurs — see
+                    // extractDiscountProductIds, which already handles both.
+                    // The render path did not, so one such row blanked the page.
+                    const product = { product: row?.product ?? row };
+                    if (!product.product?.id) return null;
+                    return (
                     <div
                       key={product.product.id}
                       className="relative group flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
@@ -323,7 +331,8 @@ const DiscountDetails = () => {
                         <X className="size-4" />
                       </Button>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-8">
@@ -365,7 +374,10 @@ const DiscountDetails = () => {
             <CardContent>
               {discount?.categories && discount.categories.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {discount.categories.map((category: any) => (
+                  {discount.categories.map((row: any) => {
+                    const category = { category: row?.category ?? row };
+                    if (!category.category?.id) return null;
+                    return (
                     <div
                       key={category.category.id}
                       className="relative group flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
@@ -410,7 +422,8 @@ const DiscountDetails = () => {
                         <X className="size-4" />
                       </Button>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-8">
@@ -655,7 +668,7 @@ const DiscountDetails = () => {
           discountId={id}
         />
       )}
-    </div>
+    </PagePanel>
   );
 };
 

@@ -24,6 +24,7 @@ import NotFoundPage from "../miscellaneous/NotFoundPage";
 import { useDeleteNotification } from "@/api/wrappers/notification.wrappers";
 import { toast } from "sonner";
 import { AR_LATN_LOCALE } from "@/utils/format-currency";
+import PagePanel from "@/components/PagePanel";
 
 const NotificationDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -95,7 +96,7 @@ const NotificationDetails = () => {
   // const isPinned = notification.isPinned;
 
   return (
-    <div className="space-y-6">
+    <PagePanel className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Notification Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -314,7 +315,7 @@ const NotificationDetails = () => {
           </Card>
         </div>
       </div>
-    </div>
+    </PagePanel>
   );
 };
 

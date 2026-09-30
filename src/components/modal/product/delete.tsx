@@ -30,7 +30,7 @@ export function DeleteProductModal({ product, open, onOpenChange }: { product: P
                         Cancel
                     </button>
                     <button
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-rose-500/12 text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252]"
                         onClick={handleDelete}
                     >
                         Delete

@@ -19,6 +19,18 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        /**
+         * Figma's primary action: a cyan→violet gradient pill. Saturated
+         * `bg-primary` slabs are not in the design's button set.
+         */
+        brand:
+          "rounded-full bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-white hover:opacity-90",
+        /** Figma's destructive: outlined in red, not filled with it. */
+        "destructive-outline":
+          "rounded-full border border-[#ff5252]/40 bg-[#ff5252]/5 text-[#ff5252] hover:bg-[#ff5252]/12",
+        /** Figma's quiet secondary: a violet-tinted pill. */
+        "brand-soft":
+          "rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-700 hover:bg-violet-500/15 dark:border-[#9a5cff]/25 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

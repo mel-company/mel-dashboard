@@ -61,6 +61,7 @@ import OrderPrimeShipmentCard from "./OrderPrimeShipmentCard";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "./OrderInvoicePreview";
 import { toast } from "sonner";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
+import PagePanel from "@/components/PagePanel";
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -216,53 +217,54 @@ const OrderDetails = () => {
   };
 
   // Get status badge - handle uppercase status from API
+  // Figma's status pill is a tinted chip, not a saturated fill. These mirror
+  // the tints the orders table already uses so a status looks the same in
+  // both places.
   const getStatusBadge = (status: string | undefined) => {
-    if (!status) {
-      return {
-        className: "bg-gray-600 text-white",
-        text: "غير معروف",
-        icon: Clock,
-      };
-    }
+    const unknown = {
+      className:
+        "bg-slate-500/12 text-slate-600 dark:bg-white/[0.06] dark:text-[#a4b1fa]",
+      text: "غير معروف",
+      icon: Clock,
+    };
+    if (!status) return unknown;
 
-    const statusUpper = status.toUpperCase();
     const statusMap: Record<
       string,
       { className: string; text: string; icon: typeof Clock }
     > = {
       PENDING: {
-        className: "bg-yellow-600 text-white",
+        className:
+          "bg-amber-500/12 text-amber-600 dark:bg-[#ff9b3d]/12 dark:text-[#ff9b3d]",
         text: "قيد الانتظار",
         icon: Clock,
       },
       PROCESSING: {
-        className: "bg-blue-600 text-white",
+        className:
+          "bg-sky-500/12 text-sky-600 dark:bg-[#33c5ff]/12 dark:text-[#33c5ff]",
         text: "قيد المعالجة",
         icon: Package,
       },
       SHIPPED: {
-        className: "bg-purple-600 text-white",
+        className:
+          "bg-violet-500/12 text-violet-600 dark:bg-[#b282ff]/12 dark:text-[#b282ff]",
         text: "تم الشحن",
         icon: Truck,
       },
       DELIVERED: {
-        className: "bg-green-600 text-white",
+        className:
+          "bg-emerald-500/12 text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8]",
         text: "تم التسليم",
         icon: CheckCircle2,
       },
       CANCELLED: {
-        className: "bg-red-600 text-white",
+        className:
+          "bg-rose-500/12 text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252]",
         text: "ملغي",
         icon: XCircle,
       },
     };
-    return (
-      statusMap[statusUpper] || {
-        className: "bg-gray-600 text-white",
-        text: status,
-        icon: Clock,
-      }
-    );
+    return statusMap[status.toUpperCase()] || { ...unknown, text: status };
   };
 
   const handleStatusUpdate = (newStatus: string) => {
@@ -455,8 +457,11 @@ const OrderDetails = () => {
     order.status !== "SHIPPED" && order.status !== "DELIVERED";
 
   const displayPrice = (price: number, discounts: any) => {
-    const hasDiscount = discounts[0]?.discount;
-    const discountPercentage = discounts[0]?.discount?.discount_percentage;
+    // A product with no `discounts` array threw here, and with no error
+    // boundary above it the whole order page rendered blank.
+    const first = Array.isArray(discounts) ? discounts[0] : undefined;
+    const hasDiscount = first?.discount;
+    const discountPercentage = first?.discount?.discount_percentage;
 
     if (hasDiscount && discountPercentage) {
       return (
@@ -474,7 +479,7 @@ const OrderDetails = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <PagePanel className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Order Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -484,7 +489,10 @@ const OrderDetails = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-2xl text-right">
-                    طلب رقم #{String(order.id).slice(0, 8)}
+                    طلب رقم{" "}
+                    <span dir="ltr" className="inline-block">
+                      #{String(order.id).slice(0, 8)}
+                    </span>
                   </CardTitle>
                   <CardDescription className="text-right mt-1">
                     تم إنشاء الطلب في {formatDate(order.createdAt)}
@@ -685,7 +693,8 @@ const OrderDetails = () => {
                               <div className="flex items-center flex-col gap-2">
                                 <div className="flex items-center gap-2">
                                   <Button
-                                    variant="default"
+                                    variant="brand-soft"
+                                    size="sm"
                                     className="font-bold"
                                     onClick={() => {
                                       setSelectedOrderProduct(product);
@@ -696,8 +705,9 @@ const OrderDetails = () => {
                                     <span className="text-xs">تعديل</span>
                                   </Button>
                                   <Button
-                                    variant="destructive"
-                                    className="font-bold text-primary"
+                                    variant="destructive-outline"
+                                    size="sm"
+                                    className="font-bold"
                                     onClick={() => {
                                       setProductToRemove(product);
                                       setIsRemoveProductDialogOpen(true);
@@ -834,8 +844,9 @@ const OrderDetails = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="secondary"
-                    className="wfull gap-2"
+                    variant="brand-soft"
+                    size="sm"
+                    className="gap-2"
                     onClick={() => setIsEditAddressDialogOpen(true)}
                   >
                     <Edit className="" />
@@ -1034,8 +1045,8 @@ const OrderDetails = () => {
             <CardContent className="space-y-3">
               {!order.appliedCoupons?.length && (
                 <Button
-                  className="w-full gap-2 bg-green-400 hover:bg-green-500/90"
-                  variant="default"
+                  className="h-12 w-full gap-2"
+                  variant="brand-soft"
                   onClick={() => setIsUseCouponDialogOpen(true)}
                 >
                   <Ticket className="size-4" />
@@ -1044,8 +1055,8 @@ const OrderDetails = () => {
               )}
               {order.status === "PENDING" && (
                 <Button
-                  className="w-full gap-2"
-                  variant="default"
+                  className="h-12 w-full gap-2"
+                  variant="brand"
                   onClick={() => handleStatusUpdate("PROCESSING")}
                   disabled={isUpdatingStatus}
                 >
@@ -1055,8 +1066,8 @@ const OrderDetails = () => {
               )}
               {order.status === "PROCESSING" && (
                 <Button
-                  className="w-full gap-2"
-                  variant="default"
+                  className="h-12 w-full gap-2"
+                  variant="brand"
                   onClick={() => handleStatusUpdate("SHIPPED")}
                   disabled={isUpdatingStatus}
                 >
@@ -1066,8 +1077,8 @@ const OrderDetails = () => {
               )}
               {order.status === "SHIPPED" && (
                 <Button
-                  className="w-full gap-2"
-                  variant="default"
+                  className="h-12 w-full gap-2"
+                  variant="brand"
                   onClick={() => handleStatusUpdate("DELIVERED")}
                   disabled={isUpdatingStatus}
                 >
@@ -1076,8 +1087,8 @@ const OrderDetails = () => {
                 </Button>
               )}
               <Button
-                className="w-full gap-2"
-                variant="secondary"
+                className="h-12 w-full gap-2"
+                variant="brand-soft"
                 onClick={handleOpenInvoicePreview}
               >
                 <FileText className="size-4" />
@@ -1085,8 +1096,8 @@ const OrderDetails = () => {
               </Button>
               <Button
                 onClick={() => setIsDeleteDialogOpen(true)}
-                className="w-full gap-2"
-                variant="destructive"
+                className="h-12 w-full gap-2"
+                variant="destructive-outline"
                 disabled={isDeleting}
               >
                 {isDeleting ? (
@@ -1103,8 +1114,8 @@ const OrderDetails = () => {
               </Button>
               {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
                 <Button
-                  className="w-full gap-2"
-                  variant="destructive"
+                  className="h-12 w-full gap-2"
+                  variant="destructive-outline"
                   onClick={handleCancelOrder}
                   disabled={isUpdatingStatus}
                 >
@@ -1278,7 +1289,11 @@ const OrderDetails = () => {
           <DialogHeader className="text-right">
             <DialogTitle className="text-right">تأكيد حذف الطلب</DialogTitle>
             <DialogDescription className="text-right">
-              هل أنت متأكد من حذف الطلب رقم #{String(order.id).slice(0, 8)}؟ لا
+              هل أنت متأكد من حذف الطلب رقم{" "}
+              <span dir="ltr" className="inline-block">
+                #{String(order.id).slice(0, 8)}
+              </span>
+              ؟ لا
               يمكنك التراجع عن هذا الإجراء بعد التأكيد.
             </DialogDescription>
           </DialogHeader>
@@ -1310,7 +1325,7 @@ const OrderDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PagePanel>
   );
 };
 
