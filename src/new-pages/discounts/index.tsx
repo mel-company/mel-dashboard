@@ -8,8 +8,7 @@ import {
   PercentIcon,
   Money04Icon,
 } from "@hugeicons-pro/core-stroke-standard";
-import { Money04Icon as Money04IconStroked } from "@hugeicons-pro/core-stroke-rounded";
-import { BaseCard, FeaturedCard } from "@/components/table/top-cards";
+import { BaseCard } from "@/components/table/top-cards";
 import PageTableHeader from "@/components/table/header";
 import SwitchTab from "@/components/table/switch-tab";
 import TitleBar from "@/components/table/title-bar";
@@ -38,6 +37,27 @@ const DiscountsPage = () => {
   const listCount = isDiscountsTab
     ? actions.discounts.length
     : actions.coupons.length;
+
+  // Figma keeps the list toolbar inside the table card, not above it.
+  const listToolbar = (
+    <PageTableHeader
+      title={listTitle}
+      subtitle={`أجمالي العناصر المتاحة ${listCount}`}
+      searchQuery={actions.searchQuery}
+      onSearchChange={actions.onSearchChange}
+      searchPlaceholder={
+        isDiscountsTab ? "ابحث في الخصومات..." : "ابحث في الكوبونات..."
+      }
+      onFilterClick={() => actions.setIsFilterDialogOpen(true)}
+      hasActiveFilters={actions.hasActiveFilters}
+      activeFilterCount={actions.activeFilterCount}
+    >
+      <SwitchTab
+        selected={actions.viewMode}
+        onChange={(v) => actions.handleViewModeChange(v as "table" | "cards")}
+      />
+    </PageTableHeader>
+  );
 
   return (
     <PagePanel className="space-y-4 sm:space-y-6">
@@ -86,28 +106,27 @@ const DiscountsPage = () => {
         </Button>
       </div>
 
-      <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
+      <div className="mb-6 rounded-[28px] bg-slate-50 p-4 dark:bg-white/[0.03] md:bg-transparent md:p-0 md:dark:bg-transparent">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {isDiscountsTab ? (
             <>
-              <FeaturedCard
+              <BaseCard
                 icon={Money04Icon}
-                strokedIcon={Money04IconStroked}
-                title="سعر الخصم الكلي"
+                title="أجمالي سعر الخصومات"
                 value={formatNumber(actions.discountStats.totalUsageAmount)}
                 suffix="د.ع"
-                color="orange"
+                color="default"
               />
               <BaseCard
                 icon={TrendingUp}
-                title="إجمالي مبالغ الخصومات"
+                title="أجمالي المبالغ المخصومة"
                 value={formatNumber(actions.discountStats.totalUsageAmount)}
                 growth={12.6}
                 color="success"
               />
               <BaseCard
                 icon={PercentIcon}
-                title="إجمالي الخصومات النشطة"
+                title="أجمالي الخصومات الفعالة"
                 value={actions.discountStats.activeDiscounts.toString()}
                 growth={12.6}
                 color="accent"
@@ -122,24 +141,23 @@ const DiscountsPage = () => {
             </>
           ) : (
             <>
-              <FeaturedCard
+              <BaseCard
                 icon={Money04Icon}
-                strokedIcon={Money04IconStroked}
-                title="إجمالي المبالغ المخصومة"
+                title="أجمالي المبالغ المخصومة"
                 value={formatNumber(actions.couponStats.totalDiscountedAmount)}
                 suffix="د.ع"
-                color="orange"
+                color="default"
               />
               <BaseCard
                 icon={Coupon02Icon}
-                title="إجمالي الكوبونات الفعالة"
+                title="أجمالي الكوبونات الفعالة"
                 value={String(actions.couponStats.activeCoupons)}
                 growth={12.6}
                 color="success"
               />
               <BaseCard
                 icon={TrendingUp}
-                title="إجمالي استخدام الكوبونات الفعالة"
+                title="أجمالي استخدام الكوبونات"
                 value={String(actions.couponStats.activeCouponsUsage)}
                 growth={12.6}
                 color="accent"
@@ -199,33 +217,14 @@ const DiscountsPage = () => {
         </div>
       </div>
 
-      <div className="hidden lg:block">
-        <PageTableHeader
-          title={listTitle}
-          subtitle={`أجمالي العناصر المتاحة ${listCount}`}
-          searchQuery={actions.searchQuery}
-          onSearchChange={actions.onSearchChange}
-          searchPlaceholder={
-            isDiscountsTab ? "ابحث في الخصومات..." : "ابحث في الكوبونات..."
-          }
-          onFilterClick={() => actions.setIsFilterDialogOpen(true)}
-          hasActiveFilters={actions.hasActiveFilters}
-          activeFilterCount={actions.activeFilterCount}
-        >
-          <SwitchTab
-            selected={actions.viewMode}
-            onChange={(v) => actions.handleViewModeChange(v as "table" | "cards")}
-          />
-        </PageTableHeader>
-      </div>
-
       {isDiscountsTab ? (
         <DiscountsContent
           actions={actions}
+          toolbar={listToolbar}
           onCreateClick={() => actions.setIsCreateDialogOpen(true)}
         />
       ) : (
-        <CouponsContent actions={actions} />
+        <CouponsContent actions={actions} toolbar={listToolbar} />
       )}
 
       <DiscountFilterDialog

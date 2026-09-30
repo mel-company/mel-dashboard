@@ -86,20 +86,26 @@ const MobileTopBar = ({ className, onMenuClick }: MobileTopBarProps) => {
     (homeData?.header?.unreadNotifications ?? 0) > 0
       ? "الإشعارات"
       : "الطلبات";
+  // Figma reads «يمكنك مراقبة جميع نشاطاتك في واجهة واحدة» on the dashboard,
+  // not a movement count — same rule as the desktop TitleBar.
   const homeSubtitle =
-    homeCount > 0
+    PAGE_SUBTITLES["/"] ||
+    homeData?.header?.subtitle ||
+    (homeCount > 0
       ? `تمتلك ${homeCount} حركة جديدة في قائمة ${homeListLabel}`
-      : homeData?.header?.subtitle || PAGE_SUBTITLES["/"];
+      : "");
 
   const subtitle = isHome
     ? homeSubtitle
     : (matchedSubtitleKey ? PAGE_SUBTITLES[matchedSubtitleKey] : undefined) ??
-      (me?.store ? me.store : PAGE_SUBTITLES["/"]);
+      PAGE_SUBTITLES["/"];
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 space-y-3 bg-background/95 px-3 pb-2 backdrop-blur-md lg:hidden",
+        "sticky top-0 z-30 space-y-3 bg-background/80 px-3 pb-2 backdrop-blur-md lg:hidden",
+        // Soften the meeting point with scrolled content — Figma has no band.
+        "after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-4 after:bg-linear-to-b after:from-background/80 after:to-transparent",
         "pt-[max(0.5rem,env(safe-area-inset-top))]",
         className,
       )}

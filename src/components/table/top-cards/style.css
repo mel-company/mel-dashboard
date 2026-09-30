@@ -47,22 +47,33 @@
 }
 
 
+/* Figma's stat badges are circles with a coloured bloom behind them — that
+   glow is the Shadow-op/* token family. Without the shadow they read flat. */
 .accent-card {
     @apply bg-violet-50 text-violet-500 dark:bg-violet-500/15 dark:text-violet-300;
+    box-shadow: 0 0 24px var(--glow-secondary-15);
 }
 
 .success-card {
     @apply bg-[rgba(0,184,138,0.05)] text-[#00b88a] dark:bg-teal-500/15 dark:text-teal-300;
+    box-shadow: 0 0 24px var(--glow-success-25);
 }
 
 .default-card {
     @apply bg-[rgba(0,183,255,0.05)] text-[#00b7ff] dark:bg-cyan-500/15 dark:text-cyan-300;
+    box-shadow: 0 0 24px var(--glow-primary-25);
 }
 
 .warning-card {
     @apply bg-[rgba(245,123,0,0.05)] text-[#f57b00] dark:bg-amber-500/15 dark:text-amber-300;
+    box-shadow: 0 0 24px var(--glow-warning-25);
 }
 
 .danger-card {
     @apply bg-[rgba(255,8,8,0.05)] text-[#ff0808] dark:bg-rose-500/15 dark:text-rose-300;
+    box-shadow: 0 0 24px var(--glow-danger-25);
+}
+
+.value .suffix {
+    @apply text-base font-bold;
 }

@@ -39,7 +39,7 @@ function Switch({
       dir="ltr"
       data-slot="switch"
       className={cn(
-        "group relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full border-0 transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-[#00C9A7] data-[state=unchecked]:bg-amber-950/5 dark:data-[state=unchecked]:bg-amber-300/10 sm:h-8 sm:w-18",
+        "group relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full border-0 transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-[#00C9A7] data-[state=unchecked]:bg-slate-900/10 dark:data-[state=unchecked]:bg-white/10 sm:h-8 sm:w-18",
         className
       )}
       checked={checked}
@@ -58,7 +58,7 @@ function Switch({
       {/* Unchecked indicator: small dot */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute right-2 top-1/2 size-2 -translate-y-1/2 rounded-full border-2 border-amber-950/30 dark:border-amber-200/30 opacity-0 transition-opacity duration-200 group-data-[state=checked]:opacity-0 group-data-[state=unchecked]:opacity-100 sm:right-3 sm:size-2.5 sm:border-3"
+        className="pointer-events-none absolute right-2 top-1/2 size-2 -translate-y-1/2 rounded-full border-2 border-slate-900/30 dark:border-white/30 opacity-0 transition-opacity duration-200 group-data-[state=checked]:opacity-0 group-data-[state=unchecked]:opacity-100 sm:right-3 sm:size-2.5 sm:border-3"
       />
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
@@ -77,7 +77,8 @@ function Switch({
     <label
       className={cn("inline-flex cursor-pointer items-center p-1 rounded-full", {
         "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400": checked,
-        "bg-amber-500/10 text-amber-600 dark:text-amber-400": !checked,
+        // Off is a neutral state, not a warning.
+        "bg-slate-500/10 text-slate-500 dark:bg-white/5 dark:text-[#a4b1fa]": !checked,
       })}
     >
       {switchNode}

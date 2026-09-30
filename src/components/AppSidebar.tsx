@@ -90,7 +90,7 @@ function NavLink({
               : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5",
           )
           : cn(
-            "w-full flex-row rounded-full px-3.5 py-2.5",
+            "w-full flex-row rounded-full px-3.5 py-3.5",
             active
               ? "text-white shadow-lg shadow-sky-500/20"
               : "rounded-2xl text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/4",
@@ -102,19 +102,19 @@ function NavLink({
           {/* Selected background — purple → cyan like Figma */}
           <span
             aria-hidden
-            className="absolute inset-0 bg-linear-to-l from-[#5B8CFF] via-[#6B6BFF] to-[#8B5CF6]"
+            className="absolute inset-0 bg-linear-to-l from-[#8B5CF6]/85 via-[#6B6BFF]/70 to-[#5B8CFF]/35"
           />
           <span
             aria-hidden
-            className="absolute -left-6 top-1/2 size-24 -translate-y-1/2 rounded-full bg-[#3B82F6]/55 blur-[2px]"
+            className="absolute -left-6 top-1/2 size-24 -translate-y-1/2 rounded-full bg-[#3B82F6]/25 blur-[6px]"
           />
           <span
             aria-hidden
-            className="absolute -right-4 -top-8 size-28 rounded-full bg-[#A78BFA]/45 blur-[1px]"
+            className="absolute -right-4 -top-8 size-28 rounded-full bg-[#A78BFA]/35 blur-[4px]"
           />
           <span
             aria-hidden
-            className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-[#4F46E5]/35 to-transparent"
+            className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-[#4F46E5]/20 to-transparent"
           />
         </>
       ) : null}
@@ -186,8 +186,10 @@ const AppSidebar = ({
       dir="rtl"
       className={cn(
         "relative flex h-full shrink-0 flex-col overflow-hidden border-l border-border/60 bg-card text-right transition-[width] duration-200",
-        "dark:border-sidebar-border dark:bg-sidebar",
-        collapsed ? "w-[76px]" : "w-[min(272px,88vw)] lg:w-[272px]",
+        "dark:border-transparent dark:bg-surface",
+        // Figma insets the panel and rounds the edge that faces the content.
+        "lg:my-3 lg:ms-0 lg:me-0 lg:h-[calc(100%-1.5rem)] lg:rounded-s-[28px]",
+        collapsed ? "w-[76px]" : "w-[min(340px,92vw)] lg:w-[272px]",
         className,
       )}
     >
@@ -236,14 +238,20 @@ const AppSidebar = ({
               </p>
             </div>
             {canToggle && (
-              <button
-                type="button"
-                onClick={() => setInternalCollapsed((v) => !v)}
-                className="hidden size-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200/70 lg:flex dark:hover:bg-white/5"
-                aria-label="طي القائمة"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
+              <>
+                <span
+                  aria-hidden
+                  className="hidden h-6 w-px shrink-0 bg-slate-200 lg:block dark:bg-white/10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setInternalCollapsed((v) => !v)}
+                  className="hidden size-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200/70 lg:flex dark:hover:bg-white/5"
+                  aria-label="طي القائمة"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+              </>
             )}
           </div>
         )}
@@ -252,8 +260,8 @@ const AppSidebar = ({
       {/* Navigation */}
       <nav
         className={cn(
-          "custom-scrollbar relative z-10 flex-1 overflow-y-auto py-2",
-          collapsed ? "space-y-4 px-2" : "space-y-5 px-3",
+          "custom-scrollbar relative z-10 min-h-0 flex-1 overflow-y-auto py-2",
+          collapsed ? "space-y-4 px-2" : "space-y-6 px-3",
         )}
       >
         {sidebarSections.map((section) => (
@@ -263,7 +271,7 @@ const AppSidebar = ({
                 {section.title}
               </p>
             )}
-            <div className={cn(collapsed ? "space-y-1.5" : "space-y-1")}>
+            <div className={cn(collapsed ? "space-y-1.5" : "space-y-1.5")}>
               {section.items.map((item) => (
                 <NavLink
                   key={item.path + item.label}
@@ -279,7 +287,7 @@ const AppSidebar = ({
       </nav>
 
       {/* Footer profile */}
-      <div className="relative z-10 p-3 pt-1">
+      <div className="relative z-10 shrink-0 p-3 pt-1">
         {/* Soft glow above avatar — dark only */}
         <div
           aria-hidden
@@ -328,12 +336,14 @@ const AppSidebar = ({
                 </p>
                 <p className="truncate text-[11px] text-slate-400">{roleLabel}</p>
               </div>
-              <ChevronDown
-                className={cn(
-                  "size-4 shrink-0 text-slate-400 transition-transform",
-                  profileOpen && "rotate-180",
-                )}
-              />
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-white/[0.06] dark:text-[#a4b1fa]">
+                <ChevronDown
+                  className={cn(
+                    "size-4 transition-transform",
+                    profileOpen && "rotate-180",
+                  )}
+                />
+              </span>
             </button>
 
             {profileOpen ? (

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Percent, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,11 +18,12 @@ import DiscountTable from "./DiscountTable";
 import DeleteDiscountDialog from "./DeleteDiscountDialog";
 
 type DiscountsContentProps = {
+  toolbar?: ReactNode;
   actions: ReturnType<typeof useDiscountsPage>;
   onCreateClick: () => void;
 };
 
-const DiscountsContent = ({ actions, onCreateClick }: DiscountsContentProps) => {
+const DiscountsContent = ({ actions, onCreateClick, toolbar }: DiscountsContentProps) => {
   const navigate = useNavigate();
   const { discounts, viewMode, deleteTarget, setDeleteTarget } = actions;
 
@@ -136,6 +138,7 @@ const DiscountsContent = ({ actions, onCreateClick }: DiscountsContentProps) => 
       <div className="hidden xl:block">
         {viewMode === "table" ? (
           <DiscountTable
+            toolbar={toolbar}
             discounts={discounts}
             onView={(id) => navigate(`/discounts/${id}`)}
             onEdit={(id) => navigate(`/discounts/${id}/edit`)}

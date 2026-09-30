@@ -38,12 +38,16 @@ export const TICKET_DEPARTMENTS = [
 ] as const;
 
 export const TICKET_STATUSES = [
-  { value: "OPEN", label: "مفتوح" },
-  { value: "CLOSED", label: "مغلق" },
-  { value: "IN_PROGRESS", label: "قيد التنفيذ" },
-  { value: "ON_HOLD", label: "معلق" },
-  { value: "RESOLVED", label: "محلول" },
-  { value: "CANCELLED", label: "ملغي" },
+  // تذكرة is feminine, so the labels agree with it — Figma draws مفتوحة /
+  // معلقة / قيد المعالجة / مغلقة, not the masculine forms. PENDING is a
+  // backend state that had no entry here, so it leaked through as raw English.
+  { value: "OPEN", label: "مفتوحة" },
+  { value: "CLOSED", label: "مغلقة" },
+  { value: "IN_PROGRESS", label: "قيد المعالجة" },
+  { value: "ON_HOLD", label: "معلقة" },
+  { value: "PENDING", label: "قيد الانتظار" },
+  { value: "RESOLVED", label: "محلولة" },
+  { value: "CANCELLED", label: "ملغاة" },
 ] as const;
 
 export type TicketFilterValues = {

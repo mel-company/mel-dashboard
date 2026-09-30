@@ -14,6 +14,7 @@ import { formatTableDate, formatTableTime, shortText } from "../utils";
 
 type CouponRowProps = {
   coupon: CouponListItem;
+  maxUsage?: number;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -22,6 +23,7 @@ type CouponRowProps = {
 
 const CouponRow = ({
   coupon,
+  maxUsage = 100,
   onView,
   onEdit,
   onDelete,
@@ -31,7 +33,7 @@ const CouponRow = ({
   const status = getCouponStatusMeta(coupon);
   const expired = isCouponExpired(coupon);
   const usage = getCouponUsageCount(coupon);
-  const progress = getCouponUsageProgress(usage);
+  const progress = getCouponUsageProgress(usage, maxUsage);
 
   return (
     <TableRow
@@ -75,7 +77,7 @@ const CouponRow = ({
           <span className="font-semibold tabular-nums text-slate-900 dark:text-[#00dfa8]">
             {usage}
           </span>
-          <div className="h-1 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-[#12183b]">
+          <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-[#12183b]">
             <div
               className="h-full rounded-full bg-emerald-500 dark:bg-[#00dfa8]"
               style={{ width: `${progress}%` }}

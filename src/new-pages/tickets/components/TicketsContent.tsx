@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { FileText, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -9,10 +10,11 @@ import TicketCard from "./TicketCard";
 import type { useTicketsPage } from "@/hooks/use-tickets-page";
 
 type TicketsContentProps = {
+  toolbar?: ReactNode;
   actions: ReturnType<typeof useTicketsPage>;
 };
 
-const TicketsContent = ({ actions }: TicketsContentProps) => {
+const TicketsContent = ({ actions, toolbar }: TicketsContentProps) => {
   const navigate = useNavigate();
 
   if (actions.isLoading && actions.tickets.length === 0) {
@@ -84,7 +86,7 @@ const TicketsContent = ({ actions }: TicketsContentProps) => {
         </div>
       </div>
       <div className="hidden xl:block">
-        <TicketTable tickets={actions.tickets} />
+        <TicketTable toolbar={toolbar} tickets={actions.tickets} />
       </div>
       <div ref={actions.loadMoreRef} className="flex justify-center py-4">
         {actions.hasNextPage && (

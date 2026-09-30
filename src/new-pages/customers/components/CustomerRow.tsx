@@ -1,9 +1,8 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Delete02Icon, PencilEdit02Icon } from "@hugeicons-pro/core-stroke-rounded";
-import { HugeiconsIcon } from "@hugeicons/react";
 import Rating from "@/components/table/rating";
+import ActionBtnList from "@/components/table/action-btn-list";
 
 type CustomerRowProps = {
   customer: any;
@@ -64,24 +63,10 @@ const CustomerRow = ({ customer, rowIndex, onDelete }: CustomerRowProps) => {
         )}
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label="حذف العميل"
-            onClick={() => onDelete(customer.id)}
-            className="text-red-500 transition-colors hover:text-red-400 dark:text-[#ff5a67] dark:hover:text-[#ff7f88]"
-          >
-            <HugeiconsIcon icon={Delete02Icon} size={16} />
-          </button>
-          <button
-            type="button"
-            aria-label="تعديل العميل"
-            onClick={() => navigate(`/customers/${customer.id}`)}
-            className="text-slate-400 transition-colors hover:text-slate-500 dark:text-[#8f9de8] dark:hover:text-[#b6c2ff]"
-          >
-            <HugeiconsIcon icon={PencilEdit02Icon} size={16} />
-          </button>
-        </div>
+        <ActionBtnList
+          onEdit={() => navigate(`/customers/${customer.id}`)}
+          onDelete={() => onDelete(customer.id)}
+        />
       </TableCell>
     </TableRow>
   );

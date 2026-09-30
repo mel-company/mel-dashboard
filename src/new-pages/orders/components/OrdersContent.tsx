@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Loader2, Package, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,11 @@ import OrderTable from "./OrderTable";
 import OrderCard from "./OrderCard";
 
 interface OrdersContentProps {
+  toolbar?: ReactNode;
   actions: any;
 }
 
-const OrdersContent = ({ actions }: OrdersContentProps) => {
+const OrdersContent = ({ actions, toolbar }: OrdersContentProps) => {
   const navigate = useNavigate();
 
   return (
@@ -85,6 +87,7 @@ const OrdersContent = ({ actions }: OrdersContentProps) => {
 
           <div className="hidden xl:block">
             <OrderTable
+            toolbar={toolbar}
               orders={actions.orders}
               imageBaseUrl={actions.imageBaseUrl}
               calculateTotal={actions.calculateTotal}

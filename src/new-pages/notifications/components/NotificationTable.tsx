@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import Pagination from "@/components/table/pagination";
 import NotificationTableHeader from "./NotificationTableHeader";
@@ -6,8 +6,20 @@ import NotificationRow from "./NotificationRow";
 import NotificationCards from "./NotificationCards";
 import type { NotificationListItem } from "@/api/types/notification";
 import { cn } from "@/lib/utils";
+import {
+  useTablePagination,
+  byCreatedAt,
+  text,
+  time,
+} from "@/hooks/use-table-pagination";
 
-type SortOrder = "desc" | "asc";
+const NOTIFICATION_COLUMNS = {
+  id: (n: unknown) => text(n, "id"),
+  title: (n: unknown) => text(n, "title"),
+  description: (n: unknown) => text(n, "message", "body", "description"),
+  type: (n: unknown) => text(n, "type"),
+  date: (n: unknown) => time(n, "createdAt", "created_at"),
+};
 
 type NotificationTableProps = {
   notifications: NotificationListItem[];
@@ -28,55 +40,15 @@ const NotificationTable = ({
   onRowClick,
   toolbar,
 }: NotificationTableProps) => {
-  const [activePage, setActivePage] = useState(1);
-  const [viewCount, setViewCount] = useState(10);
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
-
-  const sortedNotifications = useMemo(() => {
-    const list = [...notifications];
-    list.sort((a, b) => {
-      const aTime = new Date(a.createdAt).getTime();
-      const bTime = new Date(b.createdAt).getTime();
-      return sortOrder === "desc" ? bTime - aTime : aTime - bTime;
+  const { pageItems: paginatedNotifications, paginationProps, sort } =
+    useTablePagination({
+      items: notifications,
+      getSortValue: byCreatedAt,
+      columns: NOTIFICATION_COLUMNS,
+      hasNextPage,
+      isFetchingNextPage,
+      fetchNextPage,
     });
-    return list;
-  }, [notifications, sortOrder]);
-
-  const totalPages = Math.ceil(sortedNotifications.length / viewCount) || 1;
-
-  const handlePageChange = (page: number) => {
-    setActivePage(page);
-  };
-
-  const handleViewCountChange = (count: number) => {
-    setViewCount(count);
-    setActivePage(1);
-  };
-
-  const startIndex = (activePage - 1) * viewCount;
-  const paginatedNotifications = sortedNotifications.slice(
-    startIndex,
-    startIndex + viewCount,
-  );
-
-  const needsMoreData =
-    activePage * viewCount > notifications.length && hasNextPage;
-
-  useEffect(() => {
-    if (needsMoreData && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [needsMoreData, isFetchingNextPage, fetchNextPage]);
-
-  useEffect(() => {
-    if (activePage > totalPages) {
-      setActivePage(totalPages);
-    }
-  }, [activePage, totalPages]);
-
-  useEffect(() => {
-    setActivePage(1);
-  }, [sortOrder]);
 
   return (
     <div
@@ -111,7 +83,7 @@ const NotificationTable = ({
 
       <div className="hidden overflow-x-auto xl:block">
         <Table>
-          <NotificationTableHeader />
+          <NotificationTableHeader sort={sort} />
           <TableBody>
             {paginatedNotifications.map((notification) => (
               <NotificationRow
@@ -125,31 +97,7 @@ const NotificationTable = ({
       </div>
 
       <div className="mt-4 border-t border-[#e7edf6] pt-4 dark:border-white/[0.06]">
-        <Pagination
-          totalPages={
-            hasNextPage ? Math.max(totalPages, activePage + 1) : totalPages
-          }
-          activePage={activePage}
-          viewCount={viewCount}
-          onPageChange={handlePageChange}
-          onViewCountChange={handleViewCountChange}
-          trailing={
-            <div className="hidden items-center gap-2 text-sm xl:flex">
-              <select
-                className="rounded-lg border border-[rgba(125,38,247,0.15)] bg-transparent px-3 py-1.5 font-bold text-[#7d26f7] dark:border-[#9a5cff]/20 dark:text-[#b282ff]"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-                aria-label="الترتيب"
-              >
-                <option value="desc">تنازلي</option>
-                <option value="asc">تصاعدي</option>
-              </select>
-              <span className="text-[#6c809d] dark:text-muted-foreground">
-                مرتبة بشكل
-              </span>
-            </div>
-          }
-        />
+        <Pagination {...paginationProps} />
       </div>
     </div>
   );

@@ -33,6 +33,20 @@ const TicketsPage = () => {
     }
   }, [location.pathname, location.state, navigate]);
 
+  // Figma keeps the list toolbar inside the table card, not above it.
+  const listToolbar = (
+        <PageTableHeader
+          title="جميع التذاكر"
+          subtitle={`أجمالي العناصر المتاحة ${actions.tickets.length}`}
+          searchQuery={actions.searchQuery}
+          onSearchChange={actions.onSearchChange}
+          searchPlaceholder="ابحث في التذاكر..."
+          onFilterClick={() => actions.setIsFilterDialogOpen(true)}
+          hasActiveFilters={actions.hasActiveFilters}
+          activeFilterCount={actions.activeFilterCount}
+        />
+  );
+
   return (
     <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
@@ -61,7 +75,7 @@ const TicketsPage = () => {
         </Button>
       </div>
 
-      <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
+      <div className="mb-6 rounded-[28px] bg-slate-50 p-4 dark:bg-white/[0.03] md:bg-transparent md:p-0 md:dark:bg-transparent">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         <BaseCard
           icon={CustomerSupportIcon}
@@ -137,20 +151,8 @@ const TicketsPage = () => {
         </div>
       </div>
 
-      <div className="hidden lg:block">
-        <PageTableHeader
-          title="جميع التذاكر"
-          subtitle={`أجمالي العناصر المتاحة ${actions.tickets.length}`}
-          searchQuery={actions.searchQuery}
-          onSearchChange={actions.onSearchChange}
-          searchPlaceholder="ابحث في التذاكر..."
-          onFilterClick={() => actions.setIsFilterDialogOpen(true)}
-          hasActiveFilters={actions.hasActiveFilters}
-          activeFilterCount={actions.activeFilterCount}
-        />
-      </div>
 
-      <TicketsContent actions={actions} />
+      <TicketsContent actions={actions} toolbar={listToolbar} />
 
       <TicketFilterDialog
         open={actions.isFilterDialogOpen}

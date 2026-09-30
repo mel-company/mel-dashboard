@@ -1,11 +1,15 @@
 import DashboardCard from "./DashboardCard";
+import { formatCount } from "@/utils/format-currency";
 
 type TopDiscount = {
   id: string;
   name: string;
+  /** Figma prints the discount's value and kind here (e.g. «30%» / «نسبة مئوية»); the code is the fallback. */
   type: string;
+  value?: string | null;
+  valueType?: string | null;
   usageCount: number;
-  /** 0–1 progress from API, or derive from usageCount/maxUsage */
+  /** Either a 0–1 fraction or a 0–100 percentage — both are accepted. */
   progress?: number;
   maxUsage?: number;
 };
@@ -18,7 +22,7 @@ const TopDiscountsCard = ({ discounts }: TopDiscountsCardProps) => {
   if (discounts.length === 0) {
     return (
       <DashboardCard
-        title="أكثر الخصومات استخداماً"
+        title="الخصومات والكوبونات في الاعلى استخداما"
         className="min-h-[226px]"
         contentClassName="flex items-center justify-center"
       >
@@ -29,14 +33,17 @@ const TopDiscountsCard = ({ discounts }: TopDiscountsCardProps) => {
 
   return (
     <DashboardCard
-      title="أكثر الخصومات استخداماً"
+      title="الخصومات والكوبونات في الاعلى استخداما"
       className="min-h-[226px]"
       contentClassName="space-y-4"
     >
       {discounts.slice(0, 3).map((discount) => {
+        // The API is inconsistent about the unit, so accept both.
         const pct =
           discount.progress != null
-            ? discount.progress * 100
+            ? discount.progress > 1
+              ? discount.progress
+              : discount.progress * 100
             : discount.maxUsage && discount.maxUsage > 0
               ? (discount.usageCount / discount.maxUsage) * 100
               : 0;
@@ -48,11 +55,14 @@ const TopDiscountsCard = ({ discounts }: TopDiscountsCardProps) => {
                   {discount.name}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-white/40">
-                  {discount.type}
+                  {discount.value ?? discount.type}
+                  {discount.valueType ? (
+                    <span className="ms-1.5 opacity-80">{discount.valueType}</span>
+                  ) : null}
                 </p>
               </div>
               <span className="shrink-0 text-xs font-bold text-[#00AEEF]">
-                {discount.usageCount}
+                {formatCount(discount.usageCount)}
               </span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/8">

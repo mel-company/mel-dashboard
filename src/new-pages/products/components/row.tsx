@@ -14,6 +14,7 @@ import Badge from "@/components/table/badge";
 import ActionBtnList from "@/components/table/action-btn-list";
 import type { ProductListItem } from "@/api/types/product";
 import { formatCount } from "@/utils/format-currency";
+import StatusGlyph from "@/components/table/status-glyph";
 
 function renderCategories(product: ProductListItem) {
   const cats = getProductCategories(product);
@@ -49,13 +50,13 @@ function getStockQuantity(product: ProductListItem) {
 function stockStatus(product: ProductListItem) {
   const stock = getStockQuantity(product);
   if (!product.enabled) {
-    return { label: "غير متاح", color: "danger" as const };
+    return { label: "غير متاح", color: "danger" as const, tone: "alert" as const };
   }
   if (typeof stock === "number") {
-    if (stock <= 0) return { label: "غير متاح", color: "danger" as const };
-    if (stock <= 10) return { label: "قليل", color: "warning" as const };
+    if (stock <= 0) return { label: "غير متاح", color: "danger" as const, tone: "alert" as const };
+    if (stock <= 10) return { label: "قليل", color: "warning" as const, tone: "pending" as const };
   }
-  return { label: "متاح", color: "success" as const };
+  return { label: "متاح", color: "success" as const, tone: "done" as const };
 }
 
 const ProductRow = ({
@@ -145,6 +146,7 @@ const ProductRow = ({
       </TableCell>
       <TableCell className={tdClass}>
         <Badge color={status.color} bold>
+          <StatusGlyph tone={status.tone} />
           {status.label}
         </Badge>
       </TableCell>

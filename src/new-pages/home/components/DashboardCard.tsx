@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 type DashboardCardProps = {
   title?: string;
   subtitle?: string;
+  /** Figma centres the header on a few cards (e.g. نوع الدفع). */
+  centerHeader?: boolean;
   action?: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -13,6 +15,7 @@ type DashboardCardProps = {
 const DashboardCard = ({
   title,
   subtitle,
+  centerHeader,
   action,
   className,
   contentClassName,
@@ -27,7 +30,12 @@ const DashboardCard = ({
       )}
     >
       {(title || action) && (
-        <div className="flex items-start justify-between gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
+        <div
+          className={cn(
+            "flex items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5",
+            centerHeader ? "justify-center text-center" : "justify-between",
+          )}
+        >
           <div className="min-w-0 space-y-0.5">
             {title && (
               <h3 className="text-base font-bold text-text-secondary dark:text-foreground">

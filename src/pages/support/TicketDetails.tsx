@@ -34,6 +34,7 @@ import CancelTicketDialog from "./CancelTicketDialog";
 import CloseTicketDialog from "./CloseTicketDialog";
 import DeleteTicketDialog from "./DeleteTicketDialog";
 import { toast } from "sonner";
+import { TICKET_STATUSES } from "./TicketFilterDialog";
 import { cn } from "@/lib/utils";
 
 const TICKET_TYPES = [
@@ -54,14 +55,7 @@ const DEPARTMENTS = [
   { value: "IT", label: "تقنية المعلومات" },
 ] as const;
 
-const STATUS = [
-  { value: "OPEN", label: "مفتوح" },
-  { value: "CLOSED", label: "مغلق" },
-  { value: "IN_PROGRESS", label: "قيد التنفيذ" },
-  { value: "ON_HOLD", label: "معلق" },
-  { value: "RESOLVED", label: "محلول" },
-  { value: "CANCELLED", label: "ملغي" },
-] as const;
+const STATUS = TICKET_STATUSES;
 
 const getLabel = (
   list: readonly { value: string; label: string }[],

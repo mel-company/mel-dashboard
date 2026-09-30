@@ -11,7 +11,7 @@ const Badge = ({ color = "default", bold, children }: { color?: "danger" | "purp
     }
 
     return (
-        <p className={classNames(`px-3 py-1.5 rounded-full text-sm text-center`, {
+        <p className={classNames(`inline-flex items-center justify-center gap-1 whitespace-nowrap px-3 py-1.5 rounded-full text-sm text-center`, {
             [colorMap[color]]: true,
             "font-semibold": bold,
             "font-medium": !bold,

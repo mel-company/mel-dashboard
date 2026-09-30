@@ -7,6 +7,10 @@ export type Product = {
   price: number | null;
   image?: string;
   description?: string;
+  /** Figma overlays a rating chip on the card image. */
+  rating?: number;
+  /** Figma shows a period trend opposite the price. */
+  trendPercent?: number;
   categories?: Array<{
     id: string;
     name: unknown;

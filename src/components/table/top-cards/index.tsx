@@ -44,7 +44,7 @@ export const FeaturedCard = ({
     )
 }
 
-export const BaseCard = ({ icon, title, value, growth, color = "default" }: { icon: IconSvgElement, title: string, value: string, growth?: string | number, color?: "default" | "accent" | "warning" | "danger" | "success" }) => {
+export const BaseCard = ({ icon, title, value, growth, suffix, color = "default" }: { icon: IconSvgElement, title: string, value: string, growth?: string | number, /** e.g. "د.ع" for money — omit for counts */ suffix?: string, color?: "default" | "accent" | "warning" | "danger" | "success" }) => {
     const growthValue = typeof growth === "string" ? Number.parseFloat(growth) : growth
     const isNegative = typeof growthValue === "number" && growthValue < 0
 
@@ -56,6 +56,7 @@ export const BaseCard = ({ icon, title, value, growth, color = "default" }: { ic
             <div>
                 <p className="title">{title}</p>
                 <p className="value">{value}
+                    {suffix ? <span className="suffix">{suffix}</span> : null}
                     {typeof growthValue === "number" && growthValue !== 0 &&
                         <span className={`growth ${isNegative ? "is-down" : ""}`}>
                             <HugeiconsIcon icon={ArrowUpRight03Icon} size={16} className={isNegative ? "rotate-90" : ""} />

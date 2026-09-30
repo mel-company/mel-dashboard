@@ -83,6 +83,7 @@ const HomeDashboard = () => {
         status: item.label,
         count: item.value,
         color: item.color,
+        trendPercent: item.trendPercent ?? null,
       })),
     [data?.orderStatusPie],
   );
@@ -162,6 +163,8 @@ const HomeDashboard = () => {
         id: coupon.id,
         name: coupon.title || coupon.code,
         type: coupon.code,
+        value: coupon.value ?? null,
+        valueType: coupon.valueType ?? null,
         usageCount: coupon.uses,
         progress: coupon.progress,
       })),
@@ -274,6 +277,7 @@ const HomeDashboard = () => {
           <SubscriptionCard
             planCode={subscription.planCode}
             planTitle={subscription.planTitle}
+            planDescription={subscription.planDescription}
             expiresAt={subscription.expiresAt}
             daysLeft={subscription.daysLeft}
             progress={subscription.progress}

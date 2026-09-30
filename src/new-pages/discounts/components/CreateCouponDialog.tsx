@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Loader2, Percent } from "lucide-react";
+import { Loader2, Percent } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -13,11 +13,11 @@ import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useCreateCoupon } from "@/api/wrappers/coupon.wrappers";
+import DateField from "@/components/ui/date-field";
 import {
   SettingsField,
   SettingsInput,
   SettingsTextarea,
-  settingsInputClassName,
 } from "@/new-pages/settings/components/SettingsField";
 
 type CreateCouponDialogProps = {
@@ -242,38 +242,20 @@ const CreateCouponDialog = ({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
               <SettingsField label="تاريخ البدء والنفاذ">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="relative">
-                    <Calendar className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400 dark:text-[#e4e7fc]/30" />
-                    <input
-                      id="couponStart"
-                      type="date"
-                      value={startsAt}
-                      onChange={(e) => setStartsAt(e.target.value)}
-                      disabled={isPending}
-                      aria-label="تاريخ البدء"
-                      className={cn(
-                        settingsInputClassName,
-                        "h-12 w-full rounded-[14px] pl-10 text-right",
-                        darkFieldClass,
-                      )}
-                    />
-                  </div>
-                  <div className="relative">
-                    <Calendar className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400 dark:text-[#e4e7fc]/30" />
-                    <input
-                      id="couponEnd"
-                      type="date"
-                      value={expiresAt}
-                      onChange={(e) => setExpiresAt(e.target.value)}
-                      disabled={isPending}
-                      aria-label="تاريخ النفاذ"
-                      className={cn(
-                        settingsInputClassName,
-                        "h-12 w-full rounded-[14px] pl-10 text-right",
-                        darkFieldClass,
-                      )}
-                    />
-                  </div>
+                  <DateField
+                    id="couponStart"
+                    value={startsAt}
+                    onChange={setStartsAt}
+                    disabled={isPending}
+                    aria-label="تاريخ البدء"
+                  />
+                  <DateField
+                    id="couponEnd"
+                    value={expiresAt}
+                    onChange={setExpiresAt}
+                    disabled={isPending}
+                    aria-label="تاريخ النفاذ"
+                  />
                 </div>
               </SettingsField>
 

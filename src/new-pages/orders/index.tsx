@@ -1,4 +1,6 @@
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { BaseCard } from "@/components/table/top-cards";
 import OrdersContent from "./components/OrdersContent";
 import PageTableHeader from "@/components/table/header";
@@ -14,15 +16,52 @@ import {
 } from "@hugeicons-pro/core-stroke-standard";
 
 const OrdersPage = () => {
+  const navigate = useNavigate();
   const actions = useOrdersPage();
+
+  // Figma keeps the list toolbar inside the table card, not above it.
+  const listToolbar = (
+        <PageTableHeader
+          title="جميع الطلبات"
+          subtitle={`أجمالي الطلبات ${actions.orders.length}`}
+          searchQuery={actions.searchQuery}
+          onSearchChange={actions.onSearchChange}
+          searchPlaceholder="ابحث عن طلب"
+          onFilterClick={() => actions.setIsFilterDialogOpen(true)}
+          hasActiveFilters={actions.hasActiveFilters}
+          activeFilterCount={actions.activeFilterCount}
+        />
+  );
 
   return (
     <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
-        <TitleBar count={actions.stats?.totalOrders ?? actions.orders?.length ?? 0} />
+        <TitleBar count={actions.stats?.totalOrders ?? actions.orders?.length ?? 0}>
+          <Button
+            className="h-11 w-full shrink-0 gap-2 rounded-full bg-violet-100 px-4 text-violet-700 shadow-sm hover:bg-violet-200 sm:w-auto sm:gap-2.5 sm:px-5 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20"
+            onClick={() => navigate("/orders/add")}
+          >
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-500/15 dark:bg-[#b282ff]/20">
+              <Plus className="size-4" strokeWidth={2.5} />
+            </span>
+            <span className="truncate">انشاء طلب جديد</span>
+          </Button>
+        </TitleBar>
       </div>
 
-      <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
+      <div className="lg:hidden">
+        <Button
+          className="h-12 w-full gap-2 rounded-full bg-violet-100 text-violet-700 dark:border dark:border-[#9a5cff]/15 dark:bg-[#9a5cff]/10 dark:text-[#b282ff]"
+          onClick={() => navigate("/orders/add")}
+        >
+          <span className="flex size-7 items-center justify-center rounded-full bg-violet-500/15 dark:bg-[#b282ff]/20">
+            <Plus className="size-4" strokeWidth={2.5} />
+          </span>
+          انشاء طلب جديد
+        </Button>
+      </div>
+
+      <div className="mb-6 rounded-[28px] bg-slate-50 p-4 dark:bg-white/[0.03] md:bg-transparent md:p-0 md:dark:bg-transparent">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           <BaseCard
             icon={Package01Icon}
@@ -90,20 +129,8 @@ const OrdersPage = () => {
         </button>
       </div>
 
-      <div className="hidden lg:block">
-        <PageTableHeader
-          title="جميع الطلبات"
-          subtitle={`أجمالي الطلبات ${actions.orders.length}`}
-          searchQuery={actions.searchQuery}
-          onSearchChange={actions.onSearchChange}
-          searchPlaceholder="ابحث عن طلب"
-          onFilterClick={() => actions.setIsFilterDialogOpen(true)}
-          hasActiveFilters={actions.hasActiveFilters}
-          activeFilterCount={actions.activeFilterCount}
-        />
-      </div>
 
-      <OrdersContent actions={actions} />
+      <OrdersContent actions={actions} toolbar={listToolbar} />
     </PagePanel>
   );
 };
