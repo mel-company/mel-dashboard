@@ -88,7 +88,7 @@ const Discounts = () => {
     switch (status) {
       case DISCOUNT_STATUS.ACTIVE:
         return {
-          className: "bg-green-600 text-white",
+          className: "bg-emerald-500/12 text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8] text-white",
           text: "نشط",
         };
       case DISCOUNT_STATUS.INACTIVE:
@@ -98,7 +98,7 @@ const Discounts = () => {
         };
       case DISCOUNT_STATUS.EXPIRED:
         return {
-          className: "bg-red-600 text-white",
+          className: "bg-rose-500/12 text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252] text-white",
           text: "منتهي",
         };
       default:

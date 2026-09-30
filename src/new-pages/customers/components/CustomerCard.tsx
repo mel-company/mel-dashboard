@@ -20,9 +20,16 @@ const CustomerCard = ({ customer, onClick, onDelete, className }: CustomerCardPr
         : NaN;
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
       className={cn(
         "flex w-full flex-col gap-3 rounded-[20px] bg-white p-4 text-right dark:bg-[#0a0e27]",
         className,
@@ -78,7 +85,7 @@ const CustomerCard = ({ customer, onClick, onDelete, className }: CustomerCardPr
           إجمالي الطلبات
         </p>
       </div>
-    </button>
+    </div>
   );
 };
 

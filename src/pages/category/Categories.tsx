@@ -254,7 +254,7 @@ const Categories = () => {
                       {category.enabled ? (
                         <Badge
                           variant="default"
-                          className="bg-green-600 gap-1 text-sm"
+                          className="gap-1 border-0 bg-emerald-500/12 text-sm text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8]"
                         >
                           <CheckCircle2 className="size-3" />
                           مفعّل
@@ -262,7 +262,7 @@ const Categories = () => {
                       ) : (
                         <Badge
                           variant="outline"
-                          className="text-sm bg-red-600 text-white"
+                          className="border-0 bg-rose-500/12 text-sm text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252]"
                         >
                           معطّل
                         </Badge>

@@ -1,25 +1,12 @@
-import { Lock } from "lucide-react";
-import { useState } from "react";
+import ComingSoon from "../miscellaneous/ComingSoon";
 
-type Props = {};
-
-const AddEmployee = ({}: Props) => {
-  // @ts-ignore
-  const [isCommingSoon, setIsCommingSoon] = useState(true);
-
-  if (isCommingSoon) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Lock className="size-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">قريباً</h2>
-        <p className="text-muted-foreground mb-4">
-          هذا التطبيق قيد التطوير وسيكون متاحاً قريباً. شكراً لصبرك!
-        </p>
-      </div>
-    );
-  }
-
-  return <div>AddEmployee</div>;
-};
+const AddEmployee = () => (
+  <ComingSoon
+    title="إضافة موظف جديد"
+    description="هذا التطبيق قيد التطوير وسيكون متاحاً قريباً. شكراً لصبرك!"
+    backTo="/employees"
+    backLabel="العودة إلى الموظفين"
+  />
+);
 
 export default AddEmployee;

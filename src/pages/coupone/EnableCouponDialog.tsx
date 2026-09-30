@@ -58,7 +58,7 @@ const EnableCouponDialog = ({ open, onOpenChange, couponId, couponCode }: Props)
           </Button>
           <Button
             onClick={handleEnable}
-            className="bg-green-600 text-white hover:bg-green-700"
+            className="bg-emerald-500/12 text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8] text-white hover:bg-green-700"
             disabled={isPending}
           >
             {isPending ? (

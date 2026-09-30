@@ -37,6 +37,7 @@ import ErrorPage from "../miscellaneous/ErrorPage";
 import NotFoundPage from "../miscellaneous/NotFoundPage";
 import CustomerDetailsSkeleton from "./CustomerDetailsSkeleton";
 import { toast } from "sonner";
+import PagePanel from "@/components/PagePanel";
 
 const CustomerDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -133,11 +134,11 @@ const CustomerDetails = () => {
         text: "تم الشحن",
       },
       DELIVERED: {
-        className: "bg-green-600 text-white",
+        className: "bg-emerald-500/12 text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8] text-white",
         text: "تم التسليم",
       },
       CANCELLED: {
-        className: "bg-red-600 text-white",
+        className: "bg-rose-500/12 text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252] text-white",
         text: "ملغي",
       },
     };
@@ -152,7 +153,7 @@ const CustomerDetails = () => {
   const totalSpent = calculateTotalSpent();
 
   return (
-    <div className="space-y-6">
+    <PagePanel className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Customer Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -380,7 +381,7 @@ const CustomerDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PagePanel>
   );
 };
 

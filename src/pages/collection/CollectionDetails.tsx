@@ -20,6 +20,7 @@ import {
   useUpdateCollection,
 } from "@/api/wrappers/collection.wrappers";
 import AddProductToCollectionDialog from "./AddProductToCollectionDialog";
+import PagePanel from "@/components/PagePanel";
 
 /**
  * One collection: rename it, show or hide it, and manage what is in it.
@@ -106,7 +107,7 @@ const CollectionDetails = () => {
   };
 
   return (
-    <div className="space-y-5" dir="rtl">
+    <PagePanel className="space-y-5">
       <button
         type="button"
         onClick={() => navigate("/collections")}
@@ -243,7 +244,7 @@ const CollectionDetails = () => {
         collectionId={id}
         onSuccess={refetch}
       />
-    </div>
+    </PagePanel>
   );
 };
 

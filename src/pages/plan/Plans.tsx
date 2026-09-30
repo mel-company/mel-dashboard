@@ -105,7 +105,7 @@ const Plans = ({}: Props) => {
               <div className="absolute -top-3 right-4 z-10">
                 <Badge
                   variant="default"
-                  className="bg-green-600 text-white gap-1 px-3 py-1"
+                  className="bg-emerald-500/12 text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8] text-white gap-1 px-3 py-1"
                 >
                   <CheckCircle className="size-3" />
                   خطتك الحالية

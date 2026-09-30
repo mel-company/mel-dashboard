@@ -289,7 +289,7 @@ const CouponDetails = () => {
                     <Button
                       variant="default"
                       size="sm"
-                      className="gap-2 bg-green-600 text-white hover:bg-green-700"
+                      className="gap-2 bg-emerald-500/12 text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8] text-white hover:bg-green-700"
                       onClick={() => setIsEnableDialogOpen(true)}
                     >
                       <CheckCircle2 className="size-4" />

@@ -107,9 +107,16 @@ const StoreIntegrationsSection = () => {
 
   const paymentMethods = useMemo(() => {
     if (!paymentProviders) return [] as PaymentMethodOption[];
-    return paymentProviders.flatMap(
-      (p: { methods?: PaymentMethodOption[] }) => p.methods ?? [],
-    );
+    // Two providers can expose the same method id, which rendered duplicate
+    // React keys and let one row's toggle drive the other.
+    const seen = new Set<string>();
+    return paymentProviders
+      .flatMap((p: { methods?: PaymentMethodOption[] }) => p.methods ?? [])
+      .filter((m: PaymentMethodOption) => {
+        if (!m?.id || seen.has(m.id)) return false;
+        seen.add(m.id);
+        return true;
+      });
   }, [paymentProviders]);
 
   const isMethodEnabled = (methodId: string) => {

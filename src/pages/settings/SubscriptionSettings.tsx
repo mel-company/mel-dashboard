@@ -79,7 +79,7 @@ const SubscriptionSettings = ({}: Props) => {
     const statusUpper = status.toUpperCase();
     const statusMap: Record<string, { className: string; text: string }> = {
       ACTIVE: {
-        className: "bg-green-600 text-white",
+        className: "bg-emerald-500/12 text-emerald-600 dark:bg-[#00dfa8]/12 dark:text-[#00dfa8] text-white",
         text: "نشط",
       },
       PAUSED: {
@@ -87,7 +87,7 @@ const SubscriptionSettings = ({}: Props) => {
         text: "متوقف",
       },
       CANCELLED: {
-        className: "bg-red-600 text-white",
+        className: "bg-rose-500/12 text-rose-600 dark:bg-[#ff5252]/12 dark:text-[#ff5252] text-white",
         text: "ملغي",
       },
       EXPIRED: {
