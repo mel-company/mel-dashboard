@@ -16,6 +16,7 @@ import {
 
 type DiscountRowProps = {
   discount: DiscountListItem;
+  maxUsage?: number;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -24,6 +25,7 @@ type DiscountRowProps = {
 
 const DiscountRow = ({
   discount,
+  maxUsage = 100,
   onView,
   onEdit,
   onDelete,
@@ -33,7 +35,7 @@ const DiscountRow = ({
   const status = getDiscountStatusMeta(discount.discount_status);
   const isExpired = discount.discount_status === DISCOUNT_STATUS.EXPIRED;
   const usage = getDiscountUsageCount(discount);
-  const progress = getDiscountUsageProgress(usage);
+  const progress = getDiscountUsageProgress(usage, maxUsage);
 
   return (
     <TableRow
@@ -77,7 +79,7 @@ const DiscountRow = ({
           <span className="font-semibold tabular-nums text-slate-900 dark:text-[#00dfa8]">
             {usage}
           </span>
-          <div className="h-1 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-[#12183b]">
+          <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-[#12183b]">
             <div
               className="h-full rounded-full bg-emerald-500 dark:bg-[#00dfa8]"
               style={{ width: `${progress}%` }}

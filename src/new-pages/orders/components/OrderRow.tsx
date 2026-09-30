@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { File01Icon } from "@hugeicons-pro/core-stroke-rounded";
 import { HugeiconsIcon } from "@hugeicons/react";
 import OrderProductStack from "./OrderProductStack";
+import StatusGlyph from "@/components/table/status-glyph";
 import {
   formatOrderAmount,
   formatOrderCode,
@@ -46,7 +47,8 @@ const OrderRow = ({
       onClick={() => onOpen(order.id)}
     >
       <TableCell className={cn(tdClass, "font-mono text-sm font-semibold text-slate-800 dark:text-[#e4e7fc]")}>
-        {formatOrderCode(order.id)}
+        {/* bidi: without an LTR isolate the leading # is reordered to the end */}
+        <span dir="ltr" className="inline-block">{formatOrderCode(order.id)}</span>
       </TableCell>
 
       <TableCell className={tdClass}>
@@ -105,6 +107,7 @@ const OrderRow = ({
             status.className,
           )}
         >
+          <StatusGlyph tone={status.tone} />
           {status.label}
         </span>
       </TableCell>

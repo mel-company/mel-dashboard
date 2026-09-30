@@ -130,9 +130,15 @@ export function getDiscountUsageCount(discount: DiscountListItem): number {
 }
 
 /** Soft visual fill for usage bars (design has no explicit max). */
-export function getDiscountUsageProgress(usage: number, softMax = 100): number {
+/**
+ * Figma's usage bars vary in length across the column. A fixed cap of 100
+ * made every discount above it render a full bar, so 152, 143 and 134 all
+ * looked identical — scale against the largest value actually on screen.
+ */
+export function getDiscountUsageProgress(usage: number, max = 100): number {
   if (usage <= 0) return 0;
-  return Math.min(100, Math.round((usage / softMax) * 100));
+  const ceiling = Math.max(max, 1);
+  return Math.min(100, Math.round((usage / ceiling) * 100));
 }
 
 export function formatPrice(value: number): string {

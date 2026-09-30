@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Ticket, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,10 +15,11 @@ import DeleteCouponDialog from "./DeleteCouponDialog";
 import type { useDiscountsPage } from "@/hooks/use-discounts-page";
 
 type CouponsContentProps = {
+  toolbar?: ReactNode;
   actions: ReturnType<typeof useDiscountsPage>;
 };
 
-const CouponsContent = ({ actions }: CouponsContentProps) => {
+const CouponsContent = ({ actions, toolbar }: CouponsContentProps) => {
   const navigate = useNavigate();
   const { mutate: toggleCoupon } = useToggleCouponActive();
 
@@ -110,6 +112,7 @@ const CouponsContent = ({ actions }: CouponsContentProps) => {
       <div className="hidden xl:block">
         {actions.viewMode === "table" ? (
           <CouponTable
+            toolbar={toolbar}
             coupons={actions.coupons}
             onView={(id) => navigate(`/coupons/${id}`)}
             onEdit={(id) => navigate(`/coupons/${id}/edit`)}

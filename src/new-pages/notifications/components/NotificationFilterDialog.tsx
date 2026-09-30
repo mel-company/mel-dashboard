@@ -365,10 +365,15 @@ const NotificationFilterDialog = ({
           >
             الغاء
           </button>
+          {/* Sat absolutely under the row on desktop, so it read as a
+              third line below the footer. Keep it inline with الغاء. */}
           <button
             type="button"
             onClick={handleClear}
-            className="w-full py-1 text-center text-sm font-medium text-[#00b7ff] md:absolute md:bottom-2 md:left-1/2 md:-translate-x-1/2 md:w-auto dark:text-primary"
+            className={cn(
+              "text-sm font-medium text-[#00b7ff] dark:text-primary",
+              isMobile ? "w-full py-1 text-center" : "h-[60px] px-2",
+            )}
           >
             مسح الفلاتر
           </button>

@@ -55,7 +55,7 @@ const CollectionsPage = () => {
         </Button>
       </div>
 
-      <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
+      <div className="mb-6 rounded-[28px] bg-slate-50 p-4 dark:bg-white/[0.03] md:bg-transparent md:p-0 md:dark:bg-transparent">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
           <BaseCard
             icon={Layers01Icon}

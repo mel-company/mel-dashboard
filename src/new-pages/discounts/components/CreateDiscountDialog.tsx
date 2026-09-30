@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Calendar, Loader2, Percent, Upload } from "lucide-react";
+import { Loader2, Percent, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -19,9 +19,9 @@ import {
   SettingsField,
   SettingsInput,
   SettingsTextarea,
-  settingsInputClassName,
 } from "@/new-pages/settings/components/SettingsField";
 import { cn } from "@/lib/utils";
+import DateField from "@/components/ui/date-field";
 
 type CreateDiscountDialogProps = {
   open: boolean;
@@ -335,38 +335,20 @@ const CreateDiscountDialog = ({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
               <SettingsField label="تاريخ البدء والنفاذ">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="relative">
-                    <Calendar className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400 dark:text-[#e4e7fc]/30" />
-                    <input
-                      id="discountStart"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      disabled={isPending}
-                      aria-label="تاريخ البدء"
-                      className={cn(
-                        settingsInputClassName,
-                        "h-12 w-full rounded-[14px] pl-10 text-right",
-                        darkFieldClass,
-                      )}
-                    />
-                  </div>
-                  <div className="relative">
-                    <Calendar className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400 dark:text-[#e4e7fc]/30" />
-                    <input
-                      id="discountEnd"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      disabled={isPending}
-                      aria-label="تاريخ النفاذ"
-                      className={cn(
-                        settingsInputClassName,
-                        "h-12 w-full rounded-[14px] pl-10 text-right",
-                        darkFieldClass,
-                      )}
-                    />
-                  </div>
+                  <DateField
+                    id="discountStart"
+                    value={startDate}
+                    onChange={setStartDate}
+                    disabled={isPending}
+                    aria-label="تاريخ البدء"
+                  />
+                  <DateField
+                    id="discountEnd"
+                    value={endDate}
+                    onChange={setEndDate}
+                    disabled={isPending}
+                    aria-label="تاريخ النفاذ"
+                  />
                 </div>
               </SettingsField>
 

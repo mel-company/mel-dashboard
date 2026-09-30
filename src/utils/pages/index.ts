@@ -14,7 +14,9 @@ import {
     Settings01Icon as Settings01IconNormal,
     Notification01Icon as Notification01IconNormal,
     WebDesign01Icon as WebDesign01IconNormal,
-} from '@hugeicons-pro/core-stroke-rounded';
+  // Figma's rail uses the two-tone icon set, not flat strokes — the second
+  // tone is what gives each glyph its accent.
+} from '@hugeicons-pro/core-duotone-rounded';
 
 import {
     Home12Icon as Home12IconActive,
@@ -125,7 +127,7 @@ export const pages: PageType[] = [{
     },
 },
 {
-    label: "الدعم",
+    label: "الدعم الفني",
     slug: "/tickets",
     apiEndpoint: "support-ticket/store/filter-cursor",
     searchApiEndpoint: "support-ticket/store/search-cursor",
@@ -170,7 +172,7 @@ export const pages: PageType[] = [{
     label: "الموظفين",
     slug: "/employees",
     apiEndpoint: "employee",
-    group: "ادارة",
+    group: "إدارة النظام",
     icon: {
         normal: UserMultiple03IconNormal,
         active: UserMultiple03IconActive
@@ -180,7 +182,7 @@ export const pages: PageType[] = [{
     label: "الاعدادات",
     slug: "/settings",
     apiEndpoint: "settings",
-    group: "ادارة",
+    group: "إدارة النظام",
     icon: {
         normal: Settings01IconNormal,
         active: Settings01IconActive

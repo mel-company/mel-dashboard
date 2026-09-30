@@ -17,9 +17,11 @@ const PeakAccessDayCard = ({ peakDay, weeklyData }: PeakAccessDayCardProps) => {
   return (
     <DashboardCard
       className="min-h-[140px]"
-      contentClassName="flex flex-col gap-3 py-3"
+      /* Figma composes this card as one row: label on the right, bars on the
+         left. Stacking them doubled its height and spread the bars wide. */
+      contentClassName="flex flex-row items-center gap-4 py-3"
     >
-      <div className="min-w-0 text-right">
+      <div className="min-w-0 shrink-0 text-right">
         <p className="truncate text-xs font-medium text-text-secondary dark:text-foreground">
           افضل ايام الوصول
         </p>
@@ -31,8 +33,8 @@ const PeakAccessDayCard = ({ peakDay, weeklyData }: PeakAccessDayCardProps) => {
       {/* The axis is Mon→Sun and its labels are Latin (M T W T F S S), so it
           reads left-to-right. Inside the RTL document these rows would
           otherwise paint in reverse and put Friday third instead of fifth. */}
-      <div dir="ltr" className="flex w-full min-w-0 flex-col items-stretch">
-        <div className="flex h-[56px] w-full items-end justify-between gap-1 sm:h-[64px] sm:gap-1.5">
+      <div dir="ltr" className="flex min-w-0 flex-1 flex-col items-stretch">
+        <div className="flex h-[56px] w-full items-end justify-between gap-1.5 sm:h-[64px] sm:gap-2">
           {weeklyData.map((item, index) => {
             const height = Math.max((item.value / max) * 56, 6);
             const isPeak = index === peakIndex;
@@ -43,7 +45,7 @@ const PeakAccessDayCard = ({ peakDay, weeklyData }: PeakAccessDayCardProps) => {
               >
                 <div
                   className={cn(
-                    "w-full max-w-3 rounded-[2px]",
+                    "w-full max-w-2.5 rounded-[2px]",
                     isPeak
                       ? "bg-[#7d26f7] dark:bg-[#b282ff]"
                       : "bg-[rgba(125,38,247,0.15)] dark:bg-[#b282ff]/25",

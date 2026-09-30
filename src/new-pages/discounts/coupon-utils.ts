@@ -93,6 +93,7 @@ export function getCouponUsageCount(coupon: CouponListItem): number {
 }
 
 /** Soft visual fill for usage bars (design has no explicit max). */
+/** Scaled against the busiest row on screen — see getDiscountUsageProgress. */
 export function getCouponUsageProgress(usage: number, softMax = 100): number {
   if (usage <= 0) return 0;
   return Math.min(100, Math.round((usage / softMax) * 100));

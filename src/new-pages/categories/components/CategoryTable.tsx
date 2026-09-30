@@ -4,6 +4,7 @@ import Pagination from "@/components/table/pagination";
 import { CategoryTableHeader } from "./CategoryTableHeader";
 import CategoryRow from "./CategoryRow";
 import CategoryDeleteModal from "./CategoryDeleteModal";
+import { useTablePagination, byCreatedAt } from "@/hooks/use-table-pagination";
 
 type CategoryTableProps = {
   categories: any[];
@@ -16,13 +17,10 @@ const CategoryTable = ({
   refetch,
   imageBaseUrl = "",
 }: CategoryTableProps) => {
-  const [activePage, setActivePage] = useState(1);
-  const [viewCount, setViewCount] = useState(10);
+  const { pageItems: paginated, paginationProps } =
+    useTablePagination({ items: categories, getSortValue: byCreatedAt });
   const [deleteCategory, setDeleteCategory] = useState<any>(null);
 
-  const totalPages = Math.ceil(categories.length / viewCount) || 1;
-  const startIndex = (activePage - 1) * viewCount;
-  const paginated = categories.slice(startIndex, startIndex + viewCount);
 
   return (
     <div className="w-full overflow-x-auto rounded-3xl border border-transparent bg-white p-4 shadow-none sm:p-4 dark:border-transparent dark:bg-[#0a0e27]">
@@ -41,16 +39,7 @@ const CategoryTable = ({
         </TableBody>
       </Table>
       <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/[0.06]">
-        <Pagination
-          totalPages={totalPages}
-          activePage={activePage}
-          viewCount={viewCount}
-          onPageChange={setActivePage}
-          onViewCountChange={(count) => {
-            setViewCount(count);
-            setActivePage(1);
-          }}
-        />
+        <Pagination {...paginationProps} />
       </div>
       <CategoryDeleteModal
         category={deleteCategory}

@@ -51,10 +51,14 @@ const TitleBar = ({
       ? `تمتلك ${formatCount(count)} حركة جديدة في قائمة ${listLabel}`
       : null;
 
+  // The dashboard's own description outranks the movement count — Figma
+  // reads «يمكنك مراقبة جميع نشاطاتك في واجهة واحدة» there, not a count.
+  const staticDescription = defaultDescriptions[currentPage.slug];
+
   const subtitle =
     description ??
+    staticDescription ??
     countSubtitle ??
-    defaultDescriptions[currentPage.slug] ??
     null;
 
   return (
@@ -65,9 +69,12 @@ const TitleBar = ({
       )}
     >
       <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          <HugeiconsIcon icon={currentPage?.icon?.normal} className="size-6 shrink-0 sm:size-7" />
-          <h1 className="truncate text-xl font-bold sm:text-2xl xl:text-[28px] xl:leading-tight">{currentPage?.label}</h1>
+        <div className="flex items-center gap-2.5">
+          {/* Figma seats the page icon in a tinted rounded-square tile. */}
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#3b4656] sm:size-11 dark:bg-white/[0.06] dark:text-[#e4e7fc]">
+            <HugeiconsIcon icon={currentPage?.icon?.normal} className="size-5 sm:size-6" />
+          </span>
+          <h1 className="truncate text-xl font-bold sm:text-2xl xl:leading-tight">{currentPage?.label}</h1>
         </div>
         {subtitle ? (
           <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground/80 sm:line-clamp-none sm:text-sm">

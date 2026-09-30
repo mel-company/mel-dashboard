@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import MobileTopBar from "@/components/MobileTopBar";
+import FloatingRail from "@/components/FloatingRail";
 import { cn } from "@/lib/utils";
 
 const Layout = () => {
@@ -69,6 +70,9 @@ const Layout = () => {
         {showMobileChrome && (
           <MobileTopBar onMenuClick={() => setMobileSidebarOpen(true)} />
         )}
+
+        {/* Figma's floating capsule on the far edge of every web frame. */}
+        {!isFullscreenTool && <FloatingRail />}
 
         <main
           className={cn(

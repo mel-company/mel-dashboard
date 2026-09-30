@@ -21,14 +21,17 @@ const IQD_NUMBER = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-/** Latin digits, no grouping — for counts/quantities only. */
+/**
+ * Latin digits with thousands separators, no decimals — for counts.
+ * Figma groups counts the same way it groups money (12,512 طلب /
+ * 2,156 طلب / 1,145), so this deliberately does group.
+ */
 const COUNT_NUMBER = new Intl.NumberFormat("en-US", {
-  useGrouping: false,
   maximumFractionDigits: 0,
 });
 
 /**
- * Formats a count/quantity with Latin digits and no thousands commas.
+ * Formats a count/quantity with Latin digits: `12,512`.
  */
 export function formatCount(value: number | null | undefined): string {
   const n = Number(value ?? 0);

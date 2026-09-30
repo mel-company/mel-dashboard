@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ShoppingCart, X, Plus } from "lucide-react";
 import ErrorPage from "@/pages/miscellaneous/ErrorPage";
 import ProductsSkeleton from "@/pages/product/ProductsSkeleton";
@@ -6,11 +7,12 @@ import ProductTable from "./ProductTable";
 import ProductCards from "./ProductCards";
 
 interface ProductsContentProps {
+  toolbar?: ReactNode;
   actions: any;
   navigate: (path: string) => void;
 }
 
-const ProductsContent = ({ actions }: ProductsContentProps) => {
+const ProductsContent = ({ actions, toolbar }: ProductsContentProps) => {
   if (actions.isLoading && actions.products.length === 0) {
     return (
       <ProductsSkeleton
@@ -52,6 +54,7 @@ const ProductsContent = ({ actions }: ProductsContentProps) => {
       <div className="hidden xl:block">
         {actions.viewMode === "table" ? (
           <ProductTable
+            toolbar={toolbar}
             products={actions.products}
             onDelete={actions.setDeleteId}
             imageBaseUrl={actions.imageBaseUrl}

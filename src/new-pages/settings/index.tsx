@@ -20,6 +20,7 @@ const SettingsPage = () => {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <SwitchTab
+            accent="violet"
             selected={actions.activeTab}
             onChange={(value) =>
               actions.handleTabChange(value as "general" | "store")

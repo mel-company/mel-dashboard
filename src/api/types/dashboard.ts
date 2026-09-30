@@ -51,6 +51,8 @@ export type DashboardHomeResponse = {
     label: string;
     value: number;
     color: string;
+    /** Optional — Figma shows a period trend beside each status. */
+    trendPercent?: number | null;
   }>;
   paymentTypes: Array<{
     key: string;
@@ -68,8 +70,11 @@ export type DashboardHomeResponse = {
   subscription: {
     planCode: string | null;
     planTitle: string | null;
+    /** Optional — Figma shows the plan's pitch under its name. */
+    planDescription?: string | null;
     expiresAt: string | null;
     daysLeft: number;
+    /** Percentage of the term elapsed, 0–100. */
     progress: number;
   };
   topCategories: Array<{
@@ -90,6 +95,9 @@ export type DashboardHomeResponse = {
     id: string;
     title: string;
     code: string;
+    /** Optional — Figma shows the value and its kind, not the code. */
+    value?: string | null;
+    valueType?: string | null;
     uses: number;
     progress: number;
     rank: number;

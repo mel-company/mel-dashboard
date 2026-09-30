@@ -26,6 +26,24 @@ const ProductsPage = () => {
     ? `قمت بالبحث عن : "${activeSearch}"`
     : `أجمالي العناصر المتاحة ${formatCount(listCount)}`;
 
+  // Figma keeps the list toolbar inside the table card, not above it.
+  const listToolbar = (
+        <PageTableHeader
+          {...actions}
+          title={listTitle}
+          subtitle={listSubtitle}
+          searchPlaceholder="ابحث عن المنتجات"
+          onFilterClick={() => actions.setIsFilterDialogOpen(true)}
+        >
+          <SwitchTab
+            selected={actions.viewMode}
+            onChange={(value) =>
+              actions.handleViewModeChange(value as "table" | "cards")
+            }
+          />
+        </PageTableHeader>
+  );
+
   return (
     <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
@@ -111,24 +129,8 @@ const ProductsPage = () => {
         </div>
       </div>
 
-      <div className="hidden lg:block">
-        <PageTableHeader
-          {...actions}
-          title={listTitle}
-          subtitle={listSubtitle}
-          searchPlaceholder="ابحث عن المنتجات"
-          onFilterClick={() => actions.setIsFilterDialogOpen(true)}
-        >
-          <SwitchTab
-            selected={actions.viewMode}
-            onChange={(value) =>
-              actions.handleViewModeChange(value as "table" | "cards")
-            }
-          />
-        </PageTableHeader>
-      </div>
 
-      <ProductsContent actions={actions} navigate={navigate} />
+      <ProductsContent actions={actions} navigate={navigate} toolbar={listToolbar} />
 
       <ProductFilterDialog
         open={actions.isFilterDialogOpen}

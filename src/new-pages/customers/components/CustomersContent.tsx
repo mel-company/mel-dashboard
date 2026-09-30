@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Loader2, User, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,10 +9,11 @@ import CustomerTable from "./CustomerTable";
 import CustomerCard from "./CustomerCard";
 
 interface CustomersContentProps {
+  toolbar?: ReactNode;
   actions: any;
 }
 
-const CustomersContent = ({ actions }: CustomersContentProps) => {
+const CustomersContent = ({ actions, toolbar }: CustomersContentProps) => {
   const navigate = useNavigate();
 
   if (actions.isLoading && actions.customers.length === 0) {
@@ -79,6 +81,7 @@ const CustomersContent = ({ actions }: CustomersContentProps) => {
 
       <div className="hidden xl:block">
         <CustomerTable
+            toolbar={toolbar}
           customers={actions.customers}
           onDelete={actions.setDeleteId}
         />

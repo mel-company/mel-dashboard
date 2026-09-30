@@ -29,14 +29,23 @@ const POSFiltersBar = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <div className="relative min-w-0 flex-1">
+        <div
+          className={cn(
+            "flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl border px-2",
+            "border-[#00b7ff]/15 bg-white",
+            "dark:border-[#00b7ff]/15 dark:bg-[#0a0e27]",
+          )}
+        >
+          <span className="shrink-0 rounded-lg bg-[#00b7ff]/5 px-3.5 py-1.5 text-sm font-medium text-[#00b7ff]">
+            البحث
+          </span>
           <Input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="ابحث عن منتج..."
-            className="h-11 rounded-2xl border-0 bg-slate-100 pr-4 pl-11 text-right shadow-none focus-visible:ring-sky-500/30 dark:bg-slate-900"
+            className="h-8 min-w-0 flex-1 border-0 bg-transparent px-0 text-right shadow-none focus-visible:ring-0 dark:bg-transparent"
           />
-          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-sky-500" />
+          <Search className="pointer-events-none me-1 size-4 shrink-0 text-[#91a0b6] dark:text-[#4a5596]" />
         </div>
         <div className="shrink-0 text-right">
           <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
@@ -96,7 +105,7 @@ const POSFiltersBar = ({
       <button
         type="button"
         onClick={() => onCategorySelect(null)}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600/90 text-sm font-bold text-white hover:bg-violet-600"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-violet-500/25 bg-violet-500/10 text-sm font-bold text-violet-700 transition-colors hover:bg-violet-500/15 dark:border-[#9a5cff]/25 dark:bg-[#9a5cff]/10 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/20"
       >
         عرض جميع القوائم
         <LayoutGrid className="size-4" />

@@ -16,6 +16,17 @@ import {
 const CustomersPage = () => {
   const actions = useCustomersPage();
 
+  // Figma keeps the list toolbar inside the table card, not above it.
+  const listToolbar = (
+        <PageTableHeader
+          title="جميع العملاء"
+          subtitle={`أجمالي العناصر المتاحة ${actions.customers.length}`}
+          searchQuery={actions.searchQuery}
+          onSearchChange={actions.onSearchChange}
+          searchPlaceholder="ابحث عن عميل"
+        />
+  );
+
   return (
     <PagePanel className="space-y-4 sm:space-y-6">
       <div className="hidden lg:block">
@@ -28,7 +39,7 @@ const CustomersPage = () => {
         />
       </div>
 
-      <div className="mb-6 rounded-[28px] bg-slate-50 p-5 dark:bg-transparent md:bg-transparent md:p-0">
+      <div className="mb-6 rounded-[28px] bg-slate-50 p-4 dark:bg-white/[0.03] md:bg-transparent md:p-0 md:dark:bg-transparent">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
           <BaseCard
             icon={UserGroup03Icon}
@@ -78,23 +89,18 @@ const CustomersPage = () => {
         </div>
       </div>
 
-      <div className="hidden lg:block">
-        <PageTableHeader
-          title="جميع العملاء"
-          subtitle={`أجمالي العناصر المتاحة ${actions.customers.length}`}
-          searchQuery={actions.searchQuery}
-          onSearchChange={actions.onSearchChange}
-          searchPlaceholder="ابحث عن عميل"
-        />
-      </div>
 
-      <CustomersContent actions={actions} />
+      <CustomersContent actions={actions} toolbar={listToolbar} />
 
       <CustomerDeleteModal
         deleteId={actions.deleteId}
         setDeleteId={actions.setDeleteId}
         isDeleting={actions.isDeleting}
         handleDelete={actions.handleDelete}
+        customerName={
+          actions.customers.find((c: { id: string }) => c.id === actions.deleteId)
+            ?.name
+        }
       />
     </PagePanel>
   );

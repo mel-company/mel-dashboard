@@ -88,35 +88,19 @@ const SalesOverviewChart = ({
       className="min-h-[320px] md:col-span-2 xl:col-span-6"
       contentClassName="flex flex-col pt-2"
     >
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1">
-          <div className="rounded-xl bg-muted px-3 py-2 text-right">
-            <p className="text-[10px] text-[#91a0b6]">مبالغ الطلبات المعلقة</p>
-            <p className="text-xs font-normal text-foreground">
-              {formatIQD(pendingTotal)}
-            </p>
-          </div>
-          <div className="rounded-xl bg-muted px-3 py-2 text-right">
-            <p className="text-[10px] text-[#91a0b6]">مبالغ الطلبات المسلمة</p>
-            <p className="text-xs font-normal text-foreground">
-              {formatIQD(deliveredTotal)}
-            </p>
-          </div>
+      <div className="mb-3 text-right">
+        <div className="flex items-center justify-end gap-0.5">
+          <span
+            className="text-[11px] font-bold"
+            style={{ color: getTrendColor(growthPositive) }}
+          >
+            {formatGrowth(growthPercent)}
+          </span>
+          <p className="text-sm font-medium text-text-secondary dark:text-foreground">
+            أجمالي مبالغ الطلبات
+          </p>
         </div>
-        <div className="text-right">
-          <div className="flex items-center justify-end gap-0.5">
-            <span
-              className="text-[11px] font-bold"
-              style={{ color: getTrendColor(growthPositive) }}
-            >
-              {formatGrowth(growthPercent)}
-            </span>
-            <p className="text-sm font-medium text-text-secondary dark:text-foreground">
-              أجمالي مبالغ الطلبات
-            </p>
-          </div>
-          <p className="text-2xl font-bold text-foreground">{formatIQD(total)}</p>
-        </div>
+        <p className="text-2xl font-bold text-foreground">{formatIQD(total)}</p>
       </div>
       <div className="h-[220px] w-full flex-1">
         <ResponsiveContainer width="100%" height="100%">
@@ -145,6 +129,8 @@ const SalesOverviewChart = ({
               axisLine={false}
               tickLine={false}
               tick={{ fill: theme.tick, fontSize: 10 }}
+              interval="preserveStartEnd"
+              minTickGap={14}
             />
             <YAxis
               width={48}
@@ -170,6 +156,21 @@ const SalesOverviewChart = ({
             />
           </AreaChart>
         </ResponsiveContainer>
+      </div>
+      {/* Figma puts the two totals under the chart as plain figures. */}
+      <div className="mt-3 flex flex-wrap items-start justify-end gap-x-8 gap-y-2 text-right">
+        <div>
+          <p className="text-[10px] text-[#91a0b6]">مبالغ الطلبات المعلقة</p>
+          <p className="text-xs font-normal text-foreground">
+            {formatIQD(pendingTotal)}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] text-[#91a0b6]">مبالغ الطلبات المسلمة</p>
+          <p className="text-xs font-normal text-foreground">
+            {formatIQD(deliveredTotal)}
+          </p>
+        </div>
       </div>
     </DashboardCard>
   );

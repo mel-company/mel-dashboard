@@ -351,17 +351,19 @@ const POSInvoicePanel = ({
             </Button>
             <Button
               type="button"
-              className="h-12 flex-[2] gap-2 rounded-2xl bg-sky-500 text-base font-bold text-white hover:bg-sky-600"
+              className="h-14 flex-[2] gap-3 rounded-full bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-base font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               disabled={
                 cart.length === 0 || isCheckingOut || !!isAddingProducts
               }
               onClick={onPay}
             >
-              {isCheckingOut || isAddingProducts ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : (
-                <Printer className="size-5" />
-              )}
+              <span className="flex size-9 items-center justify-center rounded-full bg-white/20">
+                {isCheckingOut || isAddingProducts ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <Printer className="size-5" />
+                )}
+              </span>
               دفع الفاتورة
             </Button>
           </div>

@@ -1,6 +1,8 @@
 import { coerceImagePath, getImageUrl } from "@/utils/image-url";
 import { getProductCoverImage } from "@/utils/product-images";
 import { formatCurrency } from "@/utils/format-currency";
+import { formatDateParts } from "@/utils/format-date";
+import type { StatusTone } from "@/components/table/status-glyph";
 
 export type OrderStatusKey =
   | "PENDING"
@@ -13,31 +15,38 @@ export type OrderStatusKey =
 export type OrderStatusMeta = {
   label: string;
   className: string;
+  tone?: StatusTone;
 };
 
+/** Figma pairs each status pill with a small state glyph. */
 const STATUS_MAP: Record<string, OrderStatusMeta> = {
   PENDING: {
     label: "قيد الانتظار",
+    tone: "pending",
     className:
       "bg-amber-500/10 text-[#f57b00] dark:bg-[rgba(245,123,0,0.1)] dark:text-[#f57b00]",
   },
   PROCESSING: {
     label: "قيد المعالجة",
+    tone: "progress",
     className:
       "bg-sky-500/10 text-[#00b7ff] dark:bg-[rgba(0,183,255,0.1)] dark:text-[#00b7ff]",
   },
   SHIPPED: {
     label: "قيد التوصيل",
+    tone: "progress",
     className:
       "bg-amber-500/10 text-[#f57b00] dark:bg-[rgba(245,123,0,0.1)] dark:text-[#f57b00]",
   },
   DELIVERED: {
     label: "تم التوصيل",
+    tone: "done",
     className:
       "bg-emerald-500/10 text-[#00b88a] dark:bg-[rgba(0,184,138,0.1)] dark:text-[#00b88a]",
   },
   CANCELLED: {
     label: "مرفوض",
+    tone: "alert",
     className:
       "bg-rose-500/10 text-[#ff5252] dark:bg-[rgba(255,82,82,0.1)] dark:text-[#ff5252]",
   },
@@ -67,23 +76,7 @@ export function formatOrderCode(id?: string | number | null) {
   return `#ORD-${short}`;
 }
 
-export function formatOrderDateParts(dateString?: string | null) {
-  if (!dateString) return { date: "—", time: "" };
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return { date: "—", time: "" };
-
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-
-  const time = date.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  return { date: `${day}/${month}/${year}`, time };
-}
+export const formatOrderDateParts = formatDateParts;
 
 export function formatOrderAmount(amount?: number | null) {
   return formatCurrency(amount);
@@ -99,6 +92,23 @@ export function getOrderTotal(order: any, fallbackCalculate?: (products: any[]) 
   if (fallbackCalculate) return fallbackCalculate(order?.products ?? []);
   return 0;
 }
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: "نقداً",
+  cod: "دفع عند الاستلام",
+  card: "بطاقة الائتمان",
+  credit_card: "بطاقة الائتمان",
+  creditcard: "بطاقة الائتمان",
+  visa: "فيزا",
+  mastercard: "ماستركارد",
+  master: "ماستركارد",
+  qicard: "كي كارد",
+  qi_card: "كي كارد",
+  zaincash: "زين كاش",
+  online: "دفع الكتروني",
+  transfer: "تحويل بنكي",
+  bank_transfer: "تحويل بنكي",
+};
 
 export function getOrderPaymentLabel(order: any): {
   label: string;
@@ -120,6 +130,9 @@ export function getOrderPaymentLabel(order: any): {
 
   const text = String(raw || (cashOnDelivery ? "دفع عند الاستلام" : "")).trim();
   const lower = text.toLowerCase();
+  // The API hands back bare enum keys for the common methods; without this
+  // the cell renders "cash"/"card" in Latin under an Arabic amount.
+  const localized = PAYMENT_METHOD_LABELS[lower];
 
   if (!text) {
     return { label: "—", className: "text-slate-400 dark:text-[#a4b1fa]" };
@@ -138,7 +151,7 @@ export function getOrderPaymentLabel(order: any): {
   }
 
   if (text.includes("نقد") || lower.includes("cash")) {
-    return { label: text, className: "text-[#00b88a]" };
+    return { label: localized ?? text, className: "text-[#00b88a]" };
   }
 
   if (
@@ -149,10 +162,10 @@ export function getOrderPaymentLabel(order: any): {
     lower.includes("card") ||
     lower.includes("master")
   ) {
-    return { label: text, className: "text-[#00b7ff]" };
+    return { label: localized ?? text, className: "text-[#00b7ff]" };
   }
 
-  return { label: text, className: "text-[#8e9dff]" };
+  return { label: localized ?? text, className: "text-[#8e9dff]" };
 }
 
 function parseLocalizedName(name: unknown): string {
@@ -233,7 +246,8 @@ export function getOrderLineImagePath(item: any): string {
   return "";
 }
 
-export function getOrderProductImagePaths(order: any, max = 5): string[] {
+/** Figma stacks up to six product tiles beside the count. */
+export function getOrderProductImagePaths(order: any, max = 6): string[] {
   const products = Array.isArray(order?.products)
     ? order.products
     : Array.isArray(order?.orderProducts)
