@@ -62,6 +62,7 @@ import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "./OrderInvoicePreview";
 import { toast } from "sonner";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
 import PagePanel from "@/components/PagePanel";
+import Ltr from "@/components/Ltr";
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -490,9 +491,9 @@ const OrderDetails = () => {
                 <div>
                   <CardTitle className="text-2xl text-right">
                     طلب رقم{" "}
-                    <span dir="ltr" className="inline-block">
+                    <Ltr>
                       #{String(order.id).slice(0, 8)}
-                    </span>
+                    </Ltr>
                   </CardTitle>
                   <CardDescription className="text-right mt-1">
                     تم إنشاء الطلب في {formatDate(order.createdAt)}
@@ -1290,9 +1291,9 @@ const OrderDetails = () => {
             <DialogTitle className="text-right">تأكيد حذف الطلب</DialogTitle>
             <DialogDescription className="text-right">
               هل أنت متأكد من حذف الطلب رقم{" "}
-              <span dir="ltr" className="inline-block">
+              <Ltr>
                 #{String(order.id).slice(0, 8)}
-              </span>
+              </Ltr>
               ؟ لا
               يمكنك التراجع عن هذا الإجراء بعد التأكيد.
             </DialogDescription>

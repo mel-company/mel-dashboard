@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CustomerSupportIcon } from "@hugeicons-pro/core-duotone-rounded";
 import { formatTicketShortId } from "./utils";
+import Ltr from "@/components/Ltr";
 
 type TicketDetailsHeaderProps = {
   ticketId: string;
@@ -27,7 +28,7 @@ const TicketDetailsHeader = ({
         <div className="text-right">
           <h1 className="text-xl font-bold text-blue-950 dark:text-[#e4e7fc]">تفاصيل التذكرة</h1>
           <p className="mt-0.5 font-mono text-sm font-semibold text-violet-600 dark:text-[#b282ff]" dir="ltr">
-            {formatTicketShortId(ticketId)}
+            <Ltr>{formatTicketShortId(ticketId)}</Ltr>
           </p>
         </div>
         <div className="flex size-11 items-center justify-center rounded-2xl bg-violet-100 dark:bg-[#9a5cff]/12">

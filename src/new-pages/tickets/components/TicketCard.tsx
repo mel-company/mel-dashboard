@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { SupportTicketListItem } from "@/api/types/ticket";
 import { TICKET_DEPARTMENTS, TICKET_STATUSES, TICKET_TYPES } from "@/pages/support/TicketFilterDialog";
+import Ltr from "@/components/Ltr";
 
 type TicketCardProps = {
   ticket: SupportTicketListItem;
@@ -58,7 +59,7 @@ const TicketCard = ({ ticket, onClick, className }: TicketCardProps) => {
         <span className="text-xs text-slate-400 dark:text-[#a4b1fa]">{formatDate(ticket.createdAt)}</span>
       </div>
 
-      <p className="mt-3 text-xs text-slate-400 dark:text-[#8f9de8]">#{ticket.id.slice(0, 6)}</p>
+      <p className="mt-3 text-xs text-slate-400 dark:text-[#8f9de8]"><Ltr>#{ticket.id.slice(0, 6)}</Ltr></p>
       <h3 className="mt-1 line-clamp-2 text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">{ticket.title ?? "—"}</h3>
       <p className="mt-1 text-xs font-medium text-violet-600 dark:text-[#b282ff]">{getTicketTypeLabel(ticket.type)}</p>
       {ticket.description ? (

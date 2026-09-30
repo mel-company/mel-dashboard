@@ -10,6 +10,7 @@ import ActionBtnList from "@/components/table/action-btn-list";
 import { useUpdateGroup } from "@/api/wrappers/group.wrappers";
 import { toast } from "sonner";
 import { GroupCategoryTags } from "./GroupPreviewCard";
+import Ltr from "@/components/Ltr";
 import {
   formatDate,
   formatTime,
@@ -78,7 +79,7 @@ const GroupRow = ({
       </TableCell>
       <TableCell className={tdClass}>
         <span className="font-mono text-sm text-slate-600 dark:text-[#a4b1fa]" dir="ltr">
-          {shortId(data.id)}
+          <Ltr>{shortId(data.id)}</Ltr>
         </span>
       </TableCell>
       <TableCell className={tdClass}>

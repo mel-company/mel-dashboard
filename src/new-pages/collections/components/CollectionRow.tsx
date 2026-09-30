@@ -8,6 +8,7 @@ import ActionBtnList from "@/components/table/action-btn-list";
 import { useToggleCollectionEnabled } from "@/api/wrappers/collection.wrappers";
 import ProductThumbnails from "./ProductThumbnails";
 import { formatDate, formatTime, productCount, shortId } from "../utils";
+import Ltr from "@/components/Ltr";
 
 type CollectionRowProps = {
   collection: any;
@@ -58,7 +59,7 @@ const CollectionRow = ({
           className="font-mono text-sm text-slate-600 dark:text-[#a4b1fa]"
           dir="ltr"
         >
-          {shortId(data.id)}
+          <Ltr>{shortId(data.id)}</Ltr>
         </span>
       </TableCell>
       <TableCell className={tdClass}>
