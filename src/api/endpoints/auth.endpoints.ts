@@ -222,7 +222,10 @@ export const authAPI = {
   },
 
   refresh: async (): Promise<any> => {
-    const { data } = await axiosInstance.get<any>("/store-user-auth/refresh");
+    const refreshToken = localStorage.getItem("refreshToken");
+    const { data } = await axiosInstance.post<any>("/store-user-auth/refresh", {
+      ...(refreshToken ? { refreshToken } : {}),
+    });
     return data;
   },
 

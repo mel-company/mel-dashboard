@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authAPI } from "../endpoints/auth.endpoints";
-import { clearAuthSession, isAuthSessionMarked } from "@/utils/auth-session";
+import { clearAuthSession, persistAuthTokens } from "@/utils/auth-session";
 
 /**
  * Query key factory for auth
@@ -133,14 +133,14 @@ export const useLogout = () => {
 };
 
 /**
- * Me
+ * Refresh access token via refreshToken
  */
 export const useRefresh = () => {
-  return useQuery<any, Error, any>({
-    queryKey: [...authKeys.all, "refresh"] as const,
-    queryFn: () => authAPI.refresh(),
-    enabled: isAuthSessionMarked(),
-    retry: false,
+  return useMutation<any, Error, void>({
+    mutationFn: () => authAPI.refresh(),
+    onSuccess: (data) => {
+      persistAuthTokens(data);
+    },
   });
 };
 

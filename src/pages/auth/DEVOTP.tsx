@@ -17,7 +17,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { useDevVerify } from "@/api/wrappers/auth.wrappers";
-import { markAuthSession } from "@/utils/auth-session";
+import { establishAuthSession } from "@/utils/auth-session";
 import { useQueryClient } from "@tanstack/react-query";
 import { parse } from "tldts";
 
@@ -79,8 +79,8 @@ const DevOTP = () => {
           },
         },
         {
-          onSuccess: () => {
-            markAuthSession(queryClient);
+          onSuccess: (data) => {
+            establishAuthSession(data, queryClient);
             navigate("/", { replace: true });
           },
           onError: () => {

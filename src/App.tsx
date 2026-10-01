@@ -11,7 +11,7 @@ import SettingsLayout from "./layout/SettingsLayout";
 import Payment from "./pages/payment/Payment";
 import PaymentReturn from "./pages/payment/PaymentReturn";
 import { useConsumeBridge } from "./api/wrappers/auth.wrappers";
-import { markAuthSession } from "./utils/auth-session";
+import { establishAuthSession } from "./utils/auth-session";
 import AuthLoadingScreen from "./components/AuthLoadingScreen";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -35,8 +35,8 @@ function Bridge() {
     consumeBridge(
       { token },
       {
-        onSuccess: () => {
-          markAuthSession(queryClient);
+        onSuccess: (data) => {
+          establishAuthSession(data, queryClient);
           window.location.replace("/");
         },
         onError: () => {

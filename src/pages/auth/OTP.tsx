@@ -21,7 +21,7 @@ import {
   useValidateUser,
   useVerify,
 } from "@/api/wrappers/auth.wrappers";
-import { markAuthSession } from "@/utils/auth-session";
+import { establishAuthSession } from "@/utils/auth-session";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 
@@ -115,13 +115,13 @@ const OTP = () => {
             const fallbackUrl = verifyData?.fallbackUrl || defaultFallbackUrl;
 
             if (verifyRedirect) {
-              markAuthSession(queryClient);
+              establishAuthSession(verifyData, queryClient);
               window.location.assign(verifyRedirect);
               return;
             }
 
             if (!verifyToken || !store) {
-              markAuthSession(queryClient);
+              establishAuthSession(verifyData, queryClient);
               window.location.assign(fallbackUrl);
               return;
             }
@@ -133,7 +133,10 @@ const OTP = () => {
               },
               {
                 onSuccess: (validateData: any) => {
-                  markAuthSession(queryClient);
+                  establishAuthSession(
+                    { ...verifyData, ...validateData },
+                    queryClient,
+                  );
                   const redirectUrl = validateData?.redirectUrl;
                   if (redirectUrl) {
                     window.location.assign(redirectUrl);
@@ -142,7 +145,7 @@ const OTP = () => {
                   window.location.assign(fallbackUrl);
                 },
                 onError: () => {
-                  markAuthSession(queryClient);
+                  establishAuthSession(verifyData, queryClient);
                   window.location.assign(fallbackUrl);
                 },
               },

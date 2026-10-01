@@ -1,5 +1,12 @@
 import axios from "axios";
-import { clearAuthSession, redirectToLogin } from "@/utils/auth-session";
+import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import {
+  clearAuthSession,
+  getAccessToken,
+  getRefreshToken,
+  persistAuthTokens,
+  redirectToLogin,
+} from "@/utils/auth-session";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 
 /**
@@ -57,9 +64,48 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-function isConsumeBridgeRequest(config: { url?: string; baseURL?: string }) {
-  const url = `${config.baseURL ?? ""}${config.url ?? ""}`;
-  return url.includes("/store-user-auth/consume-bridge");
+function requestUrl(config?: { url?: string; baseURL?: string }) {
+  return `${config?.baseURL ?? ""}${config?.url ?? ""}`;
+}
+
+function isConsumeBridgeRequest(config?: { url?: string; baseURL?: string }) {
+  return requestUrl(config).includes("/store-user-auth/consume-bridge");
+}
+
+function isRefreshRequest(config?: { url?: string; baseURL?: string }) {
+  return requestUrl(config).includes("/store-user-auth/refresh");
+}
+
+function isAuthBypassRequest(config?: { url?: string; baseURL?: string }) {
+  return isConsumeBridgeRequest(config) || isRefreshRequest(config);
+}
+
+type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) return null;
+
+    try {
+      const { data } = await axiosInstance.post<any>(
+        "/store-user-auth/refresh",
+        { refreshToken },
+      );
+      persistAuthTokens(data);
+      return getAccessToken();
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 axiosInstance.interceptors.request.use(
@@ -70,15 +116,16 @@ axiosInstance.interceptors.request.use(
       config.headers["x-tenant-subdomain"] = subdomain;
     }
 
-    // Bridge token lives in the body. Don't attach a stored JWT / API key.
-    if (isConsumeBridgeRequest(config)) {
+    // Bridge token lives in the body. Refresh sends its own refreshToken.
+    // Don't attach a stored JWT / API key for those.
+    if (isAuthBypassRequest(config)) {
       if (typeof config.headers.delete === "function") {
         config.headers.delete("Authorization");
       } else {
         delete config.headers["Authorization"];
       }
     } else {
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       } else if (import.meta.env.VITE_API_KEY) {
@@ -105,16 +152,32 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error: AxiosError) => {
+    const original = error.config as RetriableConfig | undefined;
     const onBridgePage = window.location.pathname === "/bridge";
+    const status = error.response?.status;
+
     if (
-      error.response?.status === 401 &&
-      !onBridgePage &&
-      !isConsumeBridgeRequest(error.config ?? {})
+      status !== 401 ||
+      !original ||
+      original._retry ||
+      onBridgePage ||
+      isAuthBypassRequest(original)
     ) {
-      clearAuthSession();
-      redirectToLogin();
+      return Promise.reject(error);
     }
+
+    original._retry = true;
+
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      original.headers = original.headers ?? {};
+      original.headers.Authorization = `Bearer ${newToken}`;
+      return axiosInstance(original);
+    }
+
+    clearAuthSession();
+    redirectToLogin();
     return Promise.reject(error);
   },
 );
