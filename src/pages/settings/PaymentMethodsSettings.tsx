@@ -300,7 +300,21 @@ const PaymentMethodsSettings = ({}: Props) => {
           <Card key={provider.id}>
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
-                <CardTitle>{provider.name}</CardTitle>
+                <div className="flex items-center gap-3">
+                  {/* The gateway's own logo, supplied by the server so this
+                      page keeps no code → logo table of its own. */}
+                  {provider.gateway?.logoUrl && (
+                    <img
+                      src={provider.gateway.logoUrl}
+                      alt=""
+                      className="size-8 object-contain"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  )}
+                  <CardTitle>{provider.name}</CardTitle>
+                </div>
                 {provider.isActive === false && (
                   <Badge variant="secondary">موقوف من إدارة المنصة</Badge>
                 )}
