@@ -299,9 +299,26 @@ const PaymentMethodsSettings = ({}: Props) => {
         {paymentProviders?.map((provider: any) => (
           <Card key={provider.id}>
             <CardHeader>
-              <CardTitle>{provider.name}</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle>{provider.name}</CardTitle>
+                {provider.isActive === false && (
+                  <Badge variant="secondary">موقوف من إدارة المنصة</Badge>
+                )}
+              </div>
               {provider.description && (
                 <CardDescription>{provider.description}</CardDescription>
+              )}
+              {provider.isActive === false && (
+                /**
+                 * Said plainly, because the alternative is a switch that will
+                 * not stay on and no explanation anywhere. The server refuses
+                 * this too — the disabled attribute is the courtesy, not the
+                 * control.
+                 */
+                <CardDescription className="text-destructive">
+                  أوقفت إدارة المنصة هذا المزود مؤقتاً، لذلك لا يمكن تفعيل طرق
+                  الدفع التابعة له ولن تظهر للمشتري عند الدفع.
+                </CardDescription>
               )}
             </CardHeader>
             <CardContent className="space-y-4">
@@ -332,7 +349,8 @@ const PaymentMethodsSettings = ({}: Props) => {
                             </Badge>
                           )}
                           <Switch
-                            checked={s.isEnabled}
+                            checked={s.isEnabled && provider.isActive !== false}
+                            disabled={provider.isActive === false}
                             onCheckedChange={(v) => setEnabled(method.id, v)}
                           />
                         </div>
