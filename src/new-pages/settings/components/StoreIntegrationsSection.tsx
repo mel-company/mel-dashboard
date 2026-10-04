@@ -26,6 +26,7 @@ import {
 import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyDialog";
 import DomainSettingsSection from "./DomainSettingsSection";
 import PrimeIntegrationCard from "./PrimeIntegrationCard";
+import CourierAccountCard from "./CourierAccountCard";
 import { isPrimeDelivery } from "@/api/types/store";
 import settingsGearIcon from "@/assets/settings/settings-gear.svg";
 import moneyIcon from "@/assets/settings/money.svg";
@@ -326,6 +327,10 @@ const StoreIntegrationsSection = () => {
             </div>
           ) : null}
         </SettingsCard>
+
+        {/* Whichever courier the store uses: whether it can ship at all, and
+            the own-login link for the two vendors that accept one. */}
+        <CourierAccountCard />
       </div>
 
       <Dialog open={domainDialogOpen} onOpenChange={setDomainDialogOpen}>
