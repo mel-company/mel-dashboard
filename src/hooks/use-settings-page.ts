@@ -88,16 +88,6 @@ export function useSettingsPage() {
   const originalStoreFormRef = useRef<StoreFormData | null>(null);
   const hasInitializedStoreFormRef = useRef(false);
 
-  const [generalSettings, setGeneralSettings] = useState({
-    defaultProductStatus: PRODUCT_STATUS.DRAFT,
-    lowStockThreshold: 10,
-    autoCancelUnpaidHours: 24,
-    allowOrderEditing: false,
-    maintenanceMode: false,
-  });
-  const originalGeneralRef = useRef<typeof generalSettings | null>(null);
-  const hasInitializedGeneralRef = useRef(false);
-
   useEffect(() => {
     if (isLoadingSettings) return;
     // Don't block forever if store-details hangs/fails — fill what we have.
@@ -152,25 +142,6 @@ export function useSettingsPage() {
     currentSettings,
   ]);
 
-  useEffect(() => {
-    if (!currentSettings) return;
-    if (hasInitializedGeneralRef.current) return;
-
-    const next = {
-      defaultProductStatus:
-        currentSettings.product_default_state?.toUpperCase() ||
-        PRODUCT_STATUS.DRAFT,
-      lowStockThreshold: currentSettings.low_stock_alert ?? 10,
-      autoCancelUnpaidHours: currentSettings.cancel_order_after_hours ?? 24,
-      allowOrderEditing: currentSettings.allow_edit_order ?? false,
-      maintenanceMode: currentSettings.under_maintenance ?? false,
-    };
-
-    setGeneralSettings(next);
-    originalGeneralRef.current = JSON.parse(JSON.stringify(next));
-    hasInitializedGeneralRef.current = true;
-  }, [currentSettings]);
-
   const handleTabChange = useCallback(
     (tab: SettingsTab) => {
       navigate(tab === "store" ? "/settings/store" : "/settings/general");
@@ -219,14 +190,6 @@ export function useSettingsPage() {
       JSON.stringify(originalStoreFormRef.current) !== JSON.stringify(storeForm)
     );
   }, [storeForm]);
-
-  const hasGeneralChanges = useMemo(() => {
-    if (!originalGeneralRef.current) return false;
-    return (
-      JSON.stringify(originalGeneralRef.current) !==
-      JSON.stringify(generalSettings)
-    );
-  }, [generalSettings]);
 
   const saveStoreSettings = useCallback(async () => {
     const updateData: Record<string, unknown> = {
@@ -306,26 +269,6 @@ export function useSettingsPage() {
     currentSettings,
   ]);
 
-  const saveGeneralSettings = useCallback(async () => {
-    try {
-      await updateGeneralSettingsMutation.mutateAsync({
-        product_default_state: generalSettings.defaultProductStatus.toUpperCase(),
-        low_stock_alert: generalSettings.lowStockThreshold,
-        cancel_order_after_hours: generalSettings.autoCancelUnpaidHours,
-        allow_edit_order: generalSettings.allowOrderEditing,
-        under_maintenance: generalSettings.maintenanceMode,
-      });
-      originalGeneralRef.current = JSON.parse(JSON.stringify(generalSettings));
-      toast.success("تم حفظ الإعدادات بنجاح");
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(
-        err?.response?.data?.message ||
-          "حدث خطأ أثناء حفظ الإعدادات. يرجى المحاولة مرة أخرى.",
-      );
-    }
-  }, [generalSettings, updateGeneralSettingsMutation]);
-
   // Store tab does not need store-details to render.
   // General waits for settings; store-details only while still in-flight.
   const isGeneralLoading =
@@ -341,8 +284,6 @@ export function useSettingsPage() {
     storeForm,
     updateStoreField,
     handleStoreInputChange,
-    generalSettings,
-    setGeneralSettings,
     storeDetails,
     logoDialogOpen,
     setLogoDialogOpen,
@@ -350,9 +291,7 @@ export function useSettingsPage() {
     setLocationDialogOpen,
     updateStoreLocation,
     hasStoreChanges,
-    hasGeneralChanges,
     saveStoreSettings,
-    saveGeneralSettings,
     isGeneralLoading,
     isSaving,
   };
