@@ -16,25 +16,19 @@ const OrdersSection = ({
   return (
     <SettingsCard title="الطلبات">
       {/* RTL: the first child sits rightmost. Figma orders these
-          cash-on-delivery → order-editing → auto-cancel from the right. */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="space-y-2">
-          <SettingsLabel>تفعيل الدفع عند الاستلام</SettingsLabel>
-          <div className="flex flex-col items-start gap-2">
-            <Switch
-              checked={storeForm.cashOnDelivery}
-              activeLabel="مفعل"
-              disabledLabel="معطل"
-              onToggle={(checked) =>
-                updateStoreField("cashOnDelivery", checked)
-              }
-            />
-            <p className="text-[13px] text-slate-500 dark:text-slate-400">
-              سيظهر خيار الدفع عند الاستلام للعميل
-            </p>
-          </div>
-        </div>
+          order-editing → auto-cancel from the right.
 
+          Cash on delivery used to sit first here and no longer does. It was
+          two faults at once: a second switch over a flag the payment
+          providers card already owns, and a dead one — the General tab saves
+          through `PUT /settings/current`, whose DTO has no
+          `cash_on_delivery` and whose service never wrote the column, so
+          flipping it toasted success and changed nothing. The surviving
+          switch writes through `PUT /settings/payment-methods`, which also
+          mirrors the store's cash-on-delivery `StorePaymentMethod` row, and
+          it reads availability so a method the platform withdrew says
+          «قريبا» instead of silently saving. */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <SettingsLabel>السماح بتعديل الطلبات</SettingsLabel>
           <div className="flex flex-col items-start gap-2">

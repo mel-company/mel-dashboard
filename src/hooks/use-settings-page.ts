@@ -37,7 +37,6 @@ export interface StoreFormData {
   deliveryNotes: string;
   defaultProductStatus: string;
   lowStockThreshold: number;
-  cashOnDelivery: boolean;
   allowOrderEditing: boolean;
   autoCancelUnpaidHours: number;
 }
@@ -57,7 +56,6 @@ const defaultStoreForm: StoreFormData = {
   deliveryNotes: "",
   defaultProductStatus: PRODUCT_STATUS.PUBLISHED,
   lowStockThreshold: 10,
-  cashOnDelivery: true,
   allowOrderEditing: true,
   autoCancelUnpaidHours: 10,
 };
@@ -139,7 +137,6 @@ export function useSettingsPage() {
         currentSettings?.product_default_state?.toUpperCase() ??
         PRODUCT_STATUS.PUBLISHED,
       lowStockThreshold: currentSettings?.low_stock_alert ?? 10,
-      cashOnDelivery: currentSettings?.cash_on_delivery ?? true,
       allowOrderEditing: currentSettings?.allow_edit_order ?? true,
       autoCancelUnpaidHours: currentSettings?.cancel_order_after_hours ?? 10,
     };
@@ -259,14 +256,36 @@ export function useSettingsPage() {
 
     try {
       await updateStoreDetails(updateData);
+
+      /**
+       * Two endpoints, because one of them silently drops most of this form.
+       *
+       * `PUT /settings/current` writes only the fields its own DTO declares,
+       * and `product_default_state` and `allow_edit_order` are not among the
+       * ones its service copies into the update — they were sent for as long
+       * as this form has existed, accepted with a 200 and a success toast,
+       * and never stored. `cash_on_delivery` was worse: not on that DTO at
+       * all. Its switch has been removed from this form; the payment
+       * providers card owns the flag and writes it through the endpoint that
+       * also mirrors the store's cash-on-delivery method row.
+       *
+       * What is left goes to `PUT /settings/general-settings`, which does
+       * write them — and which defaults *every* field it does not receive,
+       * so the payload has to carry all five. `under_maintenance` has no
+       * control on this form and is read back from the current settings
+       * rather than omitted, which would switch a maintenance-mode store
+       * live on the next unrelated save.
+       */
       await updateSettings({
         estimated_delivery_days: storeForm.estimatedDeliveryDays,
         delivery_notes: storeForm.deliveryNotes,
-        product_default_state: storeForm.defaultProductStatus,
-        low_stock_alert: storeForm.lowStockThreshold,
-        cash_on_delivery: storeForm.cashOnDelivery,
+      });
+      await updateGeneralSettingsMutation.mutateAsync({
+        product_default_state: storeForm.defaultProductStatus.toUpperCase(),
         allow_edit_order: storeForm.allowOrderEditing,
+        low_stock_alert: storeForm.lowStockThreshold,
         cancel_order_after_hours: storeForm.autoCancelUnpaidHours,
+        under_maintenance: currentSettings?.under_maintenance ?? false,
       });
 
       originalStoreFormRef.current = JSON.parse(JSON.stringify(storeForm));
@@ -279,7 +298,13 @@ export function useSettingsPage() {
         ),
       );
     }
-  }, [storeForm, updateStoreDetails, updateSettings]);
+  }, [
+    storeForm,
+    updateStoreDetails,
+    updateSettings,
+    updateGeneralSettingsMutation,
+    currentSettings,
+  ]);
 
   const saveGeneralSettings = useCallback(async () => {
     try {
