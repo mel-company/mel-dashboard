@@ -5,6 +5,22 @@ import type { PlatformPaymentInitPayload } from "../endpoints/platform-payment.e
 export const platformPaymentKeys = {
   all: ["platform-payments"] as const,
   detail: (id: string) => [...platformPaymentKeys.all, id] as const,
+  providers: () => [...platformPaymentKeys.all, "providers"] as const,
+};
+
+/**
+ * Which gateways the platform is accepting for billing right now.
+ *
+ * Cached for the session rather than per mount: it changes only when an
+ * operator moves a switch in the admin dashboard, and the picker is rendered
+ * inside a dialog the merchant may open several times.
+ */
+export const useBillingProviders = () => {
+  return useQuery({
+    queryKey: platformPaymentKeys.providers(),
+    queryFn: () => platformPaymentAPI.listStoreProviders(),
+    staleTime: 5 * 60 * 1000,
+  });
 };
 
 export const useInitStorePlatformPayment = () => {

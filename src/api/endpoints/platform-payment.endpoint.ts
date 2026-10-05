@@ -2,6 +2,25 @@ import axiosInstance from "@/utils/AxiosInstance";
 
 export type PlatformPaymentProvider = "QI_CARD" | "ZAIN_CASH";
 
+/**
+ * A gateway the platform will actually accept a payment through right now.
+ *
+ * The server decides the list: it applies the operator's «اشتراكات العملاء»
+ * switch and drops any gateway whose credentials are unset. This file used to
+ * hold the two codes in an array and offer both unconditionally, so a gateway
+ * the operator had withdrawn was still a button — and the merchant found out
+ * by being refused after choosing it, after the price was computed and a
+ * payment row existed.
+ */
+export type BillingProvider = {
+  provider: PlatformPaymentProvider;
+  /** The gateway's own brand name, so no client keeps a code → name table. */
+  name: string;
+  logoUrl: string;
+  /** What an omitted `provider` would resolve to on the server. */
+  recommended: boolean;
+};
+
 export type PlatformPaymentInitPayload = {
   type:
     | "INITIAL_SUBSCRIPTION"
@@ -20,6 +39,14 @@ export type PlatformPaymentInitPayload = {
 };
 
 export const platformPaymentAPI = {
+  /** The gateways this merchant may pay the platform with. */
+  listStoreProviders: async (): Promise<BillingProvider[]> => {
+    const { data } = await axiosInstance.get<{ data: BillingProvider[] }>(
+      "/platform-payments/store/providers",
+    );
+    return data?.data ?? [];
+  },
+
   initStore: async (payload: PlatformPaymentInitPayload): Promise<any> => {
     const { data } = await axiosInstance.post<any>(
       "/platform-payments/store/init",
