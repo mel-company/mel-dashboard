@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyDialog";
+import CourierLogo from "@/components/CourierLogo";
 import DomainSettingsSection from "./DomainSettingsSection";
 import PrimeIntegrationCard from "./PrimeIntegrationCard";
 import CourierAccountCard from "./CourierAccountCard";
@@ -441,11 +442,27 @@ const StoreIntegrationsSection = () => {
             className="flex h-12 w-full items-center gap-3 rounded-[14px] bg-slate-100 px-4 text-right dark:bg-slate-900"
             onClick={() => setDeliveryDialogOpen(true)}
           >
-            <img
-              src={deliveryArrowIcon}
-              alt=""
-              className="h-6 w-[21px] shrink-0 object-contain"
-            />
+            {/*
+              The chosen company's own mark, which the picker shows and this
+              row did not — it drew a generic parcel arrow whichever company
+              was selected, so the one place a merchant looks to check who
+              carries their parcels was the one place that would not say.
+              `storeDetails.deliveryCompany.logo` was already here; nothing
+              read it. Prime has no logo stored, and falls back to the icon.
+            */}
+            {deliveryCompany ? (
+              <CourierLogo
+                logo={deliveryCompany.logo}
+                className="size-7 rounded-lg p-1"
+                iconClassName="size-4"
+              />
+            ) : (
+              <img
+                src={deliveryArrowIcon}
+                alt=""
+                className="h-6 w-[21px] shrink-0 object-contain"
+              />
+            )}
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
               {deliveryCompanyName}
             </span>

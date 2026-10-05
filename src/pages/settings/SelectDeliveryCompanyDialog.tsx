@@ -13,39 +13,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useFetchDeliveryCompanies } from "@/api/wrappers/delivery-company.wrappers";
 import { useUpdateDeliveryCompany } from "@/api/wrappers/settings.wrappers";
-import type { DeliveryCompany } from "@/api/types/delivery-company";
-
-/**
- * The company's own mark, or the platform's parcel icon.
- *
- * Three of the four carry a logo on the CDN and Prime carries none, so the
- * fallback is not an edge case — and a broken-image glyph beside a courier's
- * name reads as a broken dashboard, which is why a load failure falls back
- * rather than being left to the browser.
- */
-const CourierLogo = ({ company }: { company: DeliveryCompany }) => {
-  const [failed, setFailed] = useState(false);
-
-  if (!company.logo || failed) {
-    return (
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-sky-500/10">
-        <Truck className="size-5 text-sky-500" />
-      </span>
-    );
-  }
-
-  return (
-    <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 ring-1 ring-slate-200 dark:ring-white/10">
-      <img
-        src={company.logo}
-        alt=""
-        loading="lazy"
-        onError={() => setFailed(true)}
-        className="size-full object-contain"
-      />
-    </span>
-  );
-};
+import CourierLogo from "@/components/CourierLogo";
 
 type Props = {
   open: boolean;
@@ -168,7 +136,7 @@ const CourierPicker = ({
                     : "border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700",
                 )}
               >
-                <CourierLogo company={company} />
+                <CourierLogo logo={company.logo} />
 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center justify-between gap-2">
