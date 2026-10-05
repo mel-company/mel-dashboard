@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { deliveryCompanyAPI } from "../endpoints/delivery-company.endpoints";
+import type { DeliveryCompany } from "@/api/types/delivery-company";
 
 /**
  * Query key factory for delivery companies
@@ -13,10 +14,14 @@ export const deliveryCompanyKeys = {
 };
 
 /**
- * Fetch all delivery companies
+ * Fetch all delivery companies.
+ *
+ * Typed as the list rather than `any`, so a consumer that treats the
+ * pagination envelope as an array fails at the compiler instead of on the
+ * render after the answer arrives.
  */
 export const useFetchDeliveryCompanies = (enabled: boolean = true) => {
-  return useQuery<any>({
+  return useQuery<DeliveryCompany[]>({
     queryKey: deliveryCompanyKeys.list(),
     queryFn: () => deliveryCompanyAPI.fetchAll(),
     enabled,

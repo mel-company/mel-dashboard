@@ -21,13 +21,6 @@ import { toast } from "sonner";
 import { useFetchDeliveryCompanies } from "@/api/wrappers/delivery-company.wrappers";
 import { useUpdateDeliveryCompany } from "@/api/wrappers/settings.wrappers";
 
-type DeliveryCompany = {
-  id: string;
-  name?: string;
-  description?: string;
-  code?: string;
-};
-
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -55,7 +48,7 @@ const SelectDeliveryCompanyDialog = ({
   const { mutate: updateDeliveryCompany, isPending } =
     useUpdateDeliveryCompany();
 
-  const companies = (deliveryCompanies ?? []) as DeliveryCompany[];
+  const companies = deliveryCompanies ?? [];
 
   const selectedCompany = useMemo(
     () => companies.find((c) => c.id === selectedDeliveryCompanyId),
