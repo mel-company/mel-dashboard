@@ -78,7 +78,15 @@ const PaymentMethodsSettings = ({}: Props) => {
 
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [formState, setFormState] = useState<
-    Record<string, { isEnabled: boolean; credentials: Record<string, string> }>
+    Record<
+      string,
+      {
+        isEnabled: boolean;
+        credentials: Record<string, string>;
+        available?: boolean;
+        unavailableReason?: string | null;
+      }
+    >
   >({});
   const initialRef = useRef<typeof formState | null>(null);
 
@@ -111,6 +119,17 @@ const PaymentMethodsSettings = ({}: Props) => {
         next[method.id] = {
           isEnabled: storePm?.isEnabled ?? false,
           credentials,
+          /**
+           * The server's verdict, not a second opinion.
+           *
+           * It applies `canStoreEnable` — the same rule the write path
+           * enforces — so a method can never be drawn as available and then
+           * refused when you try to enable it. The fallback is for a row the
+           * settings endpoint did not return at all, where the provider flag
+           * is the only thing left to go on.
+           */
+          available: storePm?.available ?? provider.isActive !== false,
+          unavailableReason: storePm?.unavailableReason ?? null,
         };
       }
     }
@@ -189,9 +208,36 @@ const PaymentMethodsSettings = ({}: Props) => {
         cash_on_delivery: cashOnDelivery,
         credit_card: currentSettings?.credit_card ?? false,
       });
-      const methodPromises = methodsByProvider.map((method: { id: string }) => {
+      /**
+       * Only what the merchant actually changed.
+       *
+       * This used to PATCH every method in the catalogue on every save,
+       * whether or not it had been touched — so saving one unrelated switch
+       * wrote the whole form back. That is how a method the platform had
+       * withdrawn got switched off for good: its control is disabled, the API
+       * reports it as off, and the form dutifully echoed the off back into the
+       * database, destroying a choice the merchant had made and never undone.
+       *
+       * The server refuses that particular write now as well, but a form that
+       * speaks for controls nobody touched will find another way to be wrong —
+       * and this also turns N writes per save into however many were edited,
+       * which is usually none.
+       */
+      const initial = initialRef.current ?? {};
+      const changed = methodsByProvider.filter((method: { id: string }) => {
+        const next = formState[method.id];
+        if (!next) return false;
+        const before = initial[method.id];
+        if (!before) return true;
+        return (
+          before.isEnabled !== next.isEnabled ||
+          JSON.stringify(before.credentials ?? {}) !==
+            JSON.stringify(next.credentials ?? {})
+        );
+      });
+
+      const methodPromises = changed.map((method: { id: string }) => {
         const s = formState[method.id];
-        if (!s) return Promise.resolve();
         return upsertMutation.mutateAsync({
           paymentMethodId: method.id,
           isEnabled: s.isEnabled,
@@ -357,7 +403,7 @@ const PaymentMethodsSettings = ({}: Props) => {
                  * same method. Whatever "enabled" means here, it has to mean
                  * it in both places.
                  */
-                const available = provider.isActive !== false;
+                const available = s.available ?? provider.isActive !== false;
                 const enabled = s.isEnabled && available;
 
                 return (
