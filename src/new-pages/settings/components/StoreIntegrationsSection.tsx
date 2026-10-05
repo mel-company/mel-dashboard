@@ -34,7 +34,26 @@ import qiCardIcon from "@/assets/settings/qi-card.svg";
 import chevronIcon from "@/assets/settings/chevron.svg";
 import deliveryArrowIcon from "@/assets/settings/delivery-arrow.svg";
 
-type PaymentMethodOption = { id: string; name: string };
+type PaymentMethodOption = { id: string; name: string; code?: string };
+type CataloguePaymentProvider = {
+  code?: string;
+  logoUrl?: string | null;
+  /** The gateway registry's own branding, when a gateway backs this row. */
+  gateway?: { logoUrl?: string | null } | null;
+  methods?: PaymentMethodOption[];
+};
+/** A method with its provider's identity folded in, which is where the mark lives. */
+type PaymentMethodRow = PaymentMethodOption & {
+  providerCode?: string;
+  logoUrl?: string;
+};
+
+/**
+ * The platform's cash-on-delivery catalogue row — see the server's
+ * `payment/cash-on-delivery.ts`, which creates exactly this pair.
+ */
+const COD_PROVIDER_CODE = "offline";
+const COD_METHOD_CODE = "cash_on_delivery";
 
 const SectionGear = () => (
   <div className="flex size-[35px] shrink-0 items-center justify-center rounded-[10px] bg-sky-500/10">
@@ -42,8 +61,86 @@ const SectionGear = () => (
   </div>
 );
 
-const isQiMethod = (name: string) =>
-  /qi|كي|كي.?كارد|qicard/i.test(name);
+/**
+ * The brand mark for a provider row, or nothing.
+ *
+ * Two server-side sources, in order: the gateway registry's branding — which
+ * `payments/gateway.types.ts` says exists precisely so the admin dashboard,
+ * this dashboard and the storefront do not each keep a code→logo table, and
+ * the third one be the one that is wrong after a rebrand — then whatever an
+ * operator typed into «رابط الشعار» on the catalogue row itself.
+ *
+ * Only an absolute url is taken. A bare storage key has no base to resolve
+ * against here, and `<img src="logos/x.png">` would resolve against the
+ * current dashboard route and 404 as the page's own HTML.
+ */
+const providerLogoUrl = (provider: CataloguePaymentProvider) => {
+  const url = (provider.gateway?.logoUrl || provider.logoUrl || "").trim();
+  return /^(https?:|data:)/i.test(url) ? url : undefined;
+};
+
+/**
+ * Marks that ship with this build, by provider code.
+ *
+ * Not a second catalogue — it is what a row falls back to when the url above
+ * cannot be loaded or does not exist. Cash on delivery is the second case and
+ * always will be: it is not a brand, and no gateway backs it.
+ */
+const LOCAL_PROVIDER_LOGOS: Record<string, string> = {
+  qiservice: qiCardIcon,
+  offline: moneyIcon,
+};
+
+/**
+ * Every row gets a mark.
+ *
+ * Before this, one did: the icon was chosen by matching the method's Arabic
+ * *name* against a Qi-shaped regex, so «زين كاش» — a provider the registry has
+ * had a logo for all along — drew a blank 24px gap, and so would every gateway
+ * added after it. The name was never the right key; the provider code is.
+ *
+ * A remote url that fails to load falls through to the local mark and then to
+ * a neutral card glyph, because a broken image is worse than a plain one. The
+ * `key` on the call site is what resets that after the url changes.
+ */
+const PaymentMethodLogo = ({
+  src,
+  providerCode,
+}: {
+  src?: string;
+  providerCode?: string;
+}) => {
+  const [remoteFailed, setRemoteFailed] = useState(false);
+  const local = providerCode ? LOCAL_PROVIDER_LOGOS[providerCode] : undefined;
+  const url = !remoteFailed && src ? src : local;
+
+  if (!url) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className="size-6 shrink-0 text-slate-400 dark:text-slate-500"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      >
+        <rect x="2.5" y="5" width="19" height="14" rx="3" />
+        <path d="M2.5 10h19" />
+      </svg>
+    );
+  }
+
+  return (
+    <img
+      src={url}
+      alt=""
+      // Rounded because the registry's marks are full-bleed squares — a
+      // ZainCash tile with square corners reads as an unstyled image.
+      className="size-6 shrink-0 rounded-[6px] object-contain"
+      onError={() => setRemoteFailed(true)}
+    />
+  );
+};
 
 const StoreIntegrationsSection = () => {
   const { data: domainDetails } = useFindDomainDetails();
@@ -103,21 +200,53 @@ const StoreIntegrationsSection = () => {
     );
   };
 
-  const cashOnDelivery =
-    optimisticCod ?? currentSettings?.cash_on_delivery ?? false;
+  /**
+   * The catalogue, with cash on delivery lifted out of it.
+   *
+   * Cash on delivery is two records the server keeps mirrored: the
+   * `cash_on_delivery` flag on the store's settings, and a real catalogue
+   * method (provider `offline`, method `cash_on_delivery`) so the storefront
+   * can list it like any other. Drawing the catalogue verbatim therefore put
+   * «الدفع عند الاستلام» on this card twice — the dedicated row below and its
+   * own catalogue row — two switches over one piece of state, which read as a
+   * contradiction the moment a write landed on one of them first.
+   *
+   * Matched by code, not by name: a method an admin hand-built under some
+   * other code is a different method however it reads in Arabic, and hiding
+   * one of those would be worse than repeating a label.
+   */
+  const { codMethod, paymentMethods } = useMemo(() => {
+    const methods: PaymentMethodRow[] = [];
+    let cod: PaymentMethodRow | undefined;
 
-  const paymentMethods = useMemo(() => {
-    if (!paymentProviders) return [] as PaymentMethodOption[];
     // Two providers can expose the same method id, which rendered duplicate
     // React keys and let one row's toggle drive the other.
     const seen = new Set<string>();
-    return paymentProviders
-      .flatMap((p: { methods?: PaymentMethodOption[] }) => p.methods ?? [])
-      .filter((m: PaymentMethodOption) => {
-        if (!m?.id || seen.has(m.id)) return false;
-        seen.add(m.id);
-        return true;
-      });
+    const providers = asList(paymentProviders) as CataloguePaymentProvider[];
+    for (const provider of providers) {
+      // Carried onto the method, because the brand is the provider's and a
+      // row only ever has the method in hand.
+      const logoUrl = providerLogoUrl(provider);
+      for (const method of provider?.methods ?? []) {
+        if (!method?.id || seen.has(method.id)) continue;
+        seen.add(method.id);
+        const row: PaymentMethodRow = {
+          ...method,
+          providerCode: provider.code,
+          logoUrl,
+        };
+        if (
+          provider.code === COD_PROVIDER_CODE &&
+          method.code === COD_METHOD_CODE
+        ) {
+          cod = row;
+          continue;
+        }
+        methods.push(row);
+      }
+    }
+
+    return { codMethod: cod, paymentMethods: methods };
   }, [paymentProviders]);
 
   /**
@@ -155,6 +284,28 @@ const StoreIntegrationsSection = () => {
       unavailableReason: storePm?.unavailableReason ?? null,
     };
   };
+
+  /**
+   * The one cash-on-delivery row, read from both halves of the record.
+   *
+   * `checked` takes the flag *or* the catalogue row because the server's
+   * boot-time reconcile only heals a row to match a `true` flag and never the
+   * reverse — so a store that switched cash on through the generic method
+   * toggle has a live row and a `false` flag, and showing it off would invite
+   * the merchant to "fix" it by toggling twice. The write still goes through
+   * the settings endpoint, which sets both.
+   *
+   * Availability comes from the catalogue row for the same reason every other
+   * row here reads it: when the platform has withdrawn the method the switch
+   * says «قريبا» and does nothing, rather than saving a flag no checkout can
+   * act on.
+   */
+  const codState = codMethod
+    ? methodState(codMethod.id)
+    : { available: true, isEnabled: false, unavailableReason: null };
+
+  const cashOnDelivery =
+    optimisticCod ?? (currentSettings?.cash_on_delivery || codState.isEnabled);
 
   const handleCodToggle = (enabled: boolean) => {
     setOptimisticCod(enabled);
@@ -220,27 +371,30 @@ const StoreIntegrationsSection = () => {
           <div className="space-y-3">
             <div className="flex h-12 items-center justify-between rounded-[14px] bg-slate-100 px-4 dark:bg-slate-900">
               <div className="flex items-center gap-3">
-                <span className="relative size-6 shrink-0 overflow-hidden">
-                  <img
-                    src={moneyIcon}
-                    alt=""
-                    className="size-full object-contain"
-                  />
-                </span>
-                <span className="text-[13px] text-slate-900 dark:text-slate-100">
-                  الدفع عند الاستلام
+                <PaymentMethodLogo
+                  key={codMethod?.logoUrl ?? COD_PROVIDER_CODE}
+                  src={codMethod?.logoUrl}
+                  providerCode={codMethod?.providerCode ?? COD_PROVIDER_CODE}
+                />
+                <span
+                  className="text-[13px] text-slate-900 dark:text-slate-100"
+                  title={codState.unavailableReason ?? undefined}
+                >
+                  {codMethod?.name ?? "الدفع عند الاستلام"}
                 </span>
               </div>
               <Switch
                 checked={cashOnDelivery}
                 activeLabel="مفعل"
-                disabledLabel="معطل"
+                disabledLabel={codState.available ? "معطل" : "قريبا"}
                 onToggle={handleCodToggle}
-                disabled={updatePaymentMethodsMutation.isPending}
+                disabled={
+                  updatePaymentMethodsMutation.isPending || !codState.available
+                }
               />
             </div>
 
-            {paymentMethods.map((method: PaymentMethodOption) => {
+            {paymentMethods.map((method: PaymentMethodRow) => {
               const state = methodState(method.id);
 
               return (
@@ -249,13 +403,11 @@ const StoreIntegrationsSection = () => {
                   className="flex h-12 items-center justify-between rounded-[14px] bg-slate-100 px-4 dark:bg-slate-900"
                 >
                   <div className="flex items-center gap-3">
-                    {isQiMethod(method.name) ? (
-                      <img
-                        src={qiCardIcon}
-                        alt=""
-                        className="h-6 w-6 object-contain"
-                      />
-                    ) : null}
+                    <PaymentMethodLogo
+                      key={method.logoUrl ?? method.providerCode ?? method.id}
+                      src={method.logoUrl}
+                      providerCode={method.providerCode}
+                    />
                     <span
                       className="text-[13px] text-slate-900 dark:text-slate-100"
                       title={state.unavailableReason ?? undefined}
