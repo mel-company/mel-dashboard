@@ -347,6 +347,19 @@ const PaymentMethodsSettings = ({}: Props) => {
                   credentials: {} as Record<string, string>,
                 };
 
+                /**
+                 * One value, two consumers.
+                 *
+                 * The badge read `s.isEnabled` and the switch read
+                 * `s.isEnabled && provider.isActive !== false`, so when the
+                 * platform withdrew a provider you got a green «مفعّل» beside
+                 * a dead switch — the page contradicting itself about the
+                 * same method. Whatever "enabled" means here, it has to mean
+                 * it in both places.
+                 */
+                const available = provider.isActive !== false;
+                const enabled = s.isEnabled && available;
+
                 return (
                   <Card key={method.id}>
                     <CardHeader>
@@ -356,15 +369,15 @@ const PaymentMethodsSettings = ({}: Props) => {
                           <CardTitle>{method.name}</CardTitle>
                         </div>
                         <div className="flex items-center gap-3">
-                          {s.isEnabled && (
+                          {enabled && (
                             <Badge variant="default" className="gap-1">
                               <CheckCircle2 className="size-3" />
                               مفعّل
                             </Badge>
                           )}
                           <Switch
-                            checked={s.isEnabled && provider.isActive !== false}
-                            disabled={provider.isActive === false}
+                            checked={enabled}
+                            disabled={!available}
                             onCheckedChange={(v) => setEnabled(method.id, v)}
                           />
                         </div>
