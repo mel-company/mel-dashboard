@@ -120,13 +120,40 @@ const StoreIntegrationsSection = () => {
       });
   }, [paymentProviders]);
 
-  const isMethodEnabled = (methodId: string) => {
+  /**
+   * What this store may do with a method, in one lookup.
+   *
+   * `available` is the server's own verdict — it applies `canStoreEnable`,
+   * the same rule its write path enforces — so a row cannot be drawn as
+   * switchable and then refused when the merchant touches it.
+   *
+   * It matters here because «معطل» is the wrong word for a method the
+   * platform has withdrawn: it reads as *the merchant* having switched it
+   * off, when they did nothing. «قريبا» says whose decision it was, and the
+   * control is disabled so they are not invited to argue with it.
+   *
+   * No row at all means the method was never configured, which says nothing
+   * about availability — so that defaults to switchable, and the server
+   * refuses with a readable reason if it disagrees.
+   */
+  const methodState = (methodId: string) => {
     const storePm = (
       storePaymentMethods as
-      | { paymentMethodId: string; isEnabled: boolean }[]
+      | {
+          paymentMethodId: string;
+          isEnabled: boolean;
+          available?: boolean;
+          unavailableReason?: string | null;
+        }[]
       | undefined
     )?.find((s) => s.paymentMethodId === methodId);
-    return storePm?.isEnabled ?? false;
+
+    const available = storePm?.available ?? true;
+    return {
+      available,
+      isEnabled: available && (storePm?.isEnabled ?? false),
+      unavailableReason: storePm?.unavailableReason ?? null,
+    };
   };
 
   const handleCodToggle = (enabled: boolean) => {
@@ -213,32 +240,40 @@ const StoreIntegrationsSection = () => {
               />
             </div>
 
-            {paymentMethods.map((method: PaymentMethodOption) => (
-              <div
-                key={method.id}
-                className="flex h-12 items-center justify-between rounded-[14px] bg-slate-100 px-4 dark:bg-slate-900"
-              >
-                <div className="flex items-center gap-3">
-                  {isQiMethod(method.name) ? (
-                    <img
-                      src={qiCardIcon}
-                      alt=""
-                      className="h-6 w-6 object-contain"
-                    />
-                  ) : null}
-                  <span className="text-[13px] text-slate-900 dark:text-slate-100">
-                    {method.name}
-                  </span>
+            {paymentMethods.map((method: PaymentMethodOption) => {
+              const state = methodState(method.id);
+
+              return (
+                <div
+                  key={method.id}
+                  className="flex h-12 items-center justify-between rounded-[14px] bg-slate-100 px-4 dark:bg-slate-900"
+                >
+                  <div className="flex items-center gap-3">
+                    {isQiMethod(method.name) ? (
+                      <img
+                        src={qiCardIcon}
+                        alt=""
+                        className="h-6 w-6 object-contain"
+                      />
+                    ) : null}
+                    <span
+                      className="text-[13px] text-slate-900 dark:text-slate-100"
+                      title={state.unavailableReason ?? undefined}
+                    >
+                      {method.name}
+                    </span>
+                  </div>
+                  <Switch
+                    checked={state.isEnabled}
+                    activeLabel="مفعل"
+                    /* «قريبا», not «معطل»: the merchant did not switch this off. */
+                    disabledLabel={state.available ? "معطل" : "قريبا"}
+                    onToggle={(v) => handleMethodToggle(method.id, v)}
+                    disabled={upsertMutation.isPending || !state.available}
+                  />
                 </div>
-                <Switch
-                  checked={isMethodEnabled(method.id)}
-                  activeLabel="مفعل"
-                  disabledLabel="معطل"
-                  onToggle={(v) => handleMethodToggle(method.id, v)}
-                  disabled={upsertMutation.isPending}
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </SettingsCard>
 
