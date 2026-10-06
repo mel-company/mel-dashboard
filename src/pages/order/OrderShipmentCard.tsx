@@ -283,6 +283,31 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
           did not. For those two the whole of the setup is the credential form
           in settings, so that is where the fallback below points.
         */}
+        {/*
+          The platform withdrew this company while the store was using it.
+
+          Said on the order page because this is where the merchant acts: the
+          parcel will still ship — `INACTIVE` stops a company being offered,
+          not being used — but they cannot re-select it, and nothing else
+          anywhere would have told them. The settings row still draws its name
+          and logo, and the picker simply omits it.
+        */}
+        {!courier.companyActive && (
+          <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-bold">
+                أوقفت المنصة التعامل مع {courierName}
+              </p>
+              <p className="mt-1 text-xs">
+                طلباتك الحالية تُشحن عبرها كما هي، لكنها لم تبقَ متاحة للاختيار
+                — اختر شركة أخرى من الإعدادات، ولا ينتظرك حد الـ30 يوماً في هذه
+                الحالة.
+              </p>
+            </div>
+          </div>
+        )}
+
         {!shipment && !courier.accountReady && courier.supportsBranches && (
           <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />

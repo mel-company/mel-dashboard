@@ -552,6 +552,24 @@ const StoreIntegrationsSection = () => {
         currentDeliveryCompanyId={
           storeDetails?.deliveryCompanyId ?? undefined
         }
+        /*
+          The company the store holds, name and all.
+
+          The picker lists active companies only, so a withdrawn one is absent
+          from it — which left the dialog showing nothing selected and no way
+          for a merchant to see what they currently had. It cannot look that
+          company up either: it is not in the list, by definition. This row
+          already has it from the store details.
+        */
+        currentDeliveryCompany={
+          deliveryCompany
+            ? {
+                id: storeDetails?.deliveryCompanyId ?? "",
+                name: deliveryCompany.name ?? undefined,
+                logo: deliveryCompany.logo ?? undefined,
+              }
+            : undefined
+        }
       />
     </>
   );

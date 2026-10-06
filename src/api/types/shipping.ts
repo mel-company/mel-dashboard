@@ -78,6 +78,8 @@ export type ActiveCourier =
       deliveryCompanyId: string;
       deliveryCompanyName: string;
       code: string;
+      /** Whether the platform still offers this company. */
+      companyActive: boolean;
       reason: string;
     }
   | {
@@ -87,6 +89,19 @@ export type ActiveCourier =
       deliveryCompanyName: string;
       code: string;
       displayName: string;
+      /**
+       * Whether the platform still offers this company at all.
+       *
+       * False means an operator withdrew it while this store was using it.
+       * Parcels keep moving — `INACTIVE` stops a company being *offered*, not
+       * being used, because making it stop carrying would break every store on
+       * it the instant the switch flipped. But the merchant has to be told,
+       * and nothing told them: this route did not read `status`, the dispatch
+       * path does not either, and store details carry no such field, so a
+       * withdrawn courier looked completely ordinary while quietly being
+       * something they could no longer re-select.
+       */
+      companyActive: boolean;
       capabilities: CourierCapabilities;
       /** Everything the courier requires of this store is recorded. */
       accountReady: boolean;

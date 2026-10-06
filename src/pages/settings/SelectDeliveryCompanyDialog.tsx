@@ -22,6 +22,15 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentDeliveryCompanyId?: string;
+  /**
+   * The company the store holds, for the case where it is no longer listed.
+   *
+   * The list is active-only, so a company an operator withdrew is absent from
+   * it — and the dialog then showed nothing selected, with no way to see what
+   * the store currently had. Passed in rather than fetched because the picker
+   * cannot look up something the list excludes.
+   */
+  currentDeliveryCompany?: { id: string; name?: string; logo?: string | null };
   onSuccess?: () => void;
 };
 
@@ -127,6 +136,7 @@ const CourierPicker = ({
   open,
   onOpenChange,
   currentDeliveryCompanyId,
+  currentDeliveryCompany,
   onSuccess,
 }: Props) => {
   const [selectedDeliveryCompanyId, setSelectedDeliveryCompanyId] = useState<
@@ -146,6 +156,24 @@ const CourierPicker = ({
     useUpdateDeliveryCompany();
 
   const companies = deliveryCompanies ?? [];
+
+  /**
+   * The store's own company, when the list no longer carries it.
+   *
+   * Shown as a disabled card rather than omitted: a merchant looking at this
+   * dialog to find out who carries their parcels was shown four cards with
+   * none of them selected, and the one answer they came for was the one thing
+   * missing. It is disabled because re-selecting it is exactly what the
+   * platform has stopped allowing — and the 30-day limit does not apply while
+   * they hold it, so the card beside it is a live choice.
+   */
+  const withdrawnCurrent =
+    !isLoadingDeliveryCompanies &&
+    currentDeliveryCompany &&
+    currentDeliveryCompanyId &&
+    !companies.some((c) => c.id === currentDeliveryCompanyId)
+      ? currentDeliveryCompany
+      : null;
 
   const handleSubmit = () => {
     if (!selectedDeliveryCompanyId) {
@@ -206,6 +234,29 @@ const CourierPicker = ({
         aria-label="شركة التوصيل"
         className="mt-5 space-y-2.5"
       >
+        {withdrawnCurrent && (
+          <div className="flex w-full items-start gap-3 rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/60 p-3 text-right dark:border-amber-900 dark:bg-amber-950/30">
+            <CourierLogo logo={withdrawnCurrent.logo} />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  {withdrawnCurrent.name || "بدون اسم"}
+                </span>
+                <span className="shrink-0 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-900 dark:bg-amber-900 dark:text-amber-100">
+                  شركتك الحالية
+                </span>
+              </span>
+              <span className="mt-1 flex items-start gap-2 text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+                <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                <span>
+                  أوقفت المنصة التعامل مع هذه الشركة. طلباتك الحالية تُشحن
+                  عبرها كما هي، ولا يمكن اختيارها من جديد.
+                </span>
+              </span>
+            </span>
+          </div>
+        )}
+
         {isLoadingDeliveryCompanies ? (
           [0, 1, 2].map((key) => (
             <div
@@ -342,7 +393,9 @@ const CourierPicker = ({
       */}
       {companies.length > 0 && (
         <p className="mt-4 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-          يمكن تغيير شركة التوصيل مرة واحدة كل 30 يوماً.
+          {withdrawnCurrent
+            ? "شركتك الحالية لم تبقَ متاحة، فلا ينتظرك حد الـ30 يوماً — اختر شركة أخرى الآن."
+            : "يمكن تغيير شركة التوصيل مرة واحدة كل 30 يوماً."}
         </p>
       )}
 

@@ -141,6 +141,20 @@ const CourierAccountCard = () => {
           step nobody can take. Those two are ready by definition and their
           setup is the credential form below.
         */}
+        {/*
+          Withdrawn under the store's feet. The row above this card still shows
+          the company's name and logo — store details carry no status — so
+          without this the only visible sign is that the picker has stopped
+          listing it.
+        */}
+        {!courier.companyActive && (
+          <p className="rounded-[12px] bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-900">
+            أوقفت المنصة التعامل مع {courier.displayName}. طلباتك تُشحن عبرها
+            كما هي، لكنها لم تبقَ متاحة للاختيار — اختر شركة أخرى، وحد الـ30
+            يوماً لا ينطبق هنا.
+          </p>
+        )}
+
         {!courier.accountReady && courier.supportsBranches && (
           <div className="space-y-2 rounded-[12px] bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-800">
             <p>
