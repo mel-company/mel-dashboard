@@ -107,7 +107,7 @@ const DeleteDiscountDialog = ({
             type="button"
             disabled={busy || !discount || !canHide}
             onClick={handleHide}
-            className="h-12 w-full rounded-2xl bg-rose-100 text-base font-bold text-[#ff5252] shadow-none hover:bg-rose-200 sm:h-[60px] sm:text-lg dark:bg-[#ff5252]/10 dark:hover:bg-[#ff5252]/20"
+            className="h-12 w-full sm:w-auto sm:flex-1 rounded-2xl bg-rose-100 text-base font-bold text-[#ff5252] shadow-none hover:bg-rose-200 sm:h-[60px] sm:text-lg dark:bg-[#ff5252]/10 dark:hover:bg-[#ff5252]/20"
           >
             {isHiding ? (
               <>
@@ -122,7 +122,7 @@ const DeleteDiscountDialog = ({
             type="button"
             disabled={busy || !discount}
             onClick={handleDelete}
-            className="flex h-11 w-full items-center justify-center text-base font-bold text-slate-700 transition-colors hover:text-rose-600 disabled:opacity-50 sm:h-[60px] sm:text-lg dark:text-[#e4e7fc] dark:hover:text-[#ff5252]"
+            className="flex h-11 w-full sm:w-auto sm:flex-1 items-center justify-center text-base font-bold text-slate-700 transition-colors hover:text-rose-600 disabled:opacity-50 sm:h-[60px] sm:text-lg dark:text-[#e4e7fc] dark:hover:text-[#ff5252]"
           >
             {isDeleting ? (
               <>

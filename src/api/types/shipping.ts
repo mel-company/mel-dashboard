@@ -171,3 +171,38 @@ export interface CourierAccountView {
   hasPassword: boolean;
   updatedAt: string | null;
 }
+
+/**
+ * ما يحتاجه كل شركة من هذا المتجر، وما سُجِّل منه — `GET
+ * /shipping/couriers/accounts`.
+ *
+ * One entry per **registered courier**, including the ones this store has no
+ * account row for, which is the point: a store nobody has provisioned at Boxy
+ * has nothing stored, and an empty list reads as "nothing to worry about"
+ * rather than "cannot ship". The picker needs the answer for the companies a
+ * merchant has *not* chosen, before they choose one.
+ */
+export interface CourierAccountSummary {
+  courierCode: string;
+  displayName: string;
+  /**
+   * Whether the vendor can create a sub-account for a store at all. False for
+   * Modon Express and Al-Waseet, which publish no such endpoint — so there is
+   * nothing for an operator to provision and nothing to wait for.
+   */
+  supportsBranches: boolean;
+  /** Whether it accepts the merchant's own login instead. */
+  acceptsMerchantCredentials: boolean;
+  /** Whether this deployment can store a merchant credential at all. */
+  canStoreCredentials: boolean;
+  /** Branch fields this courier refuses to dispatch without. */
+  requiredBranchFields: string[];
+  /** Branch fields it reads but does not insist on. */
+  optionalBranchFields: string[];
+  /** The required fields this store is missing. Empty when ready. */
+  accountMissing: string[];
+  /** Whether this store can ship with this courier today. */
+  accountReady: boolean;
+  /** Null when this store has never been provisioned at this courier. */
+  account: CourierAccountView | null;
+}

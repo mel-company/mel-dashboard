@@ -1,7 +1,7 @@
 import axiosInstance from "@/utils/AxiosInstance";
 import type {
   ActiveCourier,
-  CourierAccountView,
+  CourierAccountSummary,
   CourierShipment,
   CourierTrackingEvent,
   CreateShipmentInput,
@@ -108,11 +108,21 @@ export const shippingAPI = {
     return data;
   },
 
-  /** هوية هذا المتجر لدى كل شركة. لا يعيد كلمة المرور أبدًا. */
-  getAccounts: async (): Promise<{ accounts: CourierAccountView[] }> => {
-    const { data } = await axiosInstance.get<{ accounts: CourierAccountView[] }>(
-      "/shipping/couriers/accounts",
-    );
+  /**
+   * هوية هذا المتجر لدى كل شركة وما ينقصها. لا يعيد كلمة المرور أبدًا.
+   *
+   * Every registered courier, not only the ones this store has a row for —
+   * so a screen can say which companies are ready to ship *before* a merchant
+   * picks one of them.
+   */
+  getAccounts: async (): Promise<{
+    canStoreCredentials: boolean;
+    accounts: CourierAccountSummary[];
+  }> => {
+    const { data } = await axiosInstance.get<{
+      canStoreCredentials: boolean;
+      accounts: CourierAccountSummary[];
+    }>("/shipping/couriers/accounts");
     return data;
   },
 

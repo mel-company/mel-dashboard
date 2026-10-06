@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Ticket, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import type { CouponListItem } from "@/api/types/coupon";
 import { isCouponExpired } from "../coupon-utils";
 import CouponCard from "./CouponCard";
 import CouponTable from "./CouponTable";
+import CouponDetailsSheet from "./CouponDetailsSheet";
 import DeleteCouponDialog from "./DeleteCouponDialog";
 import type { useDiscountsPage } from "@/hooks/use-discounts-page";
 
@@ -22,6 +23,8 @@ type CouponsContentProps = {
 const CouponsContent = ({ actions, toolbar }: CouponsContentProps) => {
   const navigate = useNavigate();
   const { mutate: toggleCoupon } = useToggleCouponActive();
+  // Figma opens coupon details as an edge drawer over the list, not as a page.
+  const [detailsCoupon, setDetailsCoupon] = useState<CouponListItem | null>(null);
 
   const handleToggle = (coupon: CouponListItem) => {
     if (isCouponExpired(coupon)) return;
@@ -82,7 +85,7 @@ const CouponsContent = ({ actions, toolbar }: CouponsContentProps) => {
               <CouponCard
                 key={coupon.id}
                 coupon={coupon}
-                onClick={() => navigate(`/coupons/${coupon.id}`)}
+                onClick={() => setDetailsCoupon(coupon)}
                 onToggleStatus={handleToggle}
               />
             ))}
@@ -114,19 +117,32 @@ const CouponsContent = ({ actions, toolbar }: CouponsContentProps) => {
           <CouponTable
             toolbar={toolbar}
             coupons={actions.coupons}
-            onView={(id) => navigate(`/coupons/${id}`)}
+            onView={(id) =>
+              setDetailsCoupon(
+                actions.coupons.find((c) => c.id === id) ?? null,
+              )
+            }
             onEdit={(id) => navigate(`/coupons/${id}/edit`)}
             onDelete={(coupon) => actions.setDeleteCouponTarget(coupon)}
             onToggleStatus={handleToggle}
           />
         ) : (
           <div className="space-y-4">
+            {/* The view toggle lives in this toolbar, and the toolbar lives
+                inside the table card — so rendering it only in table mode
+                removed the only way back. `viewMode` is persisted, so that
+                left the page stuck in cards for good. */}
+            {toolbar ? (
+              <div className="rounded-3xl bg-white p-4 dark:bg-[#0a0e27]">
+                {toolbar}
+              </div>
+            ) : null}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {actions.coupons.map((coupon) => (
                 <CouponCard
                   key={coupon.id}
                   coupon={coupon}
-                  onClick={() => navigate(`/coupons/${coupon.id}`)}
+                  onClick={() => setDetailsCoupon(coupon)}
                   onToggleStatus={handleToggle}
                 />
               ))}
@@ -153,6 +169,13 @@ const CouponsContent = ({ actions, toolbar }: CouponsContentProps) => {
           </div>
         )}
       </div>
+
+      <CouponDetailsSheet
+        coupon={detailsCoupon}
+        onOpenChange={(open) => !open && setDetailsCoupon(null)}
+        onDelete={(coupon) => actions.setDeleteCouponTarget(coupon)}
+        onChanged={() => actions.couponRefetch()}
+      />
 
       <DeleteCouponDialog
         coupon={actions.deleteCouponTarget}

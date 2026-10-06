@@ -199,7 +199,7 @@ const ProductDeleteModal = ({
               type="button"
               disabled={busy || !deleteId}
               onClick={handleHide}
-              className="h-12 w-full rounded-2xl bg-rose-100 text-base font-bold text-rose-500 shadow-none hover:bg-rose-200 sm:h-[60px] dark:bg-[#ff5252]/10 dark:text-[#ff5252] dark:hover:bg-[#ff5252]/20"
+              className="h-12 w-full sm:w-auto sm:flex-1 rounded-2xl bg-rose-100 text-base font-bold text-rose-500 shadow-none hover:bg-rose-200 sm:h-[60px] dark:bg-[#ff5252]/10 dark:text-[#ff5252] dark:hover:bg-[#ff5252]/20"
             >
               {updateProduct.isPending ? (
                 <>
@@ -218,7 +218,7 @@ const ProductDeleteModal = ({
                 e.preventDefault();
                 handleDelete();
               }}
-              className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#f5f6fa] text-base font-semibold text-[#3b4656] transition-colors hover:bg-slate-200 disabled:opacity-50 sm:h-[60px] dark:bg-white/5 dark:text-[#e4e7fc] dark:hover:bg-[#ff5252]/10 dark:hover:text-[#ff5252]"
+              className="flex h-12 w-full sm:w-auto sm:flex-1 items-center justify-center rounded-2xl bg-[#f5f6fa] text-base font-semibold text-[#3b4656] transition-colors hover:bg-slate-200 disabled:opacity-50 sm:h-[60px] dark:bg-white/5 dark:text-[#e4e7fc] dark:hover:bg-[#ff5252]/10 dark:hover:text-[#ff5252]"
             >
               {isDeleting ? (
                 <>
