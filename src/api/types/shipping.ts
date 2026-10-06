@@ -24,6 +24,32 @@ export type CourierShipmentStatus =
   | "FAILED"
   | "UNKNOWN";
 
+/**
+ * The statuses that end a parcel's journey.
+ *
+ * Mirrors the server's `PARCEL_TERMINAL_STATUSES`, which is the single list
+ * both its webhook staleness guard and its order-cancel guard ask. `FAILED` is
+ * deliberately absent from both: a failed delivery attempt is retried, so a
+ * driver may still be carrying the box.
+ *
+ * One copy here, for the same reason there is one copy there — this list was
+ * written out twice in the order pages, once to decide whether to offer «سحب
+ * الطرد» and once to decide whether cancelling the order needs a warning, and
+ * the two would have to be edited together to stay honest.
+ */
+export const PARCEL_TERMINAL_STATUSES: CourierShipmentStatus[] = [
+  "DELIVERED",
+  "RETURNED",
+  "CANCELLED",
+];
+
+/** A courier may still be carrying this parcel. */
+export const isParcelLive = (parcel: {
+  externalId: string | null;
+  status: CourierShipmentStatus;
+}): boolean =>
+  !!parcel.externalId && !PARCEL_TERMINAL_STATUSES.includes(parcel.status);
+
 export interface CourierCapabilities {
   quote: boolean;
   createShipment: boolean;
@@ -164,8 +190,22 @@ export interface CreateShipmentOptions {
   size?: "S" | "M" | "L";
   isFragile?: boolean;
   pickUpType?: "PICK_UP" | "DROP_OFF";
-  pickUpAddressUid?: string;
   readyToPickUp?: boolean;
+  /**
+   * No `pickUpAddressUid`, and it is not an omission.
+   *
+   * It names a branch inside the platform's account rather than anything about
+   * this parcel — it is the address a driver collects from — so the server
+   * refuses to accept it here and only an operator can record it, per store.
+   * `GET /boxy/pick-up-locations` is store-user guarded and lists every
+   * merchant's warehouse, so a dispatch that took this field would let any
+   * merchant send a van to another merchant's shop.
+   *
+   * It was declared here anyway, and the server's global pipe runs
+   * `whitelist: true` — so anything wired to it would have been stripped in
+   * silence, with no 400 and nothing in a log, and the parcel would ship from
+   * the default location looking like it had worked.
+   */
 }
 
 export interface CreateShipmentInput {
@@ -220,6 +260,17 @@ export interface CourierAccountSummary {
   requiredBranchFields: string[];
   /** Branch fields it reads but does not insist on. */
   optionalBranchFields: string[];
+  /**
+   * The courier's own sentence about how a store is registered with it, in
+   * Arabic — what Prime's `create-merchant-shop` produces, or that Modon
+   * publishes no sub-account endpoint at all.
+   *
+   * Served since the route existed and rendered by nothing, which left the
+   * dashboard restating the same thing in its own words and the two free to
+   * drift. It is the reason behind `supportsBranches`, so it belongs wherever
+   * that flag changes what a merchant is told.
+   */
+  branchNoteAr: string;
   /** The required fields this store is missing. Empty when ready. */
   accountMissing: string[];
   /** Whether this store can ship with this courier today. */

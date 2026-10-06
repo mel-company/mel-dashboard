@@ -58,6 +58,8 @@ import EditProductVariantDialog from "./EditProductVariantDialog";
 import RemoveOrderProduct from "./RemoveOrderProduct";
 import UseCouponDialog from "./UseCouponDialog";
 import OrderShipmentCard from "./OrderShipmentCard";
+import { useOrderShipment } from "@/api/wrappers/shipping.wrappers";
+import { isParcelLive } from "@/api/types/shipping";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "./OrderInvoicePreview";
 import { toast } from "sonner";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
@@ -78,6 +80,7 @@ const OrderDetails = () => {
   );
   const [productToRemove, setProductToRemove] = useState<any | null>(null);
   const [isUseCouponDialogOpen, setIsUseCouponDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const {
     data: order,
@@ -110,6 +113,20 @@ const OrderDetails = () => {
     useUpdateStatusToDelivered();
   const { mutate: updateStatusToCancelled, isPending: isUpdatingToCancelled } =
     useUpdateStatusToCancelled();
+
+  /**
+   * The parcel, for the cancel confirmation.
+   *
+   * Cancelling returns the stock to the shelf and is final, and none of it
+   * reaches the courier — so a merchant cancelling an order a driver is out
+   * delivering gets a credited shelf, a delivered parcel and a delivery bill.
+   * The server now refuses that unless it is acknowledged; this is what the
+   * acknowledgement is made of. Already fetched by the shipping card below,
+   * so the shared query answers without a second request.
+   */
+  const { data: parcel } = useOrderShipment(id ?? "", !!id);
+
+  const liveParcel = parcel && isParcelLive(parcel) ? parcel : null;
 
   // Calculate total price
   const calculateTotal = () => {
@@ -325,15 +342,22 @@ const OrderDetails = () => {
         });
       },
       CANCELLED: () => {
-        updateStatusToCancelled(id, {
-          onSuccess: () => {
-            toast.success("تم إلغاء الطلب بنجاح");
-            refetch();
-          },
-          onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "فشل في إلغاء الطلب");
-          },
-        });
+        // `force` only where the merchant has just been shown the parcel and
+        // confirmed anyway — the server refuses a silent cancellation.
+        updateStatusToCancelled(
+          { id, force: !!liveParcel },
+          {
+            onSuccess: () => {
+              toast.success("تم إلغاء الطلب بنجاح");
+              refetch();
+            },
+            onError: (error: any) => {
+              toast.error(
+                error?.response?.data?.message || "فشل في إلغاء الطلب"
+              );
+            },
+          }
+        );
       },
     };
 
@@ -362,9 +386,15 @@ const OrderDetails = () => {
     }
   };
 
+  /**
+   * Cancelling is final (`assertStatusTransition`) and returns the stock to
+   * the shelf, so it is confirmed rather than done on one tap — and where a
+   * courier still holds the parcel, the confirmation says so, because that is
+   * the version of this mistake that costs money.
+   */
   const handleCancelOrder = () => {
     if (!id || !order) return;
-    handleStatusUpdate("CANCELLED");
+    setIsCancelDialogOpen(true);
   };
 
   const handleOpenInvoicePreview = () => {
@@ -1285,6 +1315,76 @@ const OrderDetails = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
+      {/*
+        إلغاء الطلب — confirmed, and loudest where a parcel is in the air.
+
+        Cancelling is final and puts the stock back on the shelf. If a courier
+        still holds the parcel none of that reaches them: the driver delivers,
+        the shopper pays at the door and the merchant is billed the delivery,
+        against stock the shelf has already been credited for. So the parcel is
+        named here, with the action that actually settles it — withdraw it from
+        the shipping card where the courier supports that, and phone them where
+        it does not (Al-Waseet publishes no cancellation endpoint).
+      */}
+      <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <DialogContent className="text-right">
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-right">تأكيد إلغاء الطلب</DialogTitle>
+            <DialogDescription className="text-right">
+              الإلغاء نهائي ولا يمكن التراجع عنه، وتُرجَع الكميات إلى المخزون.
+            </DialogDescription>
+          </DialogHeader>
+
+          {liveParcel && (
+            <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-right text-sm text-amber-900">
+              <TruckIcon className="mt-0.5 size-4 shrink-0" />
+              <div className="space-y-1">
+                <p className="font-bold">
+                  هذا الطلب ما زال لديه طرد نشط لدى{" "}
+                  {liveParcel.courier?.displayName ?? liveParcel.courierCode}
+                </p>
+                <p className="text-xs">
+                  رقم الطرد <Ltr>{liveParcel.externalId}</Ltr>. الإلغاء هنا لا
+                  يُبلِغ الشركة —{" "}
+                  {liveParcel.courier?.capabilities.cancelShipment
+                    ? "اسحب الطرد من بطاقة الشحن أولاً، أو ألغِ الطلب ثم تابع الطرد مع الشركة."
+                    : "لا تدعم الشركة السحب عبر النظام، فاتصل بها لإيقاف التسليم."}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setIsCancelDialogOpen(false)}
+              disabled={isUpdatingToCancelled}
+            >
+              تراجع
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isUpdatingToCancelled}
+              onClick={() => {
+                setIsCancelDialogOpen(false);
+                handleStatusUpdate("CANCELLED");
+              }}
+            >
+              {isUpdatingToCancelled ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  جاري الإلغاء...
+                </>
+              ) : liveParcel ? (
+                "إلغاء الطلب رغم وجود الطرد"
+              ) : (
+                "تأكيد الإلغاء"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="text-right">
           <DialogHeader className="text-right">

@@ -232,11 +232,20 @@ export const orderAPI = {
   },
 
   /**
-   * Update order status to CANCELLED
+   * إلغاء الطلب.
+   *
+   * The server refuses this while a courier still holds a live parcel for the
+   * order: cancelling returns the stock to the shelf and is final, and none of
+   * that reaches the courier — the driver still delivers and the merchant is
+   * still billed the delivery. `force` is the merchant answering that refusal
+   * after being told, and it exists so they are never locked in: Al-Waseet
+   * publishes no cancellation endpoint, and a parcel can sit on a status its
+   * courier never updates.
    */
-  updateStatusToCancelled: async (id: string): Promise<any> => {
+  updateStatusToCancelled: async (id: string, force = false): Promise<any> => {
     const { data } = await axiosInstance.put<any>(
-      `/order/${id}/status/cancelled`
+      `/order/${id}/status/cancelled`,
+      force ? { force: true } : {}
     );
     return data;
   },

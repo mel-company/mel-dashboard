@@ -38,6 +38,7 @@ import type {
   CourierShipmentStatus,
   CreateShipmentOptions,
 } from "@/api/types/shipping";
+import { PARCEL_TERMINAL_STATUSES } from "@/api/types/shipping";
 import { formatCurrency } from "@/utils/format-currency";
 import Ltr from "@/components/Ltr";
 
@@ -173,7 +174,8 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
    * What the shopper paid for delivery, against what the courier bills.
    *
    * Only Prime prices a parcel before it exists, so for the other three the
-   * shopper's fee came from the merchant's own fallback rules and the gap is
+   * shopper's fee came from the fallback rules recorded for that company and
+   * the gap is
    * the merchant's to absorb. It is shown rather than hidden for exactly
    * that reason.
    */
@@ -249,11 +251,6 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
 
       <CardContent className="space-y-4">
         {/*
-          The courier needs something only an operator can provide — Prime's
-          shop id, Boxy's pick-up location. Said here rather than letting the
-          merchant discover it as a 422 on a real order.
-        */}
-        {/*
           The store changed courier while this parcel was still in the air.
           Said plainly, because every button below reaches the old company and
           nothing else on the page mentions it.
@@ -274,7 +271,19 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
           </div>
         )}
 
-        {!shipment && !courier.accountReady && (
+        {/*
+          The courier needs something only an operator can provide — Prime's
+          shop id, Boxy's pick-up location. Said here rather than letting the
+          merchant discover it as a 422 on a real order.
+
+          **Only where an operator can actually finish it.** Modon Express and
+          Al-Waseet publish no sub-account endpoint, so «راجع فريق الدعم» would
+          send a merchant to wait for a step nobody can take — the rule the
+          settings card has carried all along and this copy of the same message
+          did not. For those two the whole of the setup is the credential form
+          in settings, so that is where the fallback below points.
+        */}
+        {!shipment && !courier.accountReady && courier.supportsBranches && (
           <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
@@ -284,6 +293,30 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
               <p className="mt-1 text-xs">
                 راجع فريق الدعم لاستكمال التسجيل. لا يمكن شحن الطلبات حتى
                 يكتمل.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/*
+          The same state for a courier an operator cannot provision.
+
+          Unreachable today — a courier with `supportsBranches: false` may
+          never list a required branch field, so those two are always ready —
+          but a disabled dispatch button with nothing beside it explaining
+          itself is the failure this whole card is written to avoid, and that
+          is what the gate above would leave behind if the requirements ever
+          change.
+        */}
+        {!shipment && !courier.accountReady && !courier.supportsBranches && (
+          <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-bold">
+                لا يمكن الشحن عبر {courier.displayName} بعد
+              </p>
+              <p className="mt-1 text-xs">
+                أكمل ربط حسابك لدى الشركة من إعدادات المتجر.
               </p>
             </div>
           </div>
@@ -428,9 +461,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                   is drawn for it — a merchant is told to phone them rather
                   than shown a control that always fails. */}
               {capabilities?.cancelShipment &&
-                shipment.status !== "CANCELLED" &&
-                shipment.status !== "DELIVERED" &&
-                shipment.status !== "RETURNED" && (
+                !PARCEL_TERMINAL_STATUSES.includes(shipment.status) && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -454,10 +485,24 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                 )}
             </div>
 
-            {!capabilities?.cancelShipment && (
+            {/*
+              Two different reasons there is no Cancel button, and telling
+              them apart matters: one is Al-Waseet publishing no cancellation
+              endpoint, the other is this parcel's courier having no
+              integration behind it any more — `shipment.courier` is null —
+              which the first message would misreport as a vendor limitation.
+            */}
+            {!parcelCourier ? (
               <p className="text-xs text-muted-foreground">
-                لا تدعم {courierName} سحب الطرد عبر النظام — اتصل بهم مباشرة.
+                لم يعد هذا الطرد مرتبطاً بتكامل فعّال ({shipment.courierCode}) —
+                الأرقام أعلاه هي ما تحتاجه للاتصال بالشركة مباشرة.
               </p>
+            ) : (
+              !capabilities?.cancelShipment && (
+                <p className="text-xs text-muted-foreground">
+                  لا تدعم {courierName} سحب الطرد عبر النظام — اتصل بهم مباشرة.
+                </p>
+              )
             )}
 
             {showTracking && (

@@ -142,10 +142,23 @@ const CourierAccountCard = () => {
           setup is the credential form below.
         */}
         {!courier.accountReady && courier.supportsBranches && (
-          <p className="rounded-[12px] bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-800">
-            يحتاج تسجيل متجرك لدى {courier.displayName} إلى خطوة من فريق
-            المنصة. تواصل مع الدعم لاستكمالها — لا يمكن شحن الطلبات قبل ذلك.
-          </p>
+          <div className="space-y-2 rounded-[12px] bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-800">
+            <p>
+              يحتاج تسجيل متجرك لدى {courier.displayName} إلى خطوة من فريق
+              المنصة. تواصل مع الدعم لاستكمالها — لا يمكن شحن الطلبات قبل ذلك.
+            </p>
+            {/*
+              The courier's own account model, in its words rather than ours.
+              The server has carried it on this route all along and nothing
+              rendered it, so what a merchant is waiting for was described
+              twice — here in general terms, and in the catalogue precisely.
+            */}
+            {summary?.branchNoteAr && (
+              <p className="text-[12px] text-amber-900/80">
+                {summary.branchNoteAr}
+              </p>
+            )}
+          </div>
         )}
 
         {courier.acceptsMerchantCredentials ? (

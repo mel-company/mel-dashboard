@@ -477,14 +477,21 @@ export const useUpdateStatusToDelivered = () => {
 };
 
 /**
- * Update order status to CANCELLED mutation
+ * Update order status to CANCELLED mutation.
+ *
+ * Takes the order id, or `{ id, force }` where a live parcel has to be
+ * acknowledged first — see `orderAPI.updateStatusToCancelled`.
  */
 export const useUpdateStatusToCancelled = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<any, Error, string>({
-    mutationFn: (id: string) => orderAPI.updateStatusToCancelled(id),
-    onSuccess: (_, id) => {
+  return useMutation<any, Error, string | { id: string; force?: boolean }>({
+    mutationFn: (args) =>
+      typeof args === "string"
+        ? orderAPI.updateStatusToCancelled(args)
+        : orderAPI.updateStatusToCancelled(args.id, args.force),
+    onSuccess: (_, args) => {
+      const id = typeof args === "string" ? args : args.id;
       // Invalidate and refetch the specific order
       queryClient.invalidateQueries({
         queryKey: orderKeys.detail(id),
