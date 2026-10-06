@@ -2,6 +2,7 @@ import axiosInstance from "@/utils/AxiosInstance";
 import type {
   ActiveCourier,
   CourierAccountSummary,
+  CourierAccountView,
   CourierShipment,
   CourierTrackingEvent,
   CreateShipmentInput,

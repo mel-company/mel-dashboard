@@ -46,9 +46,21 @@ const CourierAccountCard = () => {
   // reported by the picker above rather than here.
   if (courier.selected === false || courier.integrated === false) return null;
 
-  const account = accountsData?.accounts?.find(
+  /**
+   * This courier's row, and the stored identity inside it.
+   *
+   * The two are different objects and reading the inner one off the outer was
+   * silently always `undefined`: `hasPassword` and `username` live on
+   * `summary.account`, which is null until a store has been provisioned at all.
+   * So `hasOwnLogin` was permanently false — a merchant who had already linked
+   * their Modon login was shown the empty credential form again on every
+   * visit, with no sign the platform held anything, and «حذف الربط» was
+   * unreachable.
+   */
+  const summary = accountsData?.accounts?.find(
     (row) => row.courierCode === courier.code,
   );
+  const account = summary?.account ?? null;
   const hasOwnLogin = Boolean(account?.hasPassword);
 
   const save = async () => {

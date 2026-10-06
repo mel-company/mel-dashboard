@@ -134,8 +134,18 @@ const OrderDetailsSheet = ({
     <OrderDeliveryCard
       order={order}
       shipment={shipment}
+      /**
+       * The company holding **this parcel** first, and the store's current one
+       * only when there is no parcel. A merchant who switches courier leaves
+       * live parcels behind with the old one, so naming the current company
+       * over someone else's parcel is simply wrong.
+       */
       courierName={
-        courier?.selected ? courier.deliveryCompanyName : null
+        shipment
+          ? (shipment.courier?.displayName ?? shipment.courierCode)
+          : courier?.selected
+            ? courier.deliveryCompanyName
+            : null
       }
     />
   );

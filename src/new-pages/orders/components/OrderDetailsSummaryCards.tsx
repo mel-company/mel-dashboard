@@ -5,6 +5,28 @@ import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
 import { formatCurrency, formatNumber } from "@/utils/format-currency";
 import { getOrderProductCount, getOrderStatusMeta, getOrderTotal } from "../utils";
+import type { CourierShipment } from "@/api/types/shipping";
+
+/**
+ * حالة الطرد لدى شركة الشحن — the platform's own normalised statuses.
+ *
+ * Kept beside the order's status rather than merged into it: a delivered
+ * parcel deliberately does **not** advance the order, because closing an
+ * order is the merchant's decision. So the two genuinely differ and the
+ * delivery card has to show the parcel's, which is what it claims to be
+ * about.
+ */
+const SHIPMENT_STATUS_LABEL: Record<CourierShipment["status"], string> = {
+  CREATED: "مُسجَّل",
+  PICKED_UP: "استلمه المندوب",
+  IN_TRANSIT: "في الطريق",
+  OUT_FOR_DELIVERY: "خارج للتوصيل",
+  DELIVERED: "تم التسليم",
+  RETURNED: "راجع",
+  CANCELLED: "ملغى",
+  FAILED: "محاولة فاشلة",
+  UNKNOWN: "غير معروف",
+};
 
 const Row = ({
   label,
@@ -93,7 +115,15 @@ export const OrderFinancialCard = ({
 
 type DeliveryProps = {
   order: any;
-  shipment?: any;
+  /**
+   * Typed, deliberately, in a file that is otherwise `any`.
+   *
+   * It was `any`, and that is why this card read `shipment.trackingNumber` —
+   * a field that has never existed on the payload, in the schema or in the
+   * type — so «رقم الشحنة» rendered «—» for every dispatched parcel the
+   * platform has ever had. The courier's own id is `externalId`.
+   */
+  shipment?: CourierShipment | null;
   courierName?: string | null;
 };
 
@@ -103,11 +133,21 @@ export const OrderDeliveryCard = ({
   shipment,
   courierName,
 }: DeliveryProps) => {
-  const status = getOrderStatusMeta(order?.status);
-  const trackingNumber =
-    shipment?.trackingNumber ?? shipment?.tracking_number ?? null;
-  const reference =
-    shipment?.reference ?? shipment?.shipmentCode ?? shipment?.code ?? null;
+  const orderStatus = getOrderStatusMeta(order?.status);
+  const trackingNumber = shipment?.externalId ?? null;
+  const reference = shipment?.reference ?? null;
+
+  /**
+   * The parcel's own status where there is a parcel, and the courier's own
+   * words in preference to ours — they are what a merchant repeats on the
+   * phone, and what says something useful when a parcel sits on a vague
+   * status. With no parcel, the order's status is all there is to show.
+   */
+  const status = shipment
+    ? (shipment.rawStatus?.trim() ||
+      SHIPMENT_STATUS_LABEL[shipment.status] ||
+      shipment.status)
+    : orderStatus.label;
 
   return (
     <section className="rounded-[24px] bg-white p-4 sm:p-5 dark:bg-[#0a0e27]">
@@ -127,8 +167,8 @@ export const OrderDeliveryCard = ({
       <Row label="كود الشحنة">
         {reference ? <Ltr>{String(reference)}</Ltr> : "—"}
       </Row>
-      <Row label="الحالة" divider={false}>
-        <span className="text-sky-600 dark:text-[#33c5ff]">{status.label}</span>
+      <Row label={shipment ? "حالة الطرد" : "الحالة"} divider={false}>
+        <span className="text-sky-600 dark:text-[#33c5ff]">{status}</span>
       </Row>
     </section>
   );

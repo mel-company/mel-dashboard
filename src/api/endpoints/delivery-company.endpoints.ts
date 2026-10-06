@@ -18,18 +18,20 @@ export const deliveryCompanyAPI = {
    * a merchant may change courier once every 30 days, so a company missing
    * from this list is one they cannot choose for a month.
    *
-   * **Active only.** The route answers with the withdrawn companies too, and
-   * nothing on the ship path enforces the status — `updateDeliveryCompany`
-   * accepts any company that is not soft-deleted. So an inactive company
-   * offered here is one a merchant can choose and then be locked out of
-   * changing for 30 days, with no way to tell from the list that it was
-   * never going to carry a parcel.
+   * **Active only, and the server decides that now.** The route used to answer
+   * with the withdrawn companies too and took `status` as a hint, while
+   * `updateDeliveryCompany` accepted any company that was not soft-deleted —
+   * so an inactive company could be chosen here and then held for 30 days by
+   * the change limit, with nothing in the list saying it was never going to
+   * carry a parcel. The write path refuses a non-active company and this
+   * listing no longer returns one, so the filter is not a client-side
+   * courtesy any more.
    */
   fetchAll: async (): Promise<DeliveryCompany[]> => {
     const { data } = await axiosInstance.get<
       { data?: DeliveryCompany[] } | DeliveryCompany[]
     >("/delivery-company", {
-      params: { limit: ALL_COMPANIES, status: "ACTIVE" },
+      params: { limit: ALL_COMPANIES },
     });
 
     if (Array.isArray(data)) return data;

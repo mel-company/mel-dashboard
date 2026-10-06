@@ -132,7 +132,42 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
   const shipmentLabel = useShipmentLabel(orderId);
 
   const integrated = courier?.selected === true && courier.integrated === true;
-  const capabilities = integrated ? courier.capabilities : null;
+
+  /**
+   * Which courier this screen is talking about, and what it can be asked.
+   *
+   * **A recorded parcel answers for itself.** Every server path acts on
+   * `shipment.courierCode`, never on the store's current selection, so after a
+   * merchant switches company the live parcels stay with the company that has
+   * them. Reading capabilities off the active courier instead drew the wrong
+   * buttons for exactly as long as a parcel outlived a switch: a Cancel that
+   * 422s on an Al-Waseet parcel, and no Cancel at all for a Boxy parcel once
+   * the store moved to Al-Waseet.
+   *
+   * The dispatch form below is the other way round — there is no parcel yet,
+   * so the store's current courier is the one that will get it.
+   */
+  const parcelCourier = shipment?.courier ?? null;
+  const capabilities = shipment
+    ? (parcelCourier?.capabilities ?? null)
+    : integrated
+      ? courier.capabilities
+      : null;
+
+  /** The name to put on the card: the parcel's company, or the store's. */
+  const courierName = shipment
+    ? (parcelCourier?.displayName ?? shipment.courierCode)
+    : integrated
+      ? courier.deliveryCompanyName || courier.displayName
+      : "";
+
+  /**
+   * A parcel left behind by a courier change, which is worth saying outright:
+   * the actions on it reach a company the store no longer uses, and the
+   * merchant is looking at a page that otherwise names only the new one.
+   */
+  const parcelFromOtherCourier =
+    !!shipment && integrated && shipment.courierCode !== courier.code;
 
   /**
    * What the shopper paid for delivery, against what the courier bills.
@@ -201,7 +236,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
       <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
         <CardTitle className="flex items-center gap-2 text-base">
           <Truck className="h-4 w-4" />
-          الشحن عبر {courier.deliveryCompanyName || courier.displayName}
+          الشحن عبر {courierName}
         </CardTitle>
         {shipment && (
           <span
@@ -218,7 +253,28 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
           shop id, Boxy's pick-up location. Said here rather than letting the
           merchant discover it as a 422 on a real order.
         */}
-        {!courier.accountReady && (
+        {/*
+          The store changed courier while this parcel was still in the air.
+          Said plainly, because every button below reaches the old company and
+          nothing else on the page mentions it.
+        */}
+        {parcelFromOtherCourier && (
+          <div className="flex items-start gap-2 rounded-lg bg-sky-50 p-3 text-sm text-sky-800">
+            <Truck className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-bold">
+                هذا الطرد مع {courierName}، وليس شركتك الحالية
+              </p>
+              <p className="mt-1 text-xs">
+                تم شحنه قبل تغيير شركة التوصيل، ويبقى معها حتى يُسلَّم أو
+                يُسحب. الطلبات الجديدة تُشحن عبر{" "}
+                {courier.deliveryCompanyName || courier.displayName}.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!shipment && !courier.accountReady && (
           <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
@@ -400,8 +456,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
 
             {!capabilities?.cancelShipment && (
               <p className="text-xs text-muted-foreground">
-                لا تدعم {courier.displayName} سحب الطرد عبر النظام — اتصل بهم
-                مباشرة.
+                لا تدعم {courierName} سحب الطرد عبر النظام — اتصل بهم مباشرة.
               </p>
             )}
 

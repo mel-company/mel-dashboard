@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { settingsAPI } from "../endpoints/settings.endpoints";
+import { shippingKeys } from "@/api/wrappers/shipping.wrappers";
 import { storeKeys } from "./store.wrappers";
 
 /**
@@ -185,6 +186,20 @@ export const useUpdateDeliveryCompany = () => {
       // Invalidate current settings
       queryClient.invalidateQueries({ queryKey: ["settings", "current"] });
       queryClient.invalidateQueries({ queryKey: ["stores"] });
+      /**
+       * The courier changed, so everything derived from *which* courier is
+       * stale — and `useActiveCourier` holds its answer for five minutes
+       * precisely because it only changes here.
+       *
+       * Without this the order pages kept drawing the previous courier for
+       * those five minutes: its name on the shipping card, and its
+       * capabilities deciding which buttons exist. Switching to Al-Waseet left
+       * a Cancel button that 422s (it publishes no cancellation endpoint);
+       * switching away from it made a Label button appear that Modon cannot
+       * serve. The merchant reads either as a broken dashboard.
+       */
+      queryClient.invalidateQueries({ queryKey: shippingKeys.activeCourier() });
+      queryClient.invalidateQueries({ queryKey: shippingKeys.accounts() });
     },
   });
 };

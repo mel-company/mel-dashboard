@@ -117,6 +117,27 @@ export interface CourierShipment {
   lastSyncedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * The company actually holding **this parcel**, and what it supports.
+   *
+   * Not necessarily the store's current courier, and that is the point: every
+   * server path acts on the parcel's own `courierCode`, so a merchant who
+   * switches company leaves live parcels behind with the old one. Gating a
+   * parcel's buttons on `ActiveCourier.capabilities` therefore described a
+   * different courier than the one the button would reach — a Cancel that
+   * 422s on an Al-Waseet parcel, or no Cancel at all for a Boxy parcel once
+   * the store moved to Al-Waseet.
+   *
+   * Null when nothing implements the code the parcel was created under: an
+   * integration removed while its parcels were still in the air. The ids and
+   * the last known status are still worth showing, because they are what a
+   * merchant phones the courier with.
+   */
+  courier: {
+    code: string;
+    displayName: string;
+    capabilities: CourierCapabilities;
+  } | null;
 }
 
 export interface CourierTrackingEvent {
