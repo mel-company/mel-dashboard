@@ -275,6 +275,17 @@ export interface CourierAccountSummary {
   accountMissing: string[];
   /** Whether this store can ship with this courier today. */
   accountReady: boolean;
+  /**
+   * Whether this courier can address a parcel to anywhere at all.
+   *
+   * False when nobody has mapped a province to its code: it then prices every
+   * destination at the fallback fee and refuses every dispatch. A property of
+   * the courier rather than of this store, so it is separate from
+   * `accountReady` — a company can want nothing from a merchant and still be
+   * unable to deliver. Both have to be asked before the picker offers it,
+   * because the choice is held for 30 days.
+   */
+  zonesMapped: boolean;
   /** Null when this store has never been provisioned at this courier. */
   account: CourierAccountView | null;
 }
