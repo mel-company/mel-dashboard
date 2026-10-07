@@ -32,11 +32,22 @@ export function useProductVisibility(enabled: boolean) {
     mutate(
       { id, data: { enabled: next } },
       {
-        onSuccess: () => {
-          setOptimistic(null);
+        /*
+         * Hold the override until the refetched row carries the new value.
+         *
+         * `enabled` is the cached list row, and it keeps the old value for as
+         * long as the refetch is in flight — so dropping the override the
+         * moment the request succeeded flipped the switch back under the
+         * merchant's finger before it settled. `useUpdateProduct` awaits its
+         * own invalidation, and React Query awaits that before running this —
+         * so by here the refetched row is in place and the prop can be
+         * trusted again.
+         */
+        onSuccess: async () => {
           toast.success(
             next ? "تم إظهار المنتج للعملاء" : "تم إخفاء المنتج — لن يظهر للعملاء",
           );
+          setOptimistic(null);
         },
         onError: (error: unknown) => {
           setOptimistic(null);

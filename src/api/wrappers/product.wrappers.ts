@@ -416,21 +416,52 @@ export const useDeleteProductOptionValue = () => {
 /**
  * Update an existing product mutation
  */
+/**
+ * Every cached query that holds a product, under either naming scheme.
+ *
+ * The list pages do not use `productKeys`: `useTableData` keys its query by
+ * API endpoint — `["product/filter-cursor", "list", {…}]` — which
+ * `productKeys.all` (`["products"]`) never matches. So the list was never
+ * invalidated, and with a five-minute `staleTime` on top an edit showed up
+ * only after a full page reload. Deleting looked fine purely because that
+ * path calls `refetch()` itself.
+ *
+ * Matching on the prefix covers both schemes and every product cursor, and
+ * costs nothing when no such query is mounted.
+ */
+export const isProductQuery = (query: { queryKey: readonly unknown[] }) => {
+  const root = query.queryKey[0];
+  return typeof root === "string" && root.startsWith("product");
+};
+
 export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
 
   return useMutation<any, Error, { id: string; data: any }>({
     mutationFn: ({ id, data }) => productAPI.update(id, data),
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-      const productId = data?.id ?? variables.id;
-      if (!productId) return;
-
-      queryClient.setQueryData(productKeys.detail(productId), (old: any) => {
-        if (!old) return { ...data, id: productId };
-        return { ...old, ...data, id: productId };
+    /*
+     * Awaited, so the refetches have landed before the `onSuccess` passed to
+     * `mutate()` runs — React Query waits on this promise first. That lets a
+     * caller holding an optimistic value drop it at the right moment without
+     * invalidating a second time and paying for a duplicate refetch.
+     */
+    onSuccess: async (data, variables) => {
+      const settled = queryClient.invalidateQueries({
+        predicate: isProductQuery,
       });
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
+
+      const productId = data?.id ?? variables.id;
+      if (productId) {
+        queryClient.setQueryData(productKeys.detail(productId), (old: any) => {
+          if (!old) return { ...data, id: productId };
+          return { ...old, ...data, id: productId };
+        });
+        queryClient.invalidateQueries({
+          queryKey: productKeys.detail(productId),
+        });
+      }
+
+      await settled;
     },
   });
 };
