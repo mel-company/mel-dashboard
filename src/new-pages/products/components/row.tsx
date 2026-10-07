@@ -15,6 +15,8 @@ import ActionBtnList from "@/components/table/action-btn-list";
 import type { ProductListItem } from "@/api/types/product";
 import { formatCount } from "@/utils/format-currency";
 import StatusGlyph from "@/components/table/status-glyph";
+import { Switch } from "@/components/ui/switch";
+import { useProductVisibility } from "@/hooks/use-product-visibility";
 
 function renderCategories(product: ProductListItem) {
   const cats = getProductCategories(product);
@@ -47,10 +49,14 @@ function getStockQuantity(product: ProductListItem) {
   return null;
 }
 
-function stockStatus(product: ProductListItem) {
+function stockStatus(product: ProductListItem, visible: boolean) {
   const stock = getStockQuantity(product);
-  if (!product.enabled) {
-    return { label: "غير متاح", color: "danger" as const, tone: "alert" as const };
+  // Hidden is the merchant's own decision; out of stock is the warehouse's.
+  // Both read «غير متاح» before, so a product you had hidden was
+  // indistinguishable from one that had simply sold out — and therefore
+  // unfindable once you wanted it back.
+  if (!visible) {
+    return { label: "مخفي", color: "purple" as const, tone: "progress" as const };
   }
   if (typeof stock === "number") {
     if (stock <= 0) return { label: "غير متاح", color: "danger" as const, tone: "alert" as const };
@@ -73,7 +79,10 @@ const ProductRow = ({
   const tdClass = "whitespace-normal px-4 py-3.5 text-right align-middle";
   const margin = costMargin(product.price, product.cost_to_produce);
   const cover = getProductCoverImage(product);
-  const status = stockStatus(product);
+  const { visible, setVisible, isPending } = useProductVisibility(
+    product.enabled,
+  );
+  const status = stockStatus(product, visible);
   const quantity = getStockQuantity(product);
 
   return (
@@ -149,6 +158,15 @@ const ProductRow = ({
           <StatusGlyph tone={status.tone} />
           {status.label}
         </Badge>
+      </TableCell>
+      <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
+        <Switch
+          checked={visible}
+          disabled={isPending}
+          onToggle={(next) => setVisible(product.id, next)}
+          activeLabel="ظاهر"
+          disabledLabel="مخفي"
+        />
       </TableCell>
       <TableCell className={tdClass} onClick={(e) => e.stopPropagation()}>
         <ActionBtnList

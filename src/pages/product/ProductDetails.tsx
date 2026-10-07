@@ -38,6 +38,8 @@ import EditProductPropertyDialog from "./EditProductPropertyDialog";
 import AddVariantDialog from "./AddVariantDialog";
 import EditVariantDialog from "./EditVariantDialog";
 import RemoveCategoryFromProductDialog from "./RemoveCategoryFromProductDialog";
+import { Switch } from "@/components/ui/switch";
+import { useProductVisibility } from "@/hooks/use-product-visibility";
 import AddCategoryToProductDialog from "./AddCategoryToProductDialog";
 import ProductImageDialog from "./ProductImageDialog";
 import { AssetImage } from "@/components/AssetImage";
@@ -131,6 +133,11 @@ const ProductDetails = () => {
     id ?? "",
   );
   const imageBaseUrl = useImageBaseUrl();
+  const {
+    visible,
+    setVisible,
+    isPending: isTogglingVisibility,
+  } = useProductVisibility((data as any)?.enabled ?? true);
 
   const { data: variantsData, refetch: refetchVariants } = useFetchVariants(
     { productId: id ?? "" },
@@ -616,6 +623,21 @@ const ProductDetails = () => {
         </div>
 
         <aside className="w-full shrink-0 space-y-4 md:sticky md:top-4 md:w-[300px] lg:w-[320px]">
+          <ProductSectionCard
+            title="حالة المنتج"
+            description="تحكّم بظهور المنتج في المتجر"
+          >
+            <div className="flex items-center justify-between gap-3" dir="rtl">
+              <Switch
+                checked={visible}
+                disabled={isTogglingVisibility}
+                onToggle={(next) => id && setVisible(id, next)}
+                activeLabel="ظاهر للعملاء"
+                disabledLabel="مخفي عن العملاء"
+              />
+            </div>
+          </ProductSectionCard>
+
           <ProductSectionCard
             title="أصناف المنتج الأساسي"
             label="أختيار الاصناف"
