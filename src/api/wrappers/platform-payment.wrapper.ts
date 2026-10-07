@@ -1,11 +1,35 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { platformPaymentAPI } from "../endpoints/platform-payment.endpoint";
-import type { PlatformPaymentInitPayload } from "../endpoints/platform-payment.endpoint";
+import type {
+  PlatformPaymentInitPayload,
+  SubscriptionQuoteQuery,
+} from "../endpoints/platform-payment.endpoint";
 
 export const platformPaymentKeys = {
   all: ["platform-payments"] as const,
   detail: (id: string) => [...platformPaymentKeys.all, id] as const,
   providers: () => [...platformPaymentKeys.all, "providers"] as const,
+  quote: (query: SubscriptionQuoteQuery) =>
+    [...platformPaymentKeys.all, "quote", query] as const,
+};
+
+/**
+ * What this period costs this merchant, asked of the server rather than worked
+ * out from `plan.monthly_price` — which cannot see the intro ladder and so was
+ * wrong for every merchant still inside the offer.
+ */
+export const useSubscriptionQuote = (
+  query: SubscriptionQuoteQuery | null,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: platformPaymentKeys.quote(query ?? ({} as SubscriptionQuoteQuery)),
+    queryFn: () => platformPaymentAPI.quoteStore(query!),
+    enabled: enabled && !!query?.planId,
+    // A price shown on a button the merchant is about to press. Re-asked rather
+    // than remembered, because the ladder moves when they pay.
+    staleTime: 0,
+  });
 };
 
 /**
