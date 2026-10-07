@@ -955,11 +955,8 @@ const EditProduct = ({}: Props) => {
                   return (
                     <DashedTag
                       key={catId}
-                      onRemove={
-                        categories.length > 1
-                          ? () =>
-                              setRemovingCategory({ id: catId, name: catName })
-                          : undefined
+                      onRemove={() =>
+                        setRemovingCategory({ id: catId, name: catName })
                       }
                     >
                       {catName}
