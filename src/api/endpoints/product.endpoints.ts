@@ -85,9 +85,10 @@ function appendJsonFieldsToFormData(
 }
 
 function appendImagesToFormData(target: FormData, files: File[]) {
-  files.forEach((file, index) => {
+  // `image` is an alias the API folds into the same gallery, not a cover
+  // field, so appending the first file under both names stored it twice.
+  files.forEach((file) => {
     target.append("images", file);
-    if (index === 0) target.append("image", file);
   });
 }
 
@@ -391,9 +392,8 @@ export const productAPI = {
    */
   addImages: async (productId: string, images: File[]): Promise<any> => {
     const formData = new FormData();
-    images.slice(0, MAX_PRODUCT_IMAGES).forEach((file, index) => {
+    images.slice(0, MAX_PRODUCT_IMAGES).forEach((file) => {
       formData.append("images", file);
-      if (index === 0) formData.append("image", file);
     });
     const { data } = await axiosInstance.post<any>(
       `/product/${productId}/images`,

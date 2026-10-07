@@ -303,10 +303,9 @@ const EditProduct = ({}: Props) => {
     formData.append("heightCm", heightCm);
     formData.append("rate", parseFloat(rate || "0").toString());
 
+    // One append per file — see the note in AddProduct: `image` is an alias
+    // for `images` on the API, not a separate cover field.
     selectedImageFiles.forEach((file) => formData.append("images", file));
-    if (selectedImageFiles[0]) {
-      formData.append("image", selectedImageFiles[0]);
-    }
 
     updateProduct(
       { id, data: formData },

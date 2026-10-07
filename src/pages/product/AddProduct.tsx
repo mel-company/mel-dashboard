@@ -420,8 +420,12 @@ const AddProduct = () => {
     if (widthCm) formData.append("widthCm", widthCm);
     if (heightCm) formData.append("heightCm", heightCm);
     if (rate) formData.append("rate", rate);
+    // Each file once, under `images` only. The API concatenates `image` into
+    // the same gallery rather than treating it as a cover, so sending the
+    // first file under both names uploaded it twice and left the product with
+    // two identical gallery rows. The cover is derived server-side from the
+    // primary row.
     imageFiles.forEach((file) => formData.append("images", file));
-    if (imageFiles[0]) formData.append("image", imageFiles[0]);
     if (tempImageUrl) formData.append("tempImageUrl", tempImageUrl);
     if (selectedCategories.length > 0) {
       formData.append("categoryIds", JSON.stringify(selectedCategories));
