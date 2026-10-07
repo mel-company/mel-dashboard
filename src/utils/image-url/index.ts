@@ -35,7 +35,12 @@ export function resolveAssetBaseUrl(explicitBase?: string | null): string {
     if (stripped && !stripped.startsWith("/")) return stripped;
   }
 
-  return "https://api.mel.iq";
+  // The API host serves no assets — its only static mount is `/editor-temp`,
+  // so `https://api.mel.iq/stores/…` is a guaranteed Nest 404. Objects live in
+  // R2 behind `R2_PUBLIC_URL`, which is what every url the API hands back is
+  // already built from. Falling back to the API host sent every relative key
+  // to a host that cannot serve it.
+  return "https://cdn.mel.iq";
 }
 
 export function coerceImagePath(image: unknown): string {
@@ -123,8 +128,19 @@ function isPrivateOrSignedR2Url(url: string): boolean {
 }
 
 function normalizeAssetHost(url: string, baseUrl?: string | null): string {
+  // Only a url that cannot be served as-is is worth re-hosting: a signed link
+  // expires, and a private `r2.cloudflarestorage.com` one is not readable at
+  // all. An absolute public url is already the answer.
+  //
+  // This used to fire on `baseUrl` being set, and `useImageBaseUrl` always
+  // sets one — so the public `https://cdn.mel.iq/stores/…` the API returns was
+  // rewritten onto the asset base on every single call. Surfaces drawing
+  // through `AssetImage` survived it, because its candidate list also carries
+  // the original url and retries; a bare `<img src={getImageUrl(…)}>` — the
+  // product editor's preview and its gallery thumbnails — had no second
+  // chance and showed a broken image.
   const storesPath = extractStoresAssetPath(url);
-  if (storesPath && (isPrivateOrSignedR2Url(url) || baseUrl || cleanEnvUrl(import.meta.env.VITE_PUBLIC_URL))) {
+  if (storesPath && isPrivateOrSignedR2Url(url)) {
     const base = resolveAssetBaseUrl(baseUrl);
     return `${base}/${encodeAssetPath(storesPath)}`;
   }
@@ -183,6 +199,16 @@ export function buildAssetUrlCandidates(
     if (url && !out.includes(url)) out.push(url);
   };
 
+  const isAbsolute =
+    trimmed.startsWith("http://") || trimmed.startsWith("https://");
+
+  // An absolute url that needs no rehosting goes first. It is what the API
+  // built from `R2_PUBLIC_URL` and it is already correct, so trying the asset
+  // base ahead of it spent a guaranteed 404 on every image in every list.
+  if (isAbsolute && !isPrivateOrSignedR2Url(trimmed)) {
+    push(normalizeAssetHost(trimmed, baseUrl));
+  }
+
   const storesPath = extractStoresAssetPath(trimmed);
   if (storesPath) {
     const base = resolveAssetBaseUrl(baseUrl);
@@ -190,7 +216,7 @@ export function buildAssetUrlCandidates(
     push(`${base}/${encodeAssetPath(storesPath, false)}`);
   }
 
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+  if (isAbsolute) {
     push(trimmed);
   } else if (!storesPath) {
     const base = resolveAssetBaseUrl(baseUrl);
