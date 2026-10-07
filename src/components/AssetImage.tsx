@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   buildAssetUrlCandidates,
   coerceImagePath,
@@ -41,11 +41,23 @@ export function AssetImage({
     setFailed(false);
   }, [sourceKey]);
 
+  // A cached image can finish decoding before React attaches `onLoad`, and
+  // that event never fires retroactively — so `loaded` stayed false and the
+  // element kept `opacity-0`. The picture was there, complete and the right
+  // size, and invisible. Ask the element itself when it attaches, rather than
+  // waiting for an event that has already been missed; `key={src}` below gives
+  // every candidate a fresh element, so this re-runs per source.
+  const readLoadedState = useCallback((el: HTMLImageElement | null) => {
+    if (el?.complete && el.naturalWidth > 0) setLoaded(true);
+  }, []);
+
   const src = !failed ? candidates[index] : undefined;
   if (!src) return <>{fallback}</>;
 
   return (
     <img
+      key={src}
+      ref={readLoadedState}
       src={src}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
