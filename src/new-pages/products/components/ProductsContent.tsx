@@ -60,16 +60,21 @@ const ProductsContent = ({ actions, toolbar }: ProductsContentProps) => {
             imageBaseUrl={actions.imageBaseUrl}
           />
         ) : (
-          <div className="space-y-4">
+          /*
+           * One card holding the toolbar and the grid, the same shell the
+           * table view uses. Figma (606:15593) runs a single `#0a0e27` card
+           * from the toolbar down past the last row — sampled across the grid
+           * it is #0a0e27 edge to edge, with the product cards picked out by
+           * their border rather than by their fill. Splitting the toolbar off
+           * left the grid sitting on the section wrapper, so the cards read as
+           * dark blocks on a lighter panel: the inverse of the design.
+           */
+          <div className="w-full space-y-4 overflow-hidden rounded-[24px] border border-transparent bg-white p-4 shadow-[0_2px_12px_rgba(17,44,113,0.05)] sm:p-6 dark:border-white/[0.06] dark:bg-[#0a0e27] dark:shadow-none">
             {/* The view toggle lives in this toolbar, and the toolbar lives
                 inside the table card — so rendering it only in table mode
                 removed the only way back. `viewMode` is persisted, so that
                 left the page stuck in cards for good. */}
-            {toolbar ? (
-              <div className="rounded-3xl bg-white p-4 dark:bg-[#0a0e27]">
-                {toolbar}
-              </div>
-            ) : null}
+            {toolbar}
             {cards}
           </div>
         )}
