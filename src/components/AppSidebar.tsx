@@ -260,7 +260,7 @@ const AppSidebar = ({
       {/* Navigation */}
       <nav
         className={cn(
-          "custom-scrollbar relative z-10 min-h-0 flex-1 overflow-y-auto py-2",
+          "hide-scrollbar relative z-10 min-h-0 flex-1 overflow-y-auto py-2",
           collapsed ? "space-y-4 px-2" : "space-y-6 px-3",
         )}
       >
