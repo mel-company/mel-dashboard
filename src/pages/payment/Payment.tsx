@@ -50,8 +50,26 @@ const Payment = () => {
       },
       {
         onSuccess: (data) => {
+          /**
+           * A plan change can settle without a gateway page: when the
+           * subscription has not claimed its intro month the server prices the
+           * period at 0 IQD, writes the payment `PAID` and applies the new plan
+           * before replying. There is no redirect because there is nothing to
+           * pay, so treating a missing `redirectUrl` as a failure reported a
+           * change that had already happened as one that had not.
+           */
+          if (data?.status === "PAID") {
+            toast.success(
+              Number(data?.amount) > 0
+                ? "تم الدفع بنجاح وتم تحديث الباقة"
+                : "تم تحديث الباقة — لا مبلغ مستحق",
+            );
+            navigate("/settings/store");
+            return;
+          }
+
           if (!data?.redirectUrl) {
-            toast.error("لم يتم استلام رابط الدفع من زين كاش");
+            toast.error("لم يتم استلام رابط الدفع");
             return;
           }
           if (data?.id) {

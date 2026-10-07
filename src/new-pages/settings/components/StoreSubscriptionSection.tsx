@@ -93,8 +93,24 @@ const StoreSubscriptionSection = () => {
       },
       {
         onSuccess: (data) => {
+          /**
+           * Settled with nothing to pay — the intro month prices the period at
+           * 0 IQD, so the server writes the payment `PAID` and extends the term
+           * before replying, with no gateway page to send anyone to. This used
+           * to report the one renewal path that always succeeds as a failure.
+           */
+          if (data?.status === "PAID") {
+            toast.success(
+              Number(data?.amount) > 0
+                ? "تم الدفع بنجاح وتم تجديد الاشتراك"
+                : "تم تجديد الاشتراك — لا مبلغ مستحق",
+            );
+            void refetch();
+            return;
+          }
+
           if (!data?.redirectUrl) {
-            toast.error("لم يتم استلام رابط الدفع من زين كاش");
+            toast.error("لم يتم استلام رابط الدفع");
             return;
           }
           if (data?.id) {
