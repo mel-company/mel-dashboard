@@ -65,6 +65,7 @@ import { toast } from "sonner";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
 import PagePanel from "@/components/PagePanel";
 import Ltr from "@/components/Ltr";
+import { AssetImage } from "@/components/AssetImage";
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -637,19 +638,16 @@ const OrderDetails = () => {
                     <div key={product.id || index}>
                       <div className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors">
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0">
-                          {product?.variant?.image ||
-                          product?.product?.image ? (
-                            <img
-                              src={`${baseUrl}/${
-                                product?.variant?.image ||
-                                product?.product?.image
-                              }`}
-                              alt={product?.product?.title}
-                              className="w-full h-full object-cover rounded-lg"
-                            />
-                          ) : (
-                            <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
-                          )}
+                          <AssetImage
+                            image={
+                              product?.variant?.image ||
+                              product?.product?.image
+                            }
+                            baseUrl={baseUrl}
+                            alt={product?.product?.title}
+                            className="w-full h-full object-cover rounded-lg"
+                            fallback={<ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />}
+                          />
                         </div>
                         <div className="flex-1 text-right">
                           <div className="flex itemscenter justify-between mb-2">

@@ -17,6 +17,7 @@ import {
 } from "@/api/wrappers/discount.wrappers";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AssetImage } from "@/components/AssetImage";
 
 const PAGE_SIZE = 20;
 
@@ -198,15 +199,13 @@ const AddDiscountProductDialog = ({
                     }`}
                   >
                     <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-muted shrink-0 overflow-hidden">
-                      {product.image ? (
-                        <img
-                          src={`${baseUrl}/${product.image}`}
-                          alt={product.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <ShoppingCart className="size-8 text-muted-foreground" />
-                      )}
+                      <AssetImage
+                        image={product.image}
+                        baseUrl={baseUrl}
+                        alt={product.title}
+                        className="w-full h-full object-cover"
+                        fallback={<ShoppingCart className="size-8 text-muted-foreground" />}
+                      />
                     </div>
                     <div className="flex-1 text-right">
                       <p className="font-semibold line-clamp-1">

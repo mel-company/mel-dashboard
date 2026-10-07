@@ -40,6 +40,7 @@ import CategoryGroupsSkeleton from "./CategoryGroupsSkeleton";
 import AddCategoryToGroupDialog from "./AddCategoryToGroupDialog";
 import EditGroupDialog from "./EditGroupDialog";
 import { toast } from "sonner";
+import { AssetImage } from "@/components/AssetImage";
 
 const CategoryGroupDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -257,15 +258,13 @@ const CategoryGroupDetails = () => {
                           className="flex items-center gap-3 flex-1 min-w-0"
                         >
                           <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
-                            {cat.image ? (
-                              <img
-                                src={`${baseUrl}/${cat.image}`}
-                                alt={cat.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <Folder className="size-8 text-white bg-cyan/40 rounded-full p-2" />
-                            )}
+                            <AssetImage
+                              image={cat.image}
+                              baseUrl={baseUrl}
+                              alt={cat.name}
+                              className="w-full h-full object-cover"
+                              fallback={<Folder className="size-8 text-white bg-cyan/40 rounded-full p-2" />}
+                            />
                           </div>
                           <div className="flex-1 text-right min-w-0">
                             <p className="font-semibold line-clamp-1">

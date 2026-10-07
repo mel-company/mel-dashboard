@@ -14,6 +14,8 @@ import { useFetchAvailableCategoriesSearchCursor } from "@/api/wrappers/category
 import { useAddCategoryToProduct } from "@/api/wrappers/product.wrappers";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AssetImage } from "@/components/AssetImage";
+import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 
 const PAGE_SIZE = 20;
 
@@ -54,7 +56,14 @@ const AddCategoryToProductDialog = ({
 
   // Flatten paginated categories (server-side search) and get baseUrl from first page
   const categories = data?.pages?.flatMap((p) => p.data ?? []) ?? [];
-  const baseUrl = data?.pages?.[0]?.baseUrl ?? "";
+  /*
+   * `category.image` arrives already resolved — the API runs it through
+   * `withResolvedImages`, so it is a full `https://cdn.mel.iq/...` url — and
+   * the same payload carries `baseUrl` beside it. Gluing the two together
+   * produced `https://cdn.mel.iq/https://cdn.mel.iq/...`, which is why every
+   * tile here rendered as alt text. `AssetImage` decides what a value needs.
+   */
+  const baseUrl = useImageBaseUrl(data?.pages?.[0]?.baseUrl);
 
   // Infinite scroll: load more when sentinel enters viewport
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -187,15 +196,15 @@ const AddCategoryToProductDialog = ({
                     }`}
                   >
                     <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-muted shrink-0 overflow-hidden">
-                      {category.image ? (
-                        <img
-                          src={`${baseUrl}/${category.image}`}
-                          alt={category.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Folder className="size-8 text-muted-foreground" />
-                      )}
+                      <AssetImage
+                        image={category.image}
+                        baseUrl={baseUrl}
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                        fallback={
+                          <Folder className="size-8 text-muted-foreground" />
+                        }
+                      />
                     </div>
                     <div className="flex-1 text-right">
                       <p className="font-semibold line-clamp-1">
