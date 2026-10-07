@@ -5,6 +5,7 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { couponAPI } from "../endpoints/coupon.endpoints";
+import { entityQueryPredicate } from "../utils/entity-queries";
 
 /**
  * Query key factory for coupons
@@ -30,6 +31,14 @@ export const couponKeys = {
   useCoupon: () => [...couponKeys.all, "use-coupon"] as const,
   validate: (params?: any) => [...couponKeys.all, "validate", params] as const,
 };
+
+/**
+ * Every cached query that holds a coupon, under either naming scheme — the
+ * `couponKeys` factory and the `["coupon/…", …]` the list pages get from
+ * `useTableData`. See `entityQueryPredicate` for why both exist and why a
+ * `queryKey` cannot reach them both.
+ */
+export const isCouponQuery = entityQueryPredicate("coupon");
 
 /**
  * Fetch all coupons with optional filtering and pagination

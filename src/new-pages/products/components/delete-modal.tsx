@@ -1,13 +1,9 @@
 import { useMemo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Package, Star, X } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  productKeys,
-  useUpdateProduct,
-} from "@/api/wrappers/product.wrappers";
+import { useUpdateProduct } from "@/api/wrappers/product.wrappers";
 import type { ProductListItem } from "@/api/types/product";
 import { getImageUrl } from "@/utils/image-url";
 import { getProductCoverImage } from "@/utils/product-images";
@@ -36,7 +32,6 @@ const ProductDeleteModal = ({
   products = [],
   imageBaseUrl = "",
 }: Props) => {
-  const queryClient = useQueryClient();
   const updateProduct = useUpdateProduct();
 
   const product = useMemo(
@@ -54,6 +49,15 @@ const ProductDeleteModal = ({
 
   const busy = isDeleting || updateProduct.isPending;
 
+  /*
+   * `useUpdateProduct` already invalidates every product query, list pages
+   * included, and awaits the refetch before this runs. The invalidation that
+   * used to sit here was `productKeys.all` — `["products"]`, which is not a
+   * prefix of the list's `["product/filter-cursor", …]` — so it matched
+   * nothing, and hiding a product left the row on screen with its switch still
+   * reading "ظاهر". That is the half of this dialog that looked like it had
+   * done nothing at all.
+   */
   const handleHide = () => {
     if (!deleteId) return;
     updateProduct.mutate(
@@ -62,7 +66,6 @@ const ProductDeleteModal = ({
         onSuccess: () => {
           toast.success("تم إخفاء المنتج — لن يظهر للعملاء");
           setDeleteId(null);
-          queryClient.invalidateQueries({ queryKey: productKeys.all });
         },
         onError: (error: any) => {
           toast.error(

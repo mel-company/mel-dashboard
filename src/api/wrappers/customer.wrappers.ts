@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { customerAPI } from "../endpoints/customer.endpoints";
+import { entityQueryPredicate } from "../utils/entity-queries";
+import { statsKeys } from "./stats.wrappers";
 
 /**
  * Query key factory for customers
@@ -13,6 +15,14 @@ export const customerKeys = {
   search: (params?: any) => [...customerKeys.all, "search", params] as const,
   cursor: (params?: any) => [...customerKeys.all, "cursor", params] as const,
 };
+
+/**
+ * Every cached query that holds a customer, under either naming scheme — the
+ * `customerKeys` factory and the `["customer/…", …]` the list pages get from
+ * `useTableData`. See `entityQueryPredicate` for why both exist and why a
+ * `queryKey` cannot reach them both.
+ */
+export const isCustomerQuery = entityQueryPredicate("customer");
 
 /**
  * Fetch all customers with optional filtering and pagination
@@ -128,11 +138,15 @@ export const useDeleteCustomer = () => {
   return useMutation<any, Error, string>({
     mutationFn: (id: string) => customerAPI.delete(id),
     onSuccess: (_, deletedId) => {
-      // Invalidate and refetch customers list
-      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: customerKeys.cursor() });
+      // By predicate, not by key. The list page is keyed
+      // `["customer/cursor", "list", {…}]` by `useTableData`, which neither
+      // `customerKeys.lists()` nor `customerKeys.cursor()` is a prefix of — so
+      // the deleted row stayed on screen for the five minutes of `staleTime`.
+      queryClient.invalidateQueries({ predicate: isCustomerQuery });
       // Remove the deleted customer from cache
       queryClient.removeQueries({ queryKey: customerKeys.detail(deletedId) });
+      // The page's header counts come from the store stats, not from the list.
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
     },
   });
 };

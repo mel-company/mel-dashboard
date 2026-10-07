@@ -5,6 +5,7 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { categoryAPI } from "../endpoints/category.endpoints";
+import { entityQueryPredicate } from "../utils/entity-queries";
 
 /**
  * Query key factory for categories
@@ -53,6 +54,14 @@ export const categoryKeys = {
       params,
     ] as const,
 };
+
+/**
+ * Every cached query that holds a category, under either naming scheme — the
+ * `categoryKeys` factory and the `["category/…", …]` the list pages get from
+ * `useTableData`. See `entityQueryPredicate` for why both exist and why a
+ * `queryKey` cannot reach them both.
+ */
+export const isCategoryQuery = entityQueryPredicate("category");
 
 /**
  * Fetch all categories with optional filtering and pagination

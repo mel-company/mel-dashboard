@@ -5,6 +5,7 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { discountAPI } from "../endpoints/discount.endpoints";
+import { entityQueryPredicate } from "../utils/entity-queries";
 
 /**
  * Query key factory for discounts
@@ -41,6 +42,14 @@ export const discountKeys = {
   availableCategories: (params?: any) =>
     [...discountKeys.all, "available-categories", params] as const,
 };
+
+/**
+ * Every cached query that holds a discount, under either naming scheme — the
+ * `discountKeys` factory and the `["discount/…", …]` the list pages get from
+ * `useTableData`. See `entityQueryPredicate` for why both exist and why a
+ * `queryKey` cannot reach them both.
+ */
+export const isDiscountQuery = entityQueryPredicate("discount");
 
 /**
  * Fetch all discounts with optional filtering and pagination
