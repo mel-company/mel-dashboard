@@ -24,7 +24,13 @@ function renderCategories(product: ProductListItem) {
     return <span className="text-xs text-[#91a0b6]">بدون فئة</span>;
   }
   return (
-    <div className="flex max-w-[180px] flex-wrap justify-end gap-1.5">
+    /*
+     * `justify-start`, not `justify-end`: the row is RTL, so flex-end packs
+     * to the LEFT. Inside a 180px box that pushed the badges ~73px away from
+     * the right-aligned «الفئات» header they sit under, while every other
+     * column lined up within a badge's padding.
+     */
+    <div className="flex max-w-[180px] flex-wrap justify-start gap-1.5">
       {cats.slice(0, 3).map((c) => (
         <Badge key={c.id} color="purple">
           {c.name}
