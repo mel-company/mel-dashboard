@@ -58,13 +58,18 @@ const Layout = () => {
       />
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Soft brand glow — matches Figma dark atmosphere */}
+        {/*
+          Soft brand glow. Figma (606:15593) carries one, at the top edge
+          beside the nav, and nowhere else: sampled along its canvas the page
+          is a flat #0a0e27 apart from a purple cast around x>1300, y<100.
+          The cyan companion that used to sit bottom-left washed roughly a
+          third of the width in #091834 and has no counterpart there.
+        */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden dark:block"
         >
           <div className="absolute -top-28 -right-24 size-[480px] rounded-full bg-[#9139c4]/18 blur-[140px]" />
-          <div className="absolute -bottom-32 -left-20 size-[380px] rounded-full bg-[#00b7ff]/10 blur-[120px]" />
         </div>
 
         {showMobileChrome && (

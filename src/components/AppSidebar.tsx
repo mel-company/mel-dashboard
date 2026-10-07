@@ -186,7 +186,12 @@ const AppSidebar = ({
       dir="rtl"
       className={cn(
         "relative flex h-full shrink-0 flex-col overflow-hidden border-l border-border/60 bg-card text-right transition-[width] duration-200",
-        "dark:border-transparent dark:bg-surface",
+        // Figma 606:15593 paints the nav in `Colors/Background` (#0a0e27) —
+        // the same ground as the page, with only its two pills raised to
+        // `Colors/Shiny White`. It was on `--surface` (#12183b), which is the
+        // section wrapper's colour, so the nav read as a panel sitting beside
+        // the content instead of the page it is part of.
+        "dark:border-transparent dark:bg-background",
         // Figma insets the panel and rounds the edge that faces the content.
         "lg:my-3 lg:ms-0 lg:me-0 lg:h-[calc(100%-1.5rem)] lg:rounded-s-[28px]",
         collapsed ? "w-[76px]" : "w-[min(340px,92vw)] lg:w-[272px]",
@@ -222,7 +227,7 @@ const AppSidebar = ({
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2 rounded-2xl border border-transparent bg-slate-50 px-2.5 py-2.5 dark:border-white/[0.06] dark:bg-white/[0.03]">
+          <div className="flex items-center gap-2 rounded-2xl border border-transparent bg-slate-50 px-2.5 py-2.5 dark:border-white/[0.06] dark:bg-surface">
             {/* RTL: logo on the right */}
             <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-violet-500 to-sky-400 p-[2px]">
               <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-white dark:bg-background">
@@ -324,7 +329,7 @@ const AppSidebar = ({
             <button
               type="button"
               onClick={() => setProfileOpen((v) => !v)}
-              className="flex w-full items-center gap-2.5 rounded-2xl border border-transparent bg-slate-50 px-2.5 py-2.5 text-right transition-colors hover:bg-slate-100 dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]"
+              className="flex w-full items-center gap-2.5 rounded-2xl border border-transparent bg-slate-50 px-2.5 py-2.5 text-right transition-colors hover:bg-slate-100 dark:border-white/[0.06] dark:bg-surface dark:hover:bg-white/[0.07]"
             >
               {/* RTL: avatar on the right */}
               <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-violet-500 to-sky-400 text-xs font-bold text-white">
