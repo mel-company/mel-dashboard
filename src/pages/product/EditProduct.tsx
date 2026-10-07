@@ -1053,7 +1053,9 @@ const EditProduct = ({}: Props) => {
                   <DashedTag
                     key={property.id || property.name}
                     lead={property.name}
-                    onRemove={
+                    // Edit, not remove — this opens «تعديل خاصية المنتج»,
+                    // which carries its own delete.
+                    onEdit={
                       property.id
                         ? () => setEditingPropertyId(property.id)
                         : undefined
