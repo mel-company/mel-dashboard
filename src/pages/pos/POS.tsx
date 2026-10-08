@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import TitleBar from "@/components/table/title-bar";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
+import { usePosPlanAccess } from "@/api/wrappers/plan.wrappers";
 import POSFiltersBar from "@/new-pages/pos/components/POSFiltersBar";
 import POSProductGrid from "@/new-pages/pos/components/POSProductGrid";
 import POSInvoicePanel from "@/new-pages/pos/components/POSInvoicePanel";
@@ -153,7 +154,18 @@ const POS = ({ }: Props) => {
   });
 
   const { isPhysicalStore, isLoading: isLoadingStore } = usePhysicalStoreEnabled();
-  const canAccessPos = isPhysicalStore || !!orderId;
+  /**
+   * POS is PLUS-only, and this page never asked.
+   *
+   * `GET /plan/pos-access` exists for this and had no caller, so the only gate
+   * was the store's own «متجر فعلي» switch — a setting the merchant controls —
+   * and a GO store that flipped it got the whole POS surface. The route also
+   * answers no once a PLUS term has lapsed, which is not a question this client
+   * can decide for itself.
+   */
+  const { allowed: posPlanAllowed, isLoading: isLoadingPosPlan } =
+    usePosPlanAccess();
+  const canAccessPos = (isPhysicalStore && posPlanAllowed !== false) || !!orderId;
 
   const { data: domainDetails } = useFindDomainDetails();
   const { data: storeDetails } = useFetchStoreDetails();
@@ -699,10 +711,20 @@ const POS = ({ }: Props) => {
   };
 
   if (!isLoadingStore && !isPhysicalStore && !orderId) {
-    return <POSDisabledView />;
+    return <POSDisabledView reason="setting" />;
   }
 
-  if (isLoadingStore && !orderId) {
+  /**
+   * Checked after the setting, so a merchant who has not turned POS on is told
+   * that first — it is the one they can fix themselves. `posPlanAllowed` is
+   * `undefined` while the request is in flight and only `false` refuses, so a
+   * PLUS store never sees this flash on the way in.
+   */
+  if (posPlanAllowed === false && !orderId) {
+    return <POSDisabledView reason="plan" />;
+  }
+
+  if ((isLoadingStore || isLoadingPosPlan) && !orderId) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
         <Loader2 className="size-8 animate-spin text-sky-500" />

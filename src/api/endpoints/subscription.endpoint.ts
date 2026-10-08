@@ -1,5 +1,15 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
+/**
+ * `create`, `update` and `delete` used to live here.
+ *
+ * All three pointed at routes that do not exist: the real ones are
+ * `POST /subscription/system` and `PUT /subscription/system/:id`, and
+ * `DELETE /subscription/:id` is operator-guarded. Nothing ever called them, so
+ * three dead methods sat here looking like a merchant could create, edit or
+ * delete a subscription. None of those is a merchant action: cancelling is, and
+ * it has its own route below.
+ */
 export const subscriptionAPI = {
   /**
    * Get all subscriptions with optional filtering and pagination
@@ -31,29 +41,7 @@ export const subscriptionAPI = {
     return data;
   },
 
-  /**
-   * Create a new subscription
-   */
-  create: async (subscription: any): Promise<any> => {
-    const { data } = await axiosInstance.post<any>(
-      "/subscription",
-      subscription,
-    );
-    return data;
-  },
-
-  /**
-   * Update an existing subscription
-   */
-  update: async (id: string, subscription: any): Promise<any> => {
-    const { data } = await axiosInstance.put<any>(
-      `/subscription/${id}`,
-      subscription,
-    );
-    return data;
-  },
-
-  /**
+      /**
    * Update an existing subscription
    */
   changePlan: async (planId: string): Promise<any> => {
@@ -63,15 +51,7 @@ export const subscriptionAPI = {
     return data;
   },
 
-  /**
-   * Delete a subscription (soft delete)
-   */
-  delete: async (id: string): Promise<any> => {
-    const { data } = await axiosInstance.delete<any>(`/subscription/${id}`);
-    return data;
-  },
-
-  /**
+    /**
    * Pause a subscription (set status to INACTIVE)
    */
   pause: async (id: string): Promise<any> => {
