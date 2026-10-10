@@ -87,6 +87,7 @@ function resolveStoreSlug(data: EditorHandoff): string {
 function resolveEditorHandoffUrl(
   data: EditorHandoff,
   theme: "light" | "dark",
+  generationId?: string | null,
 ): string | null {
   const token = data.jwt || data.token;
   if (!token) return null;
@@ -98,9 +99,11 @@ function resolveEditorHandoffUrl(
   // it has nowhere to put the store, and it lands the merchant on the
   // editor's own dashboard rather than the editor.
   //
-  // Deliberately no `generation=`: that tells the bridge to overwrite the
+  // No `generation=` by default: that tells the bridge to overwrite the
   // merchant's pages with a generation result. Right once, immediately after
-  // generating — wrong on a button they press every day.
+  // generating — wrong on a button they press every day. The one time it is
+  // passed is the landing page's hand-off straight after a generation (see
+  // `takeGenerationId`).
   //
   // The origin comes from this app's own config rather than the server's
   // `redirectUrl`, so a misconfigured EDITOR_URL can never iframe the
@@ -112,8 +115,26 @@ function resolveEditorHandoffUrl(
   const store = resolveStoreSlug(data);
   if (store) url.searchParams.set("store", store);
 
+  if (generationId) url.searchParams.set("generation", generationId);
+
   url.searchParams.set("theme", theme);
   return url.toString();
+}
+
+/**
+ * The generation the landing page just finished, if this visit is its
+ * hand-off (`/editor?generation=<id>`, via `/bridge?next=`).
+ *
+ * Read once and removed from the address bar, so a reload or a bookmark of
+ * this page never re-applies a generation over edits made since.
+ */
+function takeGenerationId(): string | null {
+  const url = new URL(window.location.href);
+  const id = url.searchParams.get("generation");
+  if (!id) return null;
+  url.searchParams.delete("generation");
+  window.history.replaceState(window.history.state, "", url.toString());
+  return id;
 }
 
 const EditorPage = () => {
@@ -126,6 +147,12 @@ const EditorPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [iframeBlocked, setIframeBlocked] = useState(false);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
+  // Only the embedded editor's first hand-off loads it; the "new tab" button
+  // never does.
+  const generationIdRef = useRef<string | null | undefined>(undefined);
+  if (generationIdRef.current === undefined) {
+    generationIdRef.current = takeGenerationId();
+  }
 
   /**
    * Keep the embedded editor on our theme after it has opened.
@@ -208,7 +235,11 @@ const EditorPage = () => {
 
     validateUserToEditor(undefined, {
       onSuccess: (data: EditorHandoff) => {
-        const url = resolveEditorHandoffUrl(data, theme);
+        const url = resolveEditorHandoffUrl(
+          data,
+          theme,
+          generationIdRef.current,
+        );
         if (!url) {
           // The only way to get here now: the response carried no token.
           // The editor cannot sign anyone in on its own, so there is nothing
