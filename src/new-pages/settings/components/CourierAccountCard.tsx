@@ -30,7 +30,7 @@ import {
  * The password is encrypted before storage and no route ever returns it, so
  * what comes back here is only whether one exists.
  */
-const CourierAccountCard = () => {
+const CourierAccountCard = ({ embedded = false }: { embedded?: boolean }) => {
   const { data: courier, isLoading } = useActiveCourier();
   const { data: accountsData } = useCourierAccounts();
 
@@ -105,9 +105,18 @@ const CourierAccountCard = () => {
     }
   };
 
+  const title = `حسابك لدى ${courier.deliveryCompanyName || courier.displayName}`;
+
   return (
     <SettingsCard
-      title={`حسابك لدى ${courier.deliveryCompanyName || courier.displayName}`}
+      title={title}
+      // Inside the shipping-settings modal it is a section, not a card.
+      className={
+        embedded
+          ? "border-0 bg-slate-50 p-4 shadow-none sm:p-4 dark:bg-slate-900"
+          : undefined
+      }
+      headerClassName={embedded ? "mb-2" : undefined}
       titleAccessory={
         <div className="flex size-[35px] shrink-0 items-center justify-center rounded-[10px] bg-sky-500/10">
           <Truck className="size-5 text-sky-500" />
@@ -245,6 +254,7 @@ const CourierAccountCard = () => {
                   <Button
                     variant="outline"
                     size="sm"
+                    className="text-sky-700 dark:text-sky-300"
                     onClick={() => {
                       setUsername(account?.username ?? "");
                       setPassword("");
@@ -254,7 +264,7 @@ const CourierAccountCard = () => {
                     تعديل
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="destructive-outline"
                     size="sm"
                     disabled={clearCredentials.isPending}
                     onClick={forget}

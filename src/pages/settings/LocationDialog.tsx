@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, MapPin, Search, X } from "lucide-react";
+import { Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
 import {
   MapContainer,
   Marker,
-  TileLayer,
   useMap,
   useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
+import { brandPinIcon } from "@/components/map/brand-pin";
+import VectorBaseLayer from "@/components/map/VectorBaseLayer";
 import "leaflet/dist/leaflet.css";
 import {
   SettingsField,
@@ -18,25 +19,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
-import {
-  DARK_MAP_TILES,
-  LIGHT_MAP_TILES,
-  useResolvedTheme,
-} from "@/hooks/use-resolved-theme";
+import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-const pinIcon = new L.Icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
 
 const DEFAULT_LAT = 33.3152;
 const DEFAULT_LNG = 44.3661;
@@ -184,7 +169,7 @@ function LocationMarker({
     <Marker
       ref={markerRef}
       position={position}
-      icon={pinIcon}
+      icon={brandPinIcon}
       draggable
       eventHandlers={{
         dragend: (e) => {
@@ -212,7 +197,6 @@ const LocationDialog = ({
   keepOpenOnConfirm = false,
 }: Props) => {
   const theme = useResolvedTheme();
-  const tiles = theme === "dark" ? DARK_MAP_TILES : LIGHT_MAP_TILES;
 
   const [draftLat, setDraftLat] = useState(DEFAULT_LAT);
   const [draftLng, setDraftLng] = useState(DEFAULT_LNG);
@@ -298,6 +282,23 @@ const LocationDialog = ({
     setDraftLat(lat);
     setDraftLng(lng);
   }, []);
+
+  const [locating, setLocating] = useState(false);
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        setShouldRecenter(true);
+        setMapZoom(17);
+        setDraftLat(pos.coords.latitude);
+        setDraftLng(pos.coords.longitude);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   const handleConfirm = () => {
     onConfirm({
@@ -461,7 +462,7 @@ const LocationDialog = ({
                   className="size-full z-0"
                   scrollWheelZoom
                 >
-                  <TileLayer url={tiles} />
+                  <VectorBaseLayer theme={theme} />
                   <MapResizeFix />
                   <RecenterMap
                     lat={draftLat}
@@ -476,6 +477,23 @@ const LocationDialog = ({
                   <MapClickHandler onPositionChange={handlePositionChange} />
                 </MapContainer>
               )}
+              {/* Jump to where the merchant is standing — usually the shop. */}
+              <button
+                type="button"
+                onClick={handleLocateMe}
+                disabled={locating}
+                className="absolute bottom-3 left-3 z-[400] flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-[#1a2b5a] shadow-md hover:bg-slate-50 disabled:opacity-60 dark:bg-slate-900 dark:text-slate-100"
+              >
+                {locating ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <LocateFixed className="size-4 text-[#00b7ff]" />
+                )}
+                موقعي الحالي
+              </button>
+              <p className="pointer-events-none absolute right-3 top-3 z-[400] rounded-lg bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm dark:bg-slate-900/90 dark:text-slate-300">
+                اسحب الدبوس أو اضغط على الخريطة
+              </p>
             </div>
 
             <SettingsField label="العنوان" htmlFor="location-address">

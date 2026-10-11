@@ -1,26 +1,11 @@
 import { useEffect } from "react";
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
-import L from "leaflet";
+import { MapContainer, Marker, useMap } from "react-leaflet";
+import { brandPinIcon } from "@/components/map/brand-pin";
+import VectorBaseLayer from "@/components/map/VectorBaseLayer";
 import "leaflet/dist/leaflet.css";
-import {
-  DARK_MAP_TILES,
-  LIGHT_MAP_TILES,
-  useResolvedTheme,
-} from "@/hooks/use-resolved-theme";
+import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-const pinIcon = new L.Icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
 
 function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
@@ -37,7 +22,6 @@ type Props = {
 
 const StoreMapPreview = ({ lat, lng }: Props) => {
   const theme = useResolvedTheme();
-  const tiles = theme === "dark" ? DARK_MAP_TILES : LIGHT_MAP_TILES;
 
   return (
     <MapContainer
@@ -51,9 +35,9 @@ const StoreMapPreview = ({ lat, lng }: Props) => {
       zoomControl={false}
       attributionControl={false}
     >
-      <TileLayer url={tiles} />
+      <VectorBaseLayer theme={theme} />
       <RecenterMap lat={lat} lng={lng} />
-      <Marker position={[lat, lng]} icon={pinIcon} />
+      <Marker position={[lat, lng]} icon={brandPinIcon} />
     </MapContainer>
   );
 };

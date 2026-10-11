@@ -16,10 +16,12 @@ import { useFetchPaymentProviders } from "@/api/wrappers/payment.wrappers";
 import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyDialog";
 import CourierLogo from "@/components/CourierLogo";
 import DomainSettingsSection from "./DomainSettingsSection";
-import PrimeIntegrationCard from "./PrimeIntegrationCard";
-import CourierAccountCard from "./CourierAccountCard";
-import BranchLocationField from "./BranchLocationField";
-import { isPrimeDelivery } from "@/api/types/store";
+import ShippingSettingsDialog from "./ShippingSettingsDialog";
+import { AlertTriangle } from "lucide-react";
+import {
+  useActiveCourier,
+  useCourierBranch,
+} from "@/api/wrappers/shipping.wrappers";
 import settingsGearIcon from "@/assets/settings/settings-gear.svg";
 import moneyIcon from "@/assets/settings/money.svg";
 import qiCardIcon from "@/assets/settings/qi-card.svg";
@@ -146,6 +148,15 @@ const StoreIntegrationsSection = () => {
 
   const [domainDialogOpen, setDomainDialogOpen] = useState(false);
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
+  const [shippingSettingsOpen, setShippingSettingsOpen] = useState(false);
+  const { data: activeCourier } = useActiveCourier();
+  const { data: courierBranch } = useCourierBranch();
+  const shippingNeedsSetup =
+    (activeCourier?.selected &&
+      activeCourier.integrated &&
+      !activeCourier.accountReady &&
+      !!activeCourier.capabilities?.branch) ||
+    (!!courierBranch && courierBranch.location.latitude == null);
   const [optimisticCod, setOptimisticCod] = useState<boolean | null>(null);
 
   const asList = (value: unknown): any[] =>
@@ -382,7 +393,17 @@ const StoreIntegrationsSection = () => {
 
         <SettingsCard
           title="أعدادات مزودين خدمات التوصيل"
-          titleAccessory={<SectionGear />}
+          titleAccessory={
+            <button
+              type="button"
+              onClick={() => setShippingSettingsOpen(true)}
+              aria-label="إعدادات التوصيل"
+              title="إعدادات التوصيل: موقع الفرع وحسابك لدى الشركة"
+              className="rounded-[10px] ring-sky-300 transition hover:ring-2 focus-visible:ring-2"
+            >
+              <SectionGear />
+            </button>
+          }
         >
           <p className="mb-2 px-1 text-sm font-medium text-slate-900 dark:text-slate-100">
             اختيار شركة التوصيل
@@ -423,22 +444,30 @@ const StoreIntegrationsSection = () => {
           </p>
 
           {/*
-            Where the store ships from, placed on a map. For Prime and Boxy
-            saving it also opens (or moves) the store's branch there.
+            The settings live behind the gear now; this line only appears when
+            something there still needs the merchant, so it is not missed.
           */}
-          <BranchLocationField />
+          {shippingNeedsSetup && (
+            <button
+              type="button"
+              onClick={() => setShippingSettingsOpen(true)}
+              className="mt-3 flex w-full items-center gap-2 rounded-[12px] bg-amber-50 px-3 py-2.5 text-right text-[13px] font-medium text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-200"
+            >
+              <AlertTriangle className="size-4 shrink-0" />
+              <span className="flex-1">
+                حدّد موقع الفرع لتتمكن من شحن الطلبات
+              </span>
+              <img src={chevronIcon} alt="" className="size-5 shrink-0" />
+            </button>
+          )}
 
-          {isPrimeDelivery(storeDetails) ? (
-            <div className="mt-3">
-              <PrimeIntegrationCard />
-            </div>
-          ) : null}
         </SettingsCard>
-
-        {/* Whichever courier the store uses: whether it can ship at all, and
-            the own-login link for the two vendors that accept one. */}
-        <CourierAccountCard />
       </div>
+
+      <ShippingSettingsDialog
+        open={shippingSettingsOpen}
+        onOpenChange={setShippingSettingsOpen}
+      />
 
       <Dialog open={domainDialogOpen} onOpenChange={setDomainDialogOpen}>
         <DialogContent
