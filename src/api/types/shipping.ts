@@ -59,6 +59,11 @@ export interface CourierCapabilities {
   label: boolean;
   zoneCatalogue: boolean;
   webhook: boolean;
+  /**
+   * Opens (and moves) the store's branch from a map location — Prime and Boxy.
+   * Optional because a backend from before it does not send it.
+   */
+  branch?: boolean;
 }
 
 /**
@@ -303,4 +308,34 @@ export interface CourierAccountSummary {
   zonesMapped: boolean;
   /** Null when this store has never been provisioned at this courier. */
   account: CourierAccountView | null;
+}
+
+/** Where the store's branch is — `GET`/`PUT /shipping/couriers/branch`. */
+export interface CourierBranchLocation {
+  location: {
+    address: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    stateId: string | null;
+    regionId: string | null;
+  };
+  /** The store's courier, or null when none is chosen or integrated. */
+  courier: {
+    code: string;
+    displayName: string;
+    /** Saving the location also opens (or moves) a branch at this courier. */
+    opensBranch: boolean;
+    /** The store already has a branch there. */
+    hasBranch: boolean;
+  } | null;
+  /** Present on a save. */
+  branch?: { updated: boolean } | null;
+}
+
+export interface SaveCourierBranchInput {
+  address: string;
+  latitude: number;
+  longitude: number;
+  stateId?: string;
+  regionId?: string;
 }

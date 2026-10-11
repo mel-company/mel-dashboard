@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -13,22 +13,15 @@ import {
   useUpsertStorePaymentMethod,
 } from "@/api/wrappers/settings.wrappers";
 import { useFetchPaymentProviders } from "@/api/wrappers/payment.wrappers";
-import { useUpdateStoreDetails } from "@/api/wrappers/settings.wrappers";
-import { useFetchStates } from "@/api/wrappers/state.wrappers";
-import { useFetchRegions } from "@/api/wrappers/region.wrappers";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyDialog";
 import CourierLogo from "@/components/CourierLogo";
 import DomainSettingsSection from "./DomainSettingsSection";
-import PrimeIntegrationCard from "./PrimeIntegrationCard";
-import CourierAccountCard from "./CourierAccountCard";
-import { isPrimeDelivery } from "@/api/types/store";
+import ShippingSettingsDialog from "./ShippingSettingsDialog";
+import { AlertTriangle } from "lucide-react";
+import {
+  useActiveCourier,
+  useCourierBranch,
+} from "@/api/wrappers/shipping.wrappers";
 import settingsGearIcon from "@/assets/settings/settings-gear.svg";
 import moneyIcon from "@/assets/settings/money.svg";
 import qiCardIcon from "@/assets/settings/qi-card.svg";
@@ -155,51 +148,19 @@ const StoreIntegrationsSection = () => {
 
   const [domainDialogOpen, setDomainDialogOpen] = useState(false);
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
+  const [shippingSettingsOpen, setShippingSettingsOpen] = useState(false);
+  const { data: activeCourier } = useActiveCourier();
+  const { data: courierBranch } = useCourierBranch();
+  const shippingNeedsSetup =
+    (activeCourier?.selected &&
+      activeCourier.integrated &&
+      !activeCourier.accountReady &&
+      !!activeCourier.capabilities?.branch) ||
+    (!!courierBranch && courierBranch.location.latitude == null);
   const [optimisticCod, setOptimisticCod] = useState<boolean | null>(null);
-
-  /**
-   * Where the store ships from.
-   *
-   * Half of what decides an Iraqi delivery price is whether the parcel leaves
-   * the province, and nothing recorded the store's own province — the address
-   * was free text. Kept as the platform's province and city rather than a
-   * courier's code, so it survives changing courier.
-   */
-  const updateStoreDetails = useUpdateStoreDetails();
-  const [originStateId, setOriginStateId] = useState("");
-  const [originRegionId, setOriginRegionId] = useState("");
-
-  const { data: statesData } = useFetchStates();
-  const { data: regionsData } = useFetchRegions(originStateId, !!originStateId);
 
   const asList = (value: unknown): any[] =>
     Array.isArray(value) ? value : ((value as any)?.data ?? []);
-
-  const states = useMemo(() => asList(statesData), [statesData]);
-  const regions = useMemo(() => asList(regionsData), [regionsData]);
-
-  useEffect(() => {
-    setOriginStateId((storeDetails as any)?.originStateId ?? "");
-    setOriginRegionId((storeDetails as any)?.originRegionId ?? "");
-  }, [storeDetails]);
-
-  /** Names come back as `{ ar, en }` JSON, or a bare string on older rows. */
-  const placeName = (name: unknown): string => {
-    if (!name) return "";
-    if (typeof name === "string") return name;
-    const n = name as Record<string, string | undefined>;
-    return n.ar || n.en || n.arabic || n.english || "";
-  };
-
-  const saveOrigin = (stateId: string, regionId: string) => {
-    updateStoreDetails.mutate(
-      { originStateId: stateId || null, originRegionId: regionId || null },
-      {
-        onSuccess: () => toast.success("تم حفظ موقع الفرع"),
-        onError: () => toast.error("فشل حفظ موقع الفرع"),
-      },
-    );
-  };
 
   /**
    * The catalogue, with cash on delivery lifted out of it.
@@ -432,7 +393,17 @@ const StoreIntegrationsSection = () => {
 
         <SettingsCard
           title="أعدادات مزودين خدمات التوصيل"
-          titleAccessory={<SectionGear />}
+          titleAccessory={
+            <button
+              type="button"
+              onClick={() => setShippingSettingsOpen(true)}
+              aria-label="إعدادات التوصيل"
+              title="إعدادات التوصيل: موقع الفرع وحسابك لدى الشركة"
+              className="rounded-[10px] ring-sky-300 transition hover:ring-2 focus-visible:ring-2"
+            >
+              <SectionGear />
+            </button>
+          }
         >
           <p className="mb-2 px-1 text-sm font-medium text-slate-900 dark:text-slate-100">
             اختيار شركة التوصيل
@@ -472,70 +443,31 @@ const StoreIntegrationsSection = () => {
             يمكنك تغيير شركة التوصيل كل 30 يوم
           </p>
 
-          <div className="mt-4 space-y-2">
-            <p className="px-1 text-sm font-medium text-slate-900 dark:text-slate-100">
-              موقع الفرع
-            </p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Select
-                value={originStateId}
-                onValueChange={(value) => {
-                  setOriginStateId(value);
-                  // The city list follows the province; keeping the previous
-                  // selection would save a city in a different province.
-                  setOriginRegionId("");
-                  saveOrigin(value, "");
-                }}
-              >
-                <SelectTrigger className="h-12 rounded-[14px] bg-slate-100 dark:bg-slate-900">
-                  <SelectValue placeholder="المحافظة" />
-                </SelectTrigger>
-                <SelectContent>
-                  {states.map((state: any) => (
-                    <SelectItem key={state.id} value={state.id}>
-                      {placeName(state.name)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/*
+            The settings live behind the gear now; this line only appears when
+            something there still needs the merchant, so it is not missed.
+          */}
+          {shippingNeedsSetup && (
+            <button
+              type="button"
+              onClick={() => setShippingSettingsOpen(true)}
+              className="mt-3 flex w-full items-center gap-2 rounded-[12px] bg-amber-50 px-3 py-2.5 text-right text-[13px] font-medium text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-200"
+            >
+              <AlertTriangle className="size-4 shrink-0" />
+              <span className="flex-1">
+                حدّد موقع الفرع لتتمكن من شحن الطلبات
+              </span>
+              <img src={chevronIcon} alt="" className="size-5 shrink-0" />
+            </button>
+          )}
 
-              <Select
-                value={originRegionId}
-                onValueChange={(value) => {
-                  setOriginRegionId(value);
-                  saveOrigin(originStateId, value);
-                }}
-                disabled={!originStateId}
-              >
-                <SelectTrigger className="h-12 rounded-[14px] bg-slate-100 dark:bg-slate-900">
-                  <SelectValue placeholder="المدينة" />
-                </SelectTrigger>
-                <SelectContent>
-                  {regions.map((region: any) => (
-                    <SelectItem key={region.id} value={region.id}>
-                      {placeName(region.name)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="px-1 text-[13px] text-slate-500">
-              تُستخدم لحساب أجور التوصيل — التوصيل داخل نفس المحافظة يُحسب بسعر
-              مختلف.
-            </p>
-          </div>
-
-          {isPrimeDelivery(storeDetails) ? (
-            <div className="mt-3">
-              <PrimeIntegrationCard />
-            </div>
-          ) : null}
         </SettingsCard>
-
-        {/* Whichever courier the store uses: whether it can ship at all, and
-            the own-login link for the two vendors that accept one. */}
-        <CourierAccountCard />
       </div>
+
+      <ShippingSettingsDialog
+        open={shippingSettingsOpen}
+        onOpenChange={setShippingSettingsOpen}
+      />
 
       <Dialog open={domainDialogOpen} onOpenChange={setDomainDialogOpen}>
         <DialogContent

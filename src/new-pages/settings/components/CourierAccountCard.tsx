@@ -30,7 +30,7 @@ import {
  * The password is encrypted before storage and no route ever returns it, so
  * what comes back here is only whether one exists.
  */
-const CourierAccountCard = () => {
+const CourierAccountCard = ({ embedded = false }: { embedded?: boolean }) => {
   const { data: courier, isLoading } = useActiveCourier();
   const { data: accountsData } = useCourierAccounts();
 
@@ -39,6 +39,8 @@ const CourierAccountCard = () => {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  /** Changing a linked login — the form again, over the stored one. */
+  const [editing, setEditing] = useState(false);
 
   if (isLoading || !courier) return null;
 
@@ -78,7 +80,10 @@ const CourierAccountCard = () => {
       // Never kept in component state after it is sent.
       setPassword("");
       setUsername("");
-      toast.success("تم حفظ حسابك لدى شركة الشحن.");
+      setEditing(false);
+      toast.success(
+        editing ? "تم تحديث حسابك لدى شركة الشحن." : "تم حفظ حسابك لدى شركة الشحن.",
+      );
     } catch (error) {
       const message = (
         error as { response?: { data?: { message?: unknown } } }
@@ -100,9 +105,18 @@ const CourierAccountCard = () => {
     }
   };
 
+  const title = `حسابك لدى ${courier.deliveryCompanyName || courier.displayName}`;
+
   return (
     <SettingsCard
-      title={`حسابك لدى ${courier.deliveryCompanyName || courier.displayName}`}
+      title={title}
+      // Inside the shipping-settings modal it is a section, not a card.
+      className={
+        embedded
+          ? "border-0 bg-slate-50 p-4 shadow-none sm:p-4 dark:bg-slate-900"
+          : undefined
+      }
+      headerClassName={embedded ? "mb-2" : undefined}
       titleAccessory={
         <div className="flex size-[35px] shrink-0 items-center justify-center rounded-[10px] bg-sky-500/10">
           <Truck className="size-5 text-sky-500" />
@@ -157,10 +171,22 @@ const CourierAccountCard = () => {
 
         {!courier.accountReady && courier.supportsBranches && (
           <div className="space-y-2 rounded-[12px] bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-800">
-            <p>
-              يحتاج تسجيل متجرك لدى {courier.displayName} إلى خطوة من فريق
-              المنصة. تواصل مع الدعم لاستكمالها — لا يمكن شحن الطلبات قبل ذلك.
-            </p>
+            {/*
+              Prime and Boxy now open the branch from the map location in the
+              delivery settings, so the merchant can finish this themselves.
+            */}
+            {courier.capabilities?.branch ? (
+              <p>
+                حدّد «موقع الفرع» في إعدادات التوصيل واحفظه ليُفتح فرعك لدى{" "}
+                {courier.displayName} — لا يمكن شحن الطلبات قبل ذلك.
+              </p>
+            ) : (
+              <p>
+                يحتاج تسجيل متجرك لدى {courier.displayName} إلى خطوة من فريق
+                المنصة. تواصل مع الدعم لاستكمالها — لا يمكن شحن الطلبات قبل
+                ذلك.
+              </p>
+            )}
             {/*
               The courier's own account model, in its words rather than ours.
               The server has carried it on this route all along and nothing
@@ -212,7 +238,7 @@ const CourierAccountCard = () => {
                 عبر حساب المنصة لدى {courier.displayName} — تواصل مع الدعم إن
                 أردت تفعيل الربط.
               </p>
-            ) : hasOwnLogin ? (
+            ) : hasOwnLogin && !editing ? (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] bg-slate-50 px-3 py-2.5">
                 <div className="text-[13px]">
                   <p className="font-bold text-slate-900">
@@ -224,17 +250,31 @@ const CourierAccountCard = () => {
                     </p>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={clearCredentials.isPending}
-                  onClick={forget}
-                >
-                  {clearCredentials.isPending && (
-                    <Loader2 className="size-4 animate-spin" />
-                  )}
-                  حذف الربط
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-sky-700 dark:text-sky-300"
+                    onClick={() => {
+                      setUsername(account?.username ?? "");
+                      setPassword("");
+                      setEditing(true);
+                    }}
+                  >
+                    تعديل
+                  </Button>
+                  <Button
+                    variant="destructive-outline"
+                    size="sm"
+                    disabled={clearCredentials.isPending}
+                    onClick={forget}
+                  >
+                    {clearCredentials.isPending && (
+                      <Loader2 className="size-4 animate-spin" />
+                    )}
+                    حذف الربط
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-2">
@@ -251,16 +291,37 @@ const CourierAccountCard = () => {
                   autoComplete="new-password"
                   onChange={(event) => setPassword(event.target.value)}
                 />
-                <Button
-                  size="sm"
-                  disabled={setCredentials.isPending}
-                  onClick={save}
-                >
-                  {setCredentials.isPending && (
-                    <Loader2 className="size-4 animate-spin" />
+                {editing && (
+                  <p className="text-[12px] text-slate-500">
+                    أدخل كلمة المرور من جديد — لا نحتفظ بها بشكل يمكن عرضه.
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    disabled={setCredentials.isPending}
+                    onClick={save}
+                  >
+                    {setCredentials.isPending && (
+                      <Loader2 className="size-4 animate-spin" />
+                    )}
+                    {editing ? "حفظ التعديل" : "ربط الحساب"}
+                  </Button>
+                  {editing && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={setCredentials.isPending}
+                      onClick={() => {
+                        setEditing(false);
+                        setUsername("");
+                        setPassword("");
+                      }}
+                    >
+                      إلغاء
+                    </Button>
                   )}
-                  ربط الحساب
-                </Button>
+                </div>
               </div>
             )}
           </div>

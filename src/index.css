@@ -662,3 +662,42 @@ table thead tr th:last-child {
     -webkit-mask-image: none;
   }
 }
+
+/* Map pin (src/components/map/brand-pin.ts) */
+.mel-pin-icon {
+  background: transparent;
+  border: 0;
+}
+.mel-pin {
+  position: relative;
+  width: 40px;
+  height: 48px;
+  filter: drop-shadow(0 4px 6px rgb(15 23 42 / 0.25));
+}
+.mel-pin svg {
+  position: relative;
+  z-index: 1;
+}
+.mel-pin__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  width: 14px;
+  height: 5px;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: rgb(15 23 42 / 0.3);
+  filter: blur(1px);
+}
+.leaflet-container .leaflet-control-zoom {
+  border: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.15);
+}
+.leaflet-container .leaflet-control-zoom a {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  color: #0f172a;
+}

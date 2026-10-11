@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, MapPin, Search, X } from "lucide-react";
+import { Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
 import {
   MapContainer,
   Marker,
-  TileLayer,
   useMap,
   useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
+import { brandPinIcon } from "@/components/map/brand-pin";
+import VectorBaseLayer from "@/components/map/VectorBaseLayer";
 import "leaflet/dist/leaflet.css";
 import {
   SettingsField,
@@ -18,25 +19,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
-import {
-  DARK_MAP_TILES,
-  LIGHT_MAP_TILES,
-  useResolvedTheme,
-} from "@/hooks/use-resolved-theme";
+import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-const pinIcon = new L.Icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
 
 const DEFAULT_LAT = 33.3152;
 const DEFAULT_LNG = 44.3661;
@@ -75,7 +60,25 @@ type Props = {
     latitude: number;
     longitude: number;
     address: string;
+    /** The province/city picked in the list; empty when none was picked. */
+    stateId: string;
+    regionId: string;
   }) => void;
+  /** Defaults to the store-location wording. */
+  title?: string;
+  confirmLabel?: string;
+  /** Opens with this province (and city) already chosen. */
+  initialStateId?: string | null;
+  initialRegionId?: string | null;
+  /** Keep the confirm button off until a province is chosen. */
+  requireState?: boolean;
+  /** Disables the buttons while the caller saves. */
+  busy?: boolean;
+  /**
+   * Leave the dialog open on confirm — for a caller that saves to the server
+   * and closes it itself once that succeeds.
+   */
+  keepOpenOnConfirm?: boolean;
 };
 
 function getDisplayName(name: unknown): string {
@@ -166,7 +169,7 @@ function LocationMarker({
     <Marker
       ref={markerRef}
       position={position}
-      icon={pinIcon}
+      icon={brandPinIcon}
       draggable
       eventHandlers={{
         dragend: (e) => {
@@ -185,9 +188,15 @@ const LocationDialog = ({
   longitude,
   address,
   onConfirm,
+  title = "تغيير موقع المتجر",
+  confirmLabel = "تأكيد الموقع",
+  initialStateId,
+  initialRegionId,
+  requireState = false,
+  busy = false,
+  keepOpenOnConfirm = false,
 }: Props) => {
   const theme = useResolvedTheme();
-  const tiles = theme === "dark" ? DARK_MAP_TILES : LIGHT_MAP_TILES;
 
   const [draftLat, setDraftLat] = useState(DEFAULT_LAT);
   const [draftLng, setDraftLng] = useState(DEFAULT_LNG);
@@ -197,6 +206,9 @@ const LocationDialog = ({
   const [selectedRegionId, setSelectedRegionId] = useState("");
   const [listFilter, setListFilter] = useState("");
   const [shouldRecenter, setShouldRecenter] = useState(false);
+  // Opening with a city already chosen sets the province too, and the
+  // province change below would otherwise wipe the city straight away.
+  const keepRegionOnce = useRef(false);
 
   const { data: statesData, isLoading: isLoadingStates } = useFetchStates(
     undefined,
@@ -229,13 +241,18 @@ const LocationDialog = ({
     setDraftLng(longitude ?? DEFAULT_LNG);
     setMapZoom(latitude != null && longitude != null ? 15 : 14);
     setDraftAddress(address);
-    setSelectedStateId("");
-    setSelectedRegionId("");
+    keepRegionOnce.current = !!initialStateId && !!initialRegionId;
+    setSelectedStateId(initialStateId ?? "");
+    setSelectedRegionId(initialStateId ? (initialRegionId ?? "") : "");
     setListFilter("");
     setShouldRecenter(false);
-  }, [open, latitude, longitude, address]);
+  }, [open, latitude, longitude, address, initialStateId, initialRegionId]);
 
   useEffect(() => {
+    if (keepRegionOnce.current) {
+      keepRegionOnce.current = false;
+      return;
+    }
     setSelectedRegionId("");
     setListFilter("");
   }, [selectedStateId]);
@@ -266,14 +283,36 @@ const LocationDialog = ({
     setDraftLng(lng);
   }, []);
 
+  const [locating, setLocating] = useState(false);
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        setShouldRecenter(true);
+        setMapZoom(17);
+        setDraftLat(pos.coords.latitude);
+        setDraftLng(pos.coords.longitude);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
   const handleConfirm = () => {
     onConfirm({
       latitude: draftLat,
       longitude: draftLng,
       address: draftAddress.trim(),
+      stateId: selectedStateId,
+      regionId: selectedRegionId,
     });
-    onOpenChange(false);
+    if (!keepOpenOnConfirm) onOpenChange(false);
   };
+
+  const canConfirm =
+    !busy && !!draftAddress.trim() && (!requireState || !!selectedStateId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -297,7 +336,7 @@ const LocationDialog = ({
             </button>
             <div className="flex items-center gap-2.5">
               <DialogTitle className="text-lg font-bold tracking-tight text-[#1a2b5a] dark:text-slate-50">
-                تغيير موقع المتجر
+                {title}
               </DialogTitle>
               <div className="flex size-10 items-center justify-center rounded-2xl bg-sky-100 text-[#00b7ff] dark:bg-sky-950/50 dark:text-sky-300">
                 <MapPin className="size-5" strokeWidth={2} />
@@ -423,7 +462,7 @@ const LocationDialog = ({
                   className="size-full z-0"
                   scrollWheelZoom
                 >
-                  <TileLayer url={tiles} />
+                  <VectorBaseLayer theme={theme} />
                   <MapResizeFix />
                   <RecenterMap
                     lat={draftLat}
@@ -438,6 +477,23 @@ const LocationDialog = ({
                   <MapClickHandler onPositionChange={handlePositionChange} />
                 </MapContainer>
               )}
+              {/* Jump to where the merchant is standing — usually the shop. */}
+              <button
+                type="button"
+                onClick={handleLocateMe}
+                disabled={locating}
+                className="absolute bottom-3 left-3 z-[400] flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-[#1a2b5a] shadow-md hover:bg-slate-50 disabled:opacity-60 dark:bg-slate-900 dark:text-slate-100"
+              >
+                {locating ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <LocateFixed className="size-4 text-[#00b7ff]" />
+                )}
+                موقعي الحالي
+              </button>
+              <p className="pointer-events-none absolute right-3 top-3 z-[400] rounded-lg bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm dark:bg-slate-900/90 dark:text-slate-300">
+                اسحب الدبوس أو اضغط على الخريطة
+              </p>
             </div>
 
             <SettingsField label="العنوان" htmlFor="location-address">
@@ -462,9 +518,11 @@ const LocationDialog = ({
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="h-12 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6]"
+                disabled={!canConfirm}
+                className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                تأكيد الموقع
+                {busy && <Loader2 className="size-4 animate-spin" />}
+                {confirmLabel}
               </button>
             </div>
           </div>

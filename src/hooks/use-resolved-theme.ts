@@ -30,9 +30,3 @@ export function useResolvedTheme(): "light" | "dark" {
 
   return resolved;
 }
-
-export const LIGHT_MAP_TILES =
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-
-export const DARK_MAP_TILES =
-  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";

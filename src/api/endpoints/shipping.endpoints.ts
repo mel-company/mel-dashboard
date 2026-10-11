@@ -3,6 +3,8 @@ import type {
   ActiveCourier,
   CourierAccountSummary,
   CourierAccountView,
+  CourierBranchLocation,
+  SaveCourierBranchInput,
   CourierShipment,
   CourierTrackingEvent,
   CreateShipmentInput,
@@ -54,9 +56,14 @@ export const shippingAPI = {
     orderId: string,
     body: CreateShipmentInput = {},
   ): Promise<CourierShipment> => {
+    // Flat, as `CreateCourierShipmentDto` declares them. Sent nested under
+    // `options`, the server's `whitelist: true` pipe dropped the whole object
+    // in silence — every Boxy parcel shipped as size M and never fragile, and
+    // every Modon/Al-Waseet «طرد استبدال» went out as an ordinary parcel.
+    const { options, force } = body;
     const { data } = await axiosInstance.post<CourierShipment>(
       `/shipping/orders/${orderId}/shipment`,
-      body,
+      { ...options, ...(force === undefined ? {} : { force }) },
     );
     return data;
   },
@@ -151,6 +158,32 @@ export const shippingAPI = {
   clearCredentials: async (code: string): Promise<CourierAccountView | null> => {
     const { data } = await axiosInstance.delete<CourierAccountView | null>(
       `/shipping/couriers/${code}/credentials`,
+    );
+    return data;
+  },
+
+  /** موقع فرع المتجر، وهل لديه فرع لدى شركة الشحن. */
+  getBranch: async (): Promise<CourierBranchLocation> => {
+    const { data } = await axiosInstance.get<CourierBranchLocation>(
+      "/shipping/couriers/branch",
+    );
+    return data;
+  },
+
+  /**
+   * حفظ موقع الفرع من الخريطة، وفتح الفرع (أو نقله) لدى الشركة.
+   *
+   * Sends a place, never an id. For Prime and Boxy the server creates the
+   * branch inside the platform's account, or moves the one the store has, and
+   * records the ids the courier returned; for Modon and Al-Waseet only the
+   * store's location is saved.
+   */
+  saveBranch: async (
+    body: SaveCourierBranchInput,
+  ): Promise<CourierBranchLocation> => {
+    const { data } = await axiosInstance.put<CourierBranchLocation>(
+      "/shipping/couriers/branch",
+      body,
     );
     return data;
   },
