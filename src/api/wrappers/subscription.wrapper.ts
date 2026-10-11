@@ -53,55 +53,11 @@ export const useFetchStoreSubscription = () => {
 };
 
 /**
- * Create a new subscription mutation
+ * `useCreateSubscription`, `useUpdateSubscription` and `useDeleteSubscription`
+ * used to sit here. Each wrapped an endpoint pointing at a route that does not
+ * exist, and not one of them was ever called — see the note in
+ * `subscription.endpoint.ts`.
  */
-export const useCreateSubscription = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<any, Error, any>({
-    mutationFn: (subscription: any) => subscriptionAPI.create(subscription),
-    onSuccess: () => {
-      // Invalidate and refetch subscriptions list
-      queryClient.invalidateQueries({ queryKey: subscriptionKeys.lists() });
-    },
-  });
-};
-
-/**
- * Update an existing subscription mutation
- */
-export const useUpdateSubscription = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<any, Error, { id: string; data: any }>({
-    mutationFn: ({ id, data }) => subscriptionAPI.update(id, data),
-    onSuccess: (data) => {
-      // Invalidate and refetch subscriptions list
-      queryClient.invalidateQueries({ queryKey: subscriptionKeys.lists() });
-      // Update the specific subscription cache
-      queryClient.setQueryData(subscriptionKeys.detail(data.id), data);
-    },
-  });
-};
-
-/**
- * Delete a subscription mutation
- */
-export const useDeleteSubscription = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<any, Error, string>({
-    mutationFn: (id: string) => subscriptionAPI.delete(id),
-    onSuccess: (_, deletedId) => {
-      // Invalidate and refetch subscriptions list
-      queryClient.invalidateQueries({ queryKey: subscriptionKeys.lists() });
-      // Remove the deleted subscription from cache
-      queryClient.removeQueries({
-        queryKey: subscriptionKeys.detail(deletedId),
-      });
-    },
-  });
-};
 
 /**
  * Pause a subscription mutation

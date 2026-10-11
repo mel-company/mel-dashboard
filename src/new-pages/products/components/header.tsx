@@ -17,6 +17,7 @@ const ProductTableHeader = ({ sort }: { sort?: SortState }) => {
         <SortableHead className={thClass} sortKey="cost" sort={sort}>تكلفة المنتج</SortableHead>
         <SortableHead className={cn(thClass, "w-20")} sortKey="rating" sort={sort}>التقييم</SortableHead>
         <SortableHead className={cn(thClass, "w-28")} sortKey="status" sort={sort}>الحالة</SortableHead>
+        <TableHead className={cn(thClass, "w-24")}>الظهور</TableHead>
         <TableHead className={cn(thClass, "w-32")}>العمليات</TableHead>
       </TableRow>
     </TableHeader>

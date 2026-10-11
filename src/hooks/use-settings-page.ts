@@ -37,7 +37,6 @@ export interface StoreFormData {
   deliveryNotes: string;
   defaultProductStatus: string;
   lowStockThreshold: number;
-  cashOnDelivery: boolean;
   allowOrderEditing: boolean;
   autoCancelUnpaidHours: number;
 }
@@ -57,7 +56,6 @@ const defaultStoreForm: StoreFormData = {
   deliveryNotes: "",
   defaultProductStatus: PRODUCT_STATUS.PUBLISHED,
   lowStockThreshold: 10,
-  cashOnDelivery: true,
   allowOrderEditing: true,
   autoCancelUnpaidHours: 10,
 };
@@ -89,16 +87,6 @@ export function useSettingsPage() {
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const originalStoreFormRef = useRef<StoreFormData | null>(null);
   const hasInitializedStoreFormRef = useRef(false);
-
-  const [generalSettings, setGeneralSettings] = useState({
-    defaultProductStatus: PRODUCT_STATUS.DRAFT,
-    lowStockThreshold: 10,
-    autoCancelUnpaidHours: 24,
-    allowOrderEditing: false,
-    maintenanceMode: false,
-  });
-  const originalGeneralRef = useRef<typeof generalSettings | null>(null);
-  const hasInitializedGeneralRef = useRef(false);
 
   useEffect(() => {
     if (isLoadingSettings) return;
@@ -139,7 +127,6 @@ export function useSettingsPage() {
         currentSettings?.product_default_state?.toUpperCase() ??
         PRODUCT_STATUS.PUBLISHED,
       lowStockThreshold: currentSettings?.low_stock_alert ?? 10,
-      cashOnDelivery: currentSettings?.cash_on_delivery ?? true,
       allowOrderEditing: currentSettings?.allow_edit_order ?? true,
       autoCancelUnpaidHours: currentSettings?.cancel_order_after_hours ?? 10,
     };
@@ -154,25 +141,6 @@ export function useSettingsPage() {
     storeDetails,
     currentSettings,
   ]);
-
-  useEffect(() => {
-    if (!currentSettings) return;
-    if (hasInitializedGeneralRef.current) return;
-
-    const next = {
-      defaultProductStatus:
-        currentSettings.product_default_state?.toUpperCase() ||
-        PRODUCT_STATUS.DRAFT,
-      lowStockThreshold: currentSettings.low_stock_alert ?? 10,
-      autoCancelUnpaidHours: currentSettings.cancel_order_after_hours ?? 24,
-      allowOrderEditing: currentSettings.allow_edit_order ?? false,
-      maintenanceMode: currentSettings.under_maintenance ?? false,
-    };
-
-    setGeneralSettings(next);
-    originalGeneralRef.current = JSON.parse(JSON.stringify(next));
-    hasInitializedGeneralRef.current = true;
-  }, [currentSettings]);
 
   const handleTabChange = useCallback(
     (tab: SettingsTab) => {
@@ -223,14 +191,6 @@ export function useSettingsPage() {
     );
   }, [storeForm]);
 
-  const hasGeneralChanges = useMemo(() => {
-    if (!originalGeneralRef.current) return false;
-    return (
-      JSON.stringify(originalGeneralRef.current) !==
-      JSON.stringify(generalSettings)
-    );
-  }, [generalSettings]);
-
   const saveStoreSettings = useCallback(async () => {
     const updateData: Record<string, unknown> = {
       name: storeForm.storeName,
@@ -259,14 +219,36 @@ export function useSettingsPage() {
 
     try {
       await updateStoreDetails(updateData);
+
+      /**
+       * Two endpoints, because one of them silently drops most of this form.
+       *
+       * `PUT /settings/current` writes only the fields its own DTO declares,
+       * and `product_default_state` and `allow_edit_order` are not among the
+       * ones its service copies into the update — they were sent for as long
+       * as this form has existed, accepted with a 200 and a success toast,
+       * and never stored. `cash_on_delivery` was worse: not on that DTO at
+       * all. Its switch has been removed from this form; the payment
+       * providers card owns the flag and writes it through the endpoint that
+       * also mirrors the store's cash-on-delivery method row.
+       *
+       * What is left goes to `PUT /settings/general-settings`, which does
+       * write them — and which defaults *every* field it does not receive,
+       * so the payload has to carry all five. `under_maintenance` has no
+       * control on this form and is read back from the current settings
+       * rather than omitted, which would switch a maintenance-mode store
+       * live on the next unrelated save.
+       */
       await updateSettings({
         estimated_delivery_days: storeForm.estimatedDeliveryDays,
         delivery_notes: storeForm.deliveryNotes,
-        product_default_state: storeForm.defaultProductStatus,
-        low_stock_alert: storeForm.lowStockThreshold,
-        cash_on_delivery: storeForm.cashOnDelivery,
+      });
+      await updateGeneralSettingsMutation.mutateAsync({
+        product_default_state: storeForm.defaultProductStatus.toUpperCase(),
         allow_edit_order: storeForm.allowOrderEditing,
+        low_stock_alert: storeForm.lowStockThreshold,
         cancel_order_after_hours: storeForm.autoCancelUnpaidHours,
+        under_maintenance: currentSettings?.under_maintenance ?? false,
       });
 
       originalStoreFormRef.current = JSON.parse(JSON.stringify(storeForm));
@@ -279,27 +261,13 @@ export function useSettingsPage() {
         ),
       );
     }
-  }, [storeForm, updateStoreDetails, updateSettings]);
-
-  const saveGeneralSettings = useCallback(async () => {
-    try {
-      await updateGeneralSettingsMutation.mutateAsync({
-        product_default_state: generalSettings.defaultProductStatus.toUpperCase(),
-        low_stock_alert: generalSettings.lowStockThreshold,
-        cancel_order_after_hours: generalSettings.autoCancelUnpaidHours,
-        allow_edit_order: generalSettings.allowOrderEditing,
-        under_maintenance: generalSettings.maintenanceMode,
-      });
-      originalGeneralRef.current = JSON.parse(JSON.stringify(generalSettings));
-      toast.success("تم حفظ الإعدادات بنجاح");
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(
-        err?.response?.data?.message ||
-          "حدث خطأ أثناء حفظ الإعدادات. يرجى المحاولة مرة أخرى.",
-      );
-    }
-  }, [generalSettings, updateGeneralSettingsMutation]);
+  }, [
+    storeForm,
+    updateStoreDetails,
+    updateSettings,
+    updateGeneralSettingsMutation,
+    currentSettings,
+  ]);
 
   // Store tab does not need store-details to render.
   // General waits for settings; store-details only while still in-flight.
@@ -316,8 +284,6 @@ export function useSettingsPage() {
     storeForm,
     updateStoreField,
     handleStoreInputChange,
-    generalSettings,
-    setGeneralSettings,
     storeDetails,
     logoDialogOpen,
     setLogoDialogOpen,
@@ -325,9 +291,7 @@ export function useSettingsPage() {
     setLocationDialogOpen,
     updateStoreLocation,
     hasStoreChanges,
-    hasGeneralChanges,
     saveStoreSettings,
-    saveGeneralSettings,
     isGeneralLoading,
     isSaving,
   };

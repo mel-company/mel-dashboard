@@ -48,7 +48,7 @@ function MobileStatCard({
   growth?: number;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-[#e7edf6] bg-white px-3.5 py-3 shadow-[0_2px_12px_rgba(17,44,113,0.04)] dark:border-white/[0.06] dark:bg-[#0a0e27] dark:shadow-none">
+    <div className="flex items-center gap-3 rounded-2xl border border-[#e7edf6] bg-white px-3.5 py-3 shadow-[0_2px_12px_rgba(17,44,113,0.04)] dark:border-white/[0.06] dark:bg-[#0a0e27]/50 dark:shadow-none">
       <div
         className={cn(
           "flex size-11 shrink-0 items-center justify-center rounded-2xl",

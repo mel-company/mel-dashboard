@@ -14,6 +14,7 @@ import { useConsumeBridge } from "./api/wrappers/auth.wrappers";
 import { establishAuthSession } from "./utils/auth-session";
 import AuthLoadingScreen from "./components/AuthLoadingScreen";
 import { useEffect } from "react";
+import { resolveBridgeNext } from "./utils/bridge-next";
 import { useQueryClient } from "@tanstack/react-query";
 
 function RootRedirect() {
@@ -24,7 +25,9 @@ function RootRedirect() {
 function Bridge() {
   const { mutate: consumeBridge } = useConsumeBridge();
   const queryClient = useQueryClient();
-  const token = new URLSearchParams(window.location.search).get("token");
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+  const next = resolveBridgeNext(params.get("next"));
 
   useEffect(() => {
     if (!token) {
@@ -37,14 +40,14 @@ function Bridge() {
       {
         onSuccess: (data) => {
           establishAuthSession(data, queryClient);
-          window.location.replace("/");
+          window.location.replace(next);
         },
         onError: () => {
           window.location.replace("/login");
         },
       },
     );
-  }, [token, consumeBridge, queryClient]);
+  }, [token, next, consumeBridge, queryClient]);
 
   return <AuthLoadingScreen message="جاري تسجيل الدخول..." />;
 }

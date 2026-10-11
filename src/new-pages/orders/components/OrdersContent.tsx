@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Loader2, Package, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ErrorPage from "@/pages/miscellaneous/ErrorPage";
 import EmptyPage from "@/pages/miscellaneous/EmptyPage";
@@ -8,6 +7,7 @@ import OrdersSkeleton from "@/pages/order/OrdersSkeleton";
 import OrderFilterDialog from "@/pages/order/OrderFilterDialog";
 import OrderTable from "./OrderTable";
 import OrderCard from "./OrderCard";
+import OrderDetailsSheet from "./OrderDetailsSheet";
 
 interface OrdersContentProps {
   toolbar?: ReactNode;
@@ -15,10 +15,19 @@ interface OrdersContentProps {
 }
 
 const OrdersContent = ({ actions, toolbar }: OrdersContentProps) => {
-  const navigate = useNavigate();
+  // Figma opens an order as an edge drawer over the list, not as a page.
+  const [detailsOrder, setDetailsOrder] = useState<any | null>(null);
 
   return (
     <>
+      <OrderDetailsSheet
+        order={detailsOrder}
+        onOpenChange={(open) => !open && setDetailsOrder(null)}
+        imageBaseUrl={actions.imageBaseUrl}
+        calculateTotal={actions.calculateTotal}
+        onChanged={() => actions.refetch?.()}
+      />
+
       <OrderFilterDialog
         open={actions.isFilterDialogOpen}
         onOpenChange={actions.setIsFilterDialogOpen}
@@ -59,7 +68,7 @@ const OrdersContent = ({ actions, toolbar }: OrdersContentProps) => {
                     order={order}
                     imageBaseUrl={actions.imageBaseUrl}
                     calculateTotal={actions.calculateTotal}
-                    onClick={() => navigate(`/orders/${order.id}`)}
+                    onClick={() => setDetailsOrder(order)}
                   />
                 ))}
               </div>
@@ -91,6 +100,7 @@ const OrdersContent = ({ actions, toolbar }: OrdersContentProps) => {
               orders={actions.orders}
               imageBaseUrl={actions.imageBaseUrl}
               calculateTotal={actions.calculateTotal}
+              onOpenOrder={setDetailsOrder}
             />
             <div ref={actions.loadMoreRef} className="flex justify-center py-4">
               {actions.hasNextPage && (

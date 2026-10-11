@@ -1,5 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Package, Pencil, Star, Trash2 } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Package } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete02Icon,
+  PencilEdit01Icon,
+  StarIcon,
+} from "@hugeicons-pro/core-bulk-rounded";
 import { cn } from "@/lib/utils";
 import { getProductCoverImage } from "@/utils/product-images";
 import { AssetImage } from "@/components/AssetImage";
@@ -7,26 +13,10 @@ import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import type { ProductListItem } from "@/api/types/product";
 import {
   costMargin,
-  formatPrice,
+  formatAmount,
   getProductCategories,
   shortDescription,
 } from "../utils";
-
-const CATEGORY_STYLES = [
-  "bg-[rgba(125,38,247,0.08)] text-[#7d26f7] dark:bg-[#9a5cff]/15 dark:text-[#b282ff]",
-  "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300",
-  "bg-[#00b7ff]/10 text-[#00b7ff] dark:bg-sky-500/15 dark:text-sky-300",
-  "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  "bg-[rgba(0,184,138,0.1)] text-[#00b88a] dark:bg-emerald-500/15 dark:text-emerald-300",
-];
-
-function categoryStyle(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return CATEGORY_STYLES[Math.abs(hash) % CATEGORY_STYLES.length];
-}
 
 type ProductCardsProps = {
   products: ProductListItem[];
@@ -34,6 +24,14 @@ type ProductCardsProps = {
   onDelete?: (id: string) => void;
 };
 
+/**
+ * Figma: Customer Dashboard v2 → 606:15745.
+ *
+ * The card is right-aligned throughout and the page is RTL (`PagePanel` sets
+ * `dir`), so inline-start is the RIGHT edge: the action buttons sit at
+ * `start-*` and the rating at `end-*`, and the price column is the FIRST
+ * child of the footer row so it lands on the right.
+ */
 const ProductCards = ({
   products,
   imageBaseUrl = "",
@@ -48,48 +46,22 @@ const ProductCards = ({
         const cover = getProductCoverImage(product);
         const cats = getProductCategories(product);
         const margin = costMargin(product.price, product.cost_to_produce);
+        const showsCost =
+          typeof product.cost_to_produce === "number" &&
+          product.cost_to_produce > 0 &&
+          product.cost_to_produce !== product.price;
+        const MarginArrow = (margin ?? 0) >= 0 ? ArrowUpRight : ArrowDownRight;
 
         return (
           <article
             key={product.id}
-            className="relative overflow-hidden rounded-[18px] border border-[#e7edf6] bg-white p-3 shadow-[0_2px_12px_rgba(17,44,113,0.05)] dark:border-white/[0.06] dark:bg-[#0a0e27] dark:shadow-none"
+            className="overflow-hidden rounded-[17.05px] border border-[#f5f6fa] bg-white p-[11.37px] dark:border-[#12183b] dark:bg-[#0a0e27]"
           >
-            <div className="absolute start-auto end-3 top-3 z-10 flex items-center gap-1 text-sm font-semibold text-[#3b4656] dark:text-[#e4e7fc]">
-              <Star className="size-4 fill-amber-400 text-amber-400" />
-              {typeof product.rate === "number"
-                ? product.rate.toFixed(1)
-                : "—"}
-            </div>
-
-            <div className="absolute start-3 top-3 z-10 flex flex-col items-center gap-2">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  navigate(`/products/${product.id}/edit`);
-                }}
-                className="flex size-9 items-center justify-center rounded-[10px] bg-[#00b7ff]/10 text-[#00b7ff] transition-colors hover:bg-[#00b7ff]/15 dark:bg-[#33c5ff]/10 dark:text-[#a4b1fa]"
-                aria-label="تعديل"
+            <div className="relative h-[174.05px] w-full overflow-hidden rounded-[11.11px] bg-[#f5f6fa] dark:bg-[#12183b]">
+              <Link
+                to={`/products/${product.id}`}
+                className="flex h-full w-full items-center justify-center p-[9.26px]"
               >
-                <Pencil className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onDelete?.(product.id);
-                }}
-                className="flex size-9 items-center justify-center rounded-[10px] bg-[rgba(255,8,8,0.08)] text-[#ff0808] transition-colors hover:bg-[rgba(255,8,8,0.12)] dark:bg-[#ff5252]/15 dark:text-[#ff5252]"
-                aria-label="حذف"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            </div>
-
-            <Link to={`/products/${product.id}`} className="block text-right">
-              <div className="mb-3 flex h-44 w-full items-center justify-center overflow-hidden rounded-[12px] bg-[#f5f6fa] dark:bg-[#12183b]">
                 <AssetImage
                   image={cover}
                   baseUrl={resolvedBaseUrl}
@@ -99,60 +71,120 @@ const ProductCards = ({
                     <Package className="size-12 text-muted-foreground" />
                   }
                 />
+              </Link>
+
+              {/* Star to the LEFT of the score. RTL lays the first child out
+                  rightmost, so the score is written first. */}
+              <div className="pointer-events-none absolute end-[11.58px] top-[11.58px] flex items-center gap-[3.79px] text-[15.16px] text-[#3b4656] dark:text-[#e4e7fc]">
+                {typeof product.rate === "number"
+                  ? product.rate.toFixed(1)
+                  : "—"}
+                <HugeiconsIcon
+                  icon={StarIcon}
+                  size={17.05}
+                  className="shrink-0 text-[#ff9b3d]"
+                />
               </div>
 
-              {cats.length > 0 ? (
-                <div className="mb-2 flex flex-wrap justify-end gap-1.5">
-                  {cats.slice(0, 3).map((c) => (
-                    <span
-                      key={c.id}
-                      className={cn(
-                        "rounded-full px-2.5 py-0.5 text-[11px] font-medium",
-                        categoryStyle(c.name),
-                      )}
-                    >
-                      {c.name}
-                    </span>
-                  ))}
+              <div className="absolute start-[11.58px] top-[11.58px] flex flex-col gap-[7.58px]">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/products/${product.id}/edit`)}
+                  className="rounded-[14px] p-[7.58px] text-[#6c809d] transition-colors hover:text-[#04111c] dark:text-[#a4b1fa] dark:hover:text-[#f0f2ff]"
+                  aria-label="تعديل"
+                >
+                  <HugeiconsIcon icon={PencilEdit01Icon} size={22.74} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete?.(product.id)}
+                  className="rounded-[14px] p-[7.58px] text-[#ff0808] transition-opacity hover:opacity-80 dark:text-[#ff5252]"
+                  aria-label="حذف"
+                >
+                  <HugeiconsIcon icon={Delete02Icon} size={22.74} />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-[9.26px] flex flex-col gap-[7.41px] pb-[7.58px]">
+              <Link
+                to={`/products/${product.id}`}
+                className="flex flex-col items-start gap-[3.7px]"
+              >
+                {cats.length > 0 ? (
+                  <div className="flex flex-wrap justify-start gap-[3.79px]">
+                    {cats.slice(0, 3).map((c) => (
+                      <span
+                        key={c.id}
+                        className="rounded-[15.16px] bg-[rgba(125,38,247,0.1)] px-[8.53px] py-[3.79px] text-[12.32px] font-medium text-[#7d26f7] dark:bg-[#9a5cff]/10 dark:text-[#b282ff]"
+                      >
+                        {c.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
+                {/* Figma fixes this block at 68.21px so the footers line up
+                    across the grid. A floor rather than a height: the design's
+                    Setar is not the font that ships here, so exact metrics
+                    would clip. */}
+                <div className="flex min-h-[68.21px] w-full flex-col gap-[7.58px] px-[1.85px] py-[3.7px]">
+                  <h3 className="w-full truncate text-right text-[15.16px] font-medium text-[#04111c] dark:text-[#f0f2ff]">
+                    {product.title}
+                  </h3>
+                  <p className="line-clamp-2 w-full text-right text-[11.37px] text-[#556b8b]">
+                    {shortDescription(product.description, 90)}
+                  </p>
                 </div>
-              ) : null}
+              </Link>
 
-              <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-[#04111c] dark:text-[#f0f2ff]">
-                {product.title}
-              </h3>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#91a0b6] dark:text-[#a4b1fa]">
-                {shortDescription(product.description, 90)}
-              </p>
+              <div className="flex items-center justify-between gap-2 px-[7.58px]">
+                <div className="flex min-w-[78.55px] shrink-0 flex-col items-start">
+                  <span className="text-[13.26px] font-medium leading-[13.26px] text-[#bac2cf] dark:text-[#31396e]">
+                    السعر
+                  </span>
+                  <div className="flex items-center gap-[3.7px]">
+                    <span className="text-[16.66px] font-extrabold text-[#04111c] dark:text-[#f0f2ff]">
+                      {typeof product.price === "number"
+                        ? formatAmount(product.price)
+                        : "—"}
+                    </span>
+                    <span className="text-[12.96px] font-medium text-[#6c809d] dark:text-[#a4b1fa]">
+                      د.ع
+                    </span>
+                  </div>
+                </div>
 
-              <div className="mt-3 flex items-end justify-between gap-2">
-                <div className="text-start">
+                <div className="flex flex-col items-start">
                   {margin != null ? (
-                    <p
+                    <div
                       className={cn(
-                        "text-[11px] font-semibold",
+                        "flex items-center gap-[1.9px]",
                         margin >= 0
                           ? "text-[#00b88a] dark:text-[#00dfa8]"
                           : "text-[#ff0808] dark:text-[#ff5252]",
                       )}
                     >
-                      {Math.abs(margin).toFixed(1)}% {margin >= 0 ? "↗" : "↘"}
-                    </p>
+                      <MarginArrow
+                        className="size-[9.47px] shrink-0"
+                        strokeWidth={2.5}
+                      />
+                      <span className="text-[13.26px] font-medium leading-[13.26px]">
+                        {Math.abs(margin).toFixed(1)}%
+                      </span>
+                    </div>
                   ) : null}
-                  {typeof product.cost_to_produce === "number" &&
-                  product.cost_to_produce > 0 &&
-                  product.cost_to_produce !== product.price ? (
-                    <p className="text-xs tabular-nums text-[#91a0b6] line-through dark:text-[#a4b1fa]/70">
-                      {formatPrice(product.cost_to_produce)}
-                    </p>
+                  {showsCost ? (
+                    <div className="flex items-center gap-[3.79px] leading-[1.5] text-[#3b4656] dark:text-[#e4e7fc]">
+                      <span className="text-[13.26px] font-bold">
+                        {formatAmount(product.cost_to_produce)}
+                      </span>
+                      <span className="text-[11.37px]">د.ع</span>
+                    </div>
                   ) : null}
                 </div>
-                <p className="text-base font-bold tabular-nums text-[#04111c] dark:text-[#f0f2ff]">
-                  {typeof product.price === "number"
-                    ? formatPrice(product.price)
-                    : "—"}
-                </p>
               </div>
-            </Link>
+            </div>
           </article>
         );
       })}

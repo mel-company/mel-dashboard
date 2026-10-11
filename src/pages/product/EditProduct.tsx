@@ -161,6 +161,7 @@ const EditProduct = ({}: Props) => {
   const [costToProduct, setCostToProduct] = useState("");
   // Shipping dimensions. Grams and whole centimetres — kept as strings so an
   // empty field stays empty rather than becoming a zero the courier prices on.
+  const [stock, setStock] = useState("");
   const [weightGrams, setWeightGrams] = useState("");
   const [lengthCm, setLengthCm] = useState("");
   const [widthCm, setWidthCm] = useState("");
@@ -223,6 +224,7 @@ const EditProduct = ({}: Props) => {
       );
       setPrice(product.price?.toString() ?? "");
       setCostToProduct(product.cost_to_produce?.toString() ?? "");
+      setStock(product.stock?.toString() ?? "");
       setWeightGrams(product.weightGrams?.toString() ?? "");
       setLengthCm(product.lengthCm?.toString() ?? "");
       setWidthCm(product.widthCm?.toString() ?? "");
@@ -297,16 +299,16 @@ const EditProduct = ({}: Props) => {
     );
     // Sent as "" when cleared, which the API reads as "unset this measurement"
     // rather than "it weighs nothing".
+    formData.append("stock", stock);
     formData.append("weightGrams", weightGrams);
     formData.append("lengthCm", lengthCm);
     formData.append("widthCm", widthCm);
     formData.append("heightCm", heightCm);
     formData.append("rate", parseFloat(rate || "0").toString());
 
+    // One append per file — see the note in AddProduct: `image` is an alias
+    // for `images` on the API, not a separate cover field.
     selectedImageFiles.forEach((file) => formData.append("images", file));
-    if (selectedImageFiles[0]) {
-      formData.append("image", selectedImageFiles[0]);
-    }
 
     updateProduct(
       { id, data: formData },
@@ -507,6 +509,30 @@ const EditProduct = ({}: Props) => {
                       />
                       <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
                         د.ع
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="stock" hint="اختياري" hintTone="optional">
+                      الكمية
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="stock"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={stock}
+                        onChange={(e) =>
+                          setStock(e.target.value.replace(/[^0-9]/g, ""))
+                        }
+                        placeholder="0"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        قطعة
                       </span>
                     </div>
                   </div>
@@ -956,11 +982,8 @@ const EditProduct = ({}: Props) => {
                   return (
                     <DashedTag
                       key={catId}
-                      onRemove={
-                        categories.length > 1
-                          ? () =>
-                              setRemovingCategory({ id: catId, name: catName })
-                          : undefined
+                      onRemove={() =>
+                        setRemovingCategory({ id: catId, name: catName })
                       }
                     >
                       {catName}
@@ -1030,7 +1053,9 @@ const EditProduct = ({}: Props) => {
                   <DashedTag
                     key={property.id || property.name}
                     lead={property.name}
-                    onRemove={
+                    // Edit, not remove — this opens «تعديل خاصية المنتج»,
+                    // which carries its own delete.
+                    onEdit={
                       property.id
                         ? () => setEditingPropertyId(property.id)
                         : undefined

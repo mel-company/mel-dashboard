@@ -172,49 +172,83 @@ html {
   direction: rtl;
 }
 
+/*
+ * Scrollbars.
+ *
+ * Every rule here used to read `hsl(var(--muted-foreground) / 0.3)`, and
+ * `--muted-foreground` is a hex (`#6c809d`). `hsl(#6c809d / 0.3)` is not a
+ * colour, so the whole declaration was dropped and `scrollbar-color` computed
+ * to `auto` — the browser's own grey, in both themes, on every scroller that
+ * had opted into `.custom-scrollbar`. `color-mix` takes a hex, which is what
+ * these tokens are.
+ *
+ * `.dark` is on the same element as `:root` (the boot script in index.html
+ * puts it on <html>), so the tokens are declared for both selectors: whichever
+ * matches resolves `--muted-foreground` to that theme's value and the tint
+ * follows. Nesting a `.dark` subtree re-resolves them there too.
+ */
+:root,
+.dark {
+  --scrollbar-thumb: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--muted-foreground) 55%, transparent);
+}
+
+/*
+ * `scrollbar-width` and `scrollbar-color` inherit, so the root hands them to
+ * every scroller in the app — including the many that never opted in and were
+ * showing a raw platform scrollbar next to a styled one.
+ */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* `::-webkit-scrollbar` does not inherit, so WebKit is matched explicitly. */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* The border is the gutter: it keeps a 4px thumb inside a 10px hit target. */
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+/*
+ * Kept because ~20 call sites name it. The rules above already cover them, so
+ * this only has to stay a valid selector.
+ */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/*
+ * `scrollbar-width: none` alone left the bar in place on WebKit, which is
+ * where this app runs, so the element has to be hidden as well.
+ */
 .hide-scrollbar {
   scrollbar-width: none !important;
   -ms-overflow-style: none;
 }
 
-/* Custom Scrollbar */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
-  background-clip: padding-box;
-}
-
-.dark .custom-scrollbar {
-  scrollbar-color: hsl(var(--muted-foreground) / 0.4) transparent;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.4);
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.6);
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -225,7 +259,8 @@ html {
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
+  /* The theme is ours, not the OS's — `.dark` overrides this below. */
+  color-scheme: light;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

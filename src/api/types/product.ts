@@ -22,6 +22,13 @@ export type ProductListItem = {
   description: string | null;
   price: number;
   cost_to_produce: number;
+  /**
+   * How many the merchant has to sell, summed from the product's variants.
+   *
+   * There is no `stock` column on Product — it lives on ProductVariant — so
+   * the API computes this. Absent from the storefront readers, hence optional.
+   */
+  stock?: number;
   /** Shipping dimensions — grams and whole centimetres. Null when unmeasured. */
   weightGrams?: number | null;
   lengthCm?: number | null;

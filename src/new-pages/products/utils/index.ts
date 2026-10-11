@@ -1,8 +1,18 @@
 import type { ProductListItem } from "@/api/types/product";
-import { formatCurrency } from "@/utils/format-currency";
+import { formatCurrency, formatNumber } from "@/utils/format-currency";
 
 export function formatPrice(value: number) {
   return formatCurrency(value, "0 د.ع");
+}
+
+/**
+ * The grouped number alone, no «د.ع».
+ *
+ * The card sets the amount and the currency in different sizes and colours
+ * (Figma 606:15778/606:15783), which one formatted string cannot express.
+ */
+export function formatAmount(value: number | null | undefined) {
+  return formatNumber(value);
 }
 
 export function shortDescription(text: string | null | undefined, max = 45) {

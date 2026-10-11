@@ -147,6 +147,15 @@ const DiscountsContent = ({ actions, onCreateClick, toolbar }: DiscountsContentP
           />
         ) : (
           <div className="space-y-4">
+            {/* The view toggle lives in this toolbar, and the toolbar lives
+                inside the table card — so rendering it only in table mode
+                removed the only way back. `viewMode` is persisted, so that
+                left the page stuck in cards for good. */}
+            {toolbar ? (
+              <div className="rounded-3xl bg-white p-4 dark:bg-[#0a0e27]">
+                {toolbar}
+              </div>
+            ) : null}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {discounts.map((discount) => (
                 <DiscountCard

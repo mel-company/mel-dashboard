@@ -16,6 +16,7 @@ import {
 import { useAddCategoriesToGroup } from "@/api/wrappers/group.wrappers";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AssetImage } from "@/components/AssetImage";
 
 const PAGE_SIZE = 20;
 
@@ -192,15 +193,13 @@ const AddCategoryToGroupDialog = ({
                     }`}
                   >
                     <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-muted shrink-0 overflow-hidden">
-                      {category.image ? (
-                        <img
-                          src={`${baseUrl}/${category.image}`}
-                          alt={category.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Folder className="size-8 text-muted-foreground" />
-                      )}
+                      <AssetImage
+                        image={category.image}
+                        baseUrl={baseUrl}
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                        fallback={<Folder className="size-8 text-muted-foreground" />}
+                      />
                     </div>
                     <div className="flex-1 text-right">
                       <p className="font-semibold line-clamp-1">

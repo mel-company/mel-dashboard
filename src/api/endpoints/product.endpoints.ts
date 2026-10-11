@@ -1,50 +1,9 @@
 import axiosInstance from "@/utils/AxiosInstance";
 import type { ProductListResponse } from "../types/product";
 import { MAX_PRODUCT_IMAGES } from "../types/product";
+import { productFormDataToJson } from "./product-form";
 
 const IMAGE_UPLOAD_TIMEOUT_MS = 60_000;
-
-function parseJsonField(value: FormDataEntryValue | null): unknown {
-  if (typeof value !== "string" || !value) return undefined;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-}
-
-function productFormDataToJson(formData: FormData): Record<string, unknown> {
-  const body: Record<string, unknown> = {};
-
-  for (const key of ["title", "description"] as const) {
-    const value = formData.get(key);
-    if (typeof value === "string" && value.trim()) body[key] = value.trim();
-  }
-
-  for (const key of ["price", "cost_to_produce", "rate"] as const) {
-    const value = formData.get(key);
-    if (value == null || value === "") continue;
-    const num = Number(value);
-    if (Number.isFinite(num)) body[key] = num;
-  }
-
-  const enabled = formData.get("enabled");
-  if (enabled != null && enabled !== "") {
-    body.enabled = String(enabled) === "true";
-  }
-
-  for (const key of ["categoryIds", "properties", "options"] as const) {
-    const parsed = parseJsonField(formData.get(key));
-    if (parsed !== undefined) body[key] = parsed;
-  }
-
-  const tempImageUrl = formData.get("tempImageUrl");
-  if (typeof tempImageUrl === "string" && tempImageUrl.trim()) {
-    body.image = tempImageUrl.trim();
-  }
-
-  return body;
-}
 
 /** Collect image files from FormData (`images` + optional legacy `image`). Max 10. */
 function collectImageFiles(formData: FormData): File[] {
@@ -85,9 +44,10 @@ function appendJsonFieldsToFormData(
 }
 
 function appendImagesToFormData(target: FormData, files: File[]) {
-  files.forEach((file, index) => {
+  // `image` is an alias the API folds into the same gallery, not a cover
+  // field, so appending the first file under both names stored it twice.
+  files.forEach((file) => {
     target.append("images", file);
-    if (index === 0) target.append("image", file);
   });
 }
 
@@ -391,9 +351,8 @@ export const productAPI = {
    */
   addImages: async (productId: string, images: File[]): Promise<any> => {
     const formData = new FormData();
-    images.slice(0, MAX_PRODUCT_IMAGES).forEach((file, index) => {
+    images.slice(0, MAX_PRODUCT_IMAGES).forEach((file) => {
       formData.append("images", file);
-      if (index === 0) formData.append("image", file);
     });
     const { data } = await axiosInstance.post<any>(
       `/product/${productId}/images`,

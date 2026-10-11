@@ -5,6 +5,7 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { collectionAPI } from "../endpoints/collection.endpoints";
+import { entityQueryPredicate } from "../utils/entity-queries";
 
 export interface CollectionListItem {
   id: string;
@@ -40,6 +41,14 @@ export const collectionKeys = {
       params,
     ] as const,
 };
+
+/**
+ * Every cached query that holds a collection, under either naming scheme — the
+ * `collectionKeys` factory and the `["collection/…", …]` the list pages get from
+ * `useTableData`. See `entityQueryPredicate` for why both exist and why a
+ * `queryKey` cannot reach them both.
+ */
+export const isCollectionQuery = entityQueryPredicate("collection");
 
 export const useFilterCollectionsCursor = (params?: {
   query?: string | null;

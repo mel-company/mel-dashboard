@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { usePage } from "@/hooks/pages";
 import { useTableData, useInfiniteScroll } from "@/hooks/use-table-data";
 import useTableHeader from "@/hooks/table-header";
@@ -30,29 +31,66 @@ function useViewModeManager(apiEndpoint: string | undefined, enableViewMode: boo
   return { viewMode, handleViewModeChange };
 }
 
-// Helper hook for delete functionality
+/**
+ * Stands in when a page enables no delete, so the mutation below is always
+ * called and the hook count stays the same on every render.
+ */
+const NO_DELETE_MUTATION = {
+  // Unreachable in practice: `handleDelete` is stubbed out on the way out of
+  // `useDashboardPage` whenever `enableDelete` is false.
+  mutate: () => {},
+  isPending: false,
+};
+const useNoDeleteMutation = () => NO_DELETE_MUTATION;
+
+/** The API's own wording when it has some, rather than a generic failure. */
+function apiMessage(error: unknown): string | undefined {
+  const message = (error as { response?: { data?: { message?: unknown } } })
+    ?.response?.data?.message;
+  return typeof message === "string" && message.trim() ? message : undefined;
+}
+
+/**
+ * Delete state for the row the merchant is confirming.
+ *
+ * `deleteMutation` is a hook — `useDeleteProduct`, `useDeleteCustomer` — so it
+ * has to run here, in a hook body. It used to be called inside `handleDelete`,
+ * i.e. from the click handler, where React has no dispatcher and the
+ * `useQueryClient` inside it throws `Cannot read properties of null (reading
+ * 'useContext')`. That throw landed before `mutate` existed, so confirming a
+ * delete did nothing whatsoever: no DELETE, no spinner, no toast, dialog still
+ * open, row still there. Nothing caught it, so the only trace was a line in the
+ * console — leaving the hide button beside it as the only one of the two that
+ * did anything at all.
+ *
+ * Lint could not see it either: `react-hooks/rules-of-hooks` keys off the name
+ * of the callee, and the callee here is a parameter called `deleteMutation`.
+ *
+ * `isPending` comes from the mutation rather than a `useState` beside it, so
+ * the button cannot be left spinning by a path that forgot to clear a flag.
+ */
 function useDeleteManager(deleteMutation: any, enableDelete: boolean, refetch: () => void) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { mutate, isPending } = (
+    enableDelete && deleteMutation ? deleteMutation : useNoDeleteMutation
+  )();
 
   const handleDelete = useCallback(() => {
-    if (enableDelete && deleteMutation && deleteId) {
-      const { mutate } = deleteMutation();
-      setIsDeleting(true);
-      mutate(deleteId, {
-        onSuccess: () => {
-          setDeleteId(null);
-          setIsDeleting(false);
-          refetch();
-        },
-        onError: () => {
-          setIsDeleting(false);
-        },
-      });
-    }
-  }, [enableDelete, deleteMutation, deleteId, refetch]);
+    if (!deleteId) return;
+    mutate(deleteId, {
+      onSuccess: () => {
+        setDeleteId(null);
+        refetch();
+      },
+      // Silence here is what made a rejected delete — a 403, or a row another
+      // tab already removed — indistinguishable from a dead button.
+      onError: (error: unknown) => {
+        toast.error(apiMessage(error) ?? "فشل الحذف، حاول مرة أخرى");
+      },
+    });
+  }, [mutate, deleteId, refetch]);
 
-  return { deleteId, setDeleteId, isDeleting, handleDelete };
+  return { deleteId, setDeleteId, isDeleting: isPending, handleDelete };
 }
 
 // Helper hook for optional stats

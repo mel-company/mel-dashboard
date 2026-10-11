@@ -7,10 +7,11 @@ import {
 } from "@tanstack/react-query";
 import { productAPI } from "../endpoints/product.endpoints";
 import { statsAPI } from "../endpoints/stats.endpoints";
-import { categoryKeys } from "./category.wrappers";
-import { collectionKeys } from "./collection.wrappers";
-import { couponKeys } from "./coupon.wrappers";
-import { discountKeys } from "./discount.wrappers";
+import { isCategoryQuery } from "./category.wrappers";
+import { isCollectionQuery } from "./collection.wrappers";
+import { isCouponQuery } from "./coupon.wrappers";
+import { isDiscountQuery } from "./discount.wrappers";
+import { entityQueryPredicate } from "../utils/entity-queries";
 
 /**
  * Query key factory for products
@@ -414,23 +415,41 @@ export const useDeleteProductOptionValue = () => {
 };
 
 /**
- * Update an existing product mutation
+ * Every cached query that holds a product, under either naming scheme — the
+ * `productKeys` factory and the `["product/filter-cursor", …]` the list pages
+ * get from `useTableData`. See `entityQueryPredicate` for why both exist and
+ * why a `queryKey` cannot reach them both.
  */
+export const isProductQuery = entityQueryPredicate("product");
+
 export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
 
   return useMutation<any, Error, { id: string; data: any }>({
     mutationFn: ({ id, data }) => productAPI.update(id, data),
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-      const productId = data?.id ?? variables.id;
-      if (!productId) return;
-
-      queryClient.setQueryData(productKeys.detail(productId), (old: any) => {
-        if (!old) return { ...data, id: productId };
-        return { ...old, ...data, id: productId };
+    /*
+     * Awaited, so the refetches have landed before the `onSuccess` passed to
+     * `mutate()` runs — React Query waits on this promise first. That lets a
+     * caller holding an optimistic value drop it at the right moment without
+     * invalidating a second time and paying for a duplicate refetch.
+     */
+    onSuccess: async (data, variables) => {
+      const settled = queryClient.invalidateQueries({
+        predicate: isProductQuery,
       });
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
+
+      const productId = data?.id ?? variables.id;
+      if (productId) {
+        queryClient.setQueryData(productKeys.detail(productId), (old: any) => {
+          if (!old) return { ...data, id: productId };
+          return { ...old, ...data, id: productId };
+        });
+        queryClient.invalidateQueries({
+          queryKey: productKeys.detail(productId),
+        });
+      }
+
+      await settled;
     },
   });
 };
@@ -444,17 +463,23 @@ export const useDeleteProduct = () => {
   return useMutation<any, Error, string>({
     mutationFn: (id: string) => productAPI.delete(id),
     onSuccess: (_, deletedId) => {
-      // Invalidate and refetch products list
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      // `isProductQuery`, not `productKeys.all` — see the note on the
+      // predicate. `["products"]` does not match the list page's
+      // `["product/filter-cursor", …]`, so a deleted row sat on screen for the
+      // five minutes of `staleTime` on every surface except the one list that
+      // happened to call `refetch()` for itself.
+      queryClient.invalidateQueries({ predicate: isProductQuery });
       // Remove the deleted product from cache
       queryClient.removeQueries({ queryKey: productKeys.detail(deletedId) });
       // Deleting a product now detaches it from its categories, collections,
       // coupons and discounts server-side, so every one of those lists is
-      // showing a stale membership count until it refetches.
-      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
-      queryClient.invalidateQueries({ queryKey: collectionKeys.all });
-      queryClient.invalidateQueries({ queryKey: couponKeys.all });
-      queryClient.invalidateQueries({ queryKey: discountKeys.all });
+      // showing a stale membership count until it refetches. By predicate for
+      // the same reason as above: each of those four has a list page keyed
+      // `["<entity>/filter-cursor", …]` that `<entity>Keys.all` cannot reach.
+      queryClient.invalidateQueries({ predicate: isCategoryQuery });
+      queryClient.invalidateQueries({ predicate: isCollectionQuery });
+      queryClient.invalidateQueries({ predicate: isCouponQuery });
+      queryClient.invalidateQueries({ predicate: isDiscountQuery });
     },
   });
 };

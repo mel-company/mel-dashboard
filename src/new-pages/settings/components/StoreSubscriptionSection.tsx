@@ -5,7 +5,11 @@ import {
   useFetchStoreSubscription,
   useCancelSubscription,
 } from "@/api/wrappers/subscription.wrapper";
-import { useInitStorePlatformPayment } from "@/api/wrappers/platform-payment.wrapper";
+import {
+  useInitStorePlatformPayment,
+  useSubscriptionQuote,
+} from "@/api/wrappers/platform-payment.wrapper";
+import { quoteDue, quoteExplanation } from "@/utils/subscription-quote";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -72,6 +76,26 @@ const StoreSubscriptionSection = () => {
   const cancelSubscription = useCancelSubscription();
   const initPayment = useInitStorePlatformPayment();
 
+  /**
+   * What a one-month renewal costs this merchant. `plan.monthly_price` is the
+   * catalogue price, and the intro ladder lives on the subscription — so this
+   * button named a gateway and no price, which at least had the virtue of not
+   * being wrong. Now it states the amount, and when the amount is zero it stops
+   * promising a payment page there is no need for.
+   */
+  const renewQuote = useSubscriptionQuote(
+    subscription?.planId || subscription?.plan?.id
+      ? {
+          type: "RENEWAL",
+          planId: (subscription.planId || subscription.plan.id) as string,
+          billingPeriod: "MONTHLY",
+        }
+      : null,
+  );
+  const renewDue = quoteDue(renewQuote.data);
+  const renewWhy = quoteExplanation(renewQuote.data);
+  const renewIsFree = renewQuote.data?.amount === 0;
+
   const handleRenew = () => {
     const planId = subscription?.planId || subscription?.plan?.id;
     if (!planId) {
@@ -93,8 +117,24 @@ const StoreSubscriptionSection = () => {
       },
       {
         onSuccess: (data) => {
+          /**
+           * Settled with nothing to pay — the intro month prices the period at
+           * 0 IQD, so the server writes the payment `PAID` and extends the term
+           * before replying, with no gateway page to send anyone to. This used
+           * to report the one renewal path that always succeeds as a failure.
+           */
+          if (data?.status === "PAID") {
+            toast.success(
+              Number(data?.amount) > 0
+                ? "تم الدفع بنجاح وتم تجديد الاشتراك"
+                : "تم تجديد الاشتراك — لا مبلغ مستحق",
+            );
+            void refetch();
+            return;
+          }
+
           if (!data?.redirectUrl) {
-            toast.error("لم يتم استلام رابط الدفع من زين كاش");
+            toast.error("لم يتم استلام رابط الدفع");
             return;
           }
           if (data?.id) {
@@ -274,6 +314,13 @@ const StoreSubscriptionSection = () => {
                 <span>{formatDate(subscription.end_at)}</span>
                 <span>التجديد القادم</span>
               </div>
+
+              {renewWhy && (
+                <div className="flex items-start justify-between gap-4 text-[13px] text-slate-500">
+                  <span className="text-left">{renewWhy}</span>
+                  <span className="shrink-0">عرض الاشتراك</span>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3">
@@ -294,12 +341,16 @@ const StoreSubscriptionSection = () => {
               >
                 {initPayment.isPending ? (
                   <>
-                    جاري التحويل لزين كاش...
+                    جاري التحضير...
                     <Loader2 className="size-5 animate-spin" />
                   </>
                 ) : (
                   <>
-                    تجديد عبر زين كاش
+                    {renewIsFree
+                      ? "تجديد مجاناً"
+                      : renewQuote.isLoading
+                        ? "تجديد"
+                        : `تجديد — ${renewDue}`}
                     <CheckCircle2 className="size-5" />
                   </>
                 )}

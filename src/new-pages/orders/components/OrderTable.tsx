@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 import { Table, TableBody } from "@/components/ui/table";
 import Pagination from "@/components/table/pagination";
 import OrderTableHeader from "./OrderTableHeader";
@@ -29,13 +28,16 @@ type OrderTableProps = {
   orders: any[];
   imageBaseUrl?: string;
   calculateTotal: (products: any[]) => number;
+  onOpenOrder: (order: any) => void;
 };
 
 const OrderTable = ({
   orders,
   imageBaseUrl,
-  calculateTotal, toolbar }: OrderTableProps) => {
-  const navigate = useNavigate();
+  calculateTotal,
+  onOpenOrder,
+  toolbar,
+}: OrderTableProps) => {
   const { pageItems: paginatedOrders, paginationProps, sort } =
     useTablePagination({
       items: orders,
@@ -56,7 +58,7 @@ const OrderTable = ({
               order={order}
               imageBaseUrl={imageBaseUrl}
               calculateTotal={calculateTotal}
-              onOpen={(id) => navigate(`/orders/${id}`)}
+              onOpen={() => onOpenOrder(order)}
             />
           ))}
         </TableBody>

@@ -106,6 +106,7 @@ const AddProduct = () => {
   const [costToProduct, setCostToProduct] = useState("");
   // Shipping dimensions. Grams and whole centimetres — kept as strings so an
   // empty field stays empty rather than becoming a zero the courier prices on.
+  const [stock, setStock] = useState("");
   const [weightGrams, setWeightGrams] = useState("");
   const [lengthCm, setLengthCm] = useState("");
   const [widthCm, setWidthCm] = useState("");
@@ -415,13 +416,18 @@ const AddProduct = () => {
     formData.append("price", price);
     formData.append("enabled", "true");
     if (costToProduct) formData.append("cost_to_produce", costToProduct);
+    if (stock) formData.append("stock", stock);
     if (weightGrams) formData.append("weightGrams", weightGrams);
     if (lengthCm) formData.append("lengthCm", lengthCm);
     if (widthCm) formData.append("widthCm", widthCm);
     if (heightCm) formData.append("heightCm", heightCm);
     if (rate) formData.append("rate", rate);
+    // Each file once, under `images` only. The API concatenates `image` into
+    // the same gallery rather than treating it as a cover, so sending the
+    // first file under both names uploaded it twice and left the product with
+    // two identical gallery rows. The cover is derived server-side from the
+    // primary row.
     imageFiles.forEach((file) => formData.append("images", file));
-    if (imageFiles[0]) formData.append("image", imageFiles[0]);
     if (tempImageUrl) formData.append("tempImageUrl", tempImageUrl);
     if (selectedCategories.length > 0) {
       formData.append("categoryIds", JSON.stringify(selectedCategories));
@@ -664,6 +670,30 @@ const AddProduct = () => {
                       />
                       <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
                         د.ع
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="stock" hint="اختياري" hintTone="optional">
+                      الكمية
+                    </FieldLabel>
+                    <div className="relative">
+                      <input
+                        id="stock"
+                        type="text"
+                        inputMode="numeric"
+                        lang="en"
+                        dir="ltr"
+                        value={stock}
+                        onChange={(e) =>
+                          setStock(e.target.value.replace(/[^0-9]/g, ""))
+                        }
+                        placeholder="0"
+                        className={numberFieldClass}
+                      />
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                        قطعة
                       </span>
                     </div>
                   </div>

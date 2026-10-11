@@ -62,9 +62,6 @@ const RemoveCategoryFromProductDialog = ({
           <DialogDescription className="text-right">
             هل أنت متأكد من إزالة الفئة <strong>"{categoryName}"</strong> من هذا
             المنتج؟
-            <br />
-            يجب أن يرتبط المنتج بفئة واحدة على الأقل. إذا كانت هذه هي الفئة
-            الوحيدة، لن تتمكن من إزالتها.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2">

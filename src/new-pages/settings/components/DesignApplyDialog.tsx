@@ -165,7 +165,7 @@ const DesignApplyDialog = ({ design, onOpenChange }: Props) => {
             <div className="flex flex-col gap-3 sm:flex-row-reverse">
               <Button
                 asChild
-                className="h-12 w-full rounded-2xl text-base font-bold"
+                className="h-12 w-full sm:w-auto sm:flex-1 rounded-2xl text-base font-bold"
               >
                 <a href={storeUrl} target="_blank" rel="noreferrer">
                   <ExternalLink className="size-4" />
@@ -176,7 +176,7 @@ const DesignApplyDialog = ({ design, onOpenChange }: Props) => {
                 type="button"
                 variant="secondary"
                 onClick={handleCopy}
-                className="h-12 w-full rounded-2xl text-base font-bold"
+                className="h-12 w-full sm:w-auto sm:flex-1 rounded-2xl text-base font-bold"
               >
                 {copied ? (
                   <Check className="size-4" />
@@ -220,7 +220,7 @@ const DesignApplyDialog = ({ design, onOpenChange }: Props) => {
                 type="button"
                 disabled={isPending || !design}
                 onClick={handleConfirm}
-                className="h-12 w-full rounded-2xl text-base font-bold sm:h-[54px]"
+                className="h-12 w-full sm:w-auto sm:flex-1 rounded-2xl text-base font-bold sm:h-[54px]"
               >
                 تطبيق التصميم ونشر المتجر
               </Button>
@@ -228,7 +228,7 @@ const DesignApplyDialog = ({ design, onOpenChange }: Props) => {
                 type="button"
                 disabled={isPending}
                 onClick={handleClose}
-                className="flex h-11 w-full items-center justify-center text-base font-bold text-slate-700 transition-colors hover:text-slate-900 disabled:opacity-50 sm:h-[54px] dark:text-[#e4e7fc]"
+                className="flex h-11 w-full sm:w-auto sm:flex-1 items-center justify-center text-base font-bold text-slate-700 transition-colors hover:text-slate-900 disabled:opacity-50 sm:h-[54px] dark:text-[#e4e7fc]"
               >
                 إلغاء
               </button>

@@ -52,6 +52,7 @@ import {
   extractDiscountCategoryIds,
   extractDiscountProductIds,
 } from "@/new-pages/discounts/utils";
+import { AssetImage } from "@/components/AssetImage";
 
 const DiscountDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -291,15 +292,13 @@ const DiscountDetails = () => {
                         className="flex items-center gap-4 flex-1"
                       >
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
-                          {product.product.image ? (
-                            <img
-                              src={`${baseUrl}/${product.product.image}`}
-                              alt={product.product.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />
-                          )}
+                          <AssetImage
+                            image={product.product.image}
+                            baseUrl={baseUrl}
+                            alt={product.product.title}
+                            className="w-full h-full object-cover"
+                            fallback={<ShoppingCart className="size-8 text-white bg-cyan/40 rounded-full p-2" />}
+                          />
                         </div>
                         <div className="flex-1 text-right">
                           <p className="font-semibold line-clamp-1">
@@ -387,15 +386,13 @@ const DiscountDetails = () => {
                         className="flex items-center gap-4 flex-1"
                       >
                         <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-dark-blue/10 shrink-0 overflow-hidden">
-                          {category.category.image ? (
-                            <img
-                              src={`${baseUrl}/${category.category.image}`}
-                              alt={category.category.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Folder className="size-8 text-white bg-cyan/40 rounded-full p-2" />
-                          )}
+                          <AssetImage
+                            image={category.category.image}
+                            baseUrl={baseUrl}
+                            alt={category.category.name}
+                            className="w-full h-full object-cover"
+                            fallback={<Folder className="size-8 text-white bg-cyan/40 rounded-full p-2" />}
+                          />
                         </div>
                         <div className="flex-1 text-right">
                           <p className="font-semibold line-clamp-1">

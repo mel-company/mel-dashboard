@@ -1,9 +1,18 @@
-import { Plus, X } from "lucide-react";
+import { Pencil, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type DashedTagProps = {
   children: React.ReactNode;
   onRemove?: () => void;
+  /**
+   * Opens this tag's editor.
+   *
+   * Separate from `onRemove` because they were the same control: the product
+   * properties passed their *edit* handler as `onRemove`, so a red X labelled
+   * «إزالة» opened «تعديل خاصية المنتج». The section looked like it offered
+   * nothing but deletion, which is why it read as not editable at all.
+   */
+  onEdit?: () => void;
   className?: string;
   /** Optional leading label shown in blue (e.g. property name) */
   lead?: React.ReactNode;
@@ -12,6 +21,7 @@ type DashedTagProps = {
 export function DashedTag({
   children,
   onRemove,
+  onEdit,
   className,
   lead,
 }: DashedTagProps) {
@@ -33,6 +43,16 @@ export function DashedTag({
           aria-label="إزالة"
         >
           <X className="size-2.5" strokeWidth={2.5} />
+        </button>
+      ) : null}
+      {onEdit ? (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="flex size-4 shrink-0 items-center justify-center rounded-full bg-sky-500 text-white hover:bg-sky-600 dark:bg-sky-500 dark:hover:bg-sky-400"
+          aria-label="تعديل"
+        >
+          <Pencil className="size-2.5" strokeWidth={2.5} />
         </button>
       ) : null}
       {lead ? (
