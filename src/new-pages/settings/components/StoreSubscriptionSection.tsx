@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertCircle,
   Check,
   CheckCircle2,
   Layers,
@@ -42,14 +43,49 @@ const formatDate = (dateString: string | undefined) => {
 
 const FEATURES_PREVIEW_COUNT = 6;
 
-const FALLBACK_FEATURES = [
-  "منتجات غير محدودة",
-  "لوحة تحليلات متقدمة",
-  "دعم ذو أولوية",
-  "تخصيص شامل",
-  "تقارير مفصلة",
-  "إمكانية الوصول عبر الأجهزة",
-];
+type Entitlements = {
+  max_users?: number;
+  ai_store_credits?: number;
+  ai_editor_credits?: number;
+  has_mobile_app?: boolean;
+  has_ai_editor?: boolean;
+  has_pos?: boolean;
+};
+
+type LastPayment = {
+  amount: number;
+  billingPeriod: "MONTHLY" | "YEARLY";
+  durationMonths: number;
+  paidAt: string | null;
+  createdAt: string;
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * What this store can use right now, from the server's `entitlements` (the
+ * plan's grant while the term is in force, the free floor once it is not).
+ *
+ * The list used to fall back to six invented lines — «دعم ذو أولوية»,
+ * «تقارير مفصلة» — whenever the plan had no feature rows, which is every plan
+ * in production, so every merchant read the same made-up list.
+ */
+const entitlementLabels = (e: Entitlements | undefined): string[] => {
+  if (!e) return [];
+  const labels: string[] = [];
+  if (e.has_ai_editor) labels.push("محرر المتجر بالذكاء الاصطناعي");
+  if (e.ai_store_credits)
+    labels.push(`${e.ai_store_credits} توليد متجر بالذكاء الاصطناعي`);
+  if (e.ai_editor_credits)
+    labels.push(`${e.ai_editor_credits} رصيد للمحرر الذكي`);
+  if (e.has_pos) labels.push("نقطة البيع (POS)");
+  if (e.has_mobile_app) labels.push("تطبيق التاجر");
+  if (e.max_users)
+    labels.push(
+      e.max_users === 1 ? "مستخدم واحد" : `حتى ${e.max_users} مستخدمين`,
+    );
+  return labels;
+};
 
 /** The chip printed the raw enum for every state except ACTIVE. */
 const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = {
@@ -200,22 +236,62 @@ const StoreSubscriptionSection = () => {
   const isActive = subscription.status === "ACTIVE";
   const canCancel =
     subscription.status === "ACTIVE" || subscription.status === "PAUSED";
-  const price = plan?.monthly_price ?? plan?.yearly_price ?? 0;
-  const features = plan?.features ?? [];
-  const previewFeatures = features.slice(0, FEATURES_PREVIEW_COUNT);
-  const remainingFeatures = Math.max(
-    0,
-    features.length - FEATURES_PREVIEW_COUNT,
+  const lastPayment: LastPayment | null = subscription.lastPayment ?? null;
+  const allFeatures = Array.from(
+    new Set([
+      ...entitlementLabels(subscription.entitlements),
+      ...(plan?.features ?? [])
+        .map((f: { feature?: { name?: string } }) => f.feature?.name?.trim())
+        .filter(Boolean),
+    ]),
+  ) as string[];
+  const featureLabels = allFeatures.slice(0, FEATURES_PREVIEW_COUNT);
+  const remainingFeatures = allFeatures.length - featureLabels.length;
+
+  // The badge said «سنوي» for everyone, and the bar measured against a year
+  // with an 8% floor. Both now come from the payment that bought this term.
+  const periodLabel = lastPayment
+    ? lastPayment.billingPeriod === "YEARLY"
+      ? "سنوي"
+      : "شهري"
+    : null;
+  const remainingDays = Math.max(0, Number(subscription.remainingDays ?? 0));
+  const termDays = lastPayment
+    ? Math.max(1, lastPayment.durationMonths) *
+      (lastPayment.billingPeriod === "YEARLY" &&
+      lastPayment.durationMonths === 1
+        ? 365
+        : 30)
+    : Math.max(
+        1,
+        Math.round(
+          (new Date(subscription.end_at).getTime() -
+            new Date(subscription.start_at).getTime()) /
+            DAY_MS,
+        ),
+      );
+  const progressPercent = Math.min(
+    100,
+    Math.max(0, (remainingDays / Math.max(termDays, remainingDays)) * 100),
   );
-  const remainingDays = Number(subscription.remainingDays ?? 0);
-  const progressPercent = Math.min(100, Math.max(8, (remainingDays / 365) * 100));
-  const featureLabels =
-    previewFeatures.length > 0
-      ? previewFeatures.map(
-        (feature: { feature?: { name?: string } }) =>
-          feature.feature?.name ?? "—",
-      )
-      : FALLBACK_FEATURES;
+
+  /**
+   * «قيمة الاشتراك» printed the catalogue price, so a merchant on the free
+   * intro month read 39,000. Show what they actually paid for this term, and
+   * the list price only when there is no payment to show.
+   */
+  const shownAmount = lastPayment
+    ? lastPayment.amount > 0
+      ? formatCurrency(lastPayment.amount)
+      : "مجاناً"
+    : formatCurrency(plan?.monthly_price ?? 0);
+  const amountLabel = lastPayment
+    ? `آخر دفعة — ${formatDate(lastPayment.paidAt ?? lastPayment.createdAt)}`
+    : "سعر الباقة الشهري";
+
+  const upgradeTo = subscription.upgradeAvailable
+    ? (subscription.upgradeTo as { planName?: string } | null)
+    : null;
 
   return (
     <>
@@ -231,7 +307,7 @@ const StoreSubscriptionSection = () => {
                   المميزات الفعّالة
                 </p>
                 <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-500">
-                  {features.length || featureLabels.length}
+                  {allFeatures.length}
                 </span>
               </div>
 
@@ -249,39 +325,56 @@ const StoreSubscriptionSection = () => {
                 ))}
               </ul>
 
-              <button
-                type="button"
-                className="text-start text-xs text-sky-500 hover:underline"
-                onClick={() => navigate("/plans")}
-              >
-                + {remainingFeatures > 0 ? remainingFeatures : 6} مميزات أخرى
-              </button>
+              {allFeatures.length === 0 && (
+                <p className="text-[13px] text-slate-500">
+                  لا توجد مميزات مفعّلة حالياً.
+                </p>
+              )}
 
+              {remainingFeatures > 0 && (
+                <button
+                  type="button"
+                  className="text-start text-xs text-sky-500 hover:underline"
+                  onClick={() => navigate("/plans")}
+                >
+                  + {remainingFeatures} مميزات أخرى
+                </button>
+              )}
+
+              {/* Promised "more products and branches + reports", which no
+                  plan sells. Basic is the only plan on sale; Professional is
+                  announced as coming soon. */}
               <div className="mt-auto rounded-xl bg-violet-500/5 px-4 py-3.5">
                 <div className="mb-2 flex items-center justify-start gap-1.5">
                   <Rocket className="size-4 text-violet-600" />
                   <span className="text-[13px] font-medium text-violet-600">
-                    التطوير القادمة
+                    {upgradeTo ? "ترقية متاحة" : "قريباً"}
                   </span>
                 </div>
                 <p className="text-start text-xs leading-[1.65] text-violet-600">
-                  رقّي للباقة المتقدمة: منتجات وفروع أكثر + تقارير موسّعة
+                  {upgradeTo
+                    ? `رقّي إلى باقة ${upgradeTo.planName ?? "أساسي"} لتفعيل المحرر الذكي ونقطة البيع وتطبيق التاجر.`
+                    : "الباقة الاحترافية: نطاق خاص، تصميم من Figma، ودفع إلكتروني."}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2.5 rounded-2xl bg-slate-50 p-6 dark:bg-slate-900">
+          <div className="flex min-w-0 flex-col gap-2.5 rounded-2xl bg-slate-50 p-6 dark:bg-slate-900">
             <div className="flex flex-1 flex-col justify-between gap-3 rounded-[18px] px-5 py-2">
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-sky-500/15 px-3 py-1 text-xs font-medium text-sky-500">
-                  سنوي
-                </span>
+                {periodLabel ? (
+                  <span className="rounded-full bg-sky-500/15 px-3 py-1 text-xs font-medium text-sky-500">
+                    {periodLabel}
+                  </span>
+                ) : (
+                  <span />
+                )}
                 <div className="text-right">
                   <p className="text-lg font-bold text-sky-500">
-                    {formatCurrency(price)}
+                    {shownAmount}
                   </p>
-                  <p className="text-xs text-slate-500">قيمة الاشتراك</p>
+                  <p className="text-xs text-slate-500">{amountLabel}</p>
                 </div>
               </div>
 
@@ -293,7 +386,11 @@ const StoreSubscriptionSection = () => {
                   )}
                 >
                   <span>{subscriptionStatusLabel(subscription.status)}</span>
-                  <CheckCircle2 className="size-6" />
+                  {isActive ? (
+                    <CheckCircle2 className="size-6" />
+                  ) : (
+                    <AlertCircle className="size-6" />
+                  )}
                 </div>
                 <p className="text-right">
                   <span className="text-[38px] font-medium text-sky-400">
@@ -312,7 +409,13 @@ const StoreSubscriptionSection = () => {
 
               <div className="flex items-center justify-between text-[13px] text-slate-500">
                 <span>{formatDate(subscription.end_at)}</span>
-                <span>التجديد القادم</span>
+                <span>
+                  {remainingDays <= 0
+                    ? "انتهى في"
+                    : isActive
+                      ? "التجديد القادم"
+                      : "ينتهي في"}
+                </span>
               </div>
 
               {renewWhy && (
@@ -323,11 +426,13 @@ const StoreSubscriptionSection = () => {
               )}
             </div>
 
-            <div className="flex gap-3">
+            {/* Wraps: the renew label carries the amount now, and a nowrap
+                pair pushed the whole panel out of the card. */}
+            <div className="flex flex-wrap gap-3">
               <Button
                 type="button"
                 variant="outline"
-                className="h-12 flex-1 gap-2 rounded-[14px] border-violet-500/15 bg-violet-500/10 text-[15px] font-bold text-violet-600 hover:bg-violet-500/15 hover:text-violet-700"
+                className="h-12 min-w-[170px] flex-1 gap-2 rounded-[14px] border-violet-500/15 bg-violet-500/10 text-[15px] font-bold text-violet-600 hover:bg-violet-500/15 hover:text-violet-700"
                 onClick={() => navigate("/plans")}
               >
                 عرض جميع الباقات
@@ -335,7 +440,7 @@ const StoreSubscriptionSection = () => {
               </Button>
               <Button
                 type="button"
-                className="h-12 flex-1 gap-2 rounded-[14px] bg-violet-600 text-[15px] font-bold text-white hover:bg-violet-700"
+                className="h-12 min-w-[170px] flex-1 gap-2 rounded-[14px] bg-violet-600 text-[15px] font-bold text-white hover:bg-violet-700"
                 disabled={initPayment.isPending || !subscription?.plan?.id}
                 onClick={handleRenew}
               >

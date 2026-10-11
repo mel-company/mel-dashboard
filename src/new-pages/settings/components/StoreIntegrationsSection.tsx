@@ -156,7 +156,7 @@ const StoreIntegrationsSection = () => {
       activeCourier.integrated &&
       !activeCourier.accountReady &&
       !!activeCourier.capabilities?.branch) ||
-    (!!courierBranch && courierBranch.location.latitude == null);
+    (!!courierBranch && courierBranch.location?.latitude == null);
   const [optimisticCod, setOptimisticCod] = useState<boolean | null>(null);
 
   const asList = (value: unknown): any[] =>
