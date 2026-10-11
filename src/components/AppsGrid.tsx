@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Keyboard,
   Palette,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import type { PlusFeature } from "@/api/endpoints/plan.endpoints";
+import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 
 interface AppItem {
   label: string;
@@ -42,6 +45,8 @@ interface AppItem {
   badge?: string;
   emojiIcon?: string;
   locked?: boolean;
+  /** Plan feature that locks this app for GO merchants. */
+  planFeature?: PlusFeature;
   requiresPhysicalStore?: boolean;
 }
 
@@ -68,6 +73,7 @@ const baseApps: AppItem[] = [
     icon: Palette,
     gradient: "from-sky-500 to-violet-600",
     description: "تصميم وتخصيص موقع المتجر",
+    planFeature: "ai_editor",
   },
   {
     label: "الفئات",
@@ -126,7 +132,7 @@ const baseApps: AppItem[] = [
     icon: Users2,
     gradient: "from-indigo-500 to-indigo-600",
     description: "إدارة الموظفين",
-    locked: true,
+    planFeature: "team_users",
   },
   {
     label: "الإعدادات",
@@ -192,8 +198,16 @@ const AppsGrid = () => {
     return (saved as IconSize) || "medium";
   });
   const [comingSoonDialogOpen, setComingSoonDialogOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<PlusFeature | null>(null);
   const { getAllInstalledApps } = useApps();
   const { isPhysicalStore } = usePhysicalStoreEnabled();
+  const {
+    data: entitlements,
+    isLocked: isPlanFeatureLocked,
+    messageFor,
+    goUpgrade,
+    upgradeTo,
+  } = usePlanEntitlements();
 
   // Toggle icon size between small, medium, and large
   const toggleIconSize = () => {
@@ -234,12 +248,20 @@ const AppsGrid = () => {
       .map(convertToAppItem);
   }, [installedAppsData]);
 
-  // Combine base apps with installed apps
+  // Combine base apps with installed apps; apply plan locks from entitlements.
   const allApps = useMemo(() => {
-    return [...baseApps, ...installedAppsItems].filter(
-      (app) => !app.requiresPhysicalStore || isPhysicalStore,
+    const lockedFeatures = new Set(
+      (entitlements?.locked || []).map((item) => item.feature),
     );
-  }, [installedAppsItems, isPhysicalStore]);
+    return [...baseApps, ...installedAppsItems]
+      .filter((app) => !app.requiresPhysicalStore || isPhysicalStore)
+      .map((app) => ({
+        ...app,
+        locked:
+          app.locked === true ||
+          (app.planFeature ? lockedFeatures.has(app.planFeature) : false),
+      }));
+  }, [installedAppsItems, isPhysicalStore, entitlements?.locked]);
 
   const filteredApps = allApps.filter(
     (app) =>
@@ -419,7 +441,16 @@ const AppsGrid = () => {
                 return (
                   <button
                     key={app.path}
-                    onClick={() => setComingSoonDialogOpen(true)}
+                    onClick={() => {
+                      if (
+                        app.planFeature &&
+                        isPlanFeatureLocked(app.planFeature)
+                      ) {
+                        setUpgradeFeature(app.planFeature);
+                        return;
+                      }
+                      setComingSoonDialogOpen(true);
+                    }}
                     className={cn(
                       "group relative flex flex-col items-center justify-center",
                       iconSize === "large"
@@ -499,6 +530,49 @@ const AppsGrid = () => {
                 variant="default"
               >
                 إغلاق
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Plan upgrade dialog (GO → PLUS) */}
+        <Dialog
+          open={Boolean(upgradeFeature)}
+          onOpenChange={(open) => {
+            if (!open) setUpgradeFeature(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md" dir="rtl">
+            <DialogHeader>
+              <div className="mb-4 flex items-center justify-center">
+                <div className="flex size-16 items-center justify-center rounded-full bg-violet-50 text-violet-600 dark:bg-violet-950/50">
+                  <Sparkles className="size-8" />
+                </div>
+              </div>
+              <DialogTitle className="text-center text-xl">
+                ترقية إلى {upgradeTo?.planName || "MEL PLUS"}
+              </DialogTitle>
+              <DialogDescription className="text-center text-base">
+                {upgradeFeature
+                  ? messageFor(upgradeFeature) ||
+                    "هذه الميزة متاحة في MEL PLUS فقط."
+                  : "هذه الميزة متاحة في MEL PLUS فقط."}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 flex justify-center gap-2">
+              <Button variant="outline" onClick={() => setUpgradeFeature(null)}>
+                لاحقاً
+              </Button>
+              <Button
+                className="gap-2"
+                onClick={() => {
+                  const feature = upgradeFeature;
+                  setUpgradeFeature(null);
+                  if (feature) goUpgrade(feature);
+                }}
+              >
+                <Sparkles className="size-4" />
+                ترقية الخطة
               </Button>
             </div>
           </DialogContent>

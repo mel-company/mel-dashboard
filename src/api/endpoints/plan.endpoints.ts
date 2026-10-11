@@ -1,5 +1,57 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
+export type PlusFeature = "ai_editor" | "mobile_app" | "team_users";
+
+export type PlanEntitlements = {
+  max_users: number;
+  ai_store_credits: number;
+  ai_editor_credits: number;
+  has_mobile_app: boolean;
+  has_ai_editor: boolean;
+};
+
+export type LockedFeature = {
+  feature: PlusFeature;
+  requiredPlan: string;
+  message: string;
+};
+
+export type PlanEntitlementsResponse = {
+  subscription: {
+    id: string;
+    status: string;
+    start_at: string;
+    end_at: string;
+    promo_free_claimed?: boolean;
+    promo_discount_months_used?: number;
+  };
+  plan: {
+    id: string;
+    code: string;
+    name: string;
+    monthly_price?: number;
+    yearly_price?: number;
+  };
+  entitlements: PlanEntitlements;
+  locked: LockedFeature[];
+  upgradeAvailable: boolean;
+  upgradeTo: { planCode: string; planName: string } | null;
+};
+
+export type PlanUpgradeErrorBody = {
+  statusCode: 403;
+  code: "PLAN_UPGRADE_REQUIRED";
+  feature: PlusFeature;
+  requiredPlan: string;
+  requiredPlanName: string;
+  message: string;
+  upgrade: {
+    planCode: string;
+    planName: string;
+    reason: PlusFeature;
+  };
+};
+
 export const planAPI = {
   /**
    * Get all plans with optional filtering and pagination
@@ -21,4 +73,15 @@ export const planAPI = {
     const { data } = await axiosInstance.get<any>(`/plan/${id}`);
     return data;
   },
-}
+
+  /**
+   * Current store entitlements + locked PLUS features (for upgrade UI).
+   * GET /plan/entitlements
+   */
+  fetchEntitlements: async (): Promise<PlanEntitlementsResponse> => {
+    const { data } = await axiosInstance.get<PlanEntitlementsResponse>(
+      "/plan/entitlements",
+    );
+    return data;
+  },
+};

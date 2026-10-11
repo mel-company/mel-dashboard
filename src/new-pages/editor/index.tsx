@@ -5,6 +5,8 @@ import { useValidateUserToEditor } from "@/api/wrappers/auth.wrappers";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 import { Button } from "@/components/ui/button";
+import PlanUpgradeGate from "@/components/PlanUpgradeGate";
+import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 
 type EditorHandoff = {
   redirectUrl?: string;
@@ -121,11 +123,18 @@ const EditorPage = () => {
   // A second instance on purpose — see `openInNewTab`.
   const { mutate: mintTabSession, isPending: isMintingTab } =
     useValidateUserToEditor();
+  const {
+    isLocked: isPlanFeatureLocked,
+    isLoading: entitlementsLoading,
+    handleUpgradeError,
+  } = usePlanEntitlements();
   const theme = useResolvedTheme();
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [iframeBlocked, setIframeBlocked] = useState(false);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const editorLocked =
+    !entitlementsLoading && isPlanFeatureLocked("ai_editor");
 
   /**
    * Keep the embedded editor on our theme after it has opened.
@@ -194,14 +203,17 @@ const EditorPage = () => {
         // `replace`, so Back in the new tab does not return to about:blank.
         tab.location.replace(url);
       },
-      onError: () => {
+      onError: (err) => {
         tab.close();
-        toast.error("تعذر فتح المحرر في تبويب جديد.");
+        if (!handleUpgradeError(err, "تعذر فتح المحرر في تبويب جديد.")) {
+          toast.error("تعذر فتح المحرر في تبويب جديد.");
+        }
       },
     });
   };
 
   const openEditor = () => {
+    if (editorLocked) return;
     setError(null);
     setRedirectUrl(null);
     setIframeBlocked(false);
@@ -218,18 +230,24 @@ const EditorPage = () => {
         }
         setRedirectUrl(url);
       },
-      onError: () => {
+      onError: (err) => {
+        if (handleUpgradeError(err, "تعذر فتح المحرر. حاول مرة أخرى.")) return;
         setError("تعذر فتح المحرر. حاول مرة أخرى.");
       },
     });
   };
 
   useEffect(() => {
+    if (entitlementsLoading || editorLocked) return;
     openEditor();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once on mount
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once entitlements allow
+  }, [entitlementsLoading, editorLocked]);
 
-  if (isPending || (!redirectUrl && !error)) {
+  if (editorLocked) {
+    return <PlanUpgradeGate feature="ai_editor" />;
+  }
+
+  if (entitlementsLoading || isPending || (!redirectUrl && !error)) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
         <div className="size-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />

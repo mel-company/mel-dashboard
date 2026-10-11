@@ -9,10 +9,11 @@ import { useEmployeesPage } from "@/hooks/use-employees-page";
 import TitleBar from "@/components/table/title-bar";
 import { User02Icon, TrendingUpDownIcon, AiPhone01Icon, Briefcase01Icon } from "@hugeicons-pro/core-stroke-standard";
 import PagePanel from "@/components/PagePanel";
+import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 
 const EmployeesPage = () => {
     const navigate = useNavigate();
-
+    const { isLocked, goUpgrade } = usePlanEntitlements();
     const actions = useEmployeesPage();
 
     return (
@@ -21,7 +22,13 @@ const EmployeesPage = () => {
             <TitleBar count={actions.employees?.length ?? 0}>
                 <Button
                     className="h-11 shrink-0 gap-2.5 rounded-full bg-[#00b7ff] px-5 text-white shadow-sm hover:bg-[#00a3e6]"
-                    onClick={() => navigate("/employees/add")}
+                    onClick={() => {
+                        if (isLocked("team_users")) {
+                            goUpgrade("team_users");
+                            return;
+                        }
+                        navigate("/employees/add");
+                    }}
                 >
                     <span className="flex size-7 items-center justify-center rounded-full bg-white/25">
                         <Plus className="size-4" strokeWidth={2.5} />

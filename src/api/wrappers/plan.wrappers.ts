@@ -1,9 +1,12 @@
-
 import { useQuery } from "@tanstack/react-query";
-import { planAPI } from "../endpoints/plan.endpoints";
+import {
+  planAPI,
+  type PlanEntitlementsResponse,
+  type PlusFeature,
+} from "../endpoints/plan.endpoints";
 
 /**
- * Query key factory for orders
+ * Query key factory for plans / entitlements
  */
 export const planKeys = {
   all: ["plans"] as const,
@@ -12,6 +15,7 @@ export const planKeys = {
   details: () => [...planKeys.all, "detail"] as const,
   detail: (id: string) => [...planKeys.details(), id] as const,
   search: (params?: any) => [...planKeys.all, "search", params] as const,
+  entitlements: () => [...planKeys.all, "entitlements"] as const,
 };
 
 /**
@@ -32,3 +36,24 @@ export const useFetchPlan = (id: string, enabled: boolean = true) => {
     enabled: enabled && !!id,
   });
 };
+
+/** Current store plan entitlements + locked PLUS features. */
+export const useFetchEntitlements = (enabled: boolean = true) => {
+  return useQuery<PlanEntitlementsResponse>({
+    queryKey: planKeys.entitlements(),
+    queryFn: () => planAPI.fetchEntitlements(),
+    enabled,
+    staleTime: 60_000,
+  });
+};
+
+export const isFeatureLocked = (
+  data: PlanEntitlementsResponse | undefined,
+  feature: PlusFeature,
+): boolean => Boolean(data?.locked?.some((item) => item.feature === feature));
+
+export const lockedFeatureMessage = (
+  data: PlanEntitlementsResponse | undefined,
+  feature: PlusFeature,
+): string | undefined =>
+  data?.locked?.find((item) => item.feature === feature)?.message;
