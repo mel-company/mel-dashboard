@@ -75,7 +75,25 @@ type Props = {
     latitude: number;
     longitude: number;
     address: string;
+    /** The province/city picked in the list; empty when none was picked. */
+    stateId: string;
+    regionId: string;
   }) => void;
+  /** Defaults to the store-location wording. */
+  title?: string;
+  confirmLabel?: string;
+  /** Opens with this province (and city) already chosen. */
+  initialStateId?: string | null;
+  initialRegionId?: string | null;
+  /** Keep the confirm button off until a province is chosen. */
+  requireState?: boolean;
+  /** Disables the buttons while the caller saves. */
+  busy?: boolean;
+  /**
+   * Leave the dialog open on confirm — for a caller that saves to the server
+   * and closes it itself once that succeeds.
+   */
+  keepOpenOnConfirm?: boolean;
 };
 
 function getDisplayName(name: unknown): string {
@@ -185,6 +203,13 @@ const LocationDialog = ({
   longitude,
   address,
   onConfirm,
+  title = "تغيير موقع المتجر",
+  confirmLabel = "تأكيد الموقع",
+  initialStateId,
+  initialRegionId,
+  requireState = false,
+  busy = false,
+  keepOpenOnConfirm = false,
 }: Props) => {
   const theme = useResolvedTheme();
   const tiles = theme === "dark" ? DARK_MAP_TILES : LIGHT_MAP_TILES;
@@ -197,6 +222,9 @@ const LocationDialog = ({
   const [selectedRegionId, setSelectedRegionId] = useState("");
   const [listFilter, setListFilter] = useState("");
   const [shouldRecenter, setShouldRecenter] = useState(false);
+  // Opening with a city already chosen sets the province too, and the
+  // province change below would otherwise wipe the city straight away.
+  const keepRegionOnce = useRef(false);
 
   const { data: statesData, isLoading: isLoadingStates } = useFetchStates(
     undefined,
@@ -229,13 +257,18 @@ const LocationDialog = ({
     setDraftLng(longitude ?? DEFAULT_LNG);
     setMapZoom(latitude != null && longitude != null ? 15 : 14);
     setDraftAddress(address);
-    setSelectedStateId("");
-    setSelectedRegionId("");
+    keepRegionOnce.current = !!initialStateId && !!initialRegionId;
+    setSelectedStateId(initialStateId ?? "");
+    setSelectedRegionId(initialStateId ? (initialRegionId ?? "") : "");
     setListFilter("");
     setShouldRecenter(false);
-  }, [open, latitude, longitude, address]);
+  }, [open, latitude, longitude, address, initialStateId, initialRegionId]);
 
   useEffect(() => {
+    if (keepRegionOnce.current) {
+      keepRegionOnce.current = false;
+      return;
+    }
     setSelectedRegionId("");
     setListFilter("");
   }, [selectedStateId]);
@@ -271,9 +304,14 @@ const LocationDialog = ({
       latitude: draftLat,
       longitude: draftLng,
       address: draftAddress.trim(),
+      stateId: selectedStateId,
+      regionId: selectedRegionId,
     });
-    onOpenChange(false);
+    if (!keepOpenOnConfirm) onOpenChange(false);
   };
+
+  const canConfirm =
+    !busy && !!draftAddress.trim() && (!requireState || !!selectedStateId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -297,7 +335,7 @@ const LocationDialog = ({
             </button>
             <div className="flex items-center gap-2.5">
               <DialogTitle className="text-lg font-bold tracking-tight text-[#1a2b5a] dark:text-slate-50">
-                تغيير موقع المتجر
+                {title}
               </DialogTitle>
               <div className="flex size-10 items-center justify-center rounded-2xl bg-sky-100 text-[#00b7ff] dark:bg-sky-950/50 dark:text-sky-300">
                 <MapPin className="size-5" strokeWidth={2} />
@@ -462,9 +500,11 @@ const LocationDialog = ({
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="h-12 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6]"
+                disabled={!canConfirm}
+                className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#00b7ff] text-sm font-semibold text-white hover:bg-[#00a3e6] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                تأكيد الموقع
+                {busy && <Loader2 className="size-4 animate-spin" />}
+                {confirmLabel}
               </button>
             </div>
           </div>
