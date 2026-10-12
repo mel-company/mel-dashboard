@@ -35,7 +35,17 @@ type Props = {
 };
 
 /** Why a company cannot carry this store's parcels, or null. */
-type Blocker = { title: string; detail: string };
+type Blocker = {
+  title: string;
+  detail: string;
+  /**
+   * A soft warning is shown on the card but does not disable it.
+   *
+   * Used when the remaining step (opening a Prime/Boxy branch) can only
+   * happen *after* the company is selected.
+   */
+  soft?: boolean;
+};
 
 /**
  * Whether this store could actually ship with a company, and why not.
@@ -97,24 +107,32 @@ const blockerFor = (
   if (entry.accountReady) return null;
 
   /**
-   * Who can finish it, which is the only part the merchant can act on.
+   * Branch couriers (Prime, Boxy) vs credential couriers (Modon, Al-Waseet).
    *
-   * A courier that supports branches needs an operator to provision one
-   * inside the platform's account. One that does not — Modon Express and
-   * Al-Waseet, which publish no sub-account endpoint — has nothing for an
-   * operator to do, so the merchant's own login is the whole of the setup.
+   * A branch is opened by saving the store's location *after* the company is
+   * chosen — `PUT /shipping/couriers/branch` creates the vendor branch for
+   * whatever courier the store currently holds. Blocking the choice until the
+   * branch exists therefore made the setup unreachable: the merchant could
+   * never select Prime, so the location form never had a Prime courier to
+   * open a branch for.
+   *
+   * Credential couriers stay hard-blocked here: their setup is a login the
+   * merchant already holds, and it does not need the company to be selected
+   * first.
    */
-  return entry.supportsBranches
-    ? {
-        title: `لم يكتمل تسجيل متجرك لدى ${entry.displayName}`,
-        detail:
-          entry.branchNoteAr?.trim() ||
-          "يحتاج التسجيل إلى خطوة من فريق المنصة. تواصل مع الدعم قبل اختيارها.",
-      }
-    : {
-        title: `لم يكتمل ربط حسابك لدى ${entry.displayName}`,
-        detail: "اربط حسابك الخاص لدى الشركة من إعدادات المتجر أولاً.",
-      };
+  if (entry.supportsBranches) {
+    return {
+      title: `يُكمَل التسجيل تلقائياً لدى ${entry.displayName}`,
+      detail:
+        "عند الاختيار يُفتح فرعك من موقع المتجر الحالي. إن لم يكن محدداً بعد، احفظ موقع الفرع مرة واحدة.",
+      soft: true,
+    };
+  }
+
+  return {
+    title: `لم يكتمل ربط حسابك لدى ${entry.displayName}`,
+    detail: "اربط حسابك الخاص لدى الشركة من إعدادات المتجر أولاً.",
+  };
 };
 
 /**
@@ -187,10 +205,14 @@ const CourierPicker = ({
     }
 
     // Belt and braces against a readiness answer that arrived after a card
-    // was tapped. The server refuses an inactive company; it does not refuse
-    // an unprovisioned one, because dispatch is where that is decided.
+    // was tapped. Soft blockers (branch still to open after selection) must
+    // not refuse here — that is the only way the location form can finish
+    // the registration. Hard blockers still stop the choice.
     const picked = companies.find((c) => c.id === selectedDeliveryCompanyId);
-    if (picked && blockerFor(picked, accountsData?.accounts)) {
+    const blocker = picked
+      ? blockerFor(picked, accountsData?.accounts)
+      : null;
+    if (blocker && !blocker.soft) {
       toast.error("لا يمكن اختيار هذه الشركة قبل اكتمال تسجيل متجرك لديها.");
       return;
     }
@@ -279,10 +301,10 @@ const CourierPicker = ({
             /**
              * The store's own company stays choosable even when it is not
              * ready — it is already theirs, so disabling the card would say
-             * the current state of the store is not allowed. What a merchant
-             * needs here is the reason, which is shown either way.
+             * the current state of the store is not allowed. Soft blockers
+             * (branch opened after selection) stay choosable too.
              */
-            const disabled = !!blocker && !isCurrent;
+            const disabled = !!blocker && !blocker.soft && !isCurrent;
 
             return (
               <button
@@ -361,7 +383,14 @@ const CourierPicker = ({
                     30-day change limit has already attached to the choice.
                   */}
                   {blocker && (
-                    <span className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 px-2.5 py-2 text-[11px] leading-relaxed text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                    <span
+                      className={cn(
+                        "mt-2 flex items-start gap-2 rounded-xl px-2.5 py-2 text-[11px] leading-relaxed",
+                        blocker.soft
+                          ? "bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-200"
+                          : "bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200",
+                      )}
+                    >
                       <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
                       <span>
                         <span className="block font-bold">{blocker.title}</span>
@@ -370,10 +399,9 @@ const CourierPicker = ({
                     </span>
                   )}
 
-                  {selected && !blocker && company.code === "prime" && (
+                  {selected && company.code === "prime" && (
                     <span className="mt-2 block rounded-xl bg-sky-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-sky-700 dark:text-sky-300">
-                      بعد الحفظ، ستجد بطاقة Prime في إعدادات المتجر مع رابط
-                      الموقع وزر إكمال الربط.
+                      عند الحفظ يُسجَّل متجرك لدى Prime تلقائياً من موقع الفرع.
                     </span>
                   )}
                 </span>
