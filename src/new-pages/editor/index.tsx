@@ -8,6 +8,7 @@ import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 import { Button } from "@/components/ui/button";
 import PlanUpgradeGate from "@/components/PlanUpgradeGate";
+import EditorSplash from "@/components/EditorSplash";
 import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 
 type EditorHandoff = {
@@ -217,6 +218,10 @@ const EditorPage = () => {
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [iframeBlocked, setIframeBlocked] = useState(false);
+  // Until the frame's first `load`, the splash covers it: before then the
+  // frame is an empty document, and from then on the editor paints the same
+  // splash itself and keeps it up until it is ready.
+  const [frameLoaded, setFrameLoaded] = useState(false);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const editorLocked =
     !entitlementsLoading && isPlanFeatureLocked("ai_editor");
@@ -314,6 +319,7 @@ const EditorPage = () => {
     setError(null);
     setRedirectUrl(null);
     setIframeBlocked(false);
+    setFrameLoaded(false);
 
     validateUserToEditor(undefined, {
       onSuccess: (data) => {
@@ -353,12 +359,7 @@ const EditorPage = () => {
     isPending ||
     (!redirectUrl && !error)
   ) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
-        <div className="size-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <p className="text-sm text-muted-foreground">جاري فتح محرر الموقع...</p>
-      </div>
-    );
+    return <EditorSplash theme={theme} className="min-h-0 flex-1" />;
   }
 
   if (error) {
@@ -374,7 +375,7 @@ const EditorPage = () => {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-3 py-2">
         <p className="text-sm font-medium text-foreground">محرر الموقع</p>
         <Button
@@ -404,14 +405,29 @@ const EditorPage = () => {
           </Button>
         </div>
       ) : (
-        <iframe
-          ref={frameRef}
-          title="محرر الموقع"
-          src={redirectUrl!}
-          className="min-h-0 w-full flex-1 border-0 bg-background"
-          allow="clipboard-read; clipboard-write; fullscreen"
-          onLoad={postTheme}
-          onError={() => setIframeBlocked(true)}
+        <div className="flex min-h-0 flex-1 flex-col">
+          <iframe
+            ref={frameRef}
+            title="محرر الموقع"
+            src={redirectUrl!}
+            className="min-h-0 w-full flex-1 border-0 bg-background"
+            allow="clipboard-read; clipboard-write; fullscreen"
+            onLoad={() => {
+              postTheme();
+              setFrameLoaded(true);
+            }}
+            onError={() => setIframeBlocked(true)}
+          />
+        </div>
+      )}
+
+      {/* Over the toolbar too, so the ring stays exactly where the
+          pre-handoff splash drew it. */}
+      {!iframeBlocked && (
+        <EditorSplash
+          theme={theme}
+          hidden={frameLoaded}
+          className="absolute inset-0 z-10"
         />
       )}
     </div>

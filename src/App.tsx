@@ -13,6 +13,8 @@ import PaymentReturn from "./pages/payment/PaymentReturn";
 import { useConsumeBridge } from "./api/wrappers/auth.wrappers";
 import { establishAuthSession } from "./utils/auth-session";
 import AuthLoadingScreen from "./components/AuthLoadingScreen";
+import EditorSplash from "./components/EditorSplash";
+import { useResolvedTheme } from "./hooks/use-resolved-theme";
 import { useEffect } from "react";
 import { resolveBridgeNext } from "./utils/bridge-next";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,6 +27,7 @@ function RootRedirect() {
 function Bridge() {
   const { mutate: consumeBridge } = useConsumeBridge();
   const queryClient = useQueryClient();
+  const theme = useResolvedTheme();
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
   // Landing may put `generation` on `/bridge` or inside `next` — both must
@@ -53,6 +56,12 @@ function Bridge() {
       },
     );
   }, [token, next, consumeBridge, queryClient]);
+
+  // The landing page's hand-off straight into the editor gets the editor's
+  // splash from the first frame rather than a different loader before it.
+  if (new URL(next, window.location.origin).pathname === "/editor") {
+    return <EditorSplash theme={theme} className="min-h-screen" />;
+  }
 
   return <AuthLoadingScreen message="جاري تسجيل الدخول..." />;
 }
