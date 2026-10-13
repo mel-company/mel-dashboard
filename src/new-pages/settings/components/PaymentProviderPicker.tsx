@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useBillingProviders } from "@/api/wrappers/platform-payment.wrapper";
 import type {
@@ -23,6 +23,32 @@ const PROVIDER_TITLES: Record<string, string> = {
   ZAIN_CASH: "زين كاش",
   QI_CARD: "كي كارد",
 };
+
+/**
+ * The same logos the server sends as `logoUrl`, for the fallback list drawn
+ * when that list could not be loaded, and for a gateway whose `logoUrl`
+ * comes back empty.
+ */
+const PROVIDER_LOGOS: Record<string, string> = {
+  ZAIN_CASH: "https://cdn.mel.iq/logos/zaincash.png",
+  QI_CARD: "https://cdn.mel.iq/logos/qi-card.png",
+};
+
+/** A gateway's logo tile. Draws nothing when the image will not load. */
+function ProviderLogo({ src }: { src?: string | null }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) return null;
+  return (
+    <img
+      src={src}
+      alt=""
+      aria-hidden
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="size-9 shrink-0 rounded-xl object-cover"
+    />
+  );
+}
 
 export function paymentProviderLabel(
   provider: PlatformPaymentProvider | null | undefined,
@@ -65,7 +91,7 @@ const PaymentProviderPicker = ({
     return Object.entries(PROVIDER_TITLES).map(([provider, name], index) => ({
       provider: provider as PlatformPaymentProvider,
       name,
-      logoUrl: "",
+      logoUrl: PROVIDER_LOGOS[provider] ?? "",
       recommended: index === 0,
     }));
   }, [data, isError]);
@@ -151,17 +177,22 @@ const PaymentProviderPicker = ({
               onClick={() => onChange(option.provider)}
               aria-pressed={selected}
               className={cn(
-                "rounded-2xl border-2 p-3 text-right transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                "flex items-center gap-3 rounded-2xl border-2 p-3 text-right transition-all disabled:cursor-not-allowed disabled:opacity-50",
                 selected
                   ? "border-sky-500 bg-sky-500/10"
                   : "border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700",
               )}
             >
-              <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {PROVIDER_TITLES[option.provider] ?? option.name}
-              </span>
-              <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
-                {option.name}
+              <ProviderLogo
+                src={option.logoUrl || PROVIDER_LOGOS[option.provider]}
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {PROVIDER_TITLES[option.provider] ?? option.name}
+                </span>
+                <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
+                  {option.name}
+                </span>
               </span>
             </button>
           );
