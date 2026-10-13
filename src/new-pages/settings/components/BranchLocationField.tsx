@@ -18,6 +18,36 @@ const placeName = (name: unknown): string => {
   return n.ar || n.en || n.arabic || n.english || "";
 };
 
+/**
+ * Server 422s for branch open are often English ops copy — merchants need a
+ * clear next step in Arabic, not "Shipping → zones".
+ */
+const merchantBranchSaveError = (message: unknown): string => {
+  const raw = Array.isArray(message)
+    ? message.join(" — ")
+    : typeof message === "string"
+      ? message.trim()
+      : "";
+  if (!raw) return "تعذر حفظ موقع الفرع";
+
+  const lower = raw.toLowerCase();
+  if (
+    lower.includes("province and district mapped") ||
+    lower.includes("shipping → zones") ||
+    lower.includes("shipping -> zones")
+  ) {
+    return "هذه المحافظة/المنطقة غير مربوطة بعد برموز شركة التوصيل. تواصل مع الدعم لربط المناطق، ثم أعد الحفظ.";
+  }
+  if (
+    lower.includes("phone") ||
+    raw.includes("رقم هاتف المتجر") ||
+    raw.includes("أضف رقم هاتف")
+  ) {
+    return "أضف رقم هاتف المتجر من الإعدادات العامة أولاً، ثم أعد حفظ موقع الفرع.";
+  }
+  return raw;
+};
+
 type Place = { id: string; name?: unknown };
 
 const asList = (value: unknown): Place[] =>
@@ -67,15 +97,18 @@ const BranchLocationField = () => {
     stateId: string;
     regionId: string;
   }) => {
+    if (!data.stateId || !data.regionId) {
+      toast.error("اختر المحافظة والمنطقة قبل حفظ موقع الفرع");
+      return;
+    }
+
     saveBranch.mutate(
       {
         address: data.address,
         latitude: data.latitude,
         longitude: data.longitude,
-        // Untouched list keeps the store's current province and city.
-        ...(data.stateId
-          ? { stateId: data.stateId, regionId: data.regionId || undefined }
-          : {}),
+        stateId: data.stateId,
+        regionId: data.regionId,
       },
       {
         onSuccess: (result) => {
@@ -93,13 +126,7 @@ const BranchLocationField = () => {
           const message = (
             error as { response?: { data?: { message?: unknown } } }
           )?.response?.data?.message;
-          toast.error(
-            typeof message === "string" && message.trim()
-              ? message
-              : Array.isArray(message)
-                ? message.join(" — ")
-                : "تعذر حفظ موقع الفرع",
-          );
+          toast.error(merchantBranchSaveError(message));
         },
       },
     );
@@ -147,8 +174,8 @@ const BranchLocationField = () => {
           <p className="flex items-start gap-1.5 rounded-[12px] bg-sky-50 px-3 py-2 text-[13px] leading-relaxed text-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
             <Info className="mt-0.5 size-4 shrink-0" />
             {hasPin
-              ? `لم يُفتح فرعك لدى ${courier.displayName} بعد — احفظ الموقع مرة أخرى لفتحه.`
-              : `عند حفظ الموقع يُفتح فرعك لدى ${courier.displayName} تلقائياً ليأتي المندوب لاستلام الطرود منه.`}
+              ? `لم يُفتح فرعك لدى ${courier.displayName} بعد — اختر المحافظة والمنطقة واحفظ الموقع لفتحه.`
+              : `اختر المحافظة والمنطقة ثم احفظ الموقع — يُفتح فرعك لدى ${courier.displayName} تلقائياً ليستلم المندوب الطرود منه.`}
           </p>
         )
       ) : null}
@@ -175,6 +202,7 @@ const BranchLocationField = () => {
         initialStateId={location?.stateId}
         initialRegionId={location?.regionId}
         requireState
+        requireRegion
         busy={saveBranch.isPending}
         keepOpenOnConfirm
         onConfirm={save}

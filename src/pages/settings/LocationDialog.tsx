@@ -72,6 +72,13 @@ type Props = {
   initialRegionId?: string | null;
   /** Keep the confirm button off until a province is chosen. */
   requireState?: boolean;
+  /**
+   * Keep confirm off until a district/city is chosen too.
+   *
+   * Branch couriers (Prime, Boxy) need province *and* district so the server
+   * can map them to the vendor's own zone codes before opening a branch.
+   */
+  requireRegion?: boolean;
   /** Disables the buttons while the caller saves. */
   busy?: boolean;
   /**
@@ -193,6 +200,7 @@ const LocationDialog = ({
   initialStateId,
   initialRegionId,
   requireState = false,
+  requireRegion = false,
   busy = false,
   keepOpenOnConfirm = false,
 }: Props) => {
@@ -312,7 +320,10 @@ const LocationDialog = ({
   };
 
   const canConfirm =
-    !busy && !!draftAddress.trim() && (!requireState || !!selectedStateId);
+    !busy &&
+    !!draftAddress.trim() &&
+    (!requireState || !!selectedStateId) &&
+    (!requireRegion || !!selectedRegionId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -448,6 +459,10 @@ const LocationDialog = ({
                         )}
                       </span>
                     </>
+                  ) : requireRegion ? (
+                    <span className="mt-1 block font-medium text-amber-700 dark:text-amber-300">
+                      اختر المنطقة لإكمال موقع الفرع
+                    </span>
                   ) : null}
                 </p>
               )}
