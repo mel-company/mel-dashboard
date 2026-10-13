@@ -23,6 +23,8 @@ type DomainSettingsFieldsProps = {
   dynadotResult: DynadotSearchResult | null;
   onDomainChange: (value: string) => void;
   onCheck: () => void;
+  /** Locks the slug field and availability check (e.g. rename cooldown). */
+  disabled?: boolean;
 };
 
 /**
@@ -39,12 +41,13 @@ const DomainSettingsFields = ({
   dynadotResult,
   onDomainChange,
   onCheck,
+  disabled = false,
 }: DomainSettingsFieldsProps) => {
   const isSubdomain = domainType === "subdomain";
   const slug = domain.trim().toLowerCase();
 
   return (
-    <div className="space-y-5">
+    <div className={cn("space-y-5", disabled && "opacity-70")}>
       <div className="space-y-2">
         <SettingsLabel htmlFor="domain-input" className="text-slate-900 dark:text-slate-100">
           {isSubdomain ? "اسم الدومين الفرعي" : "الدومين المخصص"}
@@ -53,7 +56,12 @@ const DomainSettingsFields = ({
         {isSubdomain ? (
           /* Suffix sits left of the field: read right-to-left it follows the
              name, and the preview below spells the result out in full. */
-          <div className="flex h-14 overflow-hidden rounded-2xl bg-slate-100 focus-within:ring-2 focus-within:ring-blue-500/30 dark:bg-slate-900">
+          <div
+            className={cn(
+              "flex h-14 overflow-hidden rounded-2xl bg-slate-100 focus-within:ring-2 focus-within:ring-blue-500/30 dark:bg-slate-900",
+              disabled && "pointer-events-none",
+            )}
+          >
             <span
               dir="ltr"
               className="flex shrink-0 items-center bg-slate-200/70 px-4 text-[15px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
@@ -66,7 +74,8 @@ const DomainSettingsFields = ({
               onChange={(e) => onDomainChange(filterDomainInput(e.target.value))}
               placeholder="example"
               dir="ltr"
-              className="min-w-0 flex-1 border-0 bg-transparent px-4 text-left text-[15px] text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+              disabled={disabled}
+              className="min-w-0 flex-1 border-0 bg-transparent px-4 text-left text-[15px] text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed dark:text-slate-100 dark:placeholder:text-slate-500"
             />
           </div>
         ) : (
@@ -77,7 +86,8 @@ const DomainSettingsFields = ({
               onChange={(e) => onDomainChange(e.target.value)}
               placeholder="example.com"
               dir="ltr"
-              className="min-w-0 flex-1 border-0 bg-transparent px-4 text-left text-[15px] text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+              disabled={disabled}
+              className="min-w-0 flex-1 border-0 bg-transparent px-4 text-left text-[15px] text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed dark:text-slate-100 dark:placeholder:text-slate-500"
             />
           </div>
         )}
@@ -99,7 +109,7 @@ const DomainSettingsFields = ({
       <Button
         type="button"
         onClick={onCheck}
-        disabled={!domain.trim() || isCheckingDomain}
+        disabled={disabled || !domain.trim() || isCheckingDomain}
         className={cn(
           "h-12 w-full gap-2 rounded-2xl border font-semibold shadow-none",
           "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800",

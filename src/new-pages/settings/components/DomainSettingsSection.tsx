@@ -9,6 +9,14 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import DomainBrandPanel from "./DomainBrandPanel";
 import DomainPathPicker, { type DomainPath } from "./DomainPathPicker";
 import DomainSettingsFields from "./DomainSettingsFields";
@@ -22,17 +30,20 @@ import {
   useFindDomainDetails,
   useUpdateDomain,
 } from "@/api/wrappers/domain.wrappers";
+import { useLogout } from "@/api/wrappers/auth.wrappers";
 import { useInitStorePlatformPayment } from "@/api/wrappers/platform-payment.wrapper";
 import type { PlatformPaymentProvider } from "@/api/endpoints/platform-payment.endpoint";
 import { normalizePlatformSlug, useDomainCheck } from "@/hooks/useDomainCheck";
 import { formatUsd, getDomainPurchasePricing } from "@/utils/domainPricing";
 import { AR_LATN_LOCALE } from "@/utils/format-currency";
+import { getLoginUrlAfterSlugRename } from "@/utils/tenant-subdomain";
 
 export const DOMAIN_PURCHASE_RETURN_KEY = "mel_domain_purchase_return";
 export const LAST_PAYMENT_ID_KEY = "mel_last_platform_payment_id";
 
 /** A slug rename re-points DNS, so it is rate-limited to once a month. */
 const RENAME_COOLDOWN_DAYS = 30;
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 const CurrentValue = ({
   label,
@@ -65,11 +76,13 @@ type DomainSettingsSectionProps = {
 const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
   const { data: domainDetails, isLoading } = useFindDomainDetails();
   const updateDomain = useUpdateDomain();
+  const logout = useLogout();
   const initPayment = useInitStorePlatformPayment();
 
   const [domainPath, setDomainPath] = useState<DomainPath>("subdomain");
   const [paymentProvider, setPaymentProvider] =
     useState<PlatformPaymentProvider | null>(null);
+  const [confirmRenameOpen, setConfirmRenameOpen] = useState(false);
 
   const {
     domain,
@@ -89,21 +102,30 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
   const customDomain = domainDetails?.customDomain?.trim() || "";
 
   const lastUpdate = domainDetails?.domain_last_update;
-  const canRenameSlug = useMemo(() => {
-    if (!lastUpdate) return true;
+  const renameCooldown = useMemo(() => {
+    if (!lastUpdate) {
+      return { canRename: true, daysRemaining: 0, daysSinceUpdate: null as number | null };
+    }
     const daysSinceUpdate = Math.floor(
-      (Date.now() - new Date(lastUpdate).getTime()) / (1000 * 60 * 60 * 24),
+      (Date.now() - new Date(lastUpdate).getTime()) / MS_PER_DAY,
     );
-    return daysSinceUpdate >= RENAME_COOLDOWN_DAYS;
+    const daysRemaining = Math.max(0, RENAME_COOLDOWN_DAYS - daysSinceUpdate);
+    return {
+      canRename: daysSinceUpdate >= RENAME_COOLDOWN_DAYS,
+      daysRemaining,
+      daysSinceUpdate,
+    };
   }, [lastUpdate]);
+
+  const canRenameSlug = renameCooldown.canRename;
 
   const formattedLastUpdate = lastUpdate
     ? new Date(lastUpdate).toLocaleDateString(AR_LATN_LOCALE, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-    : "لم يتم التحديث";
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "لم يتم التحديث بعد";
 
   const normalizedInput = domain.trim().toLowerCase();
   const customDomainAlreadyLinked = customDomain === normalizedInput;
@@ -132,7 +154,9 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
     canRenameSlug;
 
   const canSave = canPurchaseCustomDomain || canUpdateSubdomain;
-  const isSaving = updateDomain.isPending || initPayment.isPending;
+  const isSaving =
+    updateDomain.isPending || initPayment.isPending || logout.isPending;
+  const subdomainFieldsLocked = domainPath === "subdomain" && !canRenameSlug;
 
   /**
    * What each path starts with. The subdomain path edits something that already
@@ -210,10 +234,34 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
     );
   };
 
+  const finishRenameAndLeave = (nextSlug: string) => {
+    const loginUrl = getLoginUrlAfterSlugRename(nextSlug);
+    const publicHost = `${nextSlug}.mel.iq`;
+
+    logout.mutate(
+      {},
+      {
+        onSettled: () => {
+          if (loginUrl === "/login") {
+            toast.success(
+              `تم تحديث النطاق إلى ${publicHost}. سجّل الدخول من جديد.`,
+            );
+            window.location.replace("/login");
+            return;
+          }
+          toast.success("تم تحديث النطاق. سجّل الدخول من العنوان الجديد.");
+          window.location.replace(loginUrl);
+        },
+      },
+    );
+  };
+
   const renameSlug = () => {
     if (!canRenameSlug) {
       toast.error(
-        `لا يمكن تحديث النطاق. يجب الانتظار ${RENAME_COOLDOWN_DAYS} يومًا على الأقل من آخر تحديث.`,
+        renameCooldown.daysRemaining > 0
+          ? `لا يمكن تغيير النطاق الآن. متبقّي ${renameCooldown.daysRemaining} يوم.`
+          : `لا يمكن تحديث النطاق. يجب الانتظار ${RENAME_COOLDOWN_DAYS} يومًا على الأقل من آخر تحديث.`,
       );
       return;
     }
@@ -222,8 +270,9 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
       { current: platformSlug, next: slugInput },
       {
         onSuccess: () => {
-          toast.success("تم تحديث النطاق بنجاح");
+          setConfirmRenameOpen(false);
           resetCheck();
+          finishRenameAndLeave(slugInput);
         },
         onError: (error: any) => {
           const message = error?.response?.data?.message;
@@ -248,6 +297,12 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
       toast.info("لم يتم تغيير النطاق");
       return;
     }
+    if (domainPath === "subdomain" && !canRenameSlug) {
+      toast.error(
+        `لا يمكن التغيير الآن — متبقّي ${renameCooldown.daysRemaining} يوم.`,
+      );
+      return;
+    }
     if (!domainChecked || domainAvailable !== true) {
       toast.error("الرجاء التحقق من توفر الدومين أولاً");
       return;
@@ -257,7 +312,8 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
       buyDomain();
       return;
     }
-    renameSlug();
+
+    setConfirmRenameOpen(true);
   };
 
   const body = isLoading ? (
@@ -318,20 +374,22 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
             dynadotResult={dynadotResult}
             onDomainChange={handleDomainChange}
             onCheck={checkDomain}
+            disabled={subdomainFieldsLocked}
           />
 
           {domainPath === "subdomain" && (
-            <DomainNote>
+            <DomainNote tone={canRenameSlug ? "info" : "warning"}>
               {canRenameSlug
-                ? `يمكن تغيير النطاق الفرعي مرة كل ${RENAME_COOLDOWN_DAYS} يوم. آخر تحديث: ${formattedLastUpdate}`
-                : `لا يمكن التغيير الآن — يجب مرور ${RENAME_COOLDOWN_DAYS} يوم. آخر تحديث: ${formattedLastUpdate}`}
+                ? `يمكنك تغيير النطاق الفرعي مرة كل ${RENAME_COOLDOWN_DAYS} يوم. آخر تحديث: ${formattedLastUpdate}`
+                : `التغيير مقفل حالياً — متبقّي ${renameCooldown.daysRemaining} يوم. آخر تحديث: ${formattedLastUpdate}`}
             </DomainNote>
           )}
 
-          {domainPath === "subdomain" && (
+          {domainPath === "subdomain" && canRenameSlug && (
             <DomainNote tone="warning">
-              تغيير النطاق ينقل عنوان المتجر. يبقى المتجر غير متاح على العنوان
-              الجديد حتى إعادة نشره، لذا أعد النشر مباشرة بعد الحفظ.
+              بعد الحفظ يُحدَّث عنوان المتجر فوراً ويُسجَّل خروجك تلقائياً. سجّل
+              الدخول من العنوان الجديد، ثم أعد نشر المتجر ليظهر على النطاق
+              الجديد.
             </DomainNote>
           )}
 
@@ -353,12 +411,19 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
             <Button
               type="submit"
               disabled={
-                !canSave || isSaving || (domainPath === "buy" && !paymentProvider)
+                !canSave ||
+                isSaving ||
+                subdomainFieldsLocked ||
+                (domainPath === "buy" && !paymentProvider)
               }
               className="h-12 flex-1 gap-2 rounded-2xl bg-blue-600 text-white hover:bg-blue-700"
             >
               {isSaving ? (
-                <HugeiconsIcon icon={Loading03Icon} size={16} className="animate-spin" />
+                <HugeiconsIcon
+                  icon={Loading03Icon}
+                  size={16}
+                  className="animate-spin"
+                />
               ) : (
                 <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
               )}
@@ -366,7 +431,9 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
                 ? "جاري المعالجة..."
                 : domainPath === "buy" && pricing
                   ? `الدفع عبر ${paymentProviderLabel(paymentProvider)} — ${formatUsd(pricing.totalUsd)}`
-                  : "حفظ الدومين"}
+                  : subdomainFieldsLocked
+                    ? `مقفل — ${renameCooldown.daysRemaining} يوم متبقية`
+                    : "تغيير النطاق"}
             </Button>
 
             {onClose && (
@@ -415,7 +482,6 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
               <span dir="ltr">qwafer.com</span>
             </p>
           </div>
-
         </header>
 
         {body}
@@ -425,6 +491,71 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
         onClose={onClose}
         className="order-1 hidden md:order-2 md:flex"
       />
+
+      <Dialog
+        open={confirmRenameOpen}
+        onOpenChange={(open) => {
+          if (isSaving) return;
+          setConfirmRenameOpen(open);
+        }}
+      >
+        <DialogContent className="max-w-md text-right" dir="rtl">
+          <DialogHeader className="space-y-2 text-right">
+            <DialogTitle className="text-right">تأكيد تغيير النطاق</DialogTitle>
+            <DialogDescription className="text-right text-[13px] leading-relaxed">
+              سيتم تحديث عنوان متجرك، ولن تستطيع تغييره مرة أخرى لمدة{" "}
+              {RENAME_COOLDOWN_DAYS} يوم. بعد التأكيد يُسجَّل خروجك تلقائياً.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+            <div className="flex items-center justify-between gap-3 text-[13px]">
+              <span className="text-slate-500">من</span>
+              <code dir="ltr" className="font-medium text-slate-900 dark:text-slate-100">
+                {platformSlug}.mel.iq
+              </code>
+            </div>
+            <div className="flex items-center justify-between gap-3 text-[13px]">
+              <span className="text-slate-500">إلى</span>
+              <code dir="ltr" className="font-medium text-blue-700 dark:text-blue-300">
+                {slugInput}.mel.iq
+              </code>
+            </div>
+          </div>
+
+          <DomainNote tone="warning">
+            سجّل الدخول من العنوان الجديد بعد الخروج، ثم أعد نشر المتجر ليظهر
+            عليه.
+          </DomainNote>
+
+          <DialogFooter className="gap-2 sm:flex-row-reverse">
+            <Button
+              type="button"
+              onClick={renameSlug}
+              disabled={isSaving}
+              className="h-11 gap-2 rounded-2xl bg-blue-600 text-white hover:bg-blue-700"
+            >
+              {isSaving && (
+                <HugeiconsIcon
+                  icon={Loading03Icon}
+                  size={16}
+                  className="animate-spin"
+                />
+              )}
+              {isSaving ? "جاري التغيير..." : "تأكيد وتسجيل الخروج"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSaving}
+              onClick={() => setConfirmRenameOpen(false)}
+              className="h-11 rounded-2xl"
+            >
+              إلغاء
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
