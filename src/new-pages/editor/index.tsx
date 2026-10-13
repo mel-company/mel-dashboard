@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useValidateUserToEditor } from "@/api/wrappers/auth.wrappers";
+import { useFindDomainDetails } from "@/api/wrappers/domain.wrappers";
+import { normalizePlatformSlug } from "@/hooks/useDomainCheck";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,40 @@ type EditorHandoff = {
   /** The store's platform slug, which the handoff URL has to carry. */
   subdomain?: string;
 };
+
+/**
+ * validate-to-editor may return a flat body or `{ data: { … } }` like other
+ * auth endpoints. Login already unwraps both; the editor handoff did not, so a
+ * nested payload looked like "no token / no store" and the iframe never got
+ * `?store=`.
+ */
+function extractEditorHandoff(raw: unknown): EditorHandoff {
+  if (!raw || typeof raw !== "object") return {};
+  const root = raw as Record<string, unknown>;
+  const nested =
+    root.data && typeof root.data === "object"
+      ? (root.data as Record<string, unknown>)
+      : null;
+
+  const pick = (obj: Record<string, unknown> | null): EditorHandoff => {
+    if (!obj) return {};
+    const jwt = obj.jwt ?? obj.token ?? obj.accessToken;
+    const subdomain = obj.subdomain ?? obj.store ?? obj.domain;
+    const redirectUrl = obj.redirectUrl ?? obj.redirect_url;
+    return {
+      ...(typeof jwt === "string" && jwt ? { jwt, token: jwt } : {}),
+      ...(typeof subdomain === "string" && subdomain
+        ? { subdomain: normalizePlatformSlug(subdomain) }
+        : {}),
+      ...(typeof redirectUrl === "string" && redirectUrl
+        ? { redirectUrl }
+        : {}),
+    };
+  };
+
+  // Root wins over nested when both are present.
+  return { ...pick(nested), ...pick(root) };
+}
 
 const EDITOR_BASE = (
   import.meta.env.VITE_EDITOR_URL || "https://editor.mel.iq"
@@ -52,10 +88,13 @@ const THEME_MESSAGE = "mel:editor-theme";
  * which reads as an editor that loaded empty rather than as an error.
  *
  * The server answers with it; `redirectUrl` is read second so a server that
- * has not shipped that field yet still works, and the hostname
- * (`dash.<slug>.mel.iq`) is the last resort.
+ * has not shipped that field yet still works. Hostname / env and finally
+ * `domain-details` cover localhost and hosts that do not carry the slug.
  */
-function resolveStoreSlug(data: EditorHandoff): string {
+function resolveStoreSlug(
+  data: EditorHandoff,
+  domainSlug?: string | null,
+): string {
   if (data.subdomain) return data.subdomain;
 
   if (data.redirectUrl) {
@@ -64,13 +103,13 @@ function resolveStoreSlug(data: EditorHandoff): string {
         data.redirectUrl,
         window.location.origin,
       ).searchParams.get("store");
-      if (fromRedirect) return fromRedirect;
+      if (fromRedirect) return normalizePlatformSlug(fromRedirect);
     } catch {
       // A redirectUrl we cannot parse tells us nothing; fall through.
     }
   }
 
-  return getTenantSubdomain();
+  return getTenantSubdomain() || normalizePlatformSlug(domainSlug) || "";
 }
 
 /**
@@ -86,13 +125,26 @@ function resolveStoreSlug(data: EditorHandoff): string {
  * makes the two agree when the OS is light and the editor's own default is
  * dark.
  */
+type HandoffResult =
+  | { ok: true; url: string }
+  | { ok: false; reason: "token" | "store" };
+
 function resolveEditorHandoffUrl(
-  data: EditorHandoff,
+  raw: unknown,
   theme: "light" | "dark",
-  generationId?: string | null,
-): string | null {
+  options?: {
+    generationId?: string | null;
+    domainSlug?: string | null;
+  },
+): HandoffResult {
+  const data = extractEditorHandoff(raw);
   const token = data.jwt || data.token;
-  if (!token) return null;
+  if (!token) return { ok: false, reason: "token" };
+
+  const store = resolveStoreSlug(data, options?.domainSlug);
+  // Never open without `store`: the editor would scope itself to the host
+  // name "editor" and look empty instead of failing loudly.
+  if (!store) return { ok: false, reason: "store" };
 
   // `/editor/bridge` is the editor's one sign-in entry point, and the same
   // one the AI generator hands out — so both handoffs go through a single
@@ -113,14 +165,21 @@ function resolveEditorHandoffUrl(
   const url = new URL(`${EDITOR_BASE}/editor/bridge`);
   url.searchParams.set("token", token);
   url.searchParams.set("next", "/editor");
+  url.searchParams.set("store", store);
 
-  const store = resolveStoreSlug(data);
-  if (store) url.searchParams.set("store", store);
-
-  if (generationId) url.searchParams.set("generation", generationId);
+  if (options?.generationId) {
+    url.searchParams.set("generation", options.generationId);
+  }
 
   url.searchParams.set("theme", theme);
-  return url.toString();
+  return { ok: true, url: url.toString() };
+}
+
+function handoffErrorMessage(reason: "token" | "store"): string {
+  if (reason === "store") {
+    return "تعذر تحديد متجرك للمحرر. حدّث الصفحة أو افتح الداشبورد من رابط متجرك.";
+  }
+  return "تعذر إنشاء جلسة للمحرر. حاول مرة أخرى.";
 }
 
 /**
@@ -149,6 +208,11 @@ const EditorPage = () => {
     isLoading: entitlementsLoading,
     handleUpgradeError,
   } = usePlanEntitlements();
+  const { data: domainDetails, isLoading: domainLoading } =
+    useFindDomainDetails();
+  const domainSlug = normalizePlatformSlug(domainDetails?.domain);
+  const domainSlugRef = useRef(domainSlug);
+  domainSlugRef.current = domainSlug;
   const theme = useResolvedTheme();
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -156,6 +220,10 @@ const EditorPage = () => {
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const editorLocked =
     !entitlementsLoading && isPlanFeatureLocked("ai_editor");
+  // Hostname / env usually already have the slug; only block on domain-details
+  // when they do not, so we do not delay a production handoff for nothing.
+  const needsDomainSlug = !getTenantSubdomain();
+  const waitingForSlug = needsDomainSlug && domainLoading;
   // Only the embedded editor's first hand-off loads it; the "new tab" button
   // never does.
   const generationIdRef = useRef<string | null | undefined>(undefined);
@@ -220,15 +288,17 @@ const EditorPage = () => {
     tab.opener = null;
 
     mintTabSession(undefined, {
-      onSuccess: (data: EditorHandoff) => {
-        const url = resolveEditorHandoffUrl(data, theme);
-        if (!url) {
+      onSuccess: (data) => {
+        const result = resolveEditorHandoffUrl(data, theme, {
+          domainSlug: domainSlugRef.current,
+        });
+        if (!result.ok) {
           tab.close();
-          toast.error("تعذر إنشاء جلسة للمحرر.");
+          toast.error(handoffErrorMessage(result.reason));
           return;
         }
         // `replace`, so Back in the new tab does not return to about:blank.
-        tab.location.replace(url);
+        tab.location.replace(result.url);
       },
       onError: (err) => {
         tab.close();
@@ -240,45 +310,49 @@ const EditorPage = () => {
   };
 
   const openEditor = () => {
-    if (editorLocked) return;
+    if (editorLocked || waitingForSlug) return;
     setError(null);
     setRedirectUrl(null);
     setIframeBlocked(false);
 
     validateUserToEditor(undefined, {
-      onSuccess: (data: EditorHandoff) => {
-        const url = resolveEditorHandoffUrl(
-          data,
-          theme,
-          generationIdRef.current,
-        );
-        if (!url) {
-          // The only way to get here now: the response carried no token.
-          // The editor cannot sign anyone in on its own, so there is nothing
-          // to open.
-          setError("تعذر إنشاء جلسة للمحرر. حاول مرة أخرى.");
+      onSuccess: (data) => {
+        const result = resolveEditorHandoffUrl(data, theme, {
+          generationId: generationIdRef.current,
+          domainSlug: domainSlugRef.current,
+        });
+        if (!result.ok) {
+          setError(handoffErrorMessage(result.reason));
           return;
         }
-        setRedirectUrl(url);
+        setRedirectUrl(result.url);
       },
       onError: (err) => {
-        if (handleUpgradeError(err, "تعذر فتح المحرر. حاول مرة أخرى.")) return;
+        if (handleUpgradeError(err, "تعذر فتح المحرر. حاول مرة أخرى.")) {
+          setError("تعذر فتح المحرر. حاول مرة أخرى.");
+          return;
+        }
         setError("تعذر فتح المحرر. حاول مرة أخرى.");
       },
     });
   };
 
   useEffect(() => {
-    if (entitlementsLoading || editorLocked) return;
+    if (entitlementsLoading || editorLocked || waitingForSlug) return;
     openEditor();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once entitlements allow
-  }, [entitlementsLoading, editorLocked]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once slug + entitlements allow
+  }, [entitlementsLoading, editorLocked, waitingForSlug]);
 
   if (editorLocked) {
     return <PlanUpgradeGate feature="ai_editor" />;
   }
 
-  if (entitlementsLoading || isPending || (!redirectUrl && !error)) {
+  if (
+    entitlementsLoading ||
+    waitingForSlug ||
+    isPending ||
+    (!redirectUrl && !error)
+  ) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
         <div className="size-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
