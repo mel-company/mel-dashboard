@@ -411,7 +411,9 @@ const EditorPage = () => {
             title="محرر الموقع"
             src={redirectUrl!}
             className="min-h-0 w-full flex-1 border-0 bg-background"
-            allow="clipboard-read; clipboard-write; fullscreen"
+            // `microphone` lets the editor's AI chat take voice input; a
+            // cross-origin frame is refused the mic unless it is delegated here.
+            allow="clipboard-read; clipboard-write; fullscreen; microphone"
             onLoad={() => {
               postTheme();
               setFrameLoaded(true);
