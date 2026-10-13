@@ -7,6 +7,7 @@ import {
   useCourierBranch,
   useSaveCourierBranch,
 } from "@/api/wrappers/shipping.wrappers";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegions } from "@/api/wrappers/region.wrappers";
 
@@ -48,6 +49,11 @@ const merchantBranchSaveError = (message: unknown): string => {
   return raw;
 };
 
+const hasStorePhone = (phone: unknown): boolean => {
+  if (typeof phone !== "string") return false;
+  return phone.replace(/\D/g, "").length >= 10;
+};
+
 type Place = { id: string; name?: unknown };
 
 const asList = (value: unknown): Place[] =>
@@ -55,27 +61,37 @@ const asList = (value: unknown): Place[] =>
     ? value
     : ((value as { data?: Place[] } | undefined)?.data ?? []);
 
+type Props = {
+  /** Controlled open — used when the Prime checklist jumps here. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
 /**
  * موقع الفرع — where a driver collects this store's parcels.
  *
  * The merchant picks the province and city, then places the pin on a map.
  * Saving records it on the store (the origin half of every delivery price) and,
  * for a courier whose API opens branches from coordinates — Prime and Boxy —
- * the server opens the branch there or moves the existing one. Modon Express
- * and Al-Waseet have no branch API, so for them only the location is kept.
- *
- * Replaces two bare province/city selects, which priced deliveries but never
- * told the courier where to collect from: Prime branches were opened from the
- * dashboard with fixed coordinates, and Boxy's needed an operator.
+ * the server opens the branch there or moves the existing one.
  */
-const BranchLocationField = () => {
+const BranchLocationField = ({ open: openProp, onOpenChange }: Props) => {
+  const { data: storeDetails } = useFetchStoreDetails();
   const { data: branch } = useCourierBranch();
   const saveBranch = useSaveCourierBranch();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+
+  const open = openProp ?? uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    onOpenChange?.(next);
+    if (openProp === undefined) setUncontrolledOpen(next);
+  };
 
   const location = branch?.location;
   const courier = branch?.courier ?? null;
   const hasPin = location?.latitude != null && location?.longitude != null;
+  const phoneOk = hasStorePhone(storeDetails?.phone);
 
   const { data: statesData } = useFetchStates();
   const { data: regionsData } = useFetchRegions(
@@ -102,6 +118,14 @@ const BranchLocationField = () => {
       return;
     }
 
+    if (courier?.opensBranch && !phoneOk) {
+      const msg =
+        "أضف رقم هاتف المتجر من الإعدادات العامة أولاً، ثم أعد حفظ موقع الفرع.";
+      toast.error(msg);
+      setLastError(msg);
+      return;
+    }
+
     saveBranch.mutate(
       {
         address: data.address,
@@ -113,6 +137,7 @@ const BranchLocationField = () => {
       {
         onSuccess: (result) => {
           setOpen(false);
+          setLastError(null);
           const name = result.courier?.displayName;
           toast.success(
             result.courier?.opensBranch && name
@@ -126,7 +151,9 @@ const BranchLocationField = () => {
           const message = (
             error as { response?: { data?: { message?: unknown } } }
           )?.response?.data?.message;
-          toast.error(merchantBranchSaveError(message));
+          const friendly = merchantBranchSaveError(message);
+          setLastError(friendly);
+          toast.error(friendly);
         },
       },
     );
@@ -140,7 +167,10 @@ const BranchLocationField = () => {
 
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setLastError(null);
+          setOpen(true);
+        }}
         className="relative block h-28 w-full overflow-hidden rounded-[14px] bg-slate-100 text-right dark:bg-slate-900"
       >
         {hasPin ? (
@@ -179,6 +209,12 @@ const BranchLocationField = () => {
           </p>
         )
       ) : null}
+
+      {lastError && (
+        <p className="rounded-[12px] bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          {lastError}
+        </p>
+      )}
 
       <p className="px-1 text-[13px] text-slate-500">
         تُستخدم لحساب أجور التوصيل — التوصيل داخل نفس المحافظة يُحسب بسعر

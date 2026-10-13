@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Settings2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
@@ -15,15 +16,21 @@ type Props = {
  * إعدادات شركة التوصيل — everything about the store's courier integration,
  * behind the gear on the delivery card rather than stacked on the page:
  * the branch location (which opens the branch at Prime/Boxy), Prime's
- * status, and the store's account at the courier (own login for Modon and
- * Al-Waseet).
+ * checklist, and the store's account at the courier.
  */
 const ShippingSettingsDialog = ({ open, onOpenChange }: Props) => {
   const { data: storeDetails } = useFetchStoreDetails();
   const companyName = storeDetails?.deliveryCompany?.name;
+  const [locationOpen, setLocationOpen] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) setLocationOpen(false);
+        onOpenChange(next);
+      }}
+    >
       <DialogContent
         dir="rtl"
         showCloseButton={false}
@@ -55,9 +62,17 @@ const ShippingSettingsDialog = ({ open, onOpenChange }: Props) => {
           </div>
 
           <div className="space-y-4">
-            <BranchLocationField />
+            {isPrimeDelivery(storeDetails) ? (
+              <PrimeIntegrationCard
+                onOpenLocation={() => setLocationOpen(true)}
+                onRequestPhone={() => onOpenChange(false)}
+              />
+            ) : null}
 
-            {isPrimeDelivery(storeDetails) ? <PrimeIntegrationCard /> : null}
+            <BranchLocationField
+              open={locationOpen}
+              onOpenChange={setLocationOpen}
+            />
 
             {/* Whether the store can ship at all, and the own-login link for
                 the two couriers that accept one. */}
