@@ -27,7 +27,12 @@ function Bridge() {
   const queryClient = useQueryClient();
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
-  const next = resolveBridgeNext(params.get("next"));
+  // Landing may put `generation` on `/bridge` or inside `next` — both must
+  // reach `/editor?generation=` so the iframe handoff can overwrite pages.
+  const next = resolveBridgeNext(
+    params.get("next"),
+    params.get("generation"),
+  );
 
   useEffect(() => {
     if (!token) {

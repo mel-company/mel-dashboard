@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   Check,
@@ -27,6 +28,7 @@ type Props = {
 };
 
 const DesignApplyDialog = ({ design, onOpenChange }: Props) => {
+  const navigate = useNavigate();
   const { mutate: applyDesign, isPending } = useApplyDesign();
   const [storeUrl, setStoreUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -186,6 +188,21 @@ const DesignApplyDialog = ({ design, onOpenChange }: Props) => {
                 {copied ? "تم النسخ" : "نسخ الرابط"}
               </Button>
             </div>
+            {design?.id ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 w-full rounded-2xl text-base font-bold"
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate(
+                    `/editor?generation=${encodeURIComponent(design.id)}`,
+                  );
+                }}
+              >
+                فتح التصميم في المحرر
+              </Button>
+            ) : null}
           </>
         ) : isPending ? (
           <div className="flex flex-col items-center gap-3 py-6 text-center">

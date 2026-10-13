@@ -217,6 +217,24 @@ const StoreAppearanceSection = () => {
                         معاينة حيّة
                       </Button>
 
+                      {/* Re-runs the generation handoff into the editor draft.
+                          Everyday «فتح المحرر» omits `generation=`, so a
+                          merchant whose landing link dropped it stays on an
+                          old/default template with no way to pull this design
+                          into the editor except this. */}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          navigate(`/editor?generation=${encodeURIComponent(design.id)}`)
+                        }
+                        className="h-8 w-full gap-1.5 rounded-lg border-slate-200 text-[13px] font-medium text-slate-600 shadow-none hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                      >
+                        <ExternalLink className="size-3.5" />
+                        فتح في المحرر
+                      </Button>
+
                       <Button
                         type="button"
                         size="sm"
