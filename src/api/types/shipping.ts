@@ -111,42 +111,89 @@ function normalizeCourierRawCode(value: string): string {
   return value.trim().toUpperCase().replace(/\s+/g, "_");
 }
 
-function mapCourierRawLabel(
+function rawCodeKeys(
   ...candidates: Array<string | null | undefined>
-): string | null {
+): string[] {
+  const keys: string[] = [];
   for (const candidate of candidates) {
     if (!candidate?.trim()) continue;
     const key = normalizeCourierRawCode(candidate);
+    keys.push(key, key.replace(/_/g, ""));
+  }
+  return keys;
+}
+
+function mapCourierRawLabel(
+  ...candidates: Array<string | null | undefined>
+): string | null {
+  for (const key of rawCodeKeys(...candidates)) {
     if (COURIER_RAW_STATUS_AR[key]) return COURIER_RAW_STATUS_AR[key];
-    // READYTOPRINT vs READY_TO_PRINT
-    const compact = key.replace(/_/g, "");
-    if (COURIER_RAW_STATUS_AR[compact]) return COURIER_RAW_STATUS_AR[compact];
   }
   return null;
+}
+
+/** Prime (and aliases) that mean the parcel was actually handed over. */
+const DELIVERED_RAW_CODES = new Set([
+  "DLEIVERD", // Prime's spelling
+  "DELIVERED",
+]);
+
+function isPrimeConfirmedDelivered(
+  rawStatus?: string | null,
+  rawStatusCode?: string | null,
+): boolean {
+  return rawCodeKeys(rawStatusCode, rawStatus).some((key) =>
+    DELIVERED_RAW_CODES.has(key),
+  );
+}
+
+function hasAnyRawStatus(
+  rawStatus?: string | null,
+  rawStatusCode?: string | null,
+): boolean {
+  return Boolean(rawStatus?.trim() || rawStatusCode?.trim());
 }
 
 /**
  * Arabic label for a parcel status — never leave the merchant with `ONWAY`.
  *
- * - **Timeline / history:** pass `preferRaw: true` so Prime `stepCode`
- *   (READYTOPRINT, …) wins over the coarse platform enum.
- * - **Badge / summary:** default — platform status when known, else raw map.
+ * **تم التسليم** only when Prime says so (`DLEIVERD` / `DELIVERED`). A
+ * normalised platform `DELIVERED` is ignored if the courier's own step still
+ * says READYTOPRINT / ONWAY / ….
+ *
+ * Prefer Prime `stepCode` when present so the badge matches the timeline
+ * («جاهز للطبع» not a vague «في الطريق»).
  */
 export function formatCourierStatusLabel(input: {
   status?: CourierShipmentStatus | null;
   rawStatus?: string | null;
   rawStatusCode?: string | null;
-  /** Prefer Prime stepCode / raw status over the normalised platform status. */
+  /**
+   * Prefer Prime stepCode / raw status over the normalised platform status.
+   * Default true — merchants should read what the courier said.
+   */
   preferRaw?: boolean;
 }): string {
   const status = input.status ?? null;
-  // stepCode first, then shipmentStatus (ONWAY, …)
-  const rawMapped = mapCourierRawLabel(
-    input.rawStatusCode,
+  const preferRaw = input.preferRaw !== false;
+  const rawMapped = mapCourierRawLabel(input.rawStatusCode, input.rawStatus);
+  const rawPresent = hasAnyRawStatus(input.rawStatus, input.rawStatusCode);
+  const primeDelivered = isPrimeConfirmedDelivered(
     input.rawStatus,
+    input.rawStatusCode,
   );
 
-  if (input.preferRaw && rawMapped) return rawMapped;
+  // Never paint «تم التسليم» from MEL's enum alone while Prime still says
+  // something earlier in the pipeline.
+  if (status === "DELIVERED") {
+    if (rawPresent && !primeDelivered) {
+      if (rawMapped) return rawMapped;
+      return COURIER_STATUS_LABEL_AR.IN_TRANSIT;
+    }
+    return COURIER_STATUS_LABEL_AR.DELIVERED;
+  }
+
+  if (preferRaw && rawMapped) return rawMapped;
 
   if (status && status !== "UNKNOWN") {
     return COURIER_STATUS_LABEL_AR[status];

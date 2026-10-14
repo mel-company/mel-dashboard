@@ -508,10 +508,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                       >
                         <span className="absolute -start-[21px] top-1.5 size-2.5 rounded-full border-2 border-white bg-sky-500 dark:border-[#0a0e27]" />
                         <p className="text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
-                          {formatCourierStatusLabel({
-                            ...event,
-                            preferRaw: true,
-                          })}
+                          {formatCourierStatusLabel(event)}
                         </p>
                         {event.occurredAt ? (
                           <p className="mt-0.5 text-[11px] text-slate-400 dark:text-[#a4b1fa]">
