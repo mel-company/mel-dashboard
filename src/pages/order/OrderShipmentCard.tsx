@@ -127,7 +127,12 @@ const ActionBtn = ({
     variant="outline"
     size="sm"
     className={cn(
-      "h-10 flex-1 gap-1.5 rounded-[14px] border-slate-200 bg-white text-[13px] font-semibold shadow-none dark:border-[#1f2448] dark:bg-[#0a0e27]",
+      // Explicit ink — outline alone was painting near-white text on white,
+      // so «الملصق / عرض المسار / تحديث الحالة» vanished while سحب الطرد
+      // (which sets its own rose colour) stayed readable.
+      "h-10 flex-1 gap-1.5 rounded-[14px] border-slate-300 bg-white text-[13px] font-semibold text-slate-800 shadow-none",
+      "hover:bg-slate-50 hover:text-slate-900",
+      "dark:border-[#2a3160] dark:bg-[#0a0e27] dark:text-[#e4e7fc] dark:hover:bg-[#12183b]",
       className,
     )}
     {...props}
