@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Loader2 } from "lucide-react";
 import Ltr from "@/components/Ltr";
-import { formatOrderDateParts } from "../utils";
+import {
+  formatOrderDateParts,
+  formatOrderLogMessage,
+  formatOrderStatusTransition,
+} from "../utils";
 
 type Props = {
   logs?: any[];
@@ -13,6 +17,9 @@ type Props = {
  * Figma draws the order's history as a stack of flat cards, each one naming
  * the event, the status transition behind it and when it happened — not a
  * connector-and-dot timeline.
+ *
+ * API log `message` / status enums arrive in English; we localise them here
+ * so the merchant never sees `PROCESSING → SHIPPED` in an Arabic drawer.
  */
 const OrderDetailsTimeline = ({ logs, isLoading }: Props) => {
   if (isLoading) {
@@ -40,6 +47,12 @@ const OrderDetailsTimeline = ({ logs, isLoading }: Props) => {
         const transition = (log?.changes ?? []).find(
           (c: any) => c?.oldValue && c?.newValue,
         );
+        const transitionLabel = transition
+          ? formatOrderStatusTransition(
+              transition.oldValue,
+              transition.newValue,
+            )
+          : null;
 
         return (
           <div
@@ -47,13 +60,11 @@ const OrderDetailsTimeline = ({ logs, isLoading }: Props) => {
             className="rounded-2xl bg-slate-50 px-4 py-3 text-right dark:bg-[#0a0e27]"
           >
             <p className="text-[13px] font-semibold text-slate-900 dark:text-[#e4e7fc]">
-              {log?.message || log?.action || "—"}
+              {formatOrderLogMessage(log)}
             </p>
-            {transition ? (
-              <p className="mt-1 text-[11px] font-bold tracking-wide text-violet-600 dark:text-[#b282ff]">
-                <Ltr>
-                  {String(transition.oldValue)} → {String(transition.newValue)}
-                </Ltr>
+            {transitionLabel ? (
+              <p className="mt-1 text-[11px] font-bold text-violet-600 dark:text-[#b282ff]">
+                {transitionLabel}
               </p>
             ) : null}
             <p className="mt-1 text-[11px] text-slate-400 dark:text-[#a4b1fa]">

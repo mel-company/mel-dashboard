@@ -69,6 +69,66 @@ export function getOrderStatusMeta(status?: string | null): OrderStatusMeta {
   );
 }
 
+/** Arabic label for a raw status enum from the API. */
+export function getOrderStatusLabel(status?: string | null): string {
+  return getOrderStatusMeta(status).label;
+}
+
+const LOG_ACTION_LABELS: Record<string, string> = {
+  CREATED: "تم إنشاء الطلب",
+  STATUS_CHANGED: "تم تغيير حالة الطلب",
+  PRODUCT_ADDED: "تمت إضافة منتج",
+  PRODUCT_REMOVED: "تم حذف منتج",
+  PRODUCT_UPDATED: "تم تحديث منتج",
+  COUPON_APPLIED: "تم تطبيق كوبون",
+  INVOICE_UPDATED: "تم تحديث الفاتورة",
+  CANCELLED: "تم إلغاء الطلب",
+};
+
+/**
+ * The API writes English log copy (`Order status changed to SHIPPED`). The
+ * merchant UI is Arabic — translate known patterns, fall back to the action
+ * label, then the raw string only if nothing else fits.
+ */
+export function formatOrderLogMessage(log: {
+  message?: string | null;
+  action?: string | null;
+  changes?: Array<{ oldValue?: string | null; newValue?: string | null }>;
+}): string {
+  const message = String(log?.message ?? "").trim();
+  const statusChanged = message.match(
+    /^Order status changed to\s+([A-Za-z_]+)\s*$/i,
+  );
+  if (statusChanged) {
+    return `تم تغيير حالة الطلب إلى ${getOrderStatusLabel(statusChanged[1])}`;
+  }
+
+  const actionKey = String(log?.action ?? "").trim().toUpperCase();
+  if (actionKey === "STATUS_CHANGED") {
+    const to = log?.changes?.find((c) => c?.newValue)?.newValue;
+    if (to) {
+      return `تم تغيير حالة الطلب إلى ${getOrderStatusLabel(to)}`;
+    }
+    return LOG_ACTION_LABELS.STATUS_CHANGED;
+  }
+
+  if (actionKey && LOG_ACTION_LABELS[actionKey]) {
+    return LOG_ACTION_LABELS[actionKey];
+  }
+
+  if (message) return message;
+  return actionKey || "—";
+}
+
+/** `PENDING → SHIPPED` → `قيد الانتظار → قيد التوصيل`. */
+export function formatOrderStatusTransition(
+  oldValue?: string | null,
+  newValue?: string | null,
+): string | null {
+  if (!oldValue || !newValue) return null;
+  return `${getOrderStatusLabel(oldValue)} → ${getOrderStatusLabel(newValue)}`;
+}
+
 export function formatOrderCode(id?: string | number | null) {
   if (id == null) return "#ORD-????";
   const raw = String(id).replace(/[^a-zA-Z0-9]/g, "");

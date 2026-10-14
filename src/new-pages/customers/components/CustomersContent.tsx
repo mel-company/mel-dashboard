@@ -101,7 +101,7 @@ const EmptyCard = ({ actions }: { actions: any }) => {
       description={
         hasSearch
           ? "لم يتم العثور على عملاء يطابقون البحث"
-          : "سيظهر العملاء هنا عند تسجيلهم عبر المنصة"
+          : "ماكو عملاء لهذا المتجر بعد. يظهرون هنا بعد نشر المتجر وأول تسجيل أو طلب من الزبائن."
       }
       icon={<User className="size-7 text-muted-foreground" />}
       primaryAction={

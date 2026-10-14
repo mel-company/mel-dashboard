@@ -66,7 +66,16 @@ type StatusTarget = "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 function apiErrorMessage(err: unknown, fallback: string): string {
   const message = (err as { response?: { data?: { message?: unknown } } })
     ?.response?.data?.message;
-  return typeof message === "string" && message.trim() ? message : fallback;
+  if (typeof message !== "string" || !message.trim()) return fallback;
+
+  // Ship/notify path: the order's customer id is not a store customer
+  // (e.g. the merchant placed a test order as themselves). English 400s
+  // used to surface as-is and looked like a broken ship button.
+  if (/recipients do not belong to the store/i.test(message)) {
+    return "لا يمكن شحن هذا الطلب: الزبون المرتبط به ليس عميلاً في المتجر. أنشئ طلباً من واجهة المتجر بحساب زبون حقيقي ثم أعد المحاولة.";
+  }
+
+  return message;
 }
 
 type Props = {
