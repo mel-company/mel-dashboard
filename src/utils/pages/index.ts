@@ -162,6 +162,10 @@ export const pages: PageType[] = [{
     label: "العملاء",
     slug: "/customers",
     apiEndpoint: "customer/cursor",
+    // Same split the old Customers page used: list on `/cursor`, typeahead
+    // on `/search-cursor`. Without this, `useTableData` keeps hitting the
+    // list endpoint with `?query=` and search returns nothing.
+    searchApiEndpoint: "customer/search-cursor",
     group: "الحركة والمبيعات",
     icon: {
         normal: UserGroup03IconNormal,

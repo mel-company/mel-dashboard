@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Printer, Trash2, X } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  Package,
+  Printer,
+  Trash2,
+  Truck,
+  X,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   File01Icon,
@@ -13,12 +22,30 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import SwitchTab from "@/components/table/switch-tab";
 import StatusGlyph from "@/components/table/status-glyph";
 import Ltr from "@/components/Ltr";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
-import { useDeleteOrder, useFetchOrder, useFetchOrderLogs } from "@/api/wrappers/order.wrappers";
+import { isParcelLive } from "@/api/types/shipping";
+import {
+  useDeleteOrder,
+  useFetchOrder,
+  useFetchOrderLogs,
+  useUpdateStatusToCancelled,
+  useUpdateStatusToDelivered,
+  useUpdateStatusToProcessing,
+  useUpdateStatusToShipped,
+} from "@/api/wrappers/order.wrappers";
 import { useActiveCourier, useOrderShipment } from "@/api/wrappers/shipping.wrappers";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "@/pages/order/OrderInvoicePreview";
 import {
@@ -33,6 +60,14 @@ import {
   OrderDeliveryCard,
   OrderFinancialCard,
 } from "./OrderDetailsSummaryCards";
+
+type StatusTarget = "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+
+function apiErrorMessage(err: unknown, fallback: string): string {
+  const message = (err as { response?: { data?: { message?: unknown } } })
+    ?.response?.data?.message;
+  return typeof message === "string" && message.trim() ? message : fallback;
+}
 
 type Props = {
   /** The row that was opened. `null` keeps the drawer closed. */
@@ -61,6 +96,7 @@ const OrderDetailsSheet = ({
   const id = seed?.id ?? "";
   const [tab, setTab] = useState("info");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // The row already carries enough to paint the header and the summary, so the
@@ -72,11 +108,24 @@ const OrderDetailsSheet = ({
   const { data: shipment } = useOrderShipment(id, open);
   const { data: courier } = useActiveCourier(open);
   const { mutate: deleteOrder, isPending: isDeleting } = useDeleteOrder();
+  const { mutate: toProcessing, isPending: isToProcessing } =
+    useUpdateStatusToProcessing();
+  const { mutate: toShipped, isPending: isToShipped } =
+    useUpdateStatusToShipped();
+  const { mutate: toDelivered, isPending: isToDelivered } =
+    useUpdateStatusToDelivered();
+  const { mutate: toCancelled, isPending: isToCancelled } =
+    useUpdateStatusToCancelled();
+
+  const isUpdatingStatus =
+    isToProcessing || isToShipped || isToDelivered || isToCancelled;
+  const liveParcel = shipment && isParcelLive(shipment) ? shipment : null;
 
   useEffect(() => {
     if (!open) {
       setTab("info");
       setConfirmingDelete(false);
+      setCancelOpen(false);
     }
   }, [open]);
 
@@ -119,10 +168,86 @@ const OrderDetailsSheet = ({
         onOpenChange(false);
         onChanged?.();
       },
-      onError: (err: any) =>
-        toast.error(err?.response?.data?.message || "فشل في حذف الطلب"),
+      onError: (err: unknown) =>
+        toast.error(apiErrorMessage(err, "فشل في حذف الطلب")),
     });
   };
+
+  const afterStatusChange = (message: string) => {
+    toast.success(message);
+    refetch();
+    onChanged?.();
+  };
+
+  const handleStatusUpdate = (target: StatusTarget) => {
+    if (!id) return;
+
+    if (target === "PROCESSING") {
+      toProcessing(id, {
+        onSuccess: () =>
+          afterStatusChange("تم تحديث حالة الطلب إلى قيد المعالجة"),
+        onError: (err) =>
+          toast.error(apiErrorMessage(err, "فشل تحديث حالة الطلب")),
+      });
+      return;
+    }
+
+    if (target === "SHIPPED") {
+      toShipped(id, {
+        onSuccess: () => afterStatusChange("تم تحديث حالة الطلب إلى تم الشحن"),
+        onError: (err) =>
+          toast.error(apiErrorMessage(err, "فشل تحديث حالة الطلب")),
+      });
+      return;
+    }
+
+    if (target === "DELIVERED") {
+      toDelivered(id, {
+        onSuccess: () =>
+          afterStatusChange("تم تحديث حالة الطلب إلى تم التسليم"),
+        onError: (err) =>
+          toast.error(apiErrorMessage(err, "فشل تحديث حالة الطلب")),
+      });
+      return;
+    }
+
+    toCancelled(
+      { id, force: !!liveParcel },
+      {
+        onSuccess: () => {
+          setCancelOpen(false);
+          afterStatusChange("تم إلغاء الطلب بنجاح");
+        },
+        onError: (err) =>
+          toast.error(apiErrorMessage(err, "فشل في إلغاء الطلب")),
+      },
+    );
+  };
+
+  const orderStatus = String(order?.status ?? "").toUpperCase();
+  const canCancel =
+    orderStatus !== "DELIVERED" && orderStatus !== "CANCELLED";
+
+  const nextStatusAction =
+    orderStatus === "PENDING"
+      ? {
+          label: "بدء المعالجة",
+          icon: Package,
+          onClick: () => handleStatusUpdate("PROCESSING"),
+        }
+      : orderStatus === "PROCESSING"
+        ? {
+            label: "شحن الطلب",
+            icon: Truck,
+            onClick: () => handleStatusUpdate("SHIPPED"),
+          }
+        : orderStatus === "SHIPPED"
+          ? {
+              label: "تأكيد التسليم",
+              icon: CheckCircle2,
+              onClick: () => handleStatusUpdate("DELIVERED"),
+            }
+          : null;
 
   const invoiceCard = (
     <OrderDetailsInvoiceCard order={order} onSaved={() => refetch()} />
@@ -150,38 +275,73 @@ const OrderDetailsSheet = ({
     />
   );
 
-  // RTL: `flex-row` puts the first child rightmost, so طباعة الفاتورة lands
-  // on the right and حذف الطلب on the left, as drawn.
+  const StatusIcon = nextStatusAction?.icon;
+
+  // Status first (complete the order), then print / delete — the sheet used
+  // to only expose print+delete, so merchants could not advance PENDING → …
+  // → DELIVERED from the list drawer at all.
   const actions = (
-    <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-      <button
-        type="button"
-        onClick={handlePrint}
-        className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-base font-bold text-white transition-opacity hover:opacity-90"
-      >
-        <span className="flex size-8 items-center justify-center rounded-xl bg-white/20">
-          <Printer className="size-4" />
-        </span>
-        طباعة الفاتورة
-      </button>
-      <button
-        type="button"
-        onClick={handleDelete}
-        disabled={isDeleting}
-        className={cn(
-          "flex h-[52px] items-center justify-center gap-2 rounded-2xl border px-5 text-base font-bold transition-colors disabled:opacity-50 sm:w-auto sm:flex-1",
-          confirmingDelete
-            ? "border-transparent bg-[#ff5252] text-white hover:bg-[#ff3b3b]"
-            : "border-[#ff5252]/30 text-[#ff5252] hover:bg-[#ff5252]/10",
-        )}
-      >
-        {isDeleting ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Trash2 className="size-4" />
-        )}
-        {confirmingDelete ? "تأكيد الحذف" : "حذف الطلب"}
-      </button>
+    <div className="flex flex-col items-stretch gap-3">
+      {nextStatusAction ? (
+        <button
+          type="button"
+          onClick={nextStatusAction.onClick}
+          disabled={isUpdatingStatus}
+          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 text-base font-bold text-white transition-opacity hover:bg-sky-700 disabled:opacity-50"
+        >
+          {isUpdatingStatus ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : StatusIcon ? (
+            <StatusIcon className="size-4" />
+          ) : null}
+          {nextStatusAction.label}
+        </button>
+      ) : null}
+
+      {/* RTL: `flex-row` puts the first child rightmost, so طباعة الفاتورة
+          lands on the right and حذف الطلب on the left, as drawn. */}
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-base font-bold text-white transition-opacity hover:opacity-90"
+        >
+          <span className="flex size-8 items-center justify-center rounded-xl bg-white/20">
+            <Printer className="size-4" />
+          </span>
+          طباعة الفاتورة
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={isDeleting || isUpdatingStatus}
+          className={cn(
+            "flex h-[52px] items-center justify-center gap-2 rounded-2xl border px-5 text-base font-bold transition-colors disabled:opacity-50 sm:w-auto sm:flex-1",
+            confirmingDelete
+              ? "border-transparent bg-[#ff5252] text-white hover:bg-[#ff3b3b]"
+              : "border-[#ff5252]/30 text-[#ff5252] hover:bg-[#ff5252]/10",
+          )}
+        >
+          {isDeleting ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Trash2 className="size-4" />
+          )}
+          {confirmingDelete ? "تأكيد الحذف" : "حذف الطلب"}
+        </button>
+      </div>
+
+      {canCancel ? (
+        <button
+          type="button"
+          onClick={() => setCancelOpen(true)}
+          disabled={isUpdatingStatus}
+          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 text-base font-bold text-rose-600 transition-colors hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50"
+        >
+          <XCircle className="size-4" />
+          إلغاء الطلب
+        </button>
+      ) : null}
     </div>
   );
 
@@ -313,6 +473,68 @@ const OrderDetailsSheet = ({
           )}
         </div>
       </SheetContent>
+
+      {/*
+        إلغاء الطلب — confirmed, and loudest where a parcel is in the air.
+        Same acknowledgement the full order page uses: cancel returns stock
+        but does not notify the courier unless force is sent after the merchant
+        has seen the live parcel named here.
+      */}
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent className="text-right" dir="rtl">
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-right">تأكيد إلغاء الطلب</DialogTitle>
+            <DialogDescription className="text-right">
+              الإلغاء نهائي ولا يمكن التراجع عنه، وتُرجَع الكميات إلى المخزون.
+            </DialogDescription>
+          </DialogHeader>
+
+          {liveParcel ? (
+            <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-right text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              <Truck className="mt-0.5 size-4 shrink-0" />
+              <div className="space-y-1">
+                <p className="font-bold">
+                  هذا الطلب ما زال لديه طرد نشط لدى{" "}
+                  {liveParcel.courier?.displayName ?? liveParcel.courierCode}
+                </p>
+                <p className="text-xs">
+                  رقم الطرد <Ltr>{liveParcel.externalId}</Ltr>. الإلغاء هنا لا
+                  يُبلِغ الشركة —{" "}
+                  {liveParcel.courier?.capabilities?.cancelShipment
+                    ? "اسحب الطرد من بطاقة الشحن أولاً، أو ألغِ الطلب ثم تابع الطرد مع الشركة."
+                    : "لا تدعم الشركة السحب عبر النظام، فاتصل بها لإيقاف التسليم."}
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setCancelOpen(false)}
+              disabled={isToCancelled}
+            >
+              تراجع
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isToCancelled}
+              onClick={() => handleStatusUpdate("CANCELLED")}
+            >
+              {isToCancelled ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  جاري الإلغاء...
+                </>
+              ) : liveParcel ? (
+                "إلغاء الطلب رغم وجود الطرد"
+              ) : (
+                "تأكيد الإلغاء"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 };

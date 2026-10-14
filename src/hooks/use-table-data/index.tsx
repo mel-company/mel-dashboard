@@ -79,8 +79,17 @@ export function useTableData<T = any>({
   // Normalize filters - remove empty values automatically
   const normalizedFilters = normalizeFilters(filters);
 
+  // Prefer the dedicated search endpoint when the page declares one (customers,
+  // tickets, …). Passing `?query=` to the list cursor alone often returns an
+  // empty page, which looked like “العملاء ما يظهرون” after typing in search.
+  const trimmedSearch = debouncedSearch.trim();
+  const endpoint =
+    trimmedSearch && page.searchApiEndpoint
+      ? page.searchApiEndpoint
+      : page.apiEndpoint;
+
   // Build query key
-  const queryKey = [page.apiEndpoint, 'list', { query: debouncedSearch, limit, ...normalizedFilters }];
+  const queryKey = [endpoint, 'list', { query: trimmedSearch, limit, ...normalizedFilters }];
 
   // Fetch data using React Query infinite query (same pattern as old page wrappers)
   const {
@@ -95,11 +104,9 @@ export function useTableData<T = any>({
   } = useInfiniteQuery({
     queryKey,
     queryFn: async ({ pageParam }) => {
-      const endpoint = page.apiEndpoint;
-
       const params: Record<string, any> = {
         ...(pageParam && { cursor: pageParam }),
-        ...(debouncedSearch && { query: debouncedSearch }),
+        ...(trimmedSearch && { query: trimmedSearch }),
         ...(limit && { limit }),
         ...normalizedFilters,
       };
@@ -110,12 +117,19 @@ export function useTableData<T = any>({
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as string | null,
-    enabled: enabled && !!page.apiEndpoint,
+    enabled: enabled && !!endpoint,
     staleTime: forceRefetch ? 0 : 5 * 60 * 1000, // 5 minutes cache
   });
 
-  // Flatten data from all pages
-  const flattenedData: T[] = data?.pages.flatMap((page) => page.data || []) ?? [];
+  // Flatten data from all pages. Some list payloads use a named array
+  // (`customers`) instead of `data` — accept both so a filled response never
+  // paints as an empty state.
+  const flattenedData: T[] =
+    data?.pages.flatMap((pageResult) => {
+      if (Array.isArray(pageResult?.data)) return pageResult.data;
+      if (Array.isArray(pageResult?.customers)) return pageResult.customers;
+      return [];
+    }) ?? [];
   const totalItems = data?.pages[0]?.total ?? flattenedData.length;
   const imageBaseUrl = data?.pages?.[0]?.baseUrl ?? "";
 
