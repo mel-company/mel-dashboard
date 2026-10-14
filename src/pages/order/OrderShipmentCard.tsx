@@ -96,8 +96,21 @@ const apiError = (error: unknown, fallback: string): string => {
   )?.response?.data;
 
   const message = data?.message ?? data?.errorMessage ?? data?.error?.message;
-  if (typeof message === "string" && message.trim()) return message;
-  if (Array.isArray(message) && message.length) return message.join("، ");
+  const code = (data as { errorCode?: number | string } | undefined)?.errorCode;
+  const text =
+    typeof message === "string" && message.trim()
+      ? message.trim()
+      : Array.isArray(message) && message.length
+        ? message.join("، ")
+        : "";
+
+  if (
+    code === 4001 ||
+    /unsupported document size/i.test(text)
+  ) {
+    return "حجم الملصق غير مدعوم لدى شركة الشحن. جرّب لاحقاً أو تواصل مع الدعم.";
+  }
+  if (text) return text;
   return fallback;
 };
 
@@ -405,7 +418,8 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                   disabled={shipmentLabel.isPending}
                   onClick={async () => {
                     try {
-                      const result = await shipmentLabel.mutateAsync(undefined);
+                      // Prime accepts A5; A4 was the old default and 422s.
+                      const result = await shipmentLabel.mutateAsync("A5");
                       if (result?.labelUrl) {
                         window.open(result.labelUrl, "_blank", "noopener");
                       } else {

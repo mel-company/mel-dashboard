@@ -90,14 +90,20 @@ export const shippingAPI = {
     return data;
   },
 
-  /** ملصق أو وصل قابل للطباعة. */
+  /**
+   * ملصق أو وصل قابل للطباعة.
+   *
+   * Prime's current environments only accept **A5** (`4001 Unsupported
+   * document size` for A4/A6). Always send an explicit size so the request
+   * does not depend on whatever the server used to default to.
+   */
   getLabel: async (
     orderId: string,
-    size?: string,
+    size: string = "A5",
   ): Promise<{ labelUrl: string }> => {
     const { data } = await axiosInstance.get<{ labelUrl: string }>(
       `/shipping/orders/${orderId}/shipment/label`,
-      { params: size ? { size } : undefined },
+      { params: { size } },
     );
     return data;
   },
