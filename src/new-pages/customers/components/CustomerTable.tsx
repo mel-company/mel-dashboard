@@ -9,12 +9,13 @@ import {
   num,
   text,
 } from "@/hooks/use-table-pagination";
+import { getCustomerLocation } from "../utils";
 
 const CUSTOMER_COLUMNS = {
   id: (c: unknown) => text(c, "customerCode", "id"),
   name: (c: unknown) => text(c, "name", "full_name"),
   phone: (c: unknown) => text(c, "phone"),
-  location: (c: unknown) => text(c, "city", "address"),
+  location: (c: unknown) => getCustomerLocation(c),
   orders: (c: unknown) => num(c, "ordersCount", "orders_count"),
   rating: (c: unknown) => num(c, "rate", "rating"),
 };

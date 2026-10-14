@@ -26,6 +26,19 @@ export function formatOrderDeliveryLocation(order: unknown): string {
   return [state, region, point].filter(Boolean).join(" - ");
 }
 
+function firstOrderLocation(customer: Record<string, unknown>): string {
+  const candidates: unknown[] = [];
+  if (customer.lastOrder) candidates.push(customer.lastOrder);
+  if (customer.latestOrder) candidates.push(customer.latestOrder);
+  if (Array.isArray(customer.orders)) candidates.push(...customer.orders);
+
+  for (const order of candidates) {
+    const fromOrder = formatOrderDeliveryLocation(order);
+    if (fromOrder) return fromOrder;
+  }
+  return "";
+}
+
 /**
  * What to show in the «الموقع» column.
  *
@@ -40,15 +53,22 @@ export function getCustomerLocation(customer: unknown): string {
   const user = c.user as Record<string, unknown> | undefined;
 
   const direct = String(
-    user?.location ?? c.location ?? c.address ?? c.lastDeliveryAddress ?? "",
+    user?.location ??
+      c.location ??
+      c.address ??
+      c.lastDeliveryAddress ??
+      user?.address ??
+      "",
   ).trim();
   if (direct) return direct;
 
-  const orders = Array.isArray(c.orders) ? c.orders : [];
-  for (const order of orders) {
-    const fromOrder = formatOrderDeliveryLocation(order);
-    if (fromOrder) return fromOrder;
-  }
+  return firstOrderLocation(c);
+}
 
-  return "";
+/** Stored `user.location` only — empty when the list never got a sync. */
+export function getStoredCustomerLocation(customer: unknown): string {
+  if (!customer || typeof customer !== "object") return "";
+  const c = customer as Record<string, unknown>;
+  const user = c.user as Record<string, unknown> | undefined;
+  return String(user?.location ?? c.location ?? "").trim();
 }

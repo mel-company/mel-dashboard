@@ -119,12 +119,15 @@ export const useUpdateCustomer = () => {
 
   return useMutation<any, Error, { id: string; data: any }>({
     mutationFn: ({ id, data }) => customerAPI.update(id, data),
-    onSuccess: (data) => {
-      // Invalidate and refetch customers list
-      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: customerKeys.cursor() });
-      // Update the specific customer cache
-      queryClient.setQueryData(customerKeys.detail(data.id), data);
+    onSuccess: (data, variables) => {
+      // Same predicate as delete: the table is keyed `["customer/cursor", …]`
+      // by useTableData, which `customerKeys.*` is not a prefix of — so the
+      // «الموقع» column stayed empty after a location sync until a hard refresh.
+      queryClient.invalidateQueries({ predicate: isCustomerQuery });
+      const id = data?.id ?? variables.id;
+      if (id) {
+        queryClient.setQueryData(customerKeys.detail(id), data);
+      }
     },
   });
 };

@@ -60,6 +60,7 @@ import UseCouponDialog from "./UseCouponDialog";
 import OrderShipmentCard from "./OrderShipmentCard";
 import { useOrderShipment } from "@/api/wrappers/shipping.wrappers";
 import { isParcelLive } from "@/api/types/shipping";
+import { useAutoDispatchOnShip } from "@/hooks/use-auto-dispatch-on-ship";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "./OrderInvoicePreview";
 import { toast } from "sonner";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
@@ -126,6 +127,7 @@ const OrderDetails = () => {
    * so the shared query answers without a second request.
    */
   const { data: parcel } = useOrderShipment(id ?? "", !!id);
+  const { dispatchIfNeeded } = useAutoDispatchOnShip(id ?? "", !!id);
 
   const liveParcel = parcel && isParcelLive(parcel) ? parcel : null;
 
@@ -321,6 +323,7 @@ const OrderDetails = () => {
           onSuccess: () => {
             toast.success("تم تحديث حالة الطلب إلى تم الشحن");
             refetch();
+            dispatchIfNeeded();
           },
           onError: (error: any) => {
             toast.error(

@@ -38,7 +38,11 @@ import NotFoundPage from "../miscellaneous/NotFoundPage";
 import CustomerDetailsSkeleton from "./CustomerDetailsSkeleton";
 import { toast } from "sonner";
 import PagePanel from "@/components/PagePanel";
-import { getCustomerLocation } from "@/new-pages/customers/utils";
+import {
+  getCustomerLocation,
+  getStoredCustomerLocation,
+} from "@/new-pages/customers/utils";
+import { useSyncCustomerLocation } from "@/hooks/use-sync-customer-location";
 
 const CustomerDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +57,20 @@ const CustomerDetails = () => {
     isFetching,
   } = useFetchCustomer(id ?? "");
   const { mutate: deleteCustomer, isPending: isDeleting } = useDeleteCustomer();
+
+  /**
+   * Detail payload includes orders (list does not). Mirror the derived
+   * delivery line onto `user.location` so the table fills in without the
+   * merchant editing anything.
+   */
+  useSyncCustomerLocation(
+    customer?.id,
+    customer ? getCustomerLocation(customer) : "",
+    {
+      onlyIfEmpty: true,
+      storedLocation: customer ? getStoredCustomerLocation(customer) : "",
+    },
+  );
 
   const handleDelete = () => {
     if (!id) return;

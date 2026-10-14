@@ -47,7 +47,9 @@ import {
   useUpdateStatusToShipped,
 } from "@/api/wrappers/order.wrappers";
 import { useActiveCourier, useOrderShipment } from "@/api/wrappers/shipping.wrappers";
+import { useAutoDispatchOnShip } from "@/hooks/use-auto-dispatch-on-ship";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "@/pages/order/OrderInvoicePreview";
+import OrderShipmentCard from "@/pages/order/OrderShipmentCard";
 import {
   formatOrderCode,
   formatOrderDateParts,
@@ -116,6 +118,7 @@ const OrderDetailsSheet = ({
   const { data: logs, isLoading: isLoadingLogs } = useFetchOrderLogs(id, open);
   const { data: shipment } = useOrderShipment(id, open);
   const { data: courier } = useActiveCourier(open);
+  const { dispatchIfNeeded, isDispatching } = useAutoDispatchOnShip(id, open);
   const { mutate: deleteOrder, isPending: isDeleting } = useDeleteOrder();
   const { mutate: toProcessing, isPending: isToProcessing } =
     useUpdateStatusToProcessing();
@@ -127,7 +130,11 @@ const OrderDetailsSheet = ({
     useUpdateStatusToCancelled();
 
   const isUpdatingStatus =
-    isToProcessing || isToShipped || isToDelivered || isToCancelled;
+    isToProcessing ||
+    isToShipped ||
+    isToDelivered ||
+    isToCancelled ||
+    isDispatching;
   const liveParcel = shipment && isParcelLive(shipment) ? shipment : null;
 
   useEffect(() => {
@@ -203,7 +210,11 @@ const OrderDetailsSheet = ({
 
     if (target === "SHIPPED") {
       toShipped(id, {
-        onSuccess: () => afterStatusChange("تم تحديث حالة الطلب إلى تم الشحن"),
+        onSuccess: () => {
+          afterStatusChange("تم تحديث حالة الطلب إلى تم الشحن");
+          // Same press registers the Prime/courier parcel when none exists yet.
+          dispatchIfNeeded();
+        },
         onError: (err) =>
           toast.error(apiErrorMessage(err, "فشل تحديث حالة الطلب")),
       });
@@ -446,6 +457,7 @@ const OrderDetailsSheet = ({
                 {invoiceCard}
                 {financialCard}
                 {deliveryCard}
+                <OrderShipmentCard order={order} onUpdated={() => refetch()} />
                 <section className="rounded-[24px] bg-white p-4 dark:bg-[#0a0e27]">
                   <h3 className="mb-3 text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
                     سجل الطلب
@@ -467,12 +479,13 @@ const OrderDetailsSheet = ({
                   </h3>
                   <OrderDetailsTimeline logs={logs} isLoading={isLoadingLogs} />
                 </section>
-                <div className="min-w-0">
+                <div className="min-w-0 space-y-4">
                   <OrderDetailsItems
                     order={order}
                     imageBaseUrl={baseUrl}
                     variant="table"
                   />
+                  <OrderShipmentCard order={order} onUpdated={() => refetch()} />
                 </div>
                 <div className="min-w-0 space-y-4">
                   {financialCard}

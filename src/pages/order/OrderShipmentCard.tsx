@@ -1,10 +1,9 @@
-import { useMemo, useState } from "react";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  useMemo,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -40,26 +39,15 @@ import type {
 } from "@/api/types/shipping";
 import { PARCEL_TERMINAL_STATUSES } from "@/api/types/shipping";
 import { formatCurrency } from "@/utils/format-currency";
+import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
 
 /**
  * شحن الطلب — بأي شركة يستخدمها المتجر.
  *
- * Replaces the Prime-only card. Nothing here names a courier: the parcel is
- * registered, polled, tracked, labelled and withdrawn through one set of
- * routes, and the server picks the adapter off the company the store chose.
- *
- * Two things shape the whole component:
- *
- * - **Every button is gated on `capabilities`.** Three of the four couriers
- *   cannot quote, two cannot produce a label and Al-Waseet cannot cancel
- *   through the API at all. Those are vendor limitations somebody verified,
- *   not gaps — so a button that would return 422 is not rendered, because a
- *   merchant reads a failing button as a broken dashboard rather than as
- *   something their courier cannot do.
- * - **Dispatch is an act, never automatic.** It costs the merchant money and
- *   cannot be undone once a driver holds the parcel, which is why no order
- *   status triggers it and why this is a button someone presses.
+ * - Buttons gated on `capabilities` so a 422 never looks like a broken UI.
+ * - Dispatch costs money once a driver holds the parcel; the merchant asks
+ *   via this card or the order «شحن الطلب» button (`useAutoDispatchOnShip`).
  */
 
 const STATUS_LABEL: Record<CourierShipmentStatus, string> = {
@@ -75,18 +63,25 @@ const STATUS_LABEL: Record<CourierShipmentStatus, string> = {
 };
 
 const STATUS_TONE: Record<CourierShipmentStatus, string> = {
-  CREATED: "bg-slate-100 text-slate-700",
-  PICKED_UP: "bg-blue-100 text-blue-700",
-  IN_TRANSIT: "bg-blue-100 text-blue-700",
-  OUT_FOR_DELIVERY: "bg-indigo-100 text-indigo-700",
-  DELIVERED: "bg-emerald-100 text-emerald-700",
-  RETURNED: "bg-amber-100 text-amber-700",
-  CANCELLED: "bg-slate-200 text-slate-600",
-  FAILED: "bg-red-100 text-red-700",
-  UNKNOWN: "bg-slate-100 text-slate-500",
+  CREATED:
+    "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
+  PICKED_UP:
+    "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
+  IN_TRANSIT:
+    "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
+  OUT_FOR_DELIVERY:
+    "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300",
+  DELIVERED:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+  RETURNED:
+    "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
+  CANCELLED:
+    "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  FAILED: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+  UNKNOWN:
+    "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
 };
 
-/** The courier's own message, which is always more useful than a guess. */
 const apiError = (error: unknown, fallback: string): string => {
   const data = (
     error as {
@@ -100,12 +95,46 @@ const apiError = (error: unknown, fallback: string): string => {
     }
   )?.response?.data;
 
-  const message =
-    data?.message ?? data?.errorMessage ?? data?.error?.message;
+  const message = data?.message ?? data?.errorMessage ?? data?.error?.message;
   if (typeof message === "string" && message.trim()) return message;
   if (Array.isArray(message) && message.length) return message.join("، ");
   return fallback;
 };
+
+const Meta = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) => (
+  <div className="min-w-0 rounded-[16px] bg-slate-50 px-3.5 py-3 dark:bg-[#12183b]">
+    <p className="mb-1 text-[11px] text-slate-500 dark:text-[#a4b1fa]">
+      {label}
+    </p>
+    <div className="truncate text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
+      {children}
+    </div>
+  </div>
+);
+
+const ActionBtn = ({
+  children,
+  className,
+  ...props
+}: ComponentProps<typeof Button>) => (
+  <Button
+    variant="outline"
+    size="sm"
+    className={cn(
+      "h-10 flex-1 gap-1.5 rounded-[14px] border-slate-200 bg-white text-[13px] font-semibold shadow-none dark:border-[#1f2448] dark:bg-[#0a0e27]",
+      className,
+    )}
+    {...props}
+  >
+    {children}
+  </Button>
+);
 
 type Props = {
   order: Record<string, unknown>;
@@ -134,20 +163,6 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
 
   const integrated = courier?.selected === true && courier.integrated === true;
 
-  /**
-   * Which courier this screen is talking about, and what it can be asked.
-   *
-   * **A recorded parcel answers for itself.** Every server path acts on
-   * `shipment.courierCode`, never on the store's current selection, so after a
-   * merchant switches company the live parcels stay with the company that has
-   * them. Reading capabilities off the active courier instead drew the wrong
-   * buttons for exactly as long as a parcel outlived a switch: a Cancel that
-   * 422s on an Al-Waseet parcel, and no Cancel at all for a Boxy parcel once
-   * the store moved to Al-Waseet.
-   *
-   * The dispatch form below is the other way round — there is no parcel yet,
-   * so the store's current courier is the one that will get it.
-   */
   const parcelCourier = shipment?.courier ?? null;
   const capabilities = shipment
     ? (parcelCourier?.capabilities ?? null)
@@ -155,30 +170,15 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
       ? courier.capabilities
       : null;
 
-  /** The name to put on the card: the parcel's company, or the store's. */
   const courierName = shipment
     ? (parcelCourier?.displayName ?? shipment.courierCode)
     : integrated
       ? courier.deliveryCompanyName || courier.displayName
       : "";
 
-  /**
-   * A parcel left behind by a courier change, which is worth saying outright:
-   * the actions on it reach a company the store no longer uses, and the
-   * merchant is looking at a page that otherwise names only the new one.
-   */
   const parcelFromOtherCourier =
     !!shipment && integrated && shipment.courierCode !== courier.code;
 
-  /**
-   * What the shopper paid for delivery, against what the courier bills.
-   *
-   * Only Prime prices a parcel before it exists, so for the other three the
-   * shopper's fee came from the fallback rules recorded for that company and
-   * the gap is
-   * the merchant's to absorb. It is shown rather than hidden for exactly
-   * that reason.
-   */
   const feeGap = useMemo(() => {
     const paid = Number(order.deliveryFee ?? 0) || 0;
     const billed = shipment?.courierFee;
@@ -202,214 +202,174 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
 
   if (courierLoading || shipmentLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
+      <section className="rounded-[24px] bg-white p-5 dark:bg-[#0a0e27]">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-[#a4b1fa]">
+          <Loader2 className="size-4 animate-spin" />
           جارٍ قراءة بيانات الشحن…
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     );
   }
 
-  /** No courier chosen, or one with nothing behind it. Both are states. */
   if (!courier || courier.selected === false || courier.integrated === false) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Truck className="h-4 w-4" />
+      <section className="rounded-[24px] bg-white p-5 dark:bg-[#0a0e27]">
+        <header className="mb-3 flex items-center gap-2">
+          <Truck className="size-4 text-sky-600" />
+          <h3 className="text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
             الشحن
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {courier && courier.selected === false
-              ? "لم تختر شركة شحن بعد. اخترها من الإعدادات لتتمكن من شحن الطلبات."
-              : (courier?.reason ??
-                "لا يمكن الشحن من هنا لهذا المتجر حاليًا.")}
-          </p>
-        </CardContent>
-      </Card>
+          </h3>
+        </header>
+        <p className="text-sm leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
+          {courier && courier.selected === false
+            ? "لم تختر شركة شحن بعد. اخترها من الإعدادات لتتمكن من شحن الطلبات."
+            : (courier?.reason ??
+              "لا يمكن الشحن من هنا لهذا المتجر حاليًا.")}
+        </p>
+      </section>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Truck className="h-4 w-4" />
-          الشحن عبر {courierName}
-        </CardTitle>
-        {shipment && (
+    <section className="rounded-[24px] bg-white p-4 sm:p-5 dark:bg-[#0a0e27]">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-[12px] bg-sky-50 text-sky-600 dark:bg-[#33c5ff]/10 dark:text-[#33c5ff]">
+            <Truck className="size-4" />
+          </span>
+          <div className="min-w-0 text-right">
+            <h3 className="truncate text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
+              الشحن عبر {courierName}
+            </h3>
+            {shipment?.rawStatus ? (
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-[#a4b1fa]">
+                حالة الشركة:{" "}
+                <span className="font-semibold text-slate-600 dark:text-[#e4e7fc]">
+                  {shipment.rawStatus}
+                </span>
+              </p>
+            ) : null}
+          </div>
+        </div>
+        {shipment ? (
           <span
-            className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_TONE[shipment.status]}`}
+            className={cn(
+              "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-xs font-bold",
+              STATUS_TONE[shipment.status],
+            )}
           >
             {STATUS_LABEL[shipment.status] ?? shipment.status}
           </span>
-        )}
-      </CardHeader>
+        ) : null}
+      </header>
 
-      <CardContent className="space-y-4">
-        {/*
-          The store changed courier while this parcel was still in the air.
-          Said plainly, because every button below reaches the old company and
-          nothing else on the page mentions it.
-        */}
-        {parcelFromOtherCourier && (
-          <div className="flex items-start gap-2 rounded-lg bg-sky-50 p-3 text-sm text-sky-800">
-            <Truck className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
+      <div className="space-y-4">
+        {parcelFromOtherCourier ? (
+          <div className="flex items-start gap-2 rounded-[16px] bg-sky-50 p-3.5 text-sm text-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
+            <Truck className="mt-0.5 size-4 shrink-0" />
+            <div className="space-y-1 text-right">
               <p className="font-bold">
                 هذا الطرد مع {courierName}، وليس شركتك الحالية
               </p>
-              <p className="mt-1 text-xs">
-                تم شحنه قبل تغيير شركة التوصيل، ويبقى معها حتى يُسلَّم أو
-                يُسحب. الطلبات الجديدة تُشحن عبر{" "}
+              <p className="text-xs leading-relaxed opacity-90">
+                تم شحنه قبل تغيير شركة التوصيل، ويبقى معها حتى يُسلَّم أو يُسحب.
+                الطلبات الجديدة تُشحن عبر{" "}
                 {courier.deliveryCompanyName || courier.displayName}.
               </p>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/*
-          The courier needs something only an operator can provide — Prime's
-          shop id, Boxy's pick-up location. Said here rather than letting the
-          merchant discover it as a 422 on a real order.
-
-          **Only where an operator can actually finish it.** Modon Express and
-          Al-Waseet publish no sub-account endpoint, so «راجع فريق الدعم» would
-          send a merchant to wait for a step nobody can take — the rule the
-          settings card has carried all along and this copy of the same message
-          did not. For those two the whole of the setup is the credential form
-          in settings, so that is where the fallback below points.
-        */}
-        {/*
-          The platform withdrew this company while the store was using it.
-
-          Said on the order page because this is where the merchant acts: the
-          parcel will still ship — `INACTIVE` stops a company being offered,
-          not being used — but they cannot re-select it, and nothing else
-          anywhere would have told them. The settings row still draws its name
-          and logo, and the picker simply omits it.
-        */}
-        {!courier.companyActive && (
-          <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
-              <p className="font-bold">
-                أوقفت المنصة التعامل مع {courierName}
-              </p>
-              <p className="mt-1 text-xs">
-                طلباتك الحالية تُشحن عبرها كما هي، لكنها لم تبقَ متاحة للاختيار
-                — اختر شركة أخرى من الإعدادات، ولا ينتظرك حد الـ30 يوماً في هذه
-                الحالة.
+        {!courier.companyActive ? (
+          <div className="flex items-start gap-2 rounded-[16px] bg-amber-50 p-3.5 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <div className="space-y-1 text-right">
+              <p className="font-bold">أوقفت المنصة التعامل مع {courierName}</p>
+              <p className="text-xs leading-relaxed opacity-90">
+                طلباتك الحالية تُشحن عبرها كما هي، لكنها لم تبقَ متاحة للاختيار —
+                اختر شركة أخرى من الإعدادات.
               </p>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {!shipment && !courier.accountReady && courier.supportsBranches && (
-          <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
+        {!shipment && !courier.accountReady && courier.supportsBranches ? (
+          <div className="flex items-start gap-2 rounded-[16px] bg-amber-50 p-3.5 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <div className="space-y-1 text-right">
               <p className="font-bold">
                 لم يكتمل تسجيل المتجر لدى {courier.displayName}
               </p>
-              <p className="mt-1 text-xs">
+              <p className="text-xs leading-relaxed opacity-90">
                 حدّد موقع الفرع من إعدادات التوصيل واحفظه ليُفتح فرعك تلقائياً.
-                لا يمكن شحن الطلبات قبل ذلك.
               </p>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/*
-          The same state for a courier an operator cannot provision.
-
-          Unreachable today — a courier with `supportsBranches: false` may
-          never list a required branch field, so those two are always ready —
-          but a disabled dispatch button with nothing beside it explaining
-          itself is the failure this whole card is written to avoid, and that
-          is what the gate above would leave behind if the requirements ever
-          change.
-        */}
-        {!shipment && !courier.accountReady && !courier.supportsBranches && (
-          <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
+        {!shipment && !courier.accountReady && !courier.supportsBranches ? (
+          <div className="flex items-start gap-2 rounded-[16px] bg-amber-50 p-3.5 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <div className="space-y-1 text-right">
               <p className="font-bold">
                 لا يمكن الشحن عبر {courier.displayName} بعد
               </p>
-              <p className="mt-1 text-xs">
+              <p className="text-xs leading-relaxed opacity-90">
                 أكمل ربط حسابك لدى الشركة من إعدادات المتجر.
               </p>
             </div>
           </div>
-        )}
+        ) : null}
 
         {shipment ? (
           <>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-muted-foreground">رقم الطرد</p>
-                <p className="font-bold">
-                  <Ltr>{shipment.externalId ?? "—"}</Ltr>
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">رقمنا المرجعي</p>
-                <p className="font-bold">
-                  <Ltr>{shipment.reference ?? "—"}</Ltr>
-                </p>
-              </div>
-              {/* The courier's own words, which survive whatever the
-                  platform's status says — and are the thing to read when a
-                  parcel sits on a vague status. */}
-              {shipment.rawStatus && (
-                <div className="col-span-2">
-                  <p className="text-muted-foreground">حالة الشركة</p>
-                  <p className="font-bold">{shipment.rawStatus}</p>
-                </div>
-              )}
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <Meta label="رقم الطرد">
+                <Ltr>{shipment.externalId ?? "—"}</Ltr>
+              </Meta>
+              <Meta label="رقمنا المرجعي">
+                <Ltr>{shipment.reference ?? "—"}</Ltr>
+              </Meta>
             </div>
 
-            {feeGap && (
-              <div className="rounded-lg bg-muted/50 p-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">دفع الزبون</span>
-                  <span className="font-bold">
-                    {formatCurrency(feeGap.paid)}
+            {feeGap ? (
+              <div className="rounded-[16px] border border-slate-100 bg-slate-50/80 p-3.5 dark:border-[#1f2448] dark:bg-[#12183b]/60">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-bold text-slate-900 dark:text-[#e4e7fc]">
+                    <Ltr>{formatCurrency(feeGap.paid)}</Ltr>
+                  </span>
+                  <span className="text-[13px] text-slate-500 dark:text-[#a4b1fa]">
+                    دفع الزبون
                   </span>
                 </div>
-                <div className="mt-1 flex items-center justify-between">
-                  <span className="text-muted-foreground">
+                <div className="mt-2 flex items-center justify-between gap-3 border-t border-slate-200/80 pt-2 text-sm dark:border-[#1f2448]">
+                  <span className="font-bold text-slate-900 dark:text-[#e4e7fc]">
+                    <Ltr>{formatCurrency(feeGap.billed)}</Ltr>
+                  </span>
+                  <span className="text-[13px] text-slate-500 dark:text-[#a4b1fa]">
                     تحاسبك الشركة
                   </span>
-                  <span className="font-bold">
-                    {formatCurrency(feeGap.billed)}
-                  </span>
                 </div>
-                {feeGap.difference !== 0 && (
+                {feeGap.difference !== 0 ? (
                   <p
-                    className={`mt-2 text-xs font-bold ${
+                    className={cn(
+                      "mt-2.5 text-xs font-bold",
                       feeGap.difference > 0
-                        ? "text-red-600"
-                        : "text-emerald-600"
-                    }`}
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-emerald-600 dark:text-emerald-400",
+                    )}
                   >
                     {feeGap.difference > 0
                       ? `الفرق عليك: ${formatCurrency(feeGap.difference)}`
                       : `الفرق لصالحك: ${formatCurrency(-feeGap.difference)}`}
                   </p>
-                )}
+                ) : null}
               </div>
-            )}
+            ) : null}
 
-            <div className="flex flex-wrap gap-2">
-              {capabilities?.getShipment && (
-                <Button
-                  variant="outline"
-                  size="sm"
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              {capabilities?.getShipment ? (
+                <ActionBtn
                   disabled={syncShipment.isPending}
                   onClick={() =>
                     run(
@@ -420,36 +380,27 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                   }
                 >
                   {syncShipment.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-3.5 animate-spin" />
                   ) : (
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw className="size-3.5" />
                   )}
                   تحديث الحالة
-                </Button>
-              )}
+                </ActionBtn>
+              ) : null}
 
-              {capabilities?.track && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowTracking((value) => !value)}
-                >
-                  <Route className="h-4 w-4" />
+              {capabilities?.track ? (
+                <ActionBtn onClick={() => setShowTracking((v) => !v)}>
+                  <Route className="size-3.5" />
                   {showTracking ? "إخفاء المسار" : "عرض المسار"}
-                </Button>
-              )}
+                </ActionBtn>
+              ) : null}
 
-              {capabilities?.label && (
-                <Button
-                  variant="outline"
-                  size="sm"
+              {capabilities?.label ? (
+                <ActionBtn
                   disabled={shipmentLabel.isPending}
                   onClick={async () => {
                     try {
                       const result = await shipmentLabel.mutateAsync(undefined);
-                      // Opened rather than downloaded: the couriers return a
-                      // URL, and which of a receipt, a label or a tracking
-                      // page it is depends on the vendor.
                       if (result?.labelUrl) {
                         window.open(result.labelUrl, "_blank", "noopener");
                       } else {
@@ -461,128 +412,113 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                   }}
                 >
                   {shipmentLabel.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-3.5 animate-spin" />
                   ) : (
-                    <Printer className="h-4 w-4" />
+                    <Printer className="size-3.5" />
                   )}
                   الملصق
-                </Button>
-              )}
+                </ActionBtn>
+              ) : null}
 
-              {shipment.labelUrl && (
-                <Button variant="outline" size="sm" asChild>
+              {shipment.labelUrl ? (
+                <ActionBtn asChild>
                   <a
                     href={shipment.labelUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="size-3.5" />
                     صفحة التتبّع
                   </a>
-                </Button>
-              )}
+                </ActionBtn>
+              ) : null}
 
-              {/* Al-Waseet publishes no cancellation endpoint, so no button
-                  is drawn for it — a merchant is told to phone them rather
-                  than shown a control that always fails. */}
               {capabilities?.cancelShipment &&
-                !PARCEL_TERMINAL_STATUSES.includes(shipment.status) && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700"
-                    disabled={cancelShipment.isPending}
-                    onClick={() =>
-                      run(
-                        cancelShipment.mutateAsync(),
-                        "تم سحب الطرد.",
-                        "تعذر سحب الطرد.",
-                      )
-                    }
-                  >
-                    {cancelShipment.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Ban className="h-4 w-4" />
-                    )}
-                    سحب الطرد
-                  </Button>
-                )}
+              !PARCEL_TERMINAL_STATUSES.includes(shipment.status) ? (
+                <ActionBtn
+                  className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                  disabled={cancelShipment.isPending}
+                  onClick={() =>
+                    run(
+                      cancelShipment.mutateAsync(),
+                      "تم سحب الطرد.",
+                      "تعذر سحب الطرد.",
+                    )
+                  }
+                >
+                  {cancelShipment.isPending ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Ban className="size-3.5" />
+                  )}
+                  سحب الطرد
+                </ActionBtn>
+              ) : null}
             </div>
 
-            {/*
-              Two different reasons there is no Cancel button, and telling
-              them apart matters: one is Al-Waseet publishing no cancellation
-              endpoint, the other is this parcel's courier having no
-              integration behind it any more — `shipment.courier` is null —
-              which the first message would misreport as a vendor limitation.
-            */}
             {!parcelCourier ? (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] leading-relaxed text-slate-400 dark:text-[#a4b1fa]">
                 لم يعد هذا الطرد مرتبطاً بتكامل فعّال ({shipment.courierCode}) —
                 الأرقام أعلاه هي ما تحتاجه للاتصال بالشركة مباشرة.
               </p>
-            ) : (
-              !capabilities?.cancelShipment && (
-                <p className="text-xs text-muted-foreground">
-                  لا تدعم {courierName} سحب الطرد عبر النظام — اتصل بهم مباشرة.
-                </p>
-              )
-            )}
+            ) : !capabilities?.cancelShipment ? (
+              <p className="text-[11px] leading-relaxed text-slate-400 dark:text-[#a4b1fa]">
+                لا تدعم {courierName} سحب الطرد عبر النظام — اتصل بهم مباشرة.
+              </p>
+            ) : null}
 
-            {showTracking && (
-              <div className="rounded-lg border p-3">
+            {showTracking ? (
+              <div className="rounded-[16px] border border-slate-100 bg-slate-50/50 p-4 dark:border-[#1f2448] dark:bg-[#12183b]/40">
+                <p className="mb-3 text-[13px] font-bold text-slate-800 dark:text-[#e4e7fc]">
+                  مسار الطرد
+                </p>
                 {trackingLoading ? (
-                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                  <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-[#a4b1fa]">
+                    <Loader2 className="size-4 animate-spin" />
                     جارٍ قراءة المسار…
                   </p>
                 ) : tracking && tracking.length > 0 ? (
-                  <ol className="space-y-3">
+                  <ol className="relative space-y-0 border-s-2 border-sky-200 ps-4 dark:border-sky-900/60">
                     {tracking.map((event, index) => (
                       <li
                         key={`${event.rawStatusCode ?? event.status}-${index}`}
-                        className="flex items-start gap-3 text-sm"
+                        className="relative pb-4 last:pb-0"
                       >
-                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                        <div>
-                          <p className="font-bold">
-                            {event.rawStatus ??
-                              STATUS_LABEL[event.status] ??
-                              event.status}
+                        <span className="absolute -start-[21px] top-1.5 size-2.5 rounded-full border-2 border-white bg-sky-500 dark:border-[#0a0e27]" />
+                        <p className="text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
+                          {event.rawStatus ??
+                            STATUS_LABEL[event.status] ??
+                            event.status}
+                        </p>
+                        {event.occurredAt ? (
+                          <p className="mt-0.5 text-[11px] text-slate-400 dark:text-[#a4b1fa]">
+                            <Ltr>{event.occurredAt}</Ltr>
                           </p>
-                          {event.occurredAt && (
-                            <p className="text-xs text-muted-foreground">
-                              <Ltr>{event.occurredAt}</Ltr>
-                            </p>
-                          )}
-                          {event.note && (
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {event.note}
-                            </p>
-                          )}
-                        </div>
+                        ) : null}
+                        {event.note ? (
+                          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
+                            {event.note}
+                          </p>
+                        ) : null}
                       </li>
                     ))}
                   </ol>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-slate-500 dark:text-[#a4b1fa]">
                     لا يوجد مسار مسجَّل لهذا الطرد.
                   </p>
                 )}
               </div>
-            )}
+            ) : null}
           </>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground">
-              لم يُسجَّل هذا الطلب لدى شركة الشحن بعد.
+            <p className="text-sm leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
+              لم يُسجَّل هذا الطلب لدى شركة الشحن بعد. يمكنك تسجيله من هنا أو من
+              زر «شحن الطلب» أعلى الإجراءات.
             </p>
 
-            {/* Only the extras. Everything else about the parcel — the
-                recipient, the address, the money, the contents — is read off
-                the order on the server. */}
-            {courier.code === "boxy" && (
+            {courier.code === "boxy" ? (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">حجم الطرد</Label>
@@ -595,7 +531,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                       }))
                     }
                   >
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-1 h-11 rounded-[14px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -606,7 +542,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                   </Select>
                 </div>
                 <div className="flex items-end">
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex h-11 items-center gap-2 text-sm">
                     <input
                       type="checkbox"
                       checked={options.isFragile ?? false}
@@ -616,15 +552,15 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                           isFragile: event.target.checked,
                         }))
                       }
-                      className="h-4 w-4"
+                      className="size-4 rounded"
                     />
                     قابل للكسر
                   </label>
                 </div>
               </div>
-            )}
+            ) : null}
 
-            {(courier.code === "modon" || courier.code === "alwaseet") && (
+            {courier.code === "modon" || courier.code === "alwaseet" ? (
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -635,13 +571,14 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                       replacement: event.target.checked,
                     }))
                   }
-                  className="h-4 w-4"
+                  className="size-4 rounded"
                 />
                 طرد استبدال
               </label>
-            )}
+            ) : null}
 
             <Button
+              className="h-12 w-full gap-2 rounded-[14px] text-base font-bold"
               disabled={createShipment.isPending || !courier.accountReady}
               onClick={() =>
                 run(
@@ -652,25 +589,23 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
               }
             >
               {createShipment.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Truck className="h-4 w-4" />
+                <Truck className="size-4" />
               )}
-              شحن الطلب
+              تسجيل الطرد لدى {courier.displayName}
             </Button>
 
-            {/* Only Prime prices a parcel before it exists. Saying so here
-                stops a merchant waiting for a quote that is never coming. */}
-            {!capabilities?.quote && (
-              <p className="text-xs text-muted-foreground">
-                لا تعطي {courier.displayName} سعرًا قبل التسجيل — تظهر الأجرة
+            {!capabilities?.quote ? (
+              <p className="text-[11px] leading-relaxed text-slate-400 dark:text-[#a4b1fa]">
+                لا تعطي {courier.displayName} سعراً قبل التسجيل — تظهر الأجرة
                 الفعلية بعد شحن الطلب.
               </p>
-            )}
+            ) : null}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 };
 

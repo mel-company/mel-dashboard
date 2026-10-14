@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { cn } from "@/lib/utils";
 import OrderProductStack from "./OrderProductStack";
+import { useSyncCustomerLocation } from "@/hooks/use-sync-customer-location";
+import { formatOrderDeliveryLocation } from "@/new-pages/customers/utils";
 import {
   formatOrderAmount,
   formatOrderCode,
@@ -34,6 +36,15 @@ const OrderCard = ({
   const total = getOrderTotal(order, calculateTotal);
   const city = getOrderCity(order);
   const address = getOrderAddressLine(order);
+
+  useSyncCustomerLocation(
+    order.customer?.id as string | undefined,
+    formatOrderDeliveryLocation(order),
+    {
+      onlyIfEmpty: true,
+      storedLocation: String(customer?.location ?? ""),
+    },
+  );
 
   return (
     <div

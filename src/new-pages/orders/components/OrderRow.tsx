@@ -7,6 +7,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import OrderProductStack from "./OrderProductStack";
 import StatusGlyph from "@/components/table/status-glyph";
 import Ltr from "@/components/Ltr";
+import { useSyncCustomerLocation } from "@/hooks/use-sync-customer-location";
+import { formatOrderDeliveryLocation } from "@/new-pages/customers/utils";
 import {
   formatOrderAmount,
   formatOrderCode,
@@ -41,6 +43,17 @@ const OrderRow = ({
   const city = getOrderCity(order);
   const address = getOrderAddressLine(order);
   const discountPercent = getOrderDiscountPercent(order);
+
+  // Orders list already carries المحافظة/المنطقة — mirror onto the customer
+  // so «الموقع» in the customers table fills without a manual save.
+  useSyncCustomerLocation(
+    order.customer?.id as string | undefined,
+    formatOrderDeliveryLocation(order),
+    {
+      onlyIfEmpty: true,
+      storedLocation: String(customer?.location ?? ""),
+    },
+  );
 
   return (
     <TableRow

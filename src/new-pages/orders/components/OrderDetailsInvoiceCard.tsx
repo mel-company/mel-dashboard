@@ -10,6 +10,8 @@ import {
 import { useUpdateCustomer } from "@/api/wrappers/customer.wrappers";
 import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
+import { useSyncCustomerLocation } from "@/hooks/use-sync-customer-location";
+import { formatOrderDeliveryLocation } from "@/new-pages/customers/utils";
 import { getOrderPaymentLabel } from "../utils";
 
 type Props = {
@@ -97,6 +99,21 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
   const regionList: any[] = Array.isArray(regions)
     ? regions
     : (regions?.data ?? []);
+
+  /**
+   * Opening an order is enough — the merchant should not have to press save
+   * just so «الموقع» appears on the customers table.
+   */
+  useSyncCustomerLocation(
+    order?.customer?.id as string | undefined,
+    formatOrderDeliveryLocation(order),
+    {
+      onlyIfEmpty: true,
+      storedLocation: String(
+        order?.customer?.user?.location ?? order?.customer?.location ?? "",
+      ),
+    },
+  );
 
   const addressDirty =
     (order?.stateId ?? "") !== stateId ||
