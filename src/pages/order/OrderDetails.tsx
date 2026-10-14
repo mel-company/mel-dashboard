@@ -67,6 +67,13 @@ import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
 import PagePanel from "@/components/PagePanel";
 import Ltr from "@/components/Ltr";
 import { AssetImage } from "@/components/AssetImage";
+import {
+  formatOrderLogMessage,
+  formatOrderStatusTransition,
+  getOrderDeliveryAddressDisplay,
+  getOrderStatusLabel,
+  parseLocalizedName,
+} from "@/new-pages/orders/utils";
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -890,33 +897,15 @@ const OrderDetails = () => {
             <CardContent>
               <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
                 <MapPin className="size-5 text-primary mt-1 shrink-0" />
-                <div className="text-right">
-                  <p className="font-medium">{order.nearest_point || "—"}</p>
-                  <div className="flex items-center gap-2">
-                    {order.country?.name && (
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {order.country?.name?.ar}
-                        </p>
-                      </div>
-                    )}
-                    {order.state?.name && (
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-muted-foreground mt-1">-</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {order.state?.name?.arabic}
-                        </p>
-                      </div>
-                    )}
-                    {order.region?.name && (
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-muted-foreground mt-1">-</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {order.region?.name?.arabic}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                <div className="min-w-0 flex-1 text-right">
+                  <p className="font-medium leading-relaxed">
+                    {getOrderDeliveryAddressDisplay(order) || "—"}
+                  </p>
+                  {parseLocalizedName(order.country?.name) ? (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {parseLocalizedName(order.country?.name)}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </CardContent>
@@ -1186,35 +1175,57 @@ const OrderDetails = () => {
                         </div>
                         <div className="flex-1 text-right">
                           <p className="text-sm font-medium">
-                            {log.message || log.action}
+                            {formatOrderLogMessage(log)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(log.createdAt)}
                           </p>
                           {log.changes && log.changes.length > 0 && (
                             <div className="mt-2 space-y-1">
-                              {log.changes.map((change: any, idx: number) => (
-                                <div
-                                  key={idx}
-                                  className="text-xs text-muted-foreground"
-                                >
-                                  {change.oldValue && change.newValue ? (
-                                    <span>
-                                      {change.field}: {change.oldValue} →{" "}
-                                      {change.newValue}
-                                    </span>
-                                  ) : change.newValue ? (
-                                    <span>
-                                      {change.field}: {change.newValue}
-                                    </span>
-                                  ) : change.oldValue ? (
-                                    <span>
-                                      {change.field}: {change.oldValue} (تم
-                                      الحذف)
-                                    </span>
-                                  ) : null}
-                                </div>
-                              ))}
+                              {log.changes.map((change: any, idx: number) => {
+                                const fieldKey = String(change.field ?? "")
+                                  .trim()
+                                  .toLowerCase();
+                                const fieldLabel =
+                                  fieldKey === "status" ? "الحالة" : change.field;
+                                const transition =
+                                  change.oldValue && change.newValue
+                                    ? fieldKey === "status"
+                                      ? formatOrderStatusTransition(
+                                          change.oldValue,
+                                          change.newValue,
+                                        )
+                                      : `${change.oldValue} → ${change.newValue}`
+                                    : null;
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="text-xs text-muted-foreground"
+                                  >
+                                    {transition ? (
+                                      <span>
+                                        {fieldLabel}: {transition}
+                                      </span>
+                                    ) : change.newValue ? (
+                                      <span>
+                                        {fieldLabel}:{" "}
+                                        {fieldKey === "status"
+                                          ? getOrderStatusLabel(change.newValue)
+                                          : change.newValue}
+                                      </span>
+                                    ) : change.oldValue ? (
+                                      <span>
+                                        {fieldLabel}:{" "}
+                                        {fieldKey === "status"
+                                          ? getOrderStatusLabel(change.oldValue)
+                                          : change.oldValue}{" "}
+                                        (تم الحذف)
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>

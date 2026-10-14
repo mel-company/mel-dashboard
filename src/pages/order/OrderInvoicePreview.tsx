@@ -3,6 +3,7 @@ import { pdf } from "@react-pdf/renderer";
 import { Download } from "lucide-react";
 import { OrderInvoicePDF, type OrderInvoiceData } from "@/utils/files/invoice/order.invoice";
 import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
+import { getOrderDeliveryAddressDisplay } from "@/new-pages/orders/utils";
 
 const STORAGE_KEY = "order-invoice-preview-data";
 
@@ -80,13 +81,7 @@ export default function OrderInvoicePreview() {
   const total = subtotal + DELIVERY_FEE;
   const statusLabel =
     STATUS_LABELS[(order.status || "").toUpperCase()] || order.status || "—";
-  const addressParts = [
-    order.nearest_point,
-    order.region?.name?.arabic,
-    order.state?.name?.arabic,
-    order.country?.name?.ar,
-  ].filter(Boolean);
-  const deliveryAddress = addressParts.join("، ") || "—";
+  const deliveryAddress = getOrderDeliveryAddressDisplay(order) || "—";
   const createdDate = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString(AR_LATN_LOCALE)
     : "—";

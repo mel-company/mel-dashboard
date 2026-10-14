@@ -95,9 +95,9 @@ export function formatOrderLogMessage(log: {
   action?: string | null;
   changes?: Array<{ oldValue?: string | null; newValue?: string | null }>;
 }): string {
-  const message = String(log?.message ?? "").trim();
+  const message = String(log?.message ?? "").trim().replace(/[.\s]+$/g, "");
   const statusChanged = message.match(
-    /^Order status changed to\s+([A-Za-z_]+)\s*$/i,
+    /^Order status changed to\s+([A-Za-z_]+)$/i,
   );
   if (statusChanged) {
     return `تم تغيير حالة الطلب إلى ${getOrderStatusLabel(statusChanged[1])}`;
@@ -228,7 +228,8 @@ export function getOrderPaymentLabel(order: any): {
   return { label: localized ?? text, className: "text-[#8e9dff]" };
 }
 
-function parseLocalizedName(name: unknown): string {
+/** API names arrive as `{ ar, en }` or `{ arabic, english }` — never one shape. */
+export function parseLocalizedName(name: unknown): string {
   if (typeof name === "string") return name.trim();
   if (typeof name === "object" && name !== null) {
     const n = name as Record<string, string | undefined>;
@@ -242,6 +243,24 @@ function parseLocalizedName(name: unknown): string {
     );
   }
   return "";
+}
+
+/**
+ * Full delivery line for order detail cards / invoices.
+ * Falls back to the customer's stored location when the order's place names
+ * are missing — same string the merchant already sees under «الموقع».
+ */
+export function getOrderDeliveryAddressDisplay(order: any): string {
+  const parts = getOrderAddressParts(order);
+  const fromOrder = [parts.primary, parts.secondary]
+    .filter((p) => p && p !== "—")
+    .join(" - ");
+  if (fromOrder) return fromOrder;
+
+  const customerLocation = String(
+    order?.customer?.user?.location ?? order?.customer?.location ?? "",
+  ).trim();
+  return customerLocation;
 }
 
 /** Figma address cell: primary = city/state, secondary = region - landmark */
