@@ -38,6 +38,7 @@ import NotFoundPage from "../miscellaneous/NotFoundPage";
 import CustomerDetailsSkeleton from "./CustomerDetailsSkeleton";
 import { toast } from "sonner";
 import PagePanel from "@/components/PagePanel";
+import { getCustomerLocation } from "@/new-pages/customers/utils";
 
 const CustomerDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -98,6 +99,7 @@ const CustomerDetails = () => {
   const user = customer.user;
   const customerOrders = customer.orders ?? [];
   const orderCount = customer._count?.orders ?? customerOrders.length;
+  const location = getCustomerLocation(customer);
 
   // Calculate total spent
   const calculateTotalSpent = () => {
@@ -187,7 +189,7 @@ const CustomerDetails = () => {
                   <MapPin className="size-5 text-primary" />
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">الموقع</p>
-                    <p className="text-lg font-bold">{user?.location ?? "—"}</p>
+                    <p className="text-lg font-bold">{location || "—"}</p>
                   </div>
                 </div>
               </div>

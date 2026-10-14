@@ -1,5 +1,6 @@
 import { Pencil, Star, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCustomerLocation } from "../utils";
 
 type CustomerCardProps = {
   customer: any;
@@ -11,6 +12,7 @@ type CustomerCardProps = {
 const CustomerCard = ({ customer, onClick, onDelete, className }: CustomerCardProps) => {
   const user = customer.user;
   const orderCount = customer._count?.orders ?? 0;
+  const location = getCustomerLocation(customer);
   const rawRating = customer.rating ?? customer.rate ?? user?.rating;
   const rating =
     typeof rawRating === "number"
@@ -57,7 +59,7 @@ const CustomerCard = ({ customer, onClick, onDelete, className }: CustomerCardPr
       </div>
 
       <p className="line-clamp-2 text-[13px] leading-[19.5px] text-slate-400 dark:text-[#a4b1fa]">
-        {user?.location ?? "—"}
+        {location || "—"}
       </p>
 
       <div className="flex items-center justify-between gap-3">

@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import Rating from "@/components/table/rating";
 import ActionBtnList from "@/components/table/action-btn-list";
+import { getCustomerLocation } from "../utils";
 
 type CustomerRowProps = {
   customer: any;
@@ -16,6 +17,7 @@ const CustomerRow = ({ customer, rowIndex, onDelete }: CustomerRowProps) => {
   const user = customer.user;
   const orderCount = customer._count?.orders ?? 0;
   const customerCode = `CUS-${String(customer.id).slice(0, 4).toUpperCase()}`;
+  const location = getCustomerLocation(customer);
   const rawRating = customer.rating ?? customer.rate ?? user?.rating;
   const rating =
     typeof rawRating === "number"
@@ -47,7 +49,7 @@ const CustomerRow = ({ customer, rowIndex, onDelete }: CustomerRowProps) => {
       </TableCell>
       <TableCell className={tdClass}>
         <p className="line-clamp-2 text-sm text-slate-600 dark:text-[#a4b1fa]">
-          {user?.location ?? "—"}
+          {location || "—"}
         </p>
       </TableCell>
       <TableCell className={cn(tdClass, "font-semibold tabular-nums text-slate-900 dark:text-[#f0f2ff]")}>

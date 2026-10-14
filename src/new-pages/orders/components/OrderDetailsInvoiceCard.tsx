@@ -7,6 +7,7 @@ import {
   useUpdateDeliveryAddress,
   useUpdateOrder,
 } from "@/api/wrappers/order.wrappers";
+import { useUpdateCustomer } from "@/api/wrappers/customer.wrappers";
 import { useFetchStates } from "@/api/wrappers/state.wrappers";
 import { useFetchRegionsByState } from "@/api/wrappers/region.wrappers";
 import { getOrderPaymentLabel } from "../utils";
@@ -89,6 +90,7 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
   const { mutate: updateAddress, isPending: isSavingAddress } =
     useUpdateDeliveryAddress(order?.id ?? "");
   const { mutate: updateOrder, isPending: isSavingNote } = useUpdateOrder();
+  const { mutate: updateCustomer } = useUpdateCustomer();
   const isSaving = isSavingAddress || isSavingNote;
 
   const stateList: any[] = Array.isArray(states) ? states : (states?.data ?? []);
@@ -116,6 +118,26 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
     [regionList, regionId, order?.region?.name],
   );
 
+  const syncCustomerLocation = () => {
+    // List API reads `user.location`, which stays null unless something writes
+    // it. Mirror the delivery line onto the customer so «الموقع» is not empty
+    // after the merchant saves an address on an order.
+    const customerId = order?.customer?.id as string | undefined;
+    if (!customerId) return;
+    const location = [stateLabel, regionLabel, nearestPoint.trim()]
+      .filter(Boolean)
+      .join(" - ");
+    if (!location) return;
+    updateCustomer(
+      { id: customerId, data: { location } },
+      {
+        // Soft: address save already succeeded; a location sync miss must not
+        // undo that or scare the merchant with a second error toast.
+        onError: () => {},
+      },
+    );
+  };
+
   const handleSave = () => {
     if (!order?.id || !dirty) return;
 
@@ -133,6 +155,7 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
         },
         {
           onSuccess: () => {
+            syncCustomerLocation();
             if (!noteDirty) done();
           },
           onError: (err: any) =>
