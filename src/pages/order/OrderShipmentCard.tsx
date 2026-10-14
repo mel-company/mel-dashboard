@@ -37,8 +37,11 @@ import type {
   CourierShipmentStatus,
   CreateShipmentOptions,
 } from "@/api/types/shipping";
-import { PARCEL_TERMINAL_STATUSES } from "@/api/types/shipping";
-import { formatCurrency } from "@/utils/format-currency";
+import {
+  formatCourierStatusLabel,
+  PARCEL_TERMINAL_STATUSES,
+} from "@/api/types/shipping";
+import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
 
@@ -50,17 +53,17 @@ import Ltr from "@/components/Ltr";
  *   via this card or the order «شحن الطلب» button (`useAutoDispatchOnShip`).
  */
 
-const STATUS_LABEL: Record<CourierShipmentStatus, string> = {
-  CREATED: "مُسجَّل",
-  PICKED_UP: "استلمه المندوب",
-  IN_TRANSIT: "في الطريق",
-  OUT_FOR_DELIVERY: "خارج للتوصيل",
-  DELIVERED: "تم التسليم",
-  RETURNED: "راجع",
-  CANCELLED: "ملغى",
-  FAILED: "محاولة فاشلة",
-  UNKNOWN: "غير معروف",
-};
+function formatTrackingWhen(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(AR_LATN_LOCALE, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 const STATUS_TONE: Record<CourierShipmentStatus, string> = {
   CREATED:
@@ -259,11 +262,11 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
             <h3 className="truncate text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
               الشحن عبر {courierName}
             </h3>
-            {shipment?.rawStatus ? (
+            {shipment ? (
               <p className="mt-0.5 text-[11px] text-slate-400 dark:text-[#a4b1fa]">
                 حالة الشركة:{" "}
                 <span className="font-semibold text-slate-600 dark:text-[#e4e7fc]">
-                  {shipment.rawStatus}
+                  {formatCourierStatusLabel(shipment)}
                 </span>
               </p>
             ) : null}
@@ -276,7 +279,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
               STATUS_TONE[shipment.status],
             )}
           >
-            {STATUS_LABEL[shipment.status] ?? shipment.status}
+            {formatCourierStatusLabel(shipment)}
           </span>
         ) : null}
       </header>
@@ -505,13 +508,14 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                       >
                         <span className="absolute -start-[21px] top-1.5 size-2.5 rounded-full border-2 border-white bg-sky-500 dark:border-[#0a0e27]" />
                         <p className="text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
-                          {event.rawStatus ??
-                            STATUS_LABEL[event.status] ??
-                            event.status}
+                          {formatCourierStatusLabel({
+                            ...event,
+                            preferRaw: true,
+                          })}
                         </p>
                         {event.occurredAt ? (
                           <p className="mt-0.5 text-[11px] text-slate-400 dark:text-[#a4b1fa]">
-                            <Ltr>{event.occurredAt}</Ltr>
+                            {formatTrackingWhen(event.occurredAt)}
                           </p>
                         ) : null}
                         {event.note ? (

@@ -5,7 +5,10 @@ import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
 import { formatCurrency, formatNumber } from "@/utils/format-currency";
 import { getOrderProductCount, getOrderStatusMeta, getOrderTotal } from "../utils";
-import type { CourierShipment } from "@/api/types/shipping";
+import {
+  formatCourierStatusLabel,
+  type CourierShipment,
+} from "@/api/types/shipping";
 
 /**
  * حالة الطرد لدى شركة الشحن — the platform's own normalised statuses.
@@ -16,17 +19,6 @@ import type { CourierShipment } from "@/api/types/shipping";
  * delivery card has to show the parcel's, which is what it claims to be
  * about.
  */
-const SHIPMENT_STATUS_LABEL: Record<CourierShipment["status"], string> = {
-  CREATED: "مُسجَّل",
-  PICKED_UP: "استلمه المندوب",
-  IN_TRANSIT: "في الطريق",
-  OUT_FOR_DELIVERY: "خارج للتوصيل",
-  DELIVERED: "تم التسليم",
-  RETURNED: "راجع",
-  CANCELLED: "ملغى",
-  FAILED: "محاولة فاشلة",
-  UNKNOWN: "غير معروف",
-};
 
 const Row = ({
   label,
@@ -152,9 +144,7 @@ export const OrderDeliveryCard = ({
    * status. With no parcel, the order's status is all there is to show.
    */
   const status = shipment
-    ? (shipment.rawStatus?.trim() ||
-      SHIPMENT_STATUS_LABEL[shipment.status] ||
-      shipment.status)
+    ? formatCourierStatusLabel(shipment)
     : orderStatus.label;
 
   return (
