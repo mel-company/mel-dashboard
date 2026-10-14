@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Switch } from "@/components/ui/switch";
 import {
   useUpdateDeliveryAddress,
   useUpdateOrder,
@@ -161,32 +160,33 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
     "appearance-none cursor-pointer pl-10 outline-none focus-visible:ring-2 focus-visible:ring-[#00b7ff]/30",
   );
 
+  const hasPayment =
+    Boolean(payment.label?.trim()) && payment.label.trim() !== "—";
+
   return (
     <section className="rounded-[24px] bg-white p-4 sm:p-5 dark:bg-[#0a0e27]">
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-bold text-slate-900 dark:text-[#e4e7fc]">
           تفاصيل الفاتورة
         </h2>
-        {/* Figma shows the payment method as a pill with a switch beside it —
-            a statement of how this order pays, not a control. */}
-        <div
-          className={cn(
-            "flex items-center gap-2 rounded-full px-2 py-1.5",
-            "bg-amber-500/10 dark:bg-[rgba(245,123,0,0.12)]",
-          )}
-        >
-          <Switch checked disabled className="pointer-events-none" />
-          <span className={cn("px-1 text-xs font-medium", payment.className)}>
+        {/* Payment is a status badge — never a switch. The old decorative
+            toggle did nothing and read as a broken control (especially when
+            the method was «—»). */}
+        {hasPayment ? (
+          <span
+            className={cn(
+              "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium dark:bg-[#12183b]",
+              payment.className,
+            )}
+          >
             {payment.label}
           </span>
-        </div>
+        ) : null}
       </header>
 
-      {/* The mobile frame stacks these the other way up — طريقة الدفع at the
-          top, اسم العميل at the bottom — which is the desktop row read from
-          its left end. `flex-col-reverse` reproduces that without a second
-          copy of the fields. */}
-      <div className="flex flex-col-reverse gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-4">
+      {/* Customer → contact → address → notes. Same order on mobile and
+          desktop so the merchant always scans the same way. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Field label="اسم العميل">
           <ReadOnly value={customer?.name} />
         </Field>

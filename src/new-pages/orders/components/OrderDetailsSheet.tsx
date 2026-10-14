@@ -459,12 +459,14 @@ const OrderDetailsSheet = ({
             <div className="space-y-4">
               {invoiceCard}
 
-              {/* RTL grid: first track is the rightmost column, which is where
-                  Figma puts the log. */}
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[300px_minmax(0,1fr)_340px]">
-                <div className="min-w-0">
+              {/* RTL: first track is rightmost — سجل | منتجات | مالية+توصيل+أزرار */}
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(240px,280px)_minmax(0,1fr)_minmax(280px,320px)]">
+                <section className="min-w-0 rounded-[24px] bg-white p-4 dark:bg-[#0a0e27]">
+                  <h3 className="mb-3 text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
+                    سجل الطلب
+                  </h3>
                   <OrderDetailsTimeline logs={logs} isLoading={isLoadingLogs} />
-                </div>
+                </section>
                 <div className="min-w-0">
                   <OrderDetailsItems
                     order={order}

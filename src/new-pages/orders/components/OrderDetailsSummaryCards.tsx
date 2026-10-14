@@ -72,12 +72,20 @@ export const OrderFinancialCard = ({
   onAddDiscount,
 }: FinancialProps) => {
   const count = getOrderProductCount(order);
-  const goods =
+  const goods = Number(
     order?.pricing?.subtotalAfterProductDiscounts ??
-    order?.pricing?.subtotal ??
-    (calculateTotal ? calculateTotal(order?.products ?? []) : 0);
+      order?.pricing?.subtotal ??
+      (calculateTotal ? calculateTotal(order?.products ?? []) : 0),
+  ) || 0;
   const delivery = Number(order?.deliveryFee ?? 0) || 0;
-  const total = getOrderTotal(order, calculateTotal);
+  const apiTotal = Number(getOrderTotal(order, calculateTotal)) || 0;
+  // When the API's total is just the goods line but delivery is listed
+  // separately, the card used to show «1,000» next to a «3,000» shipping
+  // row — look like a broken sum. Prefer goods+delivery in that case.
+  const total =
+    delivery > 0 && Math.abs(apiTotal - goods) < 0.01
+      ? goods + delivery
+      : apiTotal || goods + delivery;
 
   return (
     <section className="rounded-[24px] bg-white p-4 sm:p-5 dark:bg-[#0a0e27]">
