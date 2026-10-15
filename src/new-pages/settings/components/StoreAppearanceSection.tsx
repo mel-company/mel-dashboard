@@ -211,8 +211,8 @@ const StoreAppearanceSection = () => {
                           onClick={() => setPreviewDesign(design)}
                           className={SECONDARY_ACTION}
                         >
-                          معاينة
                           <TemplatePreviewIcon />
+                          معاينة
                         </button>
 
                         {/* Re-runs the generation handoff into the editor
@@ -229,15 +229,15 @@ const StoreAppearanceSection = () => {
                           }
                           className={SECONDARY_ACTION}
                         >
-                          تعديل
                           <TemplateEditIcon />
+                          تعديل
                         </button>
                       </div>
 
                       {design.isActive ? (
                         <div className="flex h-9 w-full items-center justify-center gap-1 rounded-lg bg-[#00b7ff] px-[18px] text-[13px] font-medium text-[#060219]">
-                          القالب الحالي
                           <TemplateCurrentIcon />
+                          القالب الحالي
                         </div>
                       ) : (
                         <button
@@ -245,8 +245,8 @@ const StoreAppearanceSection = () => {
                           onClick={() => setDesignToApply(design)}
                           className="flex h-9 w-full cursor-pointer items-center justify-center gap-1 rounded-lg bg-[#7d26f7]/10 px-[18px] text-[13px] font-medium text-[#7d26f7] transition-colors hover:bg-[#7d26f7]/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#7d26f7]/40 dark:bg-[#9a5cff]/15 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/25"
                         >
-                          تعيين القالب
                           <TemplateApplyIcon />
+                          تعيين القالب
                         </button>
                       )}
                     </div>
