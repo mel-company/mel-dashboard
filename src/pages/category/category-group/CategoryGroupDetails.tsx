@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { ASSET_CDN_URL } from "@/utils/image-url";
 import { useState } from "react";
 import {
   Card,
@@ -61,10 +62,7 @@ const CategoryGroupDetails = () => {
     isFetching,
   } = useFetchGroup(id ?? "");
 
-  const baseUrl =
-    import.meta.env.VITE_PUBLIC_URL ||
-    import.meta.env.VITE_API_BASE_URL?.replace("/api/v1", "") ||
-    "";
+  const baseUrl = ASSET_CDN_URL;
 
   const { mutate: deleteGroup, isPending: isDeleting } = useDeleteGroup();
   const { mutate: removeCategory, isPending: isRemovingCategory } =

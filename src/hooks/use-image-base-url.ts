@@ -13,7 +13,6 @@ export function useImageBaseUrl(listBaseUrl?: string | null): string {
   return resolveAssetBaseUrl(
     pickBaseUrl(
       listBaseUrl,
-      import.meta.env.VITE_PUBLIC_URL,
       storeDetails?.baseUrl,
       storeDetails?.base_url,
     ),

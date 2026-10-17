@@ -16,31 +16,27 @@ function isInlineAssetSource(value: string): boolean {
   return /^data:/i.test(value.trim());
 }
 
-function cleanEnvUrl(value?: string): string | undefined {
-  if (!value?.trim()) return undefined;
-  return value.trim().replace(/^["']|["']$/g, "").replace(/\/+$/, "");
+/**
+ * Where every uploaded asset is served from: the R2 bucket's public domain.
+ *
+ * This used to be read from `VITE_PUBLIC_URL`, and production's build had it
+ * set to `/api/v1` — a relative path, so every rewritten image became
+ * `dash.<store>.mel.iq/api/v1/stores/…`, a guaranteed 404. Surfaces drawn
+ * through `AssetImage` survived on its later candidates; a bare `<img>` (the
+ * store logo in settings and the sidebar) never did. The bucket's domain does
+ * not change per deployment, so it is spelled out here instead.
+ */
+export const ASSET_CDN_URL = "https://cdn.mel.iq";
+
+function cleanAbsoluteUrl(value?: string | null): string | undefined {
+  const trimmed = value?.trim().replace(/^["']|["']$/g, "").replace(/\/+$/, "");
+  // A relative base ("/api/v1") resolves against the dashboard's own host,
+  // which serves no assets.
+  return trimmed && /^https?:\/\//i.test(trimmed) ? trimmed : undefined;
 }
 
 export function resolveAssetBaseUrl(explicitBase?: string | null): string {
-  const explicit = cleanEnvUrl(explicitBase ?? undefined);
-  if (explicit) return explicit;
-
-  const publicUrl = cleanEnvUrl(import.meta.env.VITE_PUBLIC_URL);
-  if (publicUrl) return publicUrl;
-
-  const apiBase = cleanEnvUrl(import.meta.env.VITE_API_BASE_URL);
-  if (apiBase) {
-    // Relative proxies like "/api/v1" strip to "" — not a usable asset host.
-    const stripped = apiBase.replace(/\/api\/v1\/?$/, "").replace(/\/+$/, "");
-    if (stripped && !stripped.startsWith("/")) return stripped;
-  }
-
-  // The API host serves no assets — its only static mount is `/editor-temp`,
-  // so `https://api.mel.iq/stores/…` is a guaranteed Nest 404. Objects live in
-  // R2 behind `R2_PUBLIC_URL`, which is what every url the API hands back is
-  // already built from. Falling back to the API host sent every relative key
-  // to a host that cannot serve it.
-  return "https://cdn.mel.iq";
+  return cleanAbsoluteUrl(explicitBase) ?? ASSET_CDN_URL;
 }
 
 export function coerceImagePath(image: unknown): string {
@@ -145,14 +141,11 @@ function normalizeAssetHost(url: string, baseUrl?: string | null): string {
     return `${base}/${encodeAssetPath(storesPath)}`;
   }
 
-  const publicUrl = cleanEnvUrl(import.meta.env.VITE_PUBLIC_URL);
-  if (!publicUrl) return url;
-
   if (/^https?:\/\/[^/]+\.r2\.dev\//i.test(url)) {
     try {
       const parsed = new URL(url);
       const path = parsed.pathname.replace(/^\/+/, "");
-      return `${publicUrl}/${encodeAssetPath(path)}`;
+      return `${ASSET_CDN_URL}/${encodeAssetPath(path)}`;
     } catch {
       return url;
     }

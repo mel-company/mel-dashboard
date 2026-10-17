@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Store, MapPin } from "lucide-react";
@@ -45,6 +45,12 @@ const BasicStoreInfoSection = ({
   const [logoError, setLogoError] = useState(false);
   const storeLogoUrl = getImageUrl(storeDetails?.logo, storeDetails?.baseUrl);
   const showStoreLogo = Boolean(storeLogoUrl) && !logoError;
+
+  // A failed load is about that one url. Without this, one broken logo kept
+  // the placeholder up for good, even after a new logo was uploaded.
+  useEffect(() => {
+    setLogoError(false);
+  }, [storeLogoUrl]);
   const mapLat = storeForm.latitude ?? 33.3152;
   const mapLng = storeForm.longitude ?? 44.3661;
 
