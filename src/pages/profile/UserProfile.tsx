@@ -1,3 +1,4 @@
+import { UserAvatar } from "@/components/UserAvatar";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -88,7 +89,11 @@ const UserProfile = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="relative h-64 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
-                <User className="size-24 text-white bg-cyan/40 rounded-full p-6" />
+                <UserAvatar
+                  seed={user?.id ?? user?.user?.id ?? user?.phone}
+                  alt={user?.fullName ?? ""}
+                  className="size-32 shadow-lg ring-4 ring-white/70"
+                />
               </div>
 
               <Separator />

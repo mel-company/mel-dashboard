@@ -1,3 +1,4 @@
+import { UserAvatar } from "@/components/UserAvatar";
 import { useParams } from "react-router-dom";
 import { dmy_employees } from "@/data/dummy";
 import {
@@ -70,7 +71,11 @@ const EmployeeDetails = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="relative h-64 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
-                <User className="size-24 text-white bg-cyan/40 rounded-full p-6" />
+                <UserAvatar
+                  seed={String(employee.id)}
+                  alt={employee.name}
+                  className="size-32 shadow-lg ring-4 ring-white/70"
+                />
               </div>
 
               <Separator />

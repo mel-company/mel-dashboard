@@ -3,6 +3,7 @@ import { AssetImage } from "@/components/AssetImage";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
 import { CHART_COLORS } from "../utils";
 import { formatCount } from "@/utils/format-currency";
+import { UserAvatar } from "@/components/UserAvatar";
 
 type TopCustomer = {
   id: string;
@@ -76,9 +77,11 @@ const TopCustomersCard = ({ customers }: TopCustomersCardProps) => {
                   alt={customer.name}
                   className="size-8 rounded-[6px] object-cover"
                   fallback={
-                    <span className="text-[10px] font-bold text-muted-foreground">
-                      {customer.name.slice(0, 2)}
-                    </span>
+                    <UserAvatar
+                      seed={customer.id}
+                      alt={customer.name}
+                      className="size-9 rounded-[6px]"
+                    />
                   }
                 />
               </div>

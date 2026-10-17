@@ -20,21 +20,13 @@ import {
   type SidebarNavItem,
 } from "@/config/sidebar-navigation";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
+import { UserAvatar } from "@/components/UserAvatar";
 
 type AppSidebarProps = {
   className?: string;
   onNavigate?: () => void;
   collapsed?: boolean;
 };
-
-function getInitials(value?: string) {
-  if (!value?.trim()) return "MA";
-  const parts = value.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
-  }
-  return value.slice(0, 2).toUpperCase();
-}
 
 function SidebarStoreLogo({ storeLogoUrl }: { storeLogoUrl: string }) {
   const [ready, setReady] = useState(false);
@@ -165,7 +157,7 @@ const AppSidebar = ({
   const displayName =
     me?.fullName || me?.name || me?.user?.name || "مستخدم ميل";
   const roleLabel = me?.role || me?.user?.role || "مدير النظام";
-  const initials = getInitials(displayName);
+  const avatarSeed = me?.id ?? me?.user?.id ?? me?.phone ?? displayName;
 
   const handleLogout = () => {
     logoutMutation(
@@ -308,10 +300,10 @@ const AppSidebar = ({
                 onNavigate?.();
               }}
               title={displayName}
-              className="flex size-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-500 to-sky-400 text-xs font-bold text-white shadow-sm"
+              className="flex size-10 items-center justify-center overflow-hidden rounded-full shadow-sm"
               aria-label="الملف الشخصي"
             >
-              {initials}
+              <UserAvatar seed={avatarSeed} className="size-10" />
             </button>
             <button
               type="button"
@@ -332,9 +324,7 @@ const AppSidebar = ({
               className="flex w-full items-center gap-2.5 rounded-2xl border border-transparent bg-slate-50 px-2.5 py-2.5 text-right transition-colors hover:bg-slate-100 dark:border-white/[0.06] dark:bg-surface dark:hover:bg-white/[0.07]"
             >
               {/* RTL: avatar on the right */}
-              <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-violet-500 to-sky-400 text-xs font-bold text-white">
-                {initials}
-              </div>
+              <UserAvatar seed={avatarSeed} className="size-10" />
               <div className="min-w-0 flex-1 text-right">
                 <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                   {displayName}
