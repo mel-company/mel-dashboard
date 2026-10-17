@@ -70,10 +70,9 @@ type Props = {
 /**
  * موقع الفرع — where a driver collects this store's parcels.
  *
- * The merchant picks the province and city, then places the pin on a map.
- * Saving records it on the store (the origin half of every delivery price) and,
- * for a courier whose API opens branches from coordinates — Prime and Boxy —
- * the server opens the branch there or moves the existing one.
+ * Province and district come from lists (e.g. الطويسة); the map only previews
+ * that area — no pin dragging. Saving records origin pricing and, for Prime /
+ * Boxy, opens or moves the courier branch.
  */
 const BranchLocationField = ({ open: openProp, onOpenChange }: Props) => {
   const { data: storeDetails } = useFetchStoreDetails();
@@ -180,11 +179,11 @@ const BranchLocationField = ({ open: openProp, onOpenChange }: Props) => {
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-1 text-slate-500">
             <MapPin className="size-5 text-sky-500" />
-            <span className="text-[13px]">حدّد موقع الفرع على الخريطة</span>
+            <span className="text-[13px]">اختر المحافظة والمنطقة من القائمة</span>
           </div>
         )}
         <span className="absolute bottom-2 left-2 z-10 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-medium text-sky-700 shadow-sm dark:bg-slate-900/95 dark:text-sky-300">
-          {hasPin ? "تعديل الموقع" : "اختيار الموقع"}
+          {hasPin ? "تعديل المحافظة/المنطقة" : "اختيار المحافظة والمنطقة"}
         </span>
       </button>
 
@@ -239,6 +238,7 @@ const BranchLocationField = ({ open: openProp, onOpenChange }: Props) => {
         initialRegionId={location?.regionId}
         requireState
         requireRegion
+        mapMode="preview"
         busy={saveBranch.isPending}
         keepOpenOnConfirm
         onConfirm={save}

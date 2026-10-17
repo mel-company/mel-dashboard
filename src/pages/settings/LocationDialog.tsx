@@ -86,6 +86,12 @@ type Props = {
    * and closes it itself once that succeeds.
    */
   keepOpenOnConfirm?: boolean;
+  /**
+   * - `pick` (default): merchant drops/drags the pin (store location).
+   * - `preview`: lists choose province/district; the map only shows that
+   *   area (branch / courier pickup) — no pin dragging.
+   */
+  mapMode?: "pick" | "preview";
 };
 
 function getDisplayName(name: unknown): string {
@@ -105,6 +111,30 @@ function resolveStateCoords(stateName: string): [number, number] {
     (k) => trimmed.includes(k) || k.includes(trimmed),
   );
   return key ? STATE_COORDS[key] : [DEFAULT_LAT, DEFAULT_LNG];
+}
+
+/** Rough center for a district name (e.g. الطويسة) so the preview map is useful. */
+async function geocodeDistrict(
+  regionName: string,
+  stateName: string,
+  signal?: AbortSignal,
+): Promise<[number, number] | null> {
+  try {
+    const q = encodeURIComponent(`${regionName}, ${stateName}, Iraq`);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=iq&q=${q}`,
+      { signal, headers: { Accept: "application/json" } },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as Array<{ lat?: string; lon?: string }>;
+    const hit = data?.[0];
+    const lat = Number(hit?.lat);
+    const lng = Number(hit?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return [lat, lng];
+  } catch {
+    return null;
+  }
 }
 
 function normalizeList(data: unknown): any[] {
@@ -162,9 +192,11 @@ function RecenterMap({
 function LocationMarker({
   position,
   onPositionChange,
+  draggable = true,
 }: {
   position: [number, number];
   onPositionChange: (lat: number, lng: number) => void;
+  draggable?: boolean;
 }) {
   const markerRef = useRef<L.Marker>(null);
 
@@ -177,13 +209,17 @@ function LocationMarker({
       ref={markerRef}
       position={position}
       icon={brandPinIcon}
-      draggable
-      eventHandlers={{
-        dragend: (e) => {
-          const pos = (e.target as L.Marker).getLatLng();
-          onPositionChange(pos.lat, pos.lng);
-        },
-      }}
+      draggable={draggable}
+      eventHandlers={
+        draggable
+          ? {
+              dragend: (e) => {
+                const pos = (e.target as L.Marker).getLatLng();
+                onPositionChange(pos.lat, pos.lng);
+              },
+            }
+          : undefined
+      }
     />
   );
 }
@@ -203,8 +239,10 @@ const LocationDialog = ({
   requireRegion = false,
   busy = false,
   keepOpenOnConfirm = false,
+  mapMode = "pick",
 }: Props) => {
   const theme = useResolvedTheme();
+  const previewOnly = mapMode === "preview";
 
   const [draftLat, setDraftLat] = useState(DEFAULT_LAT);
   const [draftLng, setDraftLng] = useState(DEFAULT_LNG);
@@ -214,9 +252,11 @@ const LocationDialog = ({
   const [selectedRegionId, setSelectedRegionId] = useState("");
   const [listFilter, setListFilter] = useState("");
   const [shouldRecenter, setShouldRecenter] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   // Opening with a city already chosen sets the province too, and the
   // province change below would otherwise wipe the city straight away.
   const keepRegionOnce = useRef(false);
+  const geocodeAbort = useRef<AbortController | null>(null);
 
   const { data: statesData, isLoading: isLoadingStates } = useFetchStates(
     undefined,
@@ -275,6 +315,32 @@ const LocationDialog = ({
     setDraftAddress(label);
   }, []);
 
+  const focusDistrictOnMap = useCallback(
+    (stateName: string, regionName: string) => {
+      geocodeAbort.current?.abort();
+      const ac = new AbortController();
+      geocodeAbort.current = ac;
+      setGeocoding(true);
+      void geocodeDistrict(regionName, stateName, ac.signal).then((coords) => {
+        if (ac.signal.aborted) {
+          setGeocoding(false);
+          return;
+        }
+        setGeocoding(false);
+        if (!coords) return;
+        setShouldRecenter(true);
+        setDraftLat(coords[0]);
+        setDraftLng(coords[1]);
+        setMapZoom(15);
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    return () => geocodeAbort.current?.abort();
+  }, []);
+
   const handleSelectState = (state: any) => {
     setSelectedStateId(state.id);
     applyPlace(getDisplayName(state.name));
@@ -282,7 +348,13 @@ const LocationDialog = ({
 
   const handleSelectRegion = (region: any) => {
     setSelectedRegionId(region.id);
-    applyPlace(selectedStateName || "العراق", getDisplayName(region.name));
+    const regionName = getDisplayName(region.name);
+    const stateName = selectedStateName || "العراق";
+    applyPlace(stateName, regionName);
+    // Preview (branch): zoom the map onto the chosen district, e.g. الطويسة.
+    if (previewOnly && regionName) {
+      focusDistrictOnMap(stateName, regionName);
+    }
   };
 
   const handlePositionChange = useCallback((lat: number, lng: number) => {
@@ -471,11 +543,13 @@ const LocationDialog = ({
             <div className="relative h-64 overflow-hidden rounded-2xl border border-slate-200/80 sm:h-72 dark:border-slate-800">
               {open && (
                 <MapContainer
-                  key={`map-${theme}-${open}`}
+                  key={`map-${theme}-${open}-${mapMode}`}
                   center={[draftLat, draftLng]}
                   zoom={mapZoom}
                   className="size-full z-0"
                   scrollWheelZoom
+                  dragging={!previewOnly}
+                  doubleClickZoom={!previewOnly}
                 >
                   <VectorBaseLayer theme={theme} />
                   <MapResizeFix />
@@ -488,37 +562,53 @@ const LocationDialog = ({
                   <LocationMarker
                     position={[draftLat, draftLng]}
                     onPositionChange={handlePositionChange}
+                    draggable={!previewOnly}
                   />
-                  <MapClickHandler onPositionChange={handlePositionChange} />
+                  {!previewOnly ? (
+                    <MapClickHandler onPositionChange={handlePositionChange} />
+                  ) : null}
                 </MapContainer>
               )}
-              {/* Jump to where the merchant is standing — usually the shop. */}
-              <button
-                type="button"
-                onClick={handleLocateMe}
-                disabled={locating}
-                className="absolute bottom-3 left-3 z-[400] flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-[#1a2b5a] shadow-md hover:bg-slate-50 disabled:opacity-60 dark:bg-slate-900 dark:text-slate-100"
-              >
-                {locating ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <LocateFixed className="size-4 text-[#00b7ff]" />
-                )}
-                موقعي الحالي
-              </button>
+              {!previewOnly ? (
+                <button
+                  type="button"
+                  onClick={handleLocateMe}
+                  disabled={locating}
+                  className="absolute bottom-3 left-3 z-[400] flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-[#1a2b5a] shadow-md hover:bg-slate-50 disabled:opacity-60 dark:bg-slate-900 dark:text-slate-100"
+                >
+                  {locating ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <LocateFixed className="size-4 text-[#00b7ff]" />
+                  )}
+                  موقعي الحالي
+                </button>
+              ) : null}
               <p className="pointer-events-none absolute right-3 top-3 z-[400] rounded-lg bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm dark:bg-slate-900/90 dark:text-slate-300">
-                اسحب الدبوس أو اضغط على الخريطة
+                {previewOnly
+                  ? geocoding
+                    ? "جاري تحديد المنطقة على الخريطة…"
+                    : "الخريطة تعرض المنطقة المختارة من القائمة"
+                  : "اسحب الدبوس أو اضغط على الخريطة"}
               </p>
             </div>
 
-            <SettingsField label="العنوان" htmlFor="location-address">
+            <SettingsField
+              label={previewOnly ? "وصف الموقع" : "العنوان"}
+              htmlFor="location-address"
+            >
               <SettingsTextarea
                 id="location-address"
                 value={draftAddress}
                 onChange={(e) => setDraftAddress(e.target.value)}
                 rows={2}
-                placeholder="اختر من القائمة أو عدّل العنوان يدوياً"
+                placeholder={
+                  previewOnly
+                    ? "يُملأ تلقائياً من المحافظة والمنطقة"
+                    : "اختر من القائمة أو عدّل العنوان يدوياً"
+                }
                 className="min-h-[72px]"
+                readOnly={previewOnly}
               />
             </SettingsField>
 
