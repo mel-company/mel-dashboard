@@ -43,171 +43,171 @@ export const PARCEL_TERMINAL_STATUSES: CourierShipmentStatus[] = [
   "CANCELLED",
 ];
 
-/** Platform status → Arabic (merchant UI). */
-export const COURIER_STATUS_LABEL_AR: Record<CourierShipmentStatus, string> = {
-  CREATED: "مُسجَّل",
-  PICKED_UP: "استلمه المندوب",
-  IN_TRANSIT: "في الطريق",
-  OUT_FOR_DELIVERY: "خارج للتوصيل",
-  DELIVERED: "تم التسليم",
-  RETURNED: "راجع",
-  CANCELLED: "ملغى",
-  FAILED: "محاولة فاشلة",
-  UNKNOWN: "غير معروف",
-};
+  /** Platform status → Arabic (merchant UI). */
+  export const COURIER_STATUS_LABEL_AR: Record<CourierShipmentStatus, string> = {
+    CREATED: "مُسجَّل",
+    PICKED_UP: "استلمه المندوب",
+    IN_TRANSIT: "في الطريق",
+    OUT_FOR_DELIVERY: "خارج للتوصيل",
+    DELIVERED: "تم التسليم",
+    RETURNED: "راجع",
+    CANCELLED: "ملغى",
+    FAILED: "محاولة فاشلة",
+    UNKNOWN: "غير معروف",
+  };
 
-/**
- * Prime `stepCode` / `shipmentStatus` (and close aliases) → Arabic.
- *
- * From Prime `list-of-system-steps` + `case-history`. MEL still normalises to
- * CREATED / IN_TRANSIT / … via `primeStatusFor`; the timeline prefers the
- * specific step so merchants see «جاهز للطبع» rather than a vague «في الطريق».
- */
-const COURIER_RAW_STATUS_AR: Record<string, string> = {
-  // Happy path
-  DRAFT: "مسودة",
-  NEW: "جديد",
-  CREATED: "مُسجَّل",
-  READYTOPRINT: "جاهز للطبع",
-  READY_TO_PRINT: "جاهز للطبع",
-  READYTOPICKUP: "جاهز للاستلام",
-  READY_TO_PICKUP: "جاهز للاستلام",
-  NEWINSTORE: "داخل المخزن",
-  NEW_IN_STORE: "داخل المخزن",
-  NEW_ONWAY: "شحنات جديدة في الطريق",
-  NEWONWAY: "شحنات جديدة في الطريق",
-  PRINTMANIFEST: "طباعة منفيست للمندوب",
-  PRINT_MANIFEST: "طباعة منفيست للمندوب",
-  ONWAY: "عند مندوب التوصيل",
-  ON_WAY: "عند مندوب التوصيل",
-  INTRANSIT: "في الطريق",
-  IN_TRANSIT: "في الطريق",
-  OUT_FOR_DELIVERY: "خارج للتوصيل",
-  // Prime's own spelling on successful delivery
-  DLEIVERD: "تم التسليم",
-  DELIVERED: "تم التسليم",
-  // Not delivered / returns
-  RTN_WITHAGENT: "تعذر التوصيل",
-  RTNWITHAGENT: "تعذر التوصيل",
-  POSTPONED: "مؤجّل",
-  TRY_AGAIN: "إعادة توصيل",
-  TRYAGAIN: "إعادة توصيل",
-  RTN_INSTORE: "راجع في المخزن",
-  RTNINSTORE: "راجع في المخزن",
-  RTNARCHV: "أرشيف الراجع",
-  RTN_ARCHV: "أرشيف الراجع",
-  RETURNED: "راجع",
-  RETURN: "راجع",
-  CANCELLED: "ملغى",
-  CANCELED: "ملغى",
-  FAILED: "محاولة فاشلة",
-  PENDING: "قيد الانتظار",
-  PICKED: "استلمه المندوب",
-  PICKEDUP: "استلمه المندوب",
-  PICKED_UP: "استلمه المندوب",
-};
-
-function normalizeCourierRawCode(value: string): string {
-  return value.trim().toUpperCase().replace(/\s+/g, "_");
-}
-
-function rawCodeKeys(
-  ...candidates: Array<string | null | undefined>
-): string[] {
-  const keys: string[] = [];
-  for (const candidate of candidates) {
-    if (!candidate?.trim()) continue;
-    const key = normalizeCourierRawCode(candidate);
-    keys.push(key, key.replace(/_/g, ""));
-  }
-  return keys;
-}
-
-function mapCourierRawLabel(
-  ...candidates: Array<string | null | undefined>
-): string | null {
-  for (const key of rawCodeKeys(...candidates)) {
-    if (COURIER_RAW_STATUS_AR[key]) return COURIER_RAW_STATUS_AR[key];
-  }
-  return null;
-}
-
-/** Prime (and aliases) that mean the parcel was actually handed over. */
-const DELIVERED_RAW_CODES = new Set([
-  "DLEIVERD", // Prime's spelling
-  "DELIVERED",
-]);
-
-function isPrimeConfirmedDelivered(
-  rawStatus?: string | null,
-  rawStatusCode?: string | null,
-): boolean {
-  return rawCodeKeys(rawStatusCode, rawStatus).some((key) =>
-    DELIVERED_RAW_CODES.has(key),
-  );
-}
-
-function hasAnyRawStatus(
-  rawStatus?: string | null,
-  rawStatusCode?: string | null,
-): boolean {
-  return Boolean(rawStatus?.trim() || rawStatusCode?.trim());
-}
-
-/**
- * Arabic label for a parcel status — never leave the merchant with `ONWAY`.
- *
- * **تم التسليم** only when Prime says so (`DLEIVERD` / `DELIVERED`). A
- * normalised platform `DELIVERED` is ignored if the courier's own step still
- * says READYTOPRINT / ONWAY / ….
- *
- * Prefer Prime `stepCode` when present so the badge matches the timeline
- * («جاهز للطبع» not a vague «في الطريق»).
- */
-export function formatCourierStatusLabel(input: {
-  status?: CourierShipmentStatus | null;
-  rawStatus?: string | null;
-  rawStatusCode?: string | null;
   /**
-   * Prefer Prime stepCode / raw status over the normalised platform status.
-   * Default true — merchants should read what the courier said.
+   * Prime `stepCode` / `shipmentStatus` (and close aliases) → Arabic.
+   *
+   * From Prime `list-of-system-steps` + `case-history`. MEL still normalises to
+   * CREATED / IN_TRANSIT / … via `primeStatusFor`; the timeline prefers the
+   * specific step so merchants see «جاهز للطبع» rather than a vague «في الطريق».
    */
-  preferRaw?: boolean;
-}): string {
-  const status = input.status ?? null;
-  const preferRaw = input.preferRaw !== false;
-  const rawMapped = mapCourierRawLabel(input.rawStatusCode, input.rawStatus);
-  const rawPresent = hasAnyRawStatus(input.rawStatus, input.rawStatusCode);
-  const primeDelivered = isPrimeConfirmedDelivered(
-    input.rawStatus,
-    input.rawStatusCode,
-  );
+  const COURIER_RAW_STATUS_AR: Record<string, string> = {
+    // Happy path
+    DRAFT: "مسودة",
+    NEW: "جديد",
+    CREATED: "مُسجَّل",
+    READYTOPRINT: "جاهز للطبع",
+    READY_TO_PRINT: "جاهز للطبع",
+    READYTOPICKUP: "جاهز للاستلام",
+    READY_TO_PICKUP: "جاهز للاستلام",
+    NEWINSTORE: "داخل المخزن",
+    NEW_IN_STORE: "داخل المخزن",
+    NEW_ONWAY: "شحنات جديدة في الطريق",
+    NEWONWAY: "شحنات جديدة في الطريق",
+    PRINTMANIFEST: "طباعة منفيست للمندوب",
+    PRINT_MANIFEST: "طباعة منفيست للمندوب",
+    ONWAY: "عند مندوب التوصيل",
+    ON_WAY: "عند مندوب التوصيل",
+    INTRANSIT: "في الطريق",
+    IN_TRANSIT: "في الطريق",
+    OUT_FOR_DELIVERY: "خارج للتوصيل",
+    // Prime's own spelling on successful delivery
+    DLEIVERD: "تم التسليم",
+    DELIVERED: "تم التسليم",
+    // Not delivered / returns
+    RTN_WITHAGENT: "تعذر التوصيل",
+    RTNWITHAGENT: "تعذر التوصيل",
+    POSTPONED: "مؤجّل",
+    TRY_AGAIN: "إعادة توصيل",
+    TRYAGAIN: "إعادة توصيل",
+    RTN_INSTORE: "راجع في المخزن",
+    RTNINSTORE: "راجع في المخزن",
+    RTNARCHV: "أرشيف الراجع",
+    RTN_ARCHV: "أرشيف الراجع",
+    RETURNED: "راجع",
+    RETURN: "راجع",
+    CANCELLED: "ملغى",
+    CANCELED: "ملغى",
+    FAILED: "محاولة فاشلة",
+    PENDING: "قيد الانتظار",
+    PICKED: "استلمه المندوب",
+    PICKEDUP: "استلمه المندوب",
+    PICKED_UP: "استلمه المندوب",
+  };
 
-  // Never paint «تم التسليم» from MEL's enum alone while Prime still says
-  // something earlier in the pipeline.
-  if (status === "DELIVERED") {
-    if (rawPresent && !primeDelivered) {
-      if (rawMapped) return rawMapped;
-      return COURIER_STATUS_LABEL_AR.IN_TRANSIT;
+  function normalizeCourierRawCode(value: string): string {
+    return value.trim().toUpperCase().replace(/\s+/g, "_");
+  }
+
+  function rawCodeKeys(
+    ...candidates: Array<string | null | undefined>
+  ): string[] {
+    const keys: string[] = [];
+    for (const candidate of candidates) {
+      if (!candidate?.trim()) continue;
+      const key = normalizeCourierRawCode(candidate);
+      keys.push(key, key.replace(/_/g, ""));
     }
-    return COURIER_STATUS_LABEL_AR.DELIVERED;
+    return keys;
   }
 
-  if (preferRaw && rawMapped) return rawMapped;
-
-  if (status && status !== "UNKNOWN") {
-    return COURIER_STATUS_LABEL_AR[status];
+  function mapCourierRawLabel(
+    ...candidates: Array<string | null | undefined>
+  ): string | null {
+    for (const key of rawCodeKeys(...candidates)) {
+      if (COURIER_RAW_STATUS_AR[key]) return COURIER_RAW_STATUS_AR[key];
+    }
+    return null;
   }
 
-  if (rawMapped) return rawMapped;
+  /** Prime (and aliases) that mean the parcel was actually handed over. */
+  const DELIVERED_RAW_CODES = new Set([
+    "DLEIVERD", // Prime's spelling
+    "DELIVERED",
+  ]);
 
-  if (status) return COURIER_STATUS_LABEL_AR[status];
+  function isPrimeConfirmedDelivered(
+    rawStatus?: string | null,
+    rawStatusCode?: string | null,
+  ): boolean {
+    return rawCodeKeys(rawStatusCode, rawStatus).some((key) =>
+      DELIVERED_RAW_CODES.has(key),
+    );
+  }
 
-  const display = String(input.rawStatus ?? input.rawStatusCode ?? "").trim();
-  return display || "—";
-}
+  function hasAnyRawStatus(
+    rawStatus?: string | null,
+    rawStatusCode?: string | null,
+  ): boolean {
+    return Boolean(rawStatus?.trim() || rawStatusCode?.trim());
+  }
 
-/** A courier may still be carrying this parcel. */
+  /**
+   * Arabic label for a parcel status — never leave the merchant with `ONWAY`.
+   *
+   * **تم التسليم** only when Prime says so (`DLEIVERD` / `DELIVERED`). A
+   * normalised platform `DELIVERED` is ignored if the courier's own step still
+   * says READYTOPRINT / ONWAY / ….
+   *
+   * Prefer Prime `stepCode` when present so the badge matches the timeline
+   * («جاهز للطبع» not a vague «في الطريق»).
+   */
+  export function formatCourierStatusLabel(input: {
+    status?: CourierShipmentStatus | null;
+    rawStatus?: string | null;
+    rawStatusCode?: string | null;
+    /**
+     * Prefer Prime stepCode / raw status over the normalised platform status.
+     * Default true — merchants should read what the courier said.
+     */
+    preferRaw?: boolean;
+  }): string {
+    const status = input.status ?? null;
+    const preferRaw = input.preferRaw !== false;
+    const rawMapped = mapCourierRawLabel(input.rawStatusCode, input.rawStatus);
+    const rawPresent = hasAnyRawStatus(input.rawStatus, input.rawStatusCode);
+    const primeDelivered = isPrimeConfirmedDelivered(
+      input.rawStatus,
+      input.rawStatusCode,
+    );
+
+    // Never paint «تم التسليم» from MEL's enum alone while Prime still says
+    // something earlier in the pipeline.
+    if (status === "DELIVERED") {
+      if (rawPresent && !primeDelivered) {
+        if (rawMapped) return rawMapped;
+        return COURIER_STATUS_LABEL_AR.IN_TRANSIT;
+      }
+      return COURIER_STATUS_LABEL_AR.DELIVERED;
+    }
+
+    if (preferRaw && rawMapped) return rawMapped;
+
+    if (status && status !== "UNKNOWN") {
+      return COURIER_STATUS_LABEL_AR[status];
+    }
+
+    if (rawMapped) return rawMapped;
+
+    if (status) return COURIER_STATUS_LABEL_AR[status];
+
+    const display = String(input.rawStatus ?? input.rawStatusCode ?? "").trim();
+    return display || "—";
+  }
+
+  /** A courier may still be carrying this parcel. */
 export const isParcelLive = (parcel: {
   externalId: string | null;
   status: CourierShipmentStatus;
