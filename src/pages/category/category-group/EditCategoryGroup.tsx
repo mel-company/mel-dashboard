@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ASSET_CDN_URL } from "@/utils/image-url";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,10 +27,7 @@ const EditCategoryGroup = () => {
   const [image, setImage] = useState("");
   const [enabled, setEnabled] = useState(true);
 
-  const baseUrl =
-    import.meta.env.VITE_PUBLIC_URL ||
-    import.meta.env.VITE_API_BASE_URL?.replace("/api/v1", "") ||
-    "";
+  const baseUrl = ASSET_CDN_URL;
 
   useEffect(() => {
     if (data) {
