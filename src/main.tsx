@@ -7,6 +7,9 @@ import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppsProvider } from "./contexts/AppsContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { loadClarity } from "./utils/clarity";
+
+loadClarity();
 
 const queryClient = new QueryClient();
 
