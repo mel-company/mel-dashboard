@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ExternalLink, Eye, Sparkles } from "lucide-react";
+import {
+  TemplateApplyIcon,
+  TemplateCurrentIcon,
+  TemplateEditIcon,
+  TemplatePreviewIcon,
+} from "@/components/icons/TemplateCardIcons";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -42,16 +48,13 @@ const ARROW_CLASSES =
   "disabled:opacity-0 disabled:pointer-events-none " +
   "dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700";
 
-const DATE_FORMAT = new Intl.DateTimeFormat("ar-IQ", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
-
-function formatDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : DATE_FORMAT.format(date);
-}
+/** «معاينة» and «تعديل»: the outlined pair under each card's text. */
+const SECONDARY_ACTION =
+  "flex h-8 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-lg " +
+  "border border-[#00b7ff]/15 px-2 text-[13px] font-medium text-[#00b7ff] " +
+  "transition-colors hover:bg-[#00b7ff]/5 " +
+  "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#00b7ff]/40 " +
+  "dark:text-[#33c5ff]";
 
 /**
  * A design with no screenshot yet still has its palette, so the card shows
@@ -142,15 +145,15 @@ const StoreAppearanceSection = () => {
                   className={cn(
                     "h-full rounded-[18px] p-[3px] transition-shadow",
                     design.isActive
-                      ? "bg-linear-to-br from-cyan-400 to-violet-500 shadow-md"
+                      ? "bg-linear-to-br from-[#00b7ff] to-[#7d26f7] shadow-md"
                       : "bg-transparent",
                   )}
                 >
                   <div
                     className={cn(
-                      "relative flex h-full flex-col items-center gap-2 rounded-[15px] p-2",
+                      "relative flex h-full flex-col items-center gap-3 rounded-[15px] p-2",
                       design.isActive
-                        ? "bg-violet-500/5 dark:bg-violet-500/10"
+                        ? "bg-white dark:bg-slate-950 [background-image:linear-gradient(rgba(125,38,247,0.05),rgba(125,38,247,0.05))]"
                         : "bg-transparent",
                     )}
                   >
@@ -164,7 +167,7 @@ const StoreAppearanceSection = () => {
                       aria-label={`معاينة ${design.storeName || "التصميم"}`}
                       className="group relative w-full cursor-pointer overflow-hidden rounded-[10px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-sky-400"
                     >
-                      <div className="h-[116px] w-full overflow-hidden rounded-[10px] bg-white shadow-sm dark:bg-slate-800">
+                      <div className="h-[116px] w-full overflow-hidden rounded-[10px] bg-white dark:bg-slate-800">
                         {design.thumbnail ? (
                           <img
                             src={design.thumbnail}
@@ -177,78 +180,75 @@ const StoreAppearanceSection = () => {
                         )}
                       </div>
 
-                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-[10px] bg-slate-900/0 opacity-0 transition duration-300 group-hover:bg-slate-900/25 group-hover:opacity-100">
-                        <span className="flex items-center gap-1 rounded-lg bg-white/90 px-3 py-1.5 text-[13px] font-medium text-slate-700 shadow-sm backdrop-blur-sm dark:bg-slate-900/90 dark:text-slate-100">
+                      {/* The design's 10% black wash, which also darkens a
+                          little further on hover to show the hint. */}
+                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-[10px] bg-black/10 transition duration-300 group-hover:bg-slate-900/30">
+                        <span className="flex items-center gap-1 rounded-lg bg-white/90 px-3 py-1.5 text-[13px] font-medium text-slate-700 opacity-0 shadow-sm backdrop-blur-sm transition duration-300 group-hover:opacity-100 dark:bg-slate-900/90 dark:text-slate-100">
                           <Eye className="size-3.5" />
                           معاينة حيّة
                         </span>
                       </span>
                     </button>
 
-                    <div className="w-full space-y-1 text-center">
-                      <p
-                        className={cn(
-                          "truncate text-[15px] text-slate-700 dark:text-slate-100",
-                          design.isActive ? "font-bold" : "font-normal",
-                        )}
-                      >
-                        {design.storeName || "تصميم بدون اسم"}
-                      </p>
-                      <p className="line-clamp-2 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">
-                        {design.tagline || design.prompt}
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        {formatDate(design.createdAt)}
-                      </p>
-                    </div>
+                    <p
+                      className={cn(
+                        "w-full truncate text-center text-[15.5px] leading-4 text-[#3b4656] dark:text-slate-100",
+                        design.isActive ? "font-bold" : "font-normal",
+                      )}
+                    >
+                      {design.storeName || "تصميم بدون اسم"}
+                    </p>
+                    <p className="line-clamp-2 min-h-8 w-full text-center text-[10.5px] leading-4 text-[#6c809d] dark:text-slate-400">
+                      {design.tagline || design.prompt}
+                    </p>
 
-                    {/* Preview above apply, because that is the order the
-                        decision is made in: a merchant looks at the design
-                        running before putting it on their shop. */}
-                    <div className="mt-auto flex w-full flex-col gap-1.5">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setPreviewDesign(design)}
-                        className="h-8 w-full gap-1.5 rounded-lg border-slate-200 text-[13px] font-medium text-slate-600 shadow-none hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                      >
-                        <Eye className="size-3.5" />
-                        معاينة حيّة
-                      </Button>
+                    {/* Preview and edit side by side, then the main action
+                        across the full width, as in the design. */}
+                    <div className="mt-auto flex w-full flex-col gap-2">
+                      <div className="flex w-full gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDesign(design)}
+                          className={SECONDARY_ACTION}
+                        >
+                          <TemplatePreviewIcon />
+                          معاينة
+                        </button>
 
-                      {/* Re-runs the generation handoff into the editor draft.
-                          Everyday «فتح المحرر» omits `generation=`, so a
-                          merchant whose landing link dropped it stays on an
-                          old/default template with no way to pull this design
-                          into the editor except this. */}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          navigate(`/editor?generation=${encodeURIComponent(design.id)}`)
-                        }
-                        className="h-8 w-full gap-1.5 rounded-lg border-slate-200 text-[13px] font-medium text-slate-600 shadow-none hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                      >
-                        <ExternalLink className="size-3.5" />
-                        فتح في المحرر
-                      </Button>
+                        {/* Re-runs the generation handoff into the editor
+                            draft. Everyday «فتح المحرر» omits `generation=`,
+                            so a merchant whose landing link dropped it stays
+                            on an old/default template with no way to pull
+                            this design into the editor except this. */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(
+                              `/editor?generation=${encodeURIComponent(design.id)}`,
+                            )
+                          }
+                          className={SECONDARY_ACTION}
+                        >
+                          <TemplateEditIcon />
+                          تعديل
+                        </button>
+                      </div>
 
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={design.isActive}
-                        onClick={() => setDesignToApply(design)}
-                        className={cn(
-                          "h-8 w-full rounded-lg text-[13px] font-medium shadow-none",
-                          design.isActive
-                            ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 disabled:opacity-100"
-                            : "bg-sky-500/10 text-sky-500 hover:bg-sky-500/20",
-                        )}
-                      >
-                        {design.isActive ? "التصميم الحالي" : "استخدام التصميم"}
-                      </Button>
+                      {design.isActive ? (
+                        <div className="flex h-9 w-full items-center justify-center gap-1 rounded-lg bg-[#00b7ff] px-[18px] text-[13px] font-medium text-[#060219]">
+                          <TemplateCurrentIcon />
+                          القالب الحالي
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setDesignToApply(design)}
+                          className="flex h-9 w-full cursor-pointer items-center justify-center gap-1 rounded-lg bg-[#7d26f7]/10 px-[18px] text-[13px] font-medium text-[#7d26f7] transition-colors hover:bg-[#7d26f7]/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#7d26f7]/40 dark:bg-[#9a5cff]/15 dark:text-[#b282ff] dark:hover:bg-[#9a5cff]/25"
+                        >
+                          <TemplateApplyIcon />
+                          تعيين القالب
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
