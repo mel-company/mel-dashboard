@@ -15,6 +15,7 @@ import { useCreateCategory } from "@/api/wrappers/category.wrappers";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import { resolveTempImageUrl } from "@/utils/resolve-temp-image-url";
 import { cn } from "@/lib/utils";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type Props = {
   open: boolean;
@@ -191,7 +192,7 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                onChange={handleImageSelect}
+                onChange={withImageEditor(handleImageSelect)}
                 className="hidden"
                 disabled={isPending}
               />

@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useCreateGroup, useAddCategoriesToGroup } from "@/api/wrappers/group.wrappers";
 import { useFetchCategories } from "@/api/wrappers/category.wrappers";
 import { cn } from "@/lib/utils";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type Props = {
   open: boolean;
@@ -234,7 +235,7 @@ const AddGroupDialog = ({ open, onOpenChange }: Props) => {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  onChange={handleImageSelect}
+                  onChange={withImageEditor(handleImageSelect)}
                   className="hidden"
                   disabled={isPending}
                 />

@@ -24,6 +24,7 @@ import {
 import { useFetchCategory } from "@/api/wrappers/category.wrappers";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import { getImageUrl } from "@/utils/image-url";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type Props = {
   open: boolean;
@@ -187,7 +188,7 @@ const CategoryImageDialog = ({ open, onOpenChange, categoryId }: Props) => {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                onChange={handleFileSelect}
+                onChange={withImageEditor(handleFileSelect)}
                 className="hidden"
               />
               <Button

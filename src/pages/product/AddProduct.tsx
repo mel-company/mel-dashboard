@@ -30,6 +30,7 @@ import { ProductPropertiesCard } from "@/components/product/ProductPropertiesCar
 import { ProductOptionsCard } from "@/components/product/ProductOptionsCard";
 import { ProductVariantsCard } from "@/components/product/ProductVariantsCard";
 import { sanitizeDecimalInput } from "@/utils/format-currency";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -842,7 +843,7 @@ const AddProduct = () => {
                   type="file"
                   accept="image/*"
                   multiple
-                  onChange={handleImageSelect}
+                  onChange={withImageEditor(handleImageSelect)}
                   className="hidden"
                   id="product-image"
                 />

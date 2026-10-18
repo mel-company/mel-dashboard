@@ -16,6 +16,7 @@ import {
   useDeleteDiscountImage,
 } from "@/api/wrappers/discount.wrappers";
 import { useFetchDiscount } from "@/api/wrappers/discount.wrappers";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type Props = {
   open: boolean;
@@ -177,7 +178,7 @@ const DiscountImageDialog = ({ open, onOpenChange, discountId }: Props) => {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                onChange={handleFileSelect}
+                onChange={withImageEditor(handleFileSelect)}
                 className="hidden"
               />
               <Button

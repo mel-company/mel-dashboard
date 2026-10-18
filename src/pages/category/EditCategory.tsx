@@ -12,6 +12,7 @@ import ErrorPage from "../miscellaneous/ErrorPage";
 import { toast } from "sonner";
 import { getImageUrl } from "@/utils/image-url";
 import { useImageBaseUrl } from "@/hooks/use-image-base-url";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type Props = {};
 
@@ -180,7 +181,7 @@ const EditCategory = ({}: Props) => {
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
-                      onChange={handleImageSelect}
+                      onChange={withImageEditor(handleImageSelect)}
                       className="hidden"
                       id="image-upload"
                     />
