@@ -569,7 +569,11 @@ const ControlGroup = ({
   </div>
 );
 
-/** A native range, coloured with the brand primary; RTL like the page. */
+/**
+ * A native range, painted: a soft track, the covered part in solid primary
+ * and a white thumb. The page is RTL, so the thumb starts at the right and
+ * the fill is drawn `to left`.
+ */
 const Range = ({
   label,
   min,
@@ -582,17 +586,23 @@ const Range = ({
   max: number;
   value: number;
   onChange: (next: number) => void;
-}) => (
-  <input
-    type="range"
-    aria-label={label}
-    min={min}
-    max={max}
-    value={value}
-    onChange={(event) => onChange(Number(event.target.value))}
-    className="h-1.5 w-full cursor-pointer accent-[var(--primary)]"
-  />
-);
+}) => {
+  const pct = max === min ? 0 : ((value - min) / (max - min)) * 100;
+  return (
+    <input
+      type="range"
+      aria-label={label}
+      min={min}
+      max={max}
+      value={value}
+      onChange={(event) => onChange(Number(event.target.value))}
+      className="image-editor-range w-full cursor-pointer"
+      style={{
+        background: `linear-gradient(to left, var(--primary) ${pct}%, var(--image-editor-track) ${pct}%)`,
+      }}
+    />
+  );
+};
 
 const AdjustSlider = ({
   title,
