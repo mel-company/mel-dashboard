@@ -18,6 +18,7 @@ import { useResolvedTheme } from "./hooks/use-resolved-theme";
 import { useEffect } from "react";
 import { resolveBridgeNext } from "./utils/bridge-next";
 import { useQueryClient } from "@tanstack/react-query";
+import { ImageEditorHost } from "./components/image-editor/ImageEditorHost";
 
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
@@ -70,6 +71,8 @@ function App() {
   return (
     <>
       <Toaster />
+      {/* One image-editor modal for every image input; see withImageEditor. */}
+      <ImageEditorHost />
       <Routes>
         <Route path="/bridge" element={<Bridge />} />
         <Route element={<PrivateRoute />}>

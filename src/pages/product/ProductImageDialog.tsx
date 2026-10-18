@@ -31,6 +31,7 @@ import {
   revokeObjectUrls,
 } from "@/utils/product-images";
 import { cn } from "@/lib/utils";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type Props = {
   open: boolean;
@@ -271,7 +272,7 @@ const ProductImageDialog = ({ open, onOpenChange, productId }: Props) => {
               type="file"
               accept="image/*"
               multiple
-              onChange={handleFileSelect}
+              onChange={withImageEditor(handleFileSelect)}
               className="hidden"
               disabled={busy || slotsLeft <= 0}
             />

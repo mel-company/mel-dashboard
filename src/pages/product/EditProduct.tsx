@@ -60,6 +60,7 @@ import RemoveCategoryFromProductDialog from "./RemoveCategoryFromProductDialog";
 import AddCategoryToProductDialog from "./AddCategoryToProductDialog";
 import ProductImageDialog from "./ProductImageDialog";
 import { formatCurrency, sanitizeDecimalInput } from "@/utils/format-currency";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type Props = {};
 
@@ -683,7 +684,7 @@ const EditProduct = ({}: Props) => {
                   type="file"
                   accept="image/*"
                   multiple
-                  onChange={handleImageSelect}
+                  onChange={withImageEditor(handleImageSelect)}
                   className="hidden"
                 />
 

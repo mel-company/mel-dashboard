@@ -14,6 +14,12 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    // ONNX Runtime (background removal in the image editor) finds its
+    // WebAssembly binary next to its own module; pre-bundled into
+    // `.vite/deps` that lookup 404s, so removal would fail in dev only.
+    optimizeDeps: {
+      exclude: ["onnxruntime-web"],
+    },
     server: {
       proxy: {
         // Dev: /api/v1 → local backend (VITE_API_PROXY_TARGET) or remote API

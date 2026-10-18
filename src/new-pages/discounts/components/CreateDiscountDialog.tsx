@@ -22,6 +22,7 @@ import {
 } from "@/new-pages/settings/components/SettingsField";
 import { cn } from "@/lib/utils";
 import DateField from "@/components/ui/date-field";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type CreateDiscountDialogProps = {
   open: boolean;
@@ -306,7 +307,7 @@ const CreateDiscountDialog = ({
                     id="discountImage"
                     type="file"
                     accept="image/*"
-                    onChange={handleImageSelect}
+                    onChange={withImageEditor(handleImageSelect)}
                     className="hidden"
                     disabled={isPending}
                   />

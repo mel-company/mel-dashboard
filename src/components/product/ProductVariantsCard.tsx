@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ProductSectionCard } from "@/components/product/tags";
 import type { ProductOption } from "@/components/product/ProductOptionsCard";
 import { formatCurrency } from "@/utils/format-currency";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 export type VariantDraft = {
   selectedOptionValues: Array<{ optionName: string; value: string }>;
@@ -80,11 +81,10 @@ function VariantImageCell({
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(e) => {
+        onChange={withImageEditor((e) => {
           const file = e.target.files?.[0];
           if (file) onPick(file);
-          e.target.value = "";
-        }}
+        })}
       />
       {image ? (
         <button

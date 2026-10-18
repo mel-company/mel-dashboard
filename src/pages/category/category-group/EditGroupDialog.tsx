@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Save, X, Loader2, Upload } from "lucide-react";
 import { useUpdateGroup } from "@/api/wrappers/group.wrappers";
 import { toast } from "sonner";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type Group = {
   id: string;
@@ -213,7 +214,7 @@ const EditGroupDialog = ({
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  onChange={handleImageSelect}
+                  onChange={withImageEditor(handleImageSelect)}
                   className="hidden"
                   id="edit-group-image"
                 />

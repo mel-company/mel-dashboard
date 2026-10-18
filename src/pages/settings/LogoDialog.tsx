@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useUpdateStoreLogo, useDeleteStoreLogo } from "@/api/wrappers/settings.wrappers";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
 import { getImageUrl } from "@/utils/image-url";
+import { withImageEditor } from "@/lib/image-edit/queue";
 
 type Props = {
   open: boolean;
@@ -173,7 +174,7 @@ const LogoDialog = ({ open, onOpenChange }: Props) => {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                onChange={handleFileSelect}
+                onChange={withImageEditor(handleFileSelect)}
                 className="hidden"
               />
               <Button
