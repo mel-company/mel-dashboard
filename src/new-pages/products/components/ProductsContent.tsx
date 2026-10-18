@@ -12,7 +12,11 @@ interface ProductsContentProps {
   navigate: (path: string) => void;
 }
 
-const ProductsContent = ({ actions, toolbar }: ProductsContentProps) => {
+const ProductsContent = ({
+  actions,
+  navigate,
+  toolbar,
+}: ProductsContentProps) => {
   if (actions.isLoading && actions.products.length === 0) {
     return (
       <ProductsSkeleton
@@ -34,7 +38,7 @@ const ProductsContent = ({ actions, toolbar }: ProductsContentProps) => {
   }
 
   if (actions.products.length === 0) {
-    return <EmptyCard actions={actions} />;
+    return <EmptyCard actions={actions} navigate={navigate} />;
   }
 
   const cards = (
@@ -85,8 +89,13 @@ const ProductsContent = ({ actions, toolbar }: ProductsContentProps) => {
 
 export default ProductsContent;
 
-const EmptyCard = ({ actions }: { actions: any }) => {
-  const navigate = actions.navigate;
+const EmptyCard = ({
+  actions,
+  navigate,
+}: {
+  actions: any;
+  navigate: (path: string) => void;
+}) => {
   const hasFilters = actions.search || actions.hasActiveFilters;
   const primaryAction = hasFilters
     ? {
