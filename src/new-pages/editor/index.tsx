@@ -7,7 +7,6 @@ import { normalizePlatformSlug } from "@/hooks/useDomainCheck";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 import { Button } from "@/components/ui/button";
-import PlanUpgradeGate from "@/components/PlanUpgradeGate";
 import EditorSplash from "@/components/EditorSplash";
 import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 
@@ -205,7 +204,6 @@ const EditorPage = () => {
   const { mutate: mintTabSession, isPending: isMintingTab } =
     useValidateUserToEditor();
   const {
-    isLocked: isPlanFeatureLocked,
     isLoading: entitlementsLoading,
     handleUpgradeError,
   } = usePlanEntitlements();
@@ -223,8 +221,9 @@ const EditorPage = () => {
   // splash itself and keeps it up until it is ready.
   const [frameLoaded, setFrameLoaded] = useState(false);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
-  const editorLocked =
-    !entitlementsLoading && isPlanFeatureLocked("ai_editor");
+  // Every plan opens the site editor. `ai_editor` gates only the agent inside
+  // it, and the server answers that per message (Basic gets a one-time trial),
+  // so locking the whole page here would shut Basic out of editing its store.
   // Hostname / env usually already have the slug; only block on domain-details
   // when they do not, so we do not delay a production handoff for nothing.
   const needsDomainSlug = !getTenantSubdomain();
@@ -315,7 +314,7 @@ const EditorPage = () => {
   };
 
   const openEditor = () => {
-    if (editorLocked || waitingForSlug) return;
+    if (waitingForSlug) return;
     setError(null);
     setRedirectUrl(null);
     setIframeBlocked(false);
@@ -344,14 +343,10 @@ const EditorPage = () => {
   };
 
   useEffect(() => {
-    if (entitlementsLoading || editorLocked || waitingForSlug) return;
+    if (entitlementsLoading || waitingForSlug) return;
     openEditor();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open once slug + entitlements allow
-  }, [entitlementsLoading, editorLocked, waitingForSlug]);
-
-  if (editorLocked) {
-    return <PlanUpgradeGate feature="ai_editor" />;
-  }
+  }, [entitlementsLoading, waitingForSlug]);
 
   if (
     entitlementsLoading ||

@@ -9,7 +9,11 @@ import {
   useInitStorePlatformPayment,
   useSubscriptionQuote,
 } from "@/api/wrappers/platform-payment.wrapper";
-import { quoteDue, quoteExplanation } from "@/utils/subscription-quote";
+import {
+  billingPeriodLabel,
+  quoteDue,
+  quoteExplanation,
+} from "@/utils/subscription-quote";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -54,7 +58,7 @@ type Entitlements = {
 
 type LastPayment = {
   amount: number;
-  billingPeriod: "MONTHLY" | "YEARLY";
+  billingPeriod: "MONTHLY" | "QUARTERLY" | "YEARLY";
   durationMonths: number;
   paidAt: string | null;
   createdAt: string;
@@ -251,9 +255,7 @@ const StoreSubscriptionSection = () => {
   // The badge said «سنوي» for everyone, and the bar measured against a year
   // with an 8% floor. Both now come from the payment that bought this term.
   const periodLabel = lastPayment
-    ? lastPayment.billingPeriod === "YEARLY"
-      ? "سنوي"
-      : "شهري"
+    ? billingPeriodLabel(lastPayment.billingPeriod)
     : null;
   const remainingDays = Math.max(0, Number(subscription.remainingDays ?? 0));
   const termDays = lastPayment
@@ -341,9 +343,7 @@ const StoreSubscriptionSection = () => {
                 </button>
               )}
 
-              {/* Promised "more products and branches + reports", which no
-                  plan sells. Basic is the only plan on sale; Professional is
-                  announced as coming soon. */}
+              {/* What Grow adds over Basic; on Grow, what is still to come. */}
               <div className="mt-auto rounded-xl bg-violet-500/5 px-4 py-3.5">
                 <div className="mb-2 flex items-center justify-start gap-1.5">
                   <Rocket className="size-4 text-violet-600" />
@@ -353,8 +353,8 @@ const StoreSubscriptionSection = () => {
                 </div>
                 <p className="text-start text-xs leading-[1.65] text-violet-600">
                   {upgradeTo
-                    ? `رقّي إلى باقة ${upgradeTo.planName ?? "أساسي"} لتفعيل المحرر الذكي ونقطة البيع وتطبيق التاجر.`
-                    : "الباقة الاحترافية: نطاق خاص، تصميم من Figma، ودفع إلكتروني."}
+                    ? `رقّي إلى باقة ${upgradeTo.planName ?? "نمو"} لمنتجات وأقسام وطلبات بلا حدود، ومساعد المحرر الذكي، وبكسلات الإعلانات، ونطاقك الخاص.`
+                    : "الباقة الاحترافية: تصميم من Figma ودفع إلكتروني."}
                 </p>
               </div>
             </div>

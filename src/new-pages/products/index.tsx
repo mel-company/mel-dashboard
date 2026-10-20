@@ -13,6 +13,7 @@ import FilterSlidersIcon from "@/components/icons/FilterSlidersIcon";
 import { cn } from "@/lib/utils";
 import { formatCount } from "@/utils/format-currency";
 import PagePanel from "@/components/PagePanel";
+import { PlanLimitNotice } from "@/components/plan/PlanLimitNotice";
 
 const ProductsPage = () => {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const ProductsPage = () => {
 
   return (
     <PagePanel className="space-y-4 sm:space-y-6">
+      <PlanLimitNotice resource="products" />
       <div className="hidden lg:block">
         <TitleBar count={actions.newProductsCount} listLabel="المنتجات">
           <Button

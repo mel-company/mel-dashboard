@@ -27,6 +27,7 @@ import CouponFilterDialog, {
 import ErrorPage from "../miscellaneous/ErrorPage";
 import EmptyPage from "../miscellaneous/EmptyPage";
 import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
+import { PlanLimitNotice } from "@/components/plan/PlanLimitNotice";
 
 const CURSOR_LIMIT = 20;
 
@@ -144,6 +145,7 @@ const Coupons = () => {
 
   return (
     <div className="space-y-6">
+      <PlanLimitNotice resource="coupons" />
       {/* Search and Add Coupon Section */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex flex-1 max-w-full sm:max-w-xl gap-2">

@@ -19,6 +19,7 @@ import {
 import ErrorPage from "../../miscellaneous/ErrorPage";
 import EmptyPage from "../../miscellaneous/EmptyPage";
 import CategoryGroupsSkeleton from "./CategoryGroupsSkeleton";
+import { PlanLimitNotice } from "@/components/plan/PlanLimitNotice";
 
 type GroupListItem = {
   id: string;
@@ -117,6 +118,7 @@ const CategorieGroups = () => {
 
   return (
     <div className="space-y-6">
+      <PlanLimitNotice resource="categoryGroups" />
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-full sm:max-w-md">
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

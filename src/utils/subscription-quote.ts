@@ -18,7 +18,18 @@ export function quoteDue(quote: SubscriptionQuote | undefined): string {
   return quote.amount > 0 ? formatCurrency(quote.amount) : "مجاناً";
 }
 
-const monthsLabel = (n: number) => (n === 1 ? "شهر" : `${n} أشهر`);
+const monthsLabel = (n: number) =>
+  n === 1 ? "شهر" : n === 12 ? "سنة" : n > 10 ? `${n} شهراً` : `${n} أشهر`;
+
+/** Labels for the three billing periods, in the order they are offered. */
+export const BILLING_PERIODS = [
+  { value: "MONTHLY", label: "شهري", months: 1 },
+  { value: "QUARTERLY", label: "3 أشهر", months: 3 },
+  { value: "YEARLY", label: "سنوي", months: 12 },
+] as const;
+
+export const billingPeriodLabel = (period?: string | null) =>
+  BILLING_PERIODS.find((p) => p.value === period)?.label ?? null;
 
 /**
  * Why that is the amount, in one line, or `null` when there is nothing to
@@ -29,6 +40,11 @@ export function quoteExplanation(
   quote: SubscriptionQuote | undefined,
 ): string | null {
   if (!quote) return null;
+  // Priced by the 3-month / yearly discount rather than the intro offer.
+  if (quote.basis === "period" && quote.listAmount > 0 && quote.savings > 0) {
+    const percent = Math.round((quote.savings / quote.listAmount) * 100);
+    return `${monthsLabel(quote.durationMonths)} بخصم ${percent}%`;
+  }
   const { freeMonths, discountMonths, fullMonths, discountedMonthlyPrice } =
     quote.breakdown;
 

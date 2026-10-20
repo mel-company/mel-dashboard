@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useFetchPlan } from "@/api/wrappers/plan.wrappers";
 import {
@@ -23,8 +24,11 @@ import {
   useSubscriptionQuote,
 } from "@/api/wrappers/platform-payment.wrapper";
 import { toast } from "sonner";
+import type { BillingPeriod } from "@/api/endpoints/platform-payment.endpoint";
+import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/utils/format-currency";
 import {
+  BILLING_PERIODS,
   quoteDue,
   quoteExplanation,
   quoteNextCharge,
@@ -36,6 +40,7 @@ const Payment = () => {
 
   const { data: plan, isLoading, error } = useFetchPlan(planId ?? "");
   const initPayment = useInitStorePlatformPayment();
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("MONTHLY");
 
   /**
    * What this merchant will actually be charged, which is not
@@ -45,7 +50,7 @@ const Payment = () => {
    * none was due at all.
    */
   const { data: quote, isLoading: quoteLoading } = useSubscriptionQuote(
-    planId ? { type: "CHANGE_PLAN", planId, billingPeriod: "MONTHLY" } : null,
+    planId ? { type: "CHANGE_PLAN", planId, billingPeriod } : null,
   );
   const dueNow = quoteDue(quote);
   const why = quoteExplanation(quote);
@@ -67,7 +72,7 @@ const Payment = () => {
       {
         type: "CHANGE_PLAN",
         planId,
-        billingPeriod: "MONTHLY",
+        billingPeriod,
         returnBaseUrl: `${window.location.origin}/payment/return`,
       },
       {
@@ -176,6 +181,40 @@ const Payment = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* 3 months is 10% off and a year 25% off. Neither stacks with
+                  the intro offer: the server prices both and charges the
+                  cheaper, so the quote below is the real amount either way. */}
+              <div className="grid grid-cols-3 gap-2 rounded-xl bg-muted/40 p-1">
+                {BILLING_PERIODS.map((period) => {
+                  const percent =
+                    period.value === "QUARTERLY"
+                      ? plan.pricing?.quarterly?.discountPercent
+                      : period.value === "YEARLY"
+                        ? plan.pricing?.yearly?.discountPercent
+                        : 0;
+                  return (
+                    <button
+                      key={period.value}
+                      type="button"
+                      onClick={() => setBillingPeriod(period.value)}
+                      className={cn(
+                        "flex flex-col items-center rounded-lg px-2 py-2 text-sm font-semibold transition",
+                        billingPeriod === period.value
+                          ? "bg-background shadow-sm text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {period.label}
+                      {percent ? (
+                        <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          خصم {percent}%
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+
               {/* The quote, itemised, so the number on the button is accounted
                   for before it is pressed. */}
               <div className="space-y-2 rounded-lg border bg-muted/40 p-4 text-sm">
@@ -258,6 +297,14 @@ const Payment = () => {
                   / شهرياً بعد العرض
                 </span>
               </div>
+              {plan.pricing?.quarterly && plan.pricing?.yearly && (
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  <p>
+                    3 أشهر: {formatCurrency(plan.pricing.quarterly.price)}
+                  </p>
+                  <p>سنة: {formatCurrency(plan.pricing.yearly.price)}</p>
+                </div>
+              )}
               <Separator />
               <p className="text-sm text-muted-foreground">
                 بعد إتمام الدفع يتم تحديث باقة المتجر تلقائياً.

@@ -6,12 +6,25 @@ import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppsProvider } from "./contexts/AppsContext";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { planKeys } from "./api/wrappers/plan.wrappers";
 import { loadClarity } from "./utils/clarity";
 
 loadClarity();
 
-const queryClient = new QueryClient();
+// Any create or delete can move a plan cap (products, categories, coupons…),
+// so the usage behind the cap notices is refreshed after every mutation. Only
+// a screen that shows it refetches.
+const queryClient: QueryClient = new QueryClient({
+  mutationCache: new MutationCache({
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: planKeys.entitlements() }),
+  }),
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

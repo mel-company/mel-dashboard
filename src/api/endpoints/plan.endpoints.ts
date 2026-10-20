@@ -16,12 +16,38 @@ export type LockedFeature = {
   message: string;
 };
 
+/** What a plan caps. `monthlyOrders` never blocks checkout; past it the merchant is only asked to upgrade. */
+export type LimitedResource =
+  | "products"
+  | "categories"
+  | "categoryGroups"
+  | "coupons"
+  | "monthlyOrders";
+
+/** One cap with this store's usage. `limit: null` is unlimited. */
+export type PlanLimitUsage = {
+  limit: number | null;
+  used: number;
+  reached: boolean;
+};
+
+/** Grow-only features, as the store may use them right now. */
+export type PlanFeatureKey = "social_pixels" | "custom_domain";
+
 export type PlanEntitlementsResponse = {
   subscription: {
     id: string;
     status: string;
     start_at: string;
     end_at: string;
+    /** Whether the term covers today. */
+    inForce?: boolean;
+    /** Whole days until `end_at`, rounded up; 0 once it has passed. */
+    daysLeft?: number;
+    /** Three days or fewer left: the dashboard shows its renewal bar. */
+    expiringSoon?: boolean;
+    /** Ended: order details are closed until the merchant renews. */
+    expired?: boolean;
     promo_free_claimed?: boolean;
     promo_discount_months_used?: number;
   };
@@ -33,9 +59,26 @@ export type PlanEntitlementsResponse = {
     yearly_price?: number;
   };
   entitlements: PlanEntitlements;
+  /** Absent on a server older than the Basic/Grow plans. */
+  limits?: Record<LimitedResource, PlanLimitUsage>;
+  features?: Record<PlanFeatureKey, boolean>;
+  /** One-time trial sizes: AI store builds and editor-agent messages. */
+  trials?: { aiStore: number; aiEditor: number };
   locked: LockedFeature[];
   upgradeAvailable: boolean;
-  upgradeTo: { planCode: string; planName: string } | null;
+  upgradeTo: { planId?: string | null; planCode: string; planName: string } | null;
+};
+
+/** The 403 a create gets at a plan cap. */
+export type PlanLimitErrorBody = {
+  statusCode: 403;
+  code: "PLAN_LIMIT_REACHED";
+  resource: LimitedResource;
+  limit: number;
+  used: number;
+  requiredPlan: string;
+  requiredPlanName: string;
+  message: string;
 };
 
 export type PlanUpgradeErrorBody = {

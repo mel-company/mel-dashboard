@@ -148,6 +148,11 @@ export const useFetchOrder = (id: string, enabled: boolean = true) => {
     queryKey: orderKeys.detail(id),
     queryFn: () => orderAPI.fetchOne(id),
     enabled: enabled && !!id,
+    // A 402 (subscription ended) is an answer, not a blip: retrying only
+    // delays the renewal screen.
+    retry: (count, error) =>
+      (error as { response?: { status?: number } })?.response?.status !==
+        402 && count < 3,
   });
 };
 

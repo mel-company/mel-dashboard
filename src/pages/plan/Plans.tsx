@@ -29,6 +29,51 @@ import { formatCurrency } from "@/utils/format-currency";
 
 type Props = {};
 
+const capLine = (limit: number | null | undefined, unit: string, plural: string) =>
+  limit === null || limit === undefined
+    ? `${plural} بلا حدود`
+    : `حتى ${limit} ${unit}`;
+
+/** The plan's grant in lines, from its columns (caps, AI, features). */
+function planHighlights(plan: any): string[] {
+  const lines = [
+    capLine(plan.max_products, "منتج", "منتجات"),
+    capLine(plan.max_categories, "قسم", "أقسام"),
+    capLine(plan.max_category_groups, "مجموعة أقسام", "مجموعات أقسام"),
+    capLine(plan.max_coupons, "كوبون", "كوبونات"),
+    capLine(plan.max_monthly_orders, "طلب شهرياً", "طلبات"),
+  ];
+  if (plan.ai_store_credits > 0) {
+    lines.push(`${plan.ai_store_credits} متاجر بالذكاء الاصطناعي شهرياً`);
+  } else if (plan.ai_store_trial > 0) {
+    lines.push("تجربة مجانية واحدة لإنشاء متجر بالذكاء الاصطناعي");
+  }
+  if (plan.has_ai_editor && plan.ai_editor_credits > 0) {
+    lines.push(`${plan.ai_editor_credits} رصيد شهرياً لمساعد المحرر الذكي`);
+  } else if (plan.ai_editor_trial > 0) {
+    lines.push(`تجربة مساعد المحرر الذكي (${plan.ai_editor_trial} رسائل)`);
+  }
+  if (plan.has_social_pixels) lines.push("بكسلات الإعلانات (ميتا، تيك توك، سناب)");
+  if (plan.has_custom_domain) lines.push("ربط نطاقك الخاص");
+  return lines;
+}
+
+/** The intro offer in one line, or null when there is none. */
+function introText(plan: any): string | null {
+  const intro = plan.pricing?.monthly?.intro;
+  if (!intro?.enabled) return null;
+  const parts: string[] = [];
+  if (intro.freeMonths > 0) {
+    parts.push(intro.freeMonths === 1 ? "أول شهر مجاناً" : `أول ${intro.freeMonths} أشهر مجاناً`);
+  }
+  if (intro.discountMonths > 0 && intro.discountPercent > 0) {
+    parts.push(
+      `خصم ${intro.discountPercent}% لمدة ${intro.discountMonths === 1 ? "شهر" : `${intro.discountMonths} أشهر`}`,
+    );
+  }
+  return parts.length ? `للمشتركين الجدد: ${parts.join("، ثم ")}` : null;
+}
+
 const Plans = ({}: Props) => {
   const navigate = useNavigate();
 
@@ -146,16 +191,47 @@ const Plans = ({}: Props) => {
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
                   <Package className="size-5 text-primary shrink-0" />
-                  <div className="text-right flex-1">
+                  <div className="text-right flex-1 space-y-1">
                     <p className="text-sm text-muted-foreground">
-                      السعر السنوي
+                      3 أشهر
+                      {plan.pricing?.quarterly?.discountPercent
+                        ? ` (خصم ${plan.pricing.quarterly.discountPercent}%)`
+                        : ""}
+                      :{" "}
+                      <span className="font-bold text-foreground">
+                        {formatCurrency(
+                          plan.pricing?.quarterly?.price ?? plan.monthly_price * 3,
+                        )}
+                      </span>
                     </p>
-                    <p className="text-xl font-bold">
-                      {formatCurrency(plan.yearly_price)}
+                    <p className="text-sm text-muted-foreground">
+                      سنة
+                      {plan.pricing?.yearly?.discountPercent
+                        ? ` (خصم ${plan.pricing.yearly.discountPercent}%)`
+                        : ""}
+                      :{" "}
+                      <span className="font-bold text-foreground">
+                        {formatCurrency(plan.yearly_price)}
+                      </span>
                     </p>
                   </div>
                 </div>
+                {introText(plan) && (
+                  <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                    {introText(plan)}
+                  </p>
+                )}
               </div>
+
+              {/* What the plan includes, from its own columns. */}
+              <ul className="space-y-1.5 text-sm">
+                {planHighlights(plan).map((line) => (
+                  <li key={line} className="flex items-start gap-2">
+                    <CheckCircle2 className="size-4 text-green-600 mt-0.5 shrink-0" />
+                    <span className="text-right text-muted-foreground">{line}</span>
+                  </li>
+                ))}
+              </ul>
 
               <Separator />
 

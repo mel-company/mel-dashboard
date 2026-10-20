@@ -73,7 +73,6 @@ const baseApps: AppItem[] = [
     icon: Palette,
     gradient: "from-sky-500 to-violet-600",
     description: "تصميم وتخصيص موقع المتجر",
-    planFeature: "ai_editor",
   },
   {
     label: "الفئات",

@@ -21,6 +21,8 @@ import DomainBrandPanel from "./DomainBrandPanel";
 import DomainPathPicker, { type DomainPath } from "./DomainPathPicker";
 import DomainSettingsFields from "./DomainSettingsFields";
 import BringYourOwnDomain from "./BringYourOwnDomain";
+import { PlanFeatureUpgrade } from "@/components/plan/PlanFeatureUpgrade";
+import { usePlanFeature } from "@/hooks/use-plan-limits";
 import DomainStatusBadge from "./DomainStatusBadge";
 import { DomainNote } from "./DomainNotes";
 import PaymentProviderPicker, {
@@ -78,6 +80,8 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
   const updateDomain = useUpdateDomain();
   const logout = useLogout();
   const initPayment = useInitStorePlatformPayment();
+  // Buying or linking a domain is Grow-only; the platform subdomain is not.
+  const hasCustomDomain = usePlanFeature("custom_domain");
 
   const [domainPath, setDomainPath] = useState<DomainPath>("subdomain");
   const [paymentProvider, setPaymentProvider] =
@@ -342,7 +346,9 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
 
       <DomainPathPicker value={domainPath} onChange={selectPath} />
 
-      {domainPath === "owned" ? (
+      {domainPath !== "subdomain" && !hasCustomDomain ? (
+        <PlanFeatureUpgrade feature="custom_domain" />
+      ) : domainPath === "owned" ? (
         <div className="space-y-4">
           <BringYourOwnDomain
             attachedDomain={customDomain || null}
