@@ -21,6 +21,9 @@ export type BillingProvider = {
   recommended: boolean;
 };
 
+/** A 3-month purchase is 10% off and a year 25% off (admin-editable per plan). */
+export type BillingPeriod = "MONTHLY" | "QUARTERLY" | "YEARLY";
+
 export type PlatformPaymentInitPayload = {
   type:
     | "INITIAL_SUBSCRIPTION"
@@ -29,7 +32,7 @@ export type PlatformPaymentInitPayload = {
     | "DOMAIN_REGISTRATION";
   /** Required for every type except DOMAIN_REGISTRATION. */
   planId?: string;
-  billingPeriod?: "MONTHLY" | "YEARLY";
+  billingPeriod?: BillingPeriod;
   durationMonths?: number;
   returnBaseUrl?: string;
   /** FQDN to register — DOMAIN_REGISTRATION only. */
@@ -50,7 +53,7 @@ export type SubscriptionQuote = {
   planId: string;
   planName: string;
   planCode: string | null;
-  billingPeriod: "MONTHLY" | "YEARLY";
+  billingPeriod: BillingPeriod;
   durationMonths: number;
   currency: string;
   /** Due now. `0` means the intro month covers it and no gateway is involved. */
@@ -58,6 +61,11 @@ export type SubscriptionQuote = {
   /** The same months with no promo applied. */
   listAmount: number;
   savings: number;
+  /**
+   * Which price won: the intro offer (`ladder`) or the 3-month / yearly
+   * discount (`period`). They never stack; the cheaper one is charged.
+   */
+  basis?: "ladder" | "period";
   breakdown: {
     freeMonths: number;
     discountMonths: number;
@@ -77,7 +85,7 @@ export type SubscriptionQuote = {
 export type SubscriptionQuoteQuery = {
   type: "INITIAL_SUBSCRIPTION" | "RENEWAL" | "CHANGE_PLAN";
   planId: string;
-  billingPeriod?: "MONTHLY" | "YEARLY";
+  billingPeriod?: BillingPeriod;
   durationMonths?: number;
 };
 

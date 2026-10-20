@@ -23,6 +23,7 @@ import {
 } from "@hugeicons-pro/core-bulk-rounded";
 import { formatCount } from "@/utils/format-currency";
 import PagePanel from "@/components/PagePanel";
+import { PlanLimitNotice } from "@/components/plan/PlanLimitNotice";
 
 const tabOptions = [
   { label: "الفئات", value: "categories", icon: ShapeCollectionIcon },
@@ -45,6 +46,7 @@ const CategoriesPage = () => {
 
   return (
     <PagePanel className="space-y-4 sm:space-y-6">
+      <PlanLimitNotice resource={showGroups ? "categoryGroups" : "categories"} />
       <div className="hidden lg:block">
         <TitleBar
           count={showGroups ? undefined : (actions.categories?.length ?? 0)}

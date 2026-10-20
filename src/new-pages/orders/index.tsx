@@ -14,6 +14,7 @@ import {
   CheckmarkCircle03Icon,
   Money04Icon,
 } from "@hugeicons-pro/core-stroke-standard";
+import { PlanLimitNotice } from "@/components/plan/PlanLimitNotice";
 
 const OrdersPage = () => {
   const navigate = useNavigate();
@@ -35,6 +36,8 @@ const OrdersPage = () => {
 
   return (
     <PagePanel className="space-y-4 sm:space-y-6">
+      {/* Past the monthly cap orders keep coming in; this only asks for the upgrade. */}
+      <PlanLimitNotice resource="monthlyOrders" />
       <div className="hidden lg:block">
         <TitleBar count={actions.stats?.totalOrders ?? actions.orders?.length ?? 0}>
           <Button

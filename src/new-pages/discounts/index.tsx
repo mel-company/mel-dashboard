@@ -23,6 +23,7 @@ import FilterSlidersIcon from "@/components/icons/FilterSlidersIcon";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/utils/format-currency";
 import PagePanel from "@/components/PagePanel";
+import { PlanLimitNotice } from "@/components/plan/PlanLimitNotice";
 
 const tabOptions = [
   { label: "الخصومات", value: "discounts", icon: DiscountTag01Icon },
@@ -61,6 +62,7 @@ const DiscountsPage = () => {
 
   return (
     <PagePanel className="space-y-4 sm:space-y-6">
+      {!isDiscountsTab && <PlanLimitNotice resource="coupons" />}
       <div className="hidden lg:block">
         <TitleBar
           count={listCount}

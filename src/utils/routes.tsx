@@ -49,6 +49,7 @@ import CreateTicket from "../new-pages/tickets/create";
 import DevStoreLogin from "../pages/auth/DevStoreLogin";
 import DevOTP from "../pages/auth/DEVOTP";
 import PrimeTestPage from "../pages/prime/PrimeTestPage";
+import { PlanLimitGate } from "../components/plan/PlanLimitNotice";
 
 export interface RouteConfig {
     path: string;
@@ -69,7 +70,14 @@ export const mainRoutes: RouteConfig[] = [
         path: "/products",
         children: [
             { path: "", element: <Products /> },
-            { path: "add", element: <AddProduct /> },
+            {
+                path: "add",
+                element: (
+                    <PlanLimitGate resource="products">
+                        <AddProduct />
+                    </PlanLimitGate>
+                ),
+            },
             {
                 path: ":id",
                 children: [
@@ -136,7 +144,14 @@ export const mainRoutes: RouteConfig[] = [
                     { path: "edit", element: <EditCategory /> },
                 ],
             },
-            { path: "add", element: <AddCategory /> },
+            {
+                path: "add",
+                element: (
+                    <PlanLimitGate resource="categories">
+                        <AddCategory />
+                    </PlanLimitGate>
+                ),
+            },
         ],
     },
     {
@@ -187,7 +202,14 @@ export const mainRoutes: RouteConfig[] = [
                     { path: "edit", element: <EditCoupon /> },
                 ],
             },
-            { path: "add", element: <AddCoupon /> },
+            {
+                path: "add",
+                element: (
+                    <PlanLimitGate resource="coupons">
+                        <AddCoupon />
+                    </PlanLimitGate>
+                ),
+            },
         ],
     },
 ];

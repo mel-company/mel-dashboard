@@ -52,6 +52,11 @@ import {
   useFetchOrderLogs,
 } from "@/api/wrappers/order.wrappers";
 import ErrorPage from "../miscellaneous/ErrorPage";
+import OrderDetailsLocked from "@/components/plan/OrderDetailsLocked";
+import {
+  isSubscriptionExpiredError,
+  usePlanUsage,
+} from "@/hooks/use-plan-limits";
 import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
 import EditDeliveryAddressDialog from "./EditDeliveryAddressDialog";
 import EditProductVariantDialog from "./EditProductVariantDialog";
@@ -98,6 +103,7 @@ const OrderDetails = () => {
     refetch,
     isFetching,
   } = useFetchOrder(id ?? "", !!id);
+  const { data: planUsage } = usePlanUsage();
 
   const baseUrl = order?.baseUrl ?? "";
 
@@ -444,6 +450,11 @@ const OrderDetails = () => {
       },
     });
   };
+
+  // Ended subscription: order details stay closed until the merchant renews.
+  if (planUsage?.subscription?.expired || isSubscriptionExpiredError(error)) {
+    return <OrderDetailsLocked />;
+  }
 
   if (isLoading) {
     return <OrderDetailsSkeleton />;

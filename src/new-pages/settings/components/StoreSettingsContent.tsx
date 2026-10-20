@@ -2,6 +2,8 @@ import StorePlanSummaryCard from "./StorePlanSummaryCard";
 import StoreIntegrationsSection from "./StoreIntegrationsSection";
 import StoreSubscriptionSection from "./StoreSubscriptionSection";
 import PoliciesSection from "./PoliciesSection";
+import StorePixelsSection from "./StorePixelsSection";
+import PlanUsageSection from "./PlanUsageSection";
 
 const StoreSettingsContent = () => {
   return (
@@ -9,10 +11,12 @@ const StoreSettingsContent = () => {
       <div className="space-y-4 xl:col-span-4">
         <StorePlanSummaryCard />
         <StoreIntegrationsSection />
+        <StorePixelsSection />
       </div>
 
       <div className="flex flex-col gap-[18px] xl:col-span-8">
         <StoreSubscriptionSection />
+        <PlanUsageSection />
         <PoliciesSection />
       </div>
     </div>

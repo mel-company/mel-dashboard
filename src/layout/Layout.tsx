@@ -4,6 +4,7 @@ import AppSidebar from "@/components/AppSidebar";
 import MobileTopBar from "@/components/MobileTopBar";
 import FloatingRail from "@/components/FloatingRail";
 import { cn } from "@/lib/utils";
+import SubscriptionBar from "@/components/plan/SubscriptionBar";
 
 const Layout = () => {
   const location = useLocation();
@@ -75,6 +76,10 @@ const Layout = () => {
         {showMobileChrome && (
           <MobileTopBar onMenuClick={() => setMobileSidebarOpen(true)} />
         )}
+
+        {/* Fixed above the scrolling page: three days or fewer left on the
+            subscription, or ended. Not over the editor's own frame. */}
+        {!isEditorPage && <SubscriptionBar />}
 
         {/* Figma's floating capsule on the far edge of every web frame. */}
         {!isFullscreenTool && <FloatingRail />}

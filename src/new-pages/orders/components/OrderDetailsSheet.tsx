@@ -1,4 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import OrderDetailsLocked from "@/components/plan/OrderDetailsLocked";
+import {
+  isSubscriptionExpiredError,
+  usePlanUsage,
+} from "@/hooks/use-plan-limits";
 import { useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
@@ -112,7 +117,13 @@ const OrderDetailsSheet = ({
 
   // The row already carries enough to paint the header and the summary, so the
   // drawer opens filled; the detail call fills in lines, logs and the parcel.
-  const { data: fresh, refetch } = useFetchOrder(id, open);
+  const { data: fresh, refetch, error: fetchError } = useFetchOrder(id, open);
+  // Ended subscription: the server refuses the detail, and the row's own
+  // fields stay hidden too rather than half an order showing.
+  const { data: planUsage } = usePlanUsage(open);
+  const locked =
+    Boolean(planUsage?.subscription?.expired) ||
+    isSubscriptionExpiredError(fetchError);
   const order = fresh ? { ...seed, ...fresh } : seed;
 
   const { data: logs, isLoading: isLoadingLogs } = useFetchOrderLogs(id, open);
@@ -430,7 +441,7 @@ const OrderDetailsSheet = ({
           </div>
         </SheetHeader>
 
-        {isMobile ? (
+        {isMobile && !locked ? (
           <div className="shrink-0 px-5 pb-4">
             <SwitchTab
               selected={tab}
@@ -445,7 +456,9 @@ const OrderDetailsSheet = ({
           ref={scrollRef}
           className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-5 pb-6 sm:px-7"
         >
-          {isMobile ? (
+          {locked ? (
+            <OrderDetailsLocked compact />
+          ) : isMobile ? (
             tab === "items" ? (
               <OrderDetailsItems
                 order={order}
