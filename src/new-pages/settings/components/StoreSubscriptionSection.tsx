@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   useFetchStoreSubscription,
   useCancelSubscription,
+  useRenewSubscription,
 } from "@/api/wrappers/subscription.wrapper";
 import {
   useInitStorePlatformPayment,
@@ -14,6 +15,8 @@ import {
   quoteDue,
   quoteExplanation,
 } from "@/utils/subscription-quote";
+import { planKeys } from "@/api/wrappers/plan.wrappers";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -106,6 +109,7 @@ const subscriptionStatusLabel = (status?: string | null) =>
 
 const StoreSubscriptionSection = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const {
@@ -115,6 +119,7 @@ const StoreSubscriptionSection = () => {
   } = useFetchStoreSubscription();
   const cancelSubscription = useCancelSubscription();
   const initPayment = useInitStorePlatformPayment();
+  const renewFree = useRenewSubscription();
 
   /**
    * What a one-month renewal costs this merchant. `plan.monthly_price` is the
@@ -135,6 +140,13 @@ const StoreSubscriptionSection = () => {
   const renewDue = quoteDue(renewQuote.data);
   const renewWhy = quoteExplanation(renewQuote.data);
   const renewIsFree = renewQuote.data?.amount === 0;
+  const renewBusy = initPayment.isPending || renewFree.isPending;
+
+  const afterRenewSuccess = (message: string) => {
+    toast.success(message);
+    void refetch();
+    void queryClient.invalidateQueries({ queryKey: planKeys.entitlements() });
+  };
 
   const handleRenew = () => {
     const planId = subscription?.planId || subscription?.plan?.id;
@@ -143,8 +155,24 @@ const StoreSubscriptionSection = () => {
       return;
     }
 
+    // Catalogue free plans never go through a gateway — extend the term.
     if (subscription?.plan?.is_free) {
-      toast.info("الباقة المجانية لا تحتاج دفع للتجديد");
+      if (!subscription.id) {
+        toast.error("لا يمكن تجديد الاشتراك — معرّف الاشتراك غير موجود");
+        return;
+      }
+      renewFree.mutate(
+        { id: subscription.id, durationMonths: 1 },
+        {
+          onSuccess: () => afterRenewSuccess("تم تجديد الاشتراك"),
+          onError: (error) => {
+            const message = (
+              error as { response?: { data?: { message?: string } } }
+            )?.response?.data?.message;
+            toast.error(message || "فشل تجديد الاشتراك");
+          },
+        },
+      );
       return;
     }
 
@@ -164,12 +192,11 @@ const StoreSubscriptionSection = () => {
            * to report the one renewal path that always succeeds as a failure.
            */
           if (data?.status === "PAID") {
-            toast.success(
+            afterRenewSuccess(
               Number(data?.amount) > 0
                 ? "تم الدفع بنجاح وتم تجديد الاشتراك"
                 : "تم تجديد الاشتراك — لا مبلغ مستحق",
             );
-            void refetch();
             return;
           }
 
@@ -193,7 +220,7 @@ const StoreSubscriptionSection = () => {
           toast.error(
             Array.isArray(message)
               ? message.join(" — ")
-              : message || "فشل بدء الدفع عبر زين كاش",
+              : message || "فشل بدء الدفع",
           );
         },
       },
@@ -441,21 +468,23 @@ const StoreSubscriptionSection = () => {
               <Button
                 type="button"
                 className="h-12 min-w-[170px] flex-1 gap-2 rounded-[14px] bg-violet-600 text-[15px] font-bold text-white hover:bg-violet-700"
-                disabled={initPayment.isPending || !subscription?.plan?.id}
+                disabled={renewBusy || !subscription?.plan?.id}
                 onClick={handleRenew}
               >
-                {initPayment.isPending ? (
+                {renewBusy ? (
                   <>
                     جاري التحضير...
                     <Loader2 className="size-5 animate-spin" />
                   </>
                 ) : (
                   <>
-                    {renewIsFree
+                    {renewIsFree || subscription?.plan?.is_free
                       ? "تجديد مجاناً"
                       : renewQuote.isLoading
                         ? "تجديد"
-                        : `تجديد — ${renewDue}`}
+                        : renewQuote.isError
+                          ? "تجديد الاشتراك"
+                          : `تجديد — ${renewDue}`}
                     <CheckCircle2 className="size-5" />
                   </>
                 )}
