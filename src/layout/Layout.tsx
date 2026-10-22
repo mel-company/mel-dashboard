@@ -5,6 +5,7 @@ import MobileTopBar from "@/components/MobileTopBar";
 import FloatingRail from "@/components/FloatingRail";
 import { cn } from "@/lib/utils";
 import SubscriptionBar from "@/components/plan/SubscriptionBar";
+import SubscriptionLifecycleGate from "@/components/plan/SubscriptionLifecycleGate";
 
 const Layout = () => {
   const location = useLocation();
@@ -100,7 +101,9 @@ const Layout = () => {
                   : "max-w-[1600px] p-3 sm:p-5 md:p-6 lg:p-7 xl:p-8 2xl:px-10",
             )}
           >
-            <Outlet />
+            <SubscriptionLifecycleGate>
+              <Outlet />
+            </SubscriptionLifecycleGate>
           </div>
         </main>
       </div>

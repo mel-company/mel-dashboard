@@ -53,9 +53,13 @@ export function isPlanLimitError(
   return data?.code === "PLAN_LIMIT_REACHED";
 }
 
-/** The 402 order details answer once the subscription has ended. */
+/** The 402 answers once the subscription term has ended (any lifecycle phase). */
 export function isSubscriptionExpiredError(err: unknown): boolean {
-  const data = (err as { response?: { data?: { code?: string } } })?.response
-    ?.data;
-  return data?.code === "SUBSCRIPTION_EXPIRED";
+  const code = (err as { response?: { data?: { code?: string } } })?.response
+    ?.data?.code;
+  return (
+    code === "SUBSCRIPTION_EXPIRED" ||
+    code === "SUBSCRIPTION_VIEW_ONLY" ||
+    code === "SUBSCRIPTION_FROZEN"
+  );
 }

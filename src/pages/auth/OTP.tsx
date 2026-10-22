@@ -97,73 +97,69 @@ const OTP = () => {
     }
 
     setIsVerifying(true);
-    try {
-      verify(
-        {
-          phone: phone,
-          code: code,
-          store: {
-            name: store,
-            domain: store,
-          },
+    verify(
+      {
+        phone: phone,
+        code: code,
+        store: {
+          name: store,
+          domain: store,
         },
-        {
-          onSuccess: (verifyData: any) => {
-            const verifyToken =
-              verifyData?.token || verifyData?.jwt || verifyData?.accessToken;
-            const verifyRedirect = verifyData?.redirectUrl;
-            const fallbackUrl = verifyData?.fallbackUrl || defaultFallbackUrl;
+      },
+      {
+        onSuccess: (verifyData: any) => {
+          const verifyToken =
+            verifyData?.token || verifyData?.jwt || verifyData?.accessToken;
+          const verifyRedirect = verifyData?.redirectUrl;
+          const fallbackUrl = verifyData?.fallbackUrl || defaultFallbackUrl;
 
-            if (verifyRedirect) {
-              establishAuthSession(verifyData, queryClient);
-              window.location.assign(verifyRedirect);
-              return;
-            }
+          if (verifyRedirect) {
+            establishAuthSession(verifyData, queryClient);
+            window.location.assign(verifyRedirect);
+            return;
+          }
 
-            if (!verifyToken || !store) {
-              establishAuthSession(verifyData, queryClient);
-              window.location.assign(fallbackUrl);
-              return;
-            }
+          if (!verifyToken || !store) {
+            establishAuthSession(verifyData, queryClient);
+            window.location.assign(fallbackUrl);
+            return;
+          }
 
-            validateUser(
-              {
-                store,
-                token: verifyToken,
+          validateUser(
+            {
+              store,
+              token: verifyToken,
+            },
+            {
+              onSuccess: (validateData: any) => {
+                establishAuthSession(
+                  { ...verifyData, ...validateData },
+                  queryClient,
+                );
+                const redirectUrl = validateData?.redirectUrl;
+                if (redirectUrl) {
+                  window.location.assign(redirectUrl);
+                  return;
+                }
+                window.location.assign(fallbackUrl);
               },
-              {
-                onSuccess: (validateData: any) => {
-                  establishAuthSession(
-                    { ...verifyData, ...validateData },
-                    queryClient,
-                  );
-                  const redirectUrl = validateData?.redirectUrl;
-                  if (redirectUrl) {
-                    window.location.assign(redirectUrl);
-                    return;
-                  }
-                  window.location.assign(fallbackUrl);
-                },
-                onError: () => {
-                  establishAuthSession(verifyData, queryClient);
-                  window.location.assign(fallbackUrl);
-                },
+              onError: () => {
+                establishAuthSession(verifyData, queryClient);
+                window.location.assign(fallbackUrl);
               },
-            );
-          },
-          onError: (error: any) => {
-            localStorage.setItem("lgd", "false");
-            toast.error(
-              error?.response?.data?.message ||
-                "فشل تحقق الرمز. يرجى المحاولة مرة أخرى",
-            );
-          },
-          onSettled: () => setIsVerifying(false),
+            },
+          );
         },
-      );
-    } finally {
-      setIsVerifying(false);
-    }
+        onError: (error: any) => {
+          localStorage.setItem("lgd", "false");
+          toast.error(
+            error?.response?.data?.message ||
+              "فشل تحقق الرمز. يرجى المحاولة مرة أخرى",
+          );
+        },
+        onSettled: () => setIsVerifying(false),
+      },
+    );
   };
 
   const handleResend = () => {

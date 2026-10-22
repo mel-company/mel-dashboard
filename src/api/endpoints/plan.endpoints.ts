@@ -34,6 +34,13 @@ export type PlanLimitUsage = {
 /** Grow-only features, as the store may use them right now. */
 export type PlanFeatureKey = "social_pixels" | "custom_domain";
 
+/** Post-term track from `GET /plan/entitlements`. */
+export type SubscriptionLifecyclePhase =
+  | "ACTIVE"
+  | "VIEW_ONLY"
+  | "FROZEN"
+  | "PURGE_DUE";
+
 export type PlanEntitlementsResponse = {
   subscription: {
     id: string;
@@ -42,9 +49,13 @@ export type PlanEntitlementsResponse = {
     end_at: string;
     /** Whether the term covers today. */
     inForce?: boolean;
+    /**
+     * ACTIVE | VIEW_ONLY (≤7 days past end) | FROZEN (7..90) | PURGE_DUE (90+).
+     */
+    lifecyclePhase?: SubscriptionLifecyclePhase;
     /** Whole days until `end_at`, rounded up; 0 once it has passed. */
     daysLeft?: number;
-    /** Three days or fewer left: the dashboard shows its renewal bar. */
+    /** Seven days or fewer left: the dashboard shows its renewal bar. */
     expiringSoon?: boolean;
     /** Ended: order details are closed until the merchant renews. */
     expired?: boolean;
