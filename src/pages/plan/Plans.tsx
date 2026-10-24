@@ -36,6 +36,9 @@ const capLine = (limit: number | null | undefined, unit: string, plural: string)
 
 /** The plan's grant in lines, from its columns (caps, AI, features). */
 function planHighlights(plan: any): string[] {
+  // The server builds the lines as set in admin, numbers from the plan; this
+  // builder is the fallback for a server older than `card_lines`.
+  if (Array.isArray(plan?.card_lines)) return plan.card_lines;
   const lines = [
     capLine(plan.max_products, "منتج", "منتجات"),
     capLine(plan.max_categories, "قسم", "أقسام"),
