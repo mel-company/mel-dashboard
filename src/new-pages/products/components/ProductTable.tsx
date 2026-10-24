@@ -16,6 +16,7 @@ import {
   get,
   num,
   text,
+  type CursorPaging,
 } from "@/hooks/use-table-pagination";
 
 const PRODUCT_COLUMNS = {
@@ -32,6 +33,8 @@ const PRODUCT_COLUMNS = {
 };
 
 interface ProductTableProps {
+  /** Lets the page footer fetch rows past the first cursor page. */
+  paging?: CursorPaging;
   /** Figma keeps the list toolbar inside the table card. */
   toolbar?: ReactNode;
   products: ProductListItem[];
@@ -39,11 +42,12 @@ interface ProductTableProps {
   imageBaseUrl?: string;
 }
 
-const ProductTable = ({ products, onDelete, imageBaseUrl = "", toolbar }: ProductTableProps) => {
+const ProductTable = ({ products, onDelete, imageBaseUrl = "", toolbar, paging }: ProductTableProps) => {
   const resolvedBaseUrl = useImageBaseUrl(imageBaseUrl);
 
   const { startIndex, pageItems: paginatedProducts, paginationProps, sort } =
     useTablePagination({
+      ...paging,
       items: products,
       getSortValue: byCreatedAt,
       columns: PRODUCT_COLUMNS,

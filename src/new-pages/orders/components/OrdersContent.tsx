@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Loader2, Package, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Package, X } from "lucide-react";
 import ErrorPage from "@/pages/miscellaneous/ErrorPage";
 import EmptyPage from "@/pages/miscellaneous/EmptyPage";
 import OrdersSkeleton from "@/pages/order/OrdersSkeleton";
@@ -8,6 +7,7 @@ import OrderFilterDialog from "@/pages/order/OrderFilterDialog";
 import OrderTable from "./OrderTable";
 import OrderCard from "./OrderCard";
 import OrderDetailsSheet from "./OrderDetailsSheet";
+import LoadMore from "@/components/table/load-more";
 
 interface OrdersContentProps {
   toolbar?: ReactNode;
@@ -73,54 +73,18 @@ const OrdersContent = ({ actions, toolbar }: OrdersContentProps) => {
                 ))}
               </div>
             </div>
-            <div ref={actions.loadMoreRef} className="flex justify-center py-4">
-              {actions.hasNextPage && (
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => actions.fetchNextPage()}
-                  disabled={actions.isFetchingNextPage}
-                >
-                  {actions.isFetchingNextPage ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      جاري التحميل...
-                    </>
-                  ) : (
-                    "تحميل المزيد"
-                  )}
-                </Button>
-              )}
-            </div>
+            <LoadMore {...actions} />
           </div>
 
           <div className="hidden xl:block">
             <OrderTable
-            toolbar={toolbar}
+              toolbar={toolbar}
+              paging={actions}
               orders={actions.orders}
               imageBaseUrl={actions.imageBaseUrl}
               calculateTotal={actions.calculateTotal}
               onOpenOrder={setDetailsOrder}
             />
-            <div ref={actions.loadMoreRef} className="flex justify-center py-4">
-              {actions.hasNextPage && (
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => actions.fetchNextPage()}
-                  disabled={actions.isFetchingNextPage}
-                >
-                  {actions.isFetchingNextPage ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      جاري التحميل...
-                    </>
-                  ) : (
-                    "تحميل المزيد"
-                  )}
-                </Button>
-              )}
-            </div>
           </div>
         </>
       )}

@@ -5,6 +5,7 @@ import ProductsSkeleton from "@/pages/product/ProductsSkeleton";
 import EmptyPage from "@/pages/miscellaneous/EmptyPage";
 import ProductTable from "./ProductTable";
 import ProductCards from "./ProductCards";
+import LoadMore from "@/components/table/load-more";
 
 interface ProductsContentProps {
   toolbar?: ReactNode;
@@ -52,7 +53,10 @@ const ProductsContent = ({
   return (
     <>
       {/* Mobile always uses card list */}
-      <div className="xl:hidden">{cards}</div>
+      <div className="xl:hidden">
+        {cards}
+        <LoadMore {...actions} />
+      </div>
 
       {/* Desktop respects table/cards toggle */}
       <div className="hidden xl:block">
@@ -60,6 +64,7 @@ const ProductsContent = ({
           <ProductTable
             toolbar={toolbar}
             products={actions.products}
+            paging={actions}
             onDelete={actions.setDeleteId}
             imageBaseUrl={actions.imageBaseUrl}
           />
@@ -80,6 +85,7 @@ const ProductsContent = ({
                 left the page stuck in cards for good. */}
             {toolbar}
             {cards}
+            <LoadMore {...actions} />
           </div>
         )}
       </div>

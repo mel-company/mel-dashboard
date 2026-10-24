@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import { FileText, Loader2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileText, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import ErrorPage from "@/pages/miscellaneous/ErrorPage";
@@ -8,6 +7,7 @@ import EmptyPage from "@/pages/miscellaneous/EmptyPage";
 import TicketTable from "./TicketTable";
 import TicketCard from "./TicketCard";
 import type { useTicketsPage } from "@/hooks/use-tickets-page";
+import LoadMore from "@/components/table/load-more";
 
 type TicketsContentProps = {
   toolbar?: ReactNode;
@@ -72,7 +72,7 @@ const TicketsContent = ({ actions, toolbar }: TicketsContentProps) => {
       <div className="xl:hidden">
         <div className="rounded-[28px] bg-slate-50 p-3 dark:bg-[#12183b]">
           <div className="mb-2 px-2 pt-1 text-right">
-            <h2 className="text-base text-slate-900 dark:text-[#e4e7fc]">جميع الفئات</h2>
+            <h2 className="text-base text-slate-900 dark:text-[#e4e7fc]">جميع التذاكر</h2>
             <p className="mt-0.5 text-xs text-slate-400 dark:text-[#a4b1fa]">
               أجمالي العناصر المتاحة{" "}
               <span className="font-bold text-slate-800 dark:text-[#e4e7fc]">{actions.tickets.length}</span>
@@ -84,28 +84,10 @@ const TicketsContent = ({ actions, toolbar }: TicketsContentProps) => {
             ))}
           </div>
         </div>
+        <LoadMore {...actions} />
       </div>
       <div className="hidden xl:block">
-        <TicketTable toolbar={toolbar} tickets={actions.tickets} />
-      </div>
-      <div ref={actions.loadMoreRef} className="flex justify-center py-4">
-        {actions.hasNextPage && (
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => actions.fetchNextPage()}
-            disabled={actions.isFetchingNextPage}
-          >
-            {actions.isFetchingNextPage ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                جاري التحميل...
-              </>
-            ) : (
-              "تحميل المزيد"
-            )}
-          </Button>
-        )}
+        <TicketTable toolbar={toolbar} tickets={actions.tickets} paging={actions} />
       </div>
     </>
   );

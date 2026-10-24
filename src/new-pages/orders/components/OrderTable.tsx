@@ -9,6 +9,7 @@ import {
   get,
   num,
   text,
+  type CursorPaging,
 } from "@/hooks/use-table-pagination";
 
 const ORDER_COLUMNS = {
@@ -23,6 +24,8 @@ const ORDER_COLUMNS = {
 };
 
 type OrderTableProps = {
+  /** Lets the page footer fetch rows past the first cursor page. */
+  paging?: CursorPaging;
   /** Figma keeps the list toolbar inside the table card. */
   toolbar?: ReactNode;
   orders: any[];
@@ -37,9 +40,11 @@ const OrderTable = ({
   calculateTotal,
   onOpenOrder,
   toolbar,
+  paging,
 }: OrderTableProps) => {
   const { pageItems: paginatedOrders, paginationProps, sort } =
     useTablePagination({
+      ...paging,
       items: orders,
       getSortValue: byCreatedAt,
       columns: ORDER_COLUMNS,

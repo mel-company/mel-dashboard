@@ -6,6 +6,7 @@ import CategoryTable from "./CategoryTable";
 import CategoryCards from "./CategoryCards";
 import CategoryDeleteModal from "./CategoryDeleteModal";
 import { useState } from "react";
+import LoadMore from "@/components/table/load-more";
 
 interface CategoriesContentProps {
   actions: any;
@@ -58,16 +59,21 @@ const CategoriesContent = ({ actions }: CategoriesContentProps) => {
           </p>
         </div>
         {cards}
+        <LoadMore {...actions} />
       </div>
       <div className="hidden xl:block">
         {actions.viewMode === "table" ? (
           <CategoryTable
             categories={actions.categories}
+            paging={actions}
             refetch={actions.refetch}
             imageBaseUrl={actions.imageBaseUrl}
           />
         ) : (
-          cards
+          <>
+            {cards}
+            <LoadMore {...actions} />
+          </>
         )}
       </div>
       <CategoryDeleteModal

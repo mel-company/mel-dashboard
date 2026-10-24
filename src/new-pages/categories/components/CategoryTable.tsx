@@ -4,9 +4,11 @@ import Pagination from "@/components/table/pagination";
 import { CategoryTableHeader } from "./CategoryTableHeader";
 import CategoryRow from "./CategoryRow";
 import CategoryDeleteModal from "./CategoryDeleteModal";
-import { useTablePagination, byCreatedAt } from "@/hooks/use-table-pagination";
+import { useTablePagination, byCreatedAt, type CursorPaging } from "@/hooks/use-table-pagination";
 
 type CategoryTableProps = {
+  /** Lets the page footer fetch rows past the first cursor page. */
+  paging?: CursorPaging;
   categories: any[];
   refetch: () => void;
   imageBaseUrl?: string;
@@ -16,9 +18,10 @@ const CategoryTable = ({
   categories,
   refetch,
   imageBaseUrl = "",
+  paging,
 }: CategoryTableProps) => {
   const { pageItems: paginated, paginationProps } =
-    useTablePagination({ items: categories, getSortValue: byCreatedAt });
+    useTablePagination({ ...paging, items: categories, getSortValue: byCreatedAt });
   const [deleteCategory, setDeleteCategory] = useState<any>(null);
 
 

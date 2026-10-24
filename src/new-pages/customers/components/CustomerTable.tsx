@@ -8,6 +8,7 @@ import {
   byCreatedAt,
   num,
   text,
+  type CursorPaging,
 } from "@/hooks/use-table-pagination";
 import { getCustomerLocation } from "../utils";
 
@@ -21,15 +22,18 @@ const CUSTOMER_COLUMNS = {
 };
 
 type CustomerTableProps = {
+  /** Lets the page footer fetch rows past the first cursor page. */
+  paging?: CursorPaging;
   /** Figma keeps the list toolbar inside the table card. */
   toolbar?: ReactNode;
   customers: any[];
   onDelete: (id: string) => void;
 };
 
-const CustomerTable = ({ customers, onDelete, toolbar }: CustomerTableProps) => {
+const CustomerTable = ({ customers, onDelete, toolbar, paging }: CustomerTableProps) => {
   const { startIndex, pageItems: paginatedCustomers, paginationProps, sort } =
     useTablePagination({
+      ...paging,
       items: customers,
       getSortValue: byCreatedAt,
       columns: CUSTOMER_COLUMNS,

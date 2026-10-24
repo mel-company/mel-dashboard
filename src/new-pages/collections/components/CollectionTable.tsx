@@ -7,6 +7,7 @@ import {
   byCreatedAt,
   num,
   text,
+  type CursorPaging,
 } from "@/hooks/use-table-pagination";
 
 const COLLECTION_COLUMNS = {
@@ -16,6 +17,8 @@ const COLLECTION_COLUMNS = {
 };
 
 type CollectionTableProps = {
+  /** Lets the page footer fetch rows past the first cursor page. */
+  paging?: CursorPaging;
   collections: any[];
   refetch: () => void;
   onDelete: (collection: any) => void;
@@ -27,9 +30,11 @@ const CollectionTable = ({
   refetch,
   onDelete,
   imageBaseUrl = "",
+  paging,
 }: CollectionTableProps) => {
   const { pageItems: paginated, paginationProps, sort } =
     useTablePagination({
+      ...paging,
       items: collections,
       getSortValue: byCreatedAt,
       columns: COLLECTION_COLUMNS,

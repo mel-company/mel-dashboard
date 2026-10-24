@@ -11,6 +11,7 @@ import {
   num,
   text,
   time,
+  type CursorPaging,
 } from "@/hooks/use-table-pagination";
 
 const COUPON_COLUMNS = {
@@ -22,6 +23,8 @@ const COUPON_COLUMNS = {
 };
 
 type CouponTableProps = {
+  /** Lets the page footer fetch rows past the first cursor page. */
+  paging?: CursorPaging;
   /** Figma keeps the list toolbar inside the table card. */
   toolbar?: ReactNode;
   coupons: CouponListItem[];
@@ -36,9 +39,12 @@ const CouponTable = ({
   onView,
   onEdit,
   onDelete,
-  onToggleStatus, toolbar }: CouponTableProps) => {
+  onToggleStatus, toolbar,
+  paging,
+}: CouponTableProps) => {
   const { pageItems: paginated, paginationProps, sort } =
     useTablePagination({
+      ...paging,
       items: coupons,
       getSortValue: byCreatedAt,
       columns: COUPON_COLUMNS,
