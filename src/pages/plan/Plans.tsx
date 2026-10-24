@@ -53,8 +53,14 @@ function planHighlights(plan: any): string[] {
   } else if (plan.ai_editor_trial > 0) {
     lines.push(`تجربة مساعد المحرر الذكي (${plan.ai_editor_trial} رسائل)`);
   }
+  // These three default to on; a server older than the columns omits them.
+  if (plan.has_online_payment !== false) lines.push("الدفع الإلكتروني: زين كاش وكي كارد");
+  if (plan.has_courier_integrations !== false) lines.push("ربط شركات الشحن وإرسال الطلبات تلقائياً");
+  if (plan.has_advanced_stats !== false) lines.push("إحصائيات وتقارير متقدمة");
   if (plan.has_social_pixels) lines.push("بكسلات الإعلانات (ميتا، تيك توك، سناب)");
   if (plan.has_custom_domain) lines.push("ربط نطاقك الخاص");
+  if (plan.has_mobile_app) lines.push("تطبيق التاجر على الهاتف");
+  if (plan.has_pos) lines.push("نقطة البيع POS");
   return lines;
 }
 

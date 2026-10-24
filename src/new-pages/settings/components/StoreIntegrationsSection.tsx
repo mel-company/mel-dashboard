@@ -17,7 +17,8 @@ import SelectDeliveryCompanyDialog from "@/pages/settings/SelectDeliveryCompanyD
 import CourierLogo from "@/components/CourierLogo";
 import DomainSettingsSection from "./DomainSettingsSection";
 import ShippingSettingsDialog from "./ShippingSettingsDialog";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Lock } from "lucide-react";
+import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 import {
   useActiveCourier,
   useCourierBranch,
@@ -137,6 +138,7 @@ const PaymentMethodLogo = ({
 };
 
 const StoreIntegrationsSection = () => {
+  const { goUpgrade } = usePlanEntitlements();
   const { data: domainDetails } = useFindDomainDetails();
   const { data: storeDetails } = useFetchStoreDetails();
   const { data: currentSettings } = useFetchCurrentSettings();
@@ -235,6 +237,8 @@ const StoreIntegrationsSection = () => {
           isEnabled: boolean;
           available?: boolean;
           unavailableReason?: string | null;
+          /** Set when only a plan upgrade would make the method available. */
+          requiresUpgrade?: string | null;
         }[]
       | undefined
     )?.find((s) => s.paymentMethodId === methodId);
@@ -244,6 +248,7 @@ const StoreIntegrationsSection = () => {
       available,
       isEnabled: available && (storePm?.isEnabled ?? false),
       unavailableReason: storePm?.unavailableReason ?? null,
+      requiresUpgrade: Boolean(storePm?.requiresUpgrade),
     };
   };
 
@@ -264,7 +269,12 @@ const StoreIntegrationsSection = () => {
    */
   const codState = codMethod
     ? methodState(codMethod.id)
-    : { available: true, isEnabled: false, unavailableReason: null };
+    : {
+        available: true,
+        isEnabled: false,
+        unavailableReason: null,
+        requiresUpgrade: false,
+      };
 
   const cashOnDelivery =
     optimisticCod ?? (currentSettings?.cash_on_delivery || codState.isEnabled);
@@ -377,6 +387,19 @@ const StoreIntegrationsSection = () => {
                       {method.name}
                     </span>
                   </div>
+                  {state.requiresUpgrade ? (
+                    // Online payment is a plan feature: the way on is an
+                    // upgrade, not a switch that cannot stay on.
+                    <button
+                      type="button"
+                      onClick={() => goUpgrade()}
+                      title={state.unavailableReason ?? undefined}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1.5 text-xs font-bold text-white"
+                    >
+                      <Lock className="size-3.5" />
+                      ترقية
+                    </button>
+                  ) : (
                   <Switch
                     checked={state.isEnabled}
                     activeLabel="مفعل"
@@ -385,6 +408,7 @@ const StoreIntegrationsSection = () => {
                     onToggle={(v) => handleMethodToggle(method.id, v)}
                     disabled={upsertMutation.isPending || !state.available}
                   />
+                  )}
                 </div>
               );
             })}

@@ -3,6 +3,8 @@ import { AlertTriangle, CheckCircle2, Loader2, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import SettingsCard from "./SettingsCard";
+import { usePlanFeature } from "@/hooks/use-plan-limits";
+import { PlanFeatureUpgrade } from "@/components/plan/PlanFeatureUpgrade";
 import { SettingsInput } from "./SettingsField";
 import {
   useActiveCourier,
@@ -33,6 +35,7 @@ import {
 const CourierAccountCard = ({ embedded = false }: { embedded?: boolean }) => {
   const { data: courier, isLoading } = useActiveCourier();
   const { data: accountsData } = useCourierAccounts();
+  const courierAllowed = usePlanFeature("courier_integrations");
 
   const setCredentials = useSetCourierCredentials();
   const clearCredentials = useClearCourierCredentials();
@@ -47,6 +50,22 @@ const CourierAccountCard = ({ embedded = false }: { embedded?: boolean }) => {
   // No courier chosen, or a company with no integration behind it. Both are
   // reported by the picker above rather than here.
   if (courier.selected === false || courier.integrated === false) return null;
+
+  // Linking an account is the courier-integrations plan feature.
+  if (!courierAllowed) {
+    return (
+      <SettingsCard
+        title={`حسابك لدى ${courier.deliveryCompanyName || courier.displayName}`}
+        className={
+          embedded
+            ? "border-0 bg-slate-50 p-4 shadow-none sm:p-4 dark:bg-slate-900"
+            : undefined
+        }
+      >
+        <PlanFeatureUpgrade feature="courier_integrations" />
+      </SettingsCard>
+    );
+  }
 
   /**
    * This courier's row, and the stored identity inside it.

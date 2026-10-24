@@ -4,6 +4,7 @@ import {
   useCreateShipment,
   useOrderShipment,
 } from "@/api/wrappers/shipping.wrappers";
+import { usePlanFeature } from "@/hooks/use-plan-limits";
 
 function shipErrorMessage(err: unknown, fallback: string): string {
   const message = (err as { response?: { data?: { message?: unknown } } })
@@ -24,6 +25,7 @@ export function useAutoDispatchOnShip(orderId: string, enabled = true) {
   const { data: courier } = useActiveCourier(enabled && !!orderId);
   const { data: shipment } = useOrderShipment(orderId, enabled && !!orderId);
   const createShipment = useCreateShipment(orderId);
+  const courierAllowed = usePlanFeature("courier_integrations");
 
   const dispatchIfNeeded = () => {
     if (!orderId) return;
@@ -31,7 +33,9 @@ export function useAutoDispatchOnShip(orderId: string, enabled = true) {
 
     if (!courier || courier.selected !== true) return;
 
-    if (!courier.integrated) {
+    // A plan without courier integrations ships by hand, like a company
+    // with no integration.
+    if (!courier.integrated || !courierAllowed) {
       toast.message(
         "تم تحديث حالة الطلب. سجّل الطرد يدوياً لدى شركة التوصيل إن لزم.",
       );
