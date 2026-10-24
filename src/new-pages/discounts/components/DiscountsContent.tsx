@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Percent, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Percent, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
   useEnableDiscount,
@@ -16,6 +15,7 @@ import DiscountsSkeleton from "@/pages/discount/DiscountsSkeleton";
 import DiscountCard from "./DiscountCard";
 import DiscountTable from "./DiscountTable";
 import DeleteDiscountDialog from "./DeleteDiscountDialog";
+import LoadMore from "@/components/table/load-more";
 
 type DiscountsContentProps = {
   toolbar?: ReactNode;
@@ -114,31 +114,14 @@ const DiscountsContent = ({ actions, onCreateClick, toolbar }: DiscountsContentP
             ))}
           </div>
         </div>
-        <div ref={actions.loadMoreRef} className="flex justify-center py-4">
-          {actions.hasNextPage && (
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => actions.fetchNextPage()}
-              disabled={actions.isFetchingNextPage || isToggling}
-            >
-              {actions.isFetchingNextPage ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  جاري التحميل...
-                </>
-              ) : (
-                "تحميل المزيد"
-              )}
-            </Button>
-          )}
-        </div>
+        <LoadMore {...actions} disabled={isToggling} />
       </div>
 
       <div className="hidden xl:block">
         {viewMode === "table" ? (
           <DiscountTable
             toolbar={toolbar}
+            paging={actions}
             discounts={discounts}
             onView={(id) => navigate(`/discounts/${id}`)}
             onEdit={(id) => navigate(`/discounts/${id}/edit`)}
@@ -166,25 +149,7 @@ const DiscountsContent = ({ actions, onCreateClick, toolbar }: DiscountsContentP
                 />
               ))}
             </div>
-            <div ref={actions.loadMoreRef} className="flex justify-center py-4">
-              {actions.hasNextPage && (
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => actions.fetchNextPage()}
-                  disabled={actions.isFetchingNextPage || isToggling}
-                >
-                  {actions.isFetchingNextPage ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      جاري التحميل...
-                    </>
-                  ) : (
-                    "تحميل المزيد"
-                  )}
-                </Button>
-              )}
-            </div>
+            <LoadMore {...actions} disabled={isToggling} />
           </div>
         )}
       </div>

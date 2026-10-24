@@ -9,6 +9,7 @@ import {
   byCreatedAt,
   text,
   time,
+  type CursorPaging,
 } from "@/hooks/use-table-pagination";
 
 const TICKET_COLUMNS = {
@@ -21,14 +22,17 @@ const TICKET_COLUMNS = {
 };
 
 type TicketTableProps = {
+  /** Lets the page footer fetch rows past the first cursor page. */
+  paging?: CursorPaging;
   /** Figma keeps the list toolbar inside the table card. */
   toolbar?: ReactNode;
   tickets: SupportTicketListItem[];
 };
 
-const TicketTable = ({ tickets, toolbar }: TicketTableProps) => {
+const TicketTable = ({ tickets, toolbar, paging }: TicketTableProps) => {
   const { startIndex, pageItems: paginatedTickets, paginationProps, sort } =
     useTablePagination({
+      ...paging,
       items: tickets,
       getSortValue: byCreatedAt,
       columns: TICKET_COLUMNS,

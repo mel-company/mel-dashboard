@@ -3,6 +3,13 @@ import type { SortOrder } from "@/components/table/pagination";
 
 type Comparable = string | number;
 
+/** The cursor query's paging state, handed to a table so its footer can pull more rows. */
+export type CursorPaging = {
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  fetchNextPage?: () => void;
+};
+
 type Options<T> = {
   items: T[];
   /** Field the «مرتبة بشكل» select orders on. Omit to hide that select. */

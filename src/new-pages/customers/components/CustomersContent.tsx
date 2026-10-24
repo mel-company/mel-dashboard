@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { Loader2, User, X } from "lucide-react";
+import { User, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import ErrorPage from "@/pages/miscellaneous/ErrorPage";
 import EmptyPage from "@/pages/miscellaneous/EmptyPage";
 import CustomersSkeleton from "@/pages/customer/CustomersSkeleton";
 import CustomerTable from "./CustomerTable";
 import CustomerCard from "./CustomerCard";
+import LoadMore from "@/components/table/load-more";
 
 interface CustomersContentProps {
   toolbar?: ReactNode;
@@ -58,30 +58,13 @@ const CustomersContent = ({ actions, toolbar }: CustomersContentProps) => {
             ))}
           </div>
         </div>
-        <div ref={actions.loadMoreRef} className="flex justify-center py-4">
-          {actions.hasNextPage && (
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => actions.fetchNextPage()}
-              disabled={actions.isFetchingNextPage}
-            >
-              {actions.isFetchingNextPage ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  جاري التحميل...
-                </>
-              ) : (
-                "تحميل المزيد"
-              )}
-            </Button>
-          )}
-        </div>
+        <LoadMore {...actions} />
       </div>
 
       <div className="hidden xl:block">
         <CustomerTable
-            toolbar={toolbar}
+          toolbar={toolbar}
+          paging={actions}
           customers={actions.customers}
           onDelete={actions.setDeleteId}
         />

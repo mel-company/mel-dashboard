@@ -6,6 +6,7 @@ import CategoriesSkeleton from "@/pages/category/CategoriesSkeleton";
 import CollectionTable from "./CollectionTable";
 import CollectionCards from "./CollectionCards";
 import CollectionDeleteModal from "./CollectionDeleteModal";
+import LoadMore from "@/components/table/load-more";
 
 interface CollectionsContentProps {
   actions: any;
@@ -56,21 +57,24 @@ const CollectionsContent = ({ actions }: CollectionsContentProps) => {
           </p>
         </div>
         {cards}
+        <LoadMore {...actions} />
       </div>
       <div className="hidden xl:block">
         {actions.viewMode === "table" ? (
           <CollectionTable
             collections={actions.collections}
+            paging={actions}
             refetch={actions.refetch}
             onDelete={setDeleteCollection}
             imageBaseUrl={actions.imageBaseUrl}
           />
         ) : (
-          cards
+          <>
+            {cards}
+            <LoadMore {...actions} />
+          </>
         )}
       </div>
-      {/* The sentinel the list engine watches to pull the next cursor page. */}
-      <div ref={actions.loadMoreRef} className="h-1" />
       <CollectionDeleteModal
         collection={deleteCollection}
         onOpenChange={(open) => !open && setDeleteCollection(null)}

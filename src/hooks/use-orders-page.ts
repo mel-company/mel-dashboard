@@ -16,12 +16,15 @@ function buildFilterTags(
   const tags = [];
 
   if (filters.status !== undefined) {
+    // Keys match what OrderFilterDialog sends (ORDER_STATUS / ORDER_PERIOD).
+    // They were lowercase and "week", so every chip showed the raw
+    // "PENDING" or "7days" instead of its label.
     const statusLabels: Record<string, string> = {
-      pending: "قيد الانتظار",
-      processing: "قيد المعالجة",
-      shipped: "تم الشحن",
-      delivered: "تم التسليم",
-      cancelled: "ملغي",
+      PENDING: "قيد الانتظار",
+      PROCESSING: "قيد المعالجة",
+      SHIPPED: "تم الشحن",
+      DELIVERED: "تم التسليم",
+      CANCELLED: "ملغي",
     };
 
     tags.push({
@@ -34,7 +37,7 @@ function buildFilterTags(
   if (filters.period !== undefined) {
     const periodLabels: Record<string, string> = {
       today: "اليوم",
-      week: "هذا الأسبوع",
+      "7days": "آخر 7 أيام",
       month: "هذا الشهر",
       year: "هذه السنة",
     };

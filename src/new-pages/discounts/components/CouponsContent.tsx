@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Ticket, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Ticket, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useToggleCouponActive } from "@/api/wrappers/coupon.wrappers";
 import ErrorPage from "@/pages/miscellaneous/ErrorPage";
@@ -14,6 +13,7 @@ import CouponTable from "./CouponTable";
 import CouponDetailsSheet from "./CouponDetailsSheet";
 import DeleteCouponDialog from "./DeleteCouponDialog";
 import type { useDiscountsPage } from "@/hooks/use-discounts-page";
+import LoadMore from "@/components/table/load-more";
 
 type CouponsContentProps = {
   toolbar?: ReactNode;
@@ -91,31 +91,14 @@ const CouponsContent = ({ actions, toolbar }: CouponsContentProps) => {
             ))}
           </div>
         </div>
-        <div ref={actions.loadMoreRef} className="flex justify-center py-4">
-          {actions.hasNextPage && (
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => actions.fetchNextPage()}
-              disabled={actions.isFetchingNextPage}
-            >
-              {actions.isFetchingNextPage ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  جاري التحميل...
-                </>
-              ) : (
-                "تحميل المزيد"
-              )}
-            </Button>
-          )}
-        </div>
+        <LoadMore {...actions} />
       </div>
 
       <div className="hidden xl:block">
         {actions.viewMode === "table" ? (
           <CouponTable
             toolbar={toolbar}
+            paging={actions}
             coupons={actions.coupons}
             onView={(id) =>
               setDetailsCoupon(
@@ -147,25 +130,7 @@ const CouponsContent = ({ actions, toolbar }: CouponsContentProps) => {
                 />
               ))}
             </div>
-            <div ref={actions.loadMoreRef} className="flex justify-center py-4">
-              {actions.hasNextPage && (
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => actions.fetchNextPage()}
-                  disabled={actions.isFetchingNextPage}
-                >
-                  {actions.isFetchingNextPage ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      جاري التحميل...
-                    </>
-                  ) : (
-                    "تحميل المزيد"
-                  )}
-                </Button>
-              )}
-            </div>
+            <LoadMore {...actions} />
           </div>
         )}
       </div>
