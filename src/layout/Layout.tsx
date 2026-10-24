@@ -2,14 +2,27 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import MobileTopBar from "@/components/MobileTopBar";
-import FloatingRail from "@/components/FloatingRail";
+import FloatingRail, {
+  type TamimaEntryMode,
+} from "@/components/FloatingRail";
+import TamimaAssistant from "@/components/tamima/TamimaAssistant";
+import TamimaVoiceSession from "@/components/tamima/TamimaVoiceSession";
+import {
+  TamimaBackgroundRefreshProvider,
+  useTamimaBackgroundRefresh,
+} from "@/components/tamima/TamimaBackgroundRefresh";
 import { cn } from "@/lib/utils";
 import SubscriptionBar from "@/components/plan/SubscriptionBar";
 import SubscriptionLifecycleGate from "@/components/plan/SubscriptionLifecycleGate";
 
-const Layout = () => {
+const LayoutInner = () => {
   const location = useLocation();
+  const { pageKey } = useTamimaBackgroundRefresh();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [tamimaTextOpen, setTamimaTextOpen] = useState(false);
+  const [tamimaVoiceMode, setTamimaVoiceMode] = useState<
+    "closed" | "expanded" | "docked"
+  >("closed");
 
   const isPosPage = location.pathname === "/pos";
   const isEditorPage = location.pathname === "/editor";
@@ -82,8 +95,42 @@ const Layout = () => {
             subscription, or ended. Not over the editor's own frame. */}
         {!isEditorPage && <SubscriptionBar />}
 
-        {/* Figma's floating capsule on the far edge of every web frame. */}
-        {!isFullscreenTool && <FloatingRail />}
+        {/* Tamima + light/dark — same floating capsule, all breakpoints. */}
+        {!isFullscreenTool && (
+          <FloatingRail
+            onAssistantModeSelect={(mode: TamimaEntryMode) => {
+              if (mode === "voice") {
+                setTamimaTextOpen(false);
+                setTamimaVoiceMode("expanded");
+                return;
+              }
+              setTamimaVoiceMode((prev) =>
+                prev === "expanded" ? "docked" : prev,
+              );
+              setTamimaTextOpen(true);
+            }}
+            hideTamima={tamimaVoiceMode === "docked"}
+            assistantOpen={
+              tamimaTextOpen || tamimaVoiceMode === "expanded"
+            }
+          />
+        )}
+
+        <TamimaAssistant
+          open={tamimaTextOpen}
+          onOpenChange={(open) => {
+            setTamimaTextOpen(open);
+            if (open) {
+              setTamimaVoiceMode((prev) =>
+                prev === "expanded" ? "docked" : prev,
+              );
+            }
+          }}
+        />
+        <TamimaVoiceSession
+          mode={tamimaVoiceMode}
+          onModeChange={setTamimaVoiceMode}
+        />
 
         <main
           className={cn(
@@ -102,7 +149,8 @@ const Layout = () => {
             )}
           >
             <SubscriptionLifecycleGate>
-              <Outlet />
+              {/* Remount page behind Tamima after approve — assistant stays open. */}
+              <Outlet key={`${location.pathname}:${pageKey}`} />
             </SubscriptionLifecycleGate>
           </div>
         </main>
@@ -110,5 +158,11 @@ const Layout = () => {
     </div>
   );
 };
+
+const Layout = () => (
+  <TamimaBackgroundRefreshProvider>
+    <LayoutInner />
+  </TamimaBackgroundRefreshProvider>
+);
 
 export default Layout;

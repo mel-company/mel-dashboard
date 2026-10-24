@@ -53,6 +53,11 @@ function planHighlights(plan: any): string[] {
   } else if (plan.ai_editor_trial > 0) {
     lines.push(`تجربة مساعد المحرر الذكي (${plan.ai_editor_trial} رسائل)`);
   }
+  if (plan.has_tamima && plan.ai_tamima_credits > 0) {
+    lines.push(`${plan.ai_tamima_credits} رصيد شهرياً لمساعد تميمة`);
+  } else if (plan.ai_tamima_trial > 0) {
+    lines.push(`تجربة مساعد تميمة (${plan.ai_tamima_trial} رسائل)`);
+  }
   if (plan.has_social_pixels) lines.push("بكسلات الإعلانات (ميتا، تيك توك، سناب)");
   if (plan.has_custom_domain) lines.push("ربط نطاقك الخاص");
   return lines;

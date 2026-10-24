@@ -1,13 +1,20 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
-export type PlusFeature = "ai_editor" | "mobile_app" | "team_users";
+export type PlusFeature =
+  | "ai_editor"
+  | "tamima"
+  | "mobile_app"
+  | "team_users"
+  | "pos";
 
 export type PlanEntitlements = {
   max_users: number;
   ai_store_credits: number;
   ai_editor_credits: number;
+  ai_tamima_credits: number;
   has_mobile_app: boolean;
   has_ai_editor: boolean;
+  has_tamima: boolean;
 };
 
 export type LockedFeature = {
@@ -73,8 +80,8 @@ export type PlanEntitlementsResponse = {
   /** Absent on a server older than the Basic/Grow plans. */
   limits?: Record<LimitedResource, PlanLimitUsage>;
   features?: Record<PlanFeatureKey, boolean>;
-  /** One-time trial sizes: AI store builds and editor-agent messages. */
-  trials?: { aiStore: number; aiEditor: number };
+  /** One-time trial sizes: AI store builds, editor-agent, and Tamima. */
+  trials?: { aiStore: number; aiEditor: number; aiTamima?: number };
   locked: LockedFeature[];
   upgradeAvailable: boolean;
   upgradeTo: { planId?: string | null; planCode: string; planName: string } | null;

@@ -5,8 +5,10 @@ import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 
 const FEATURE_TITLES: Record<PlusFeature, string> = {
   ai_editor: "محرر الذكاء الاصطناعي",
+  tamima: "مساعد تميمة",
   team_users: "أعضاء الفريق",
   mobile_app: "تطبيق الهاتف",
+  pos: "نقطة البيع (POS)",
 };
 
 type PlanUpgradeGateProps = {

@@ -54,8 +54,10 @@ type Entitlements = {
   max_users?: number;
   ai_store_credits?: number;
   ai_editor_credits?: number;
+  ai_tamima_credits?: number;
   has_mobile_app?: boolean;
   has_ai_editor?: boolean;
+  has_tamima?: boolean;
   has_pos?: boolean;
 };
 
@@ -81,10 +83,13 @@ const entitlementLabels = (e: Entitlements | undefined): string[] => {
   if (!e) return [];
   const labels: string[] = [];
   if (e.has_ai_editor) labels.push("محرر المتجر بالذكاء الاصطناعي");
+  if (e.has_tamima) labels.push("مساعد تميمة");
   if (e.ai_store_credits)
     labels.push(`${e.ai_store_credits} توليد متجر بالذكاء الاصطناعي`);
   if (e.ai_editor_credits)
     labels.push(`${e.ai_editor_credits} رصيد للمحرر الذكي`);
+  if (e.ai_tamima_credits)
+    labels.push(`${e.ai_tamima_credits} رصيد لمساعد تميمة`);
   if (e.has_pos) labels.push("نقطة البيع (POS)");
   if (e.has_mobile_app) labels.push("تطبيق التاجر");
   if (e.max_users)
