@@ -6,6 +6,9 @@ import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 const FEATURE_COPY: Record<PlanFeatureKey, string> = {
   custom_domain: "ربط نطاقك الخاص أو شراء نطاق جديد",
   social_pixels: "ربط بكسلات الإعلانات (ميتا، تيك توك، سناب شات)",
+  online_payment: "الدفع الإلكتروني (زين كاش، كي كارد)",
+  courier_integrations: "ربط شركات الشحن وإرسال الطلبات لها تلقائياً",
+  advanced_stats: "الإحصائيات والتقارير المتقدمة",
 };
 
 /** An inline upgrade panel where a Grow-only feature would be. */

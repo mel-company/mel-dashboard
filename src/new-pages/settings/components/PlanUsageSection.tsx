@@ -76,6 +76,30 @@ const PlanUsageSection = () => {
                   {features.custom_domain ? "مفعّل" : "غير متاح في باقتك"}
                 </td>
               </tr>
+              <tr>
+                <td className="py-2.5 font-medium text-slate-900 dark:text-slate-100">
+                  الدفع الإلكتروني
+                </td>
+                <td colSpan={2} className="py-2.5 text-slate-700 dark:text-slate-300">
+                  {features.online_payment !== false ? "مفعّل" : "غير متاح في باقتك"}
+                </td>
+              </tr>
+              <tr>
+                <td className="py-2.5 font-medium text-slate-900 dark:text-slate-100">
+                  ربط شركات الشحن
+                </td>
+                <td colSpan={2} className="py-2.5 text-slate-700 dark:text-slate-300">
+                  {features.courier_integrations !== false ? "مفعّل" : "غير متاح في باقتك"}
+                </td>
+              </tr>
+              <tr>
+                <td className="py-2.5 font-medium text-slate-900 dark:text-slate-100">
+                  الإحصائيات المتقدمة
+                </td>
+                <td colSpan={2} className="py-2.5 text-slate-700 dark:text-slate-300">
+                  {features.advanced_stats !== false ? "مفعّلة" : "غير متاحة في باقتك"}
+                </td>
+              </tr>
             </>
           )}
         </tbody>

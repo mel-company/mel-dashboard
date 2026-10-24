@@ -43,6 +43,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { usePlanUsage } from "@/hooks/use-plan-limits";
+import { PlanFeatureUpgrade } from "@/components/plan/PlanFeatureUpgrade";
 
 // Register Chart.js components
 ChartJS.register(
@@ -68,7 +70,25 @@ const TIME_RANGE_OPTIONS = [
   { value: "custom", label: "مدة مخصصة" },
 ] as const;
 
+/**
+ * The analytics page is a plan feature (`advanced_stats`). Decided before the
+ * page mounts, so a plan without it never fires the requests the server would
+ * refuse.
+ */
 const Stats = () => {
+  const { data, isLoading } = usePlanUsage();
+  if (isLoading) return <StatsSkeleton />;
+  if (data?.features && data.features.advanced_stats === false) {
+    return (
+      <div className="p-4 md:p-6">
+        <PlanFeatureUpgrade feature="advanced_stats" />
+      </div>
+    );
+  }
+  return <StatsContent />;
+};
+
+const StatsContent = () => {
   const navigate = useNavigate();
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [timeRange, setTimeRange] = useState<string>("7d");

@@ -32,7 +32,12 @@ export type PlanLimitUsage = {
 };
 
 /** Grow-only features, as the store may use them right now. */
-export type PlanFeatureKey = "social_pixels" | "custom_domain";
+export type PlanFeatureKey =
+  | "social_pixels"
+  | "custom_domain"
+  | "online_payment"
+  | "courier_integrations"
+  | "advanced_stats";
 
 /** Post-term track from `GET /plan/entitlements`. */
 export type SubscriptionLifecyclePhase =

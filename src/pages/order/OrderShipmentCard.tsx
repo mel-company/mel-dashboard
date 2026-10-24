@@ -44,6 +44,8 @@ import {
 import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
+import { usePlanFeature } from "@/hooks/use-plan-limits";
+import { PlanFeatureUpgrade } from "@/components/plan/PlanFeatureUpgrade";
 
 /**
  * شحن الطلب — بأي شركة يستخدمها المتجر.
@@ -178,6 +180,8 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
   const [options, setOptions] = useState<CreateShipmentOptions>({});
 
   const createShipment = useCreateShipment(orderId);
+  // Sending a parcel into the courier's system is a plan feature.
+  const courierAllowed = usePlanFeature("courier_integrations");
   const syncShipment = useSyncShipment(orderId);
   const cancelShipment = useCancelShipment(orderId);
   const shipmentLabel = useShipmentLabel(orderId);
@@ -597,6 +601,9 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
               </label>
             ) : null}
 
+            {!courierAllowed ? (
+              <PlanFeatureUpgrade feature="courier_integrations" />
+            ) : (
             <Button
               className="h-12 w-full gap-2 rounded-[14px] text-base font-bold"
               disabled={createShipment.isPending || !courier.accountReady}
@@ -615,6 +622,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
               )}
               تسجيل الطرد لدى {courier.displayName}
             </Button>
+            )}
 
             {!capabilities?.quote ? (
               <p className="text-[11px] leading-relaxed text-slate-400 dark:text-[#a4b1fa]">
