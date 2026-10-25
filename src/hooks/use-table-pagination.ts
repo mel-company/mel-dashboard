@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { SortOrder } from "@/components/table/pagination";
+import { resolveTablePage } from "./table-page";
 
 type Comparable = string | number;
 
@@ -65,18 +66,32 @@ export function useTablePagination<T>({
     });
   }, [items, columns, sortKey, getSortValue, sortOrder]);
 
-  const totalPages = Math.ceil(sorted.length / viewCount) || 1;
   // Clamp during render rather than correcting it in an effect, so the list
   // never paints one frame of an out-of-range page.
-  const activePage = Math.min(requestedPage, totalPages);
+  const {
+    wantedPage,
+    activePage,
+    loadedPages: totalPages,
+    needsMoreData,
+    footerPages,
+  } = resolveTablePage({
+    requestedPage,
+    viewCount,
+    loadedCount: items.length,
+    hasNextPage: !!hasNextPage,
+  });
   const startIndex = (activePage - 1) * viewCount;
   const pageItems = useMemo(
     () => sorted.slice(startIndex, startIndex + viewCount),
     [sorted, startIndex, viewCount],
   );
 
+  // Forget a page that can't be reached, so it can't keep pulling pages in.
+  // Set during render (React's "adjust state on change" pattern), not in an
+  // effect, so no frame paints with the stale page.
+  if (wantedPage !== requestedPage) setRequestedPage(wantedPage);
+
   // Pull the next cursor page in when the reader walks past what we hold.
-  const needsMoreData = activePage * viewCount > items.length && !!hasNextPage;
   useEffect(() => {
     if (needsMoreData && !isFetchingNextPage) fetchNextPage?.();
   }, [needsMoreData, isFetchingNextPage, fetchNextPage]);
@@ -113,9 +128,7 @@ export function useTablePagination<T>({
     sort,
     /** Spread straight into <Pagination />. */
     paginationProps: {
-      totalPages: hasNextPage
-        ? Math.max(totalPages, activePage + 1)
-        : totalPages,
+      totalPages: footerPages,
       activePage,
       viewCount,
       onPageChange: setRequestedPage,
