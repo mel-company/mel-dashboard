@@ -87,6 +87,28 @@ const STATUS_TONE: Record<CourierShipmentStatus, string> = {
     "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
 };
 
+/**
+ * Al-Zaeem's sticker comes back as a `data:` URL, which browsers refuse to
+ * open in a new tab. Turn it into a blob URL, and save it as a file when the
+ * new tab is blocked.
+ */
+const openDataUrl = (dataUrl: string, fileName: string): void => {
+  const [head, body = ""] = dataUrl.split(",", 2);
+  const type = /^data:([^;,]+)/.exec(head)?.[1] ?? "application/pdf";
+  const bytes = head.includes(";base64")
+    ? Uint8Array.from(atob(body), (c) => c.charCodeAt(0))
+    : new TextEncoder().encode(decodeURIComponent(body));
+  const url = URL.createObjectURL(new Blob([bytes], { type }));
+  if (!window.open(url, "_blank")) {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+  }
+  // Give the new tab time to load it before the URL goes away.
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+};
+
 const apiError = (error: unknown, fallback: string): string => {
   const data = (
     error as {
@@ -427,7 +449,9 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                     try {
                       // Prime accepts A5; A4 was the old default and 422s.
                       const result = await shipmentLabel.mutateAsync("A5");
-                      if (result?.labelUrl) {
+                      if (result?.labelUrl?.startsWith("data:")) {
+                        openDataUrl(result.labelUrl, `sticker-${orderId}.pdf`);
+                      } else if (result?.labelUrl) {
                         window.open(result.labelUrl, "_blank", "noopener");
                       } else {
                         toast.error("لم تُرجع الشركة رابط ملصق.");
@@ -446,7 +470,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                 </ActionBtn>
               ) : null}
 
-              {shipment.labelUrl ? (
+              {shipment.labelUrl && !shipment.labelUrl.startsWith("data:") ? (
                 <ActionBtn asChild>
                   <a
                     href={shipment.labelUrl}
