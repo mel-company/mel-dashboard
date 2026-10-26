@@ -8,6 +8,13 @@ import {
 } from "@hugeicons-pro/core-stroke-rounded";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SettingsLabel } from "./SettingsField";
 import DomainPriceBreakdown from "./DomainPriceBreakdown";
 import { DomainPreview } from "./DomainNotes";
@@ -157,53 +164,47 @@ const DomainSettingsFields = ({
         ) : (
           <div
             dir="ltr"
-            className={cn("flex gap-2", disabled && "pointer-events-none")}
+            className={cn(
+              "flex h-14 overflow-hidden rounded-2xl bg-slate-100 focus-within:ring-2 focus-within:ring-blue-500/30 dark:bg-slate-900",
+              disabled && "pointer-events-none",
+            )}
           >
-            <div className="flex h-14 min-w-0 flex-1 overflow-hidden rounded-2xl bg-slate-100 focus-within:ring-2 focus-within:ring-blue-500/30 dark:bg-slate-900">
-              <input
-                id="domain-input"
-                value={name}
-                onChange={(e) => pushCustom(e.target.value, tld)}
-                placeholder="mystore"
-                dir="ltr"
-                disabled={disabled}
-                className="min-w-0 flex-1 border-0 bg-transparent px-4 text-left text-[15px] text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed dark:text-slate-100 dark:placeholder:text-slate-500"
-              />
-              <span className="flex shrink-0 items-center bg-slate-200/70 px-3 text-[15px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                {tld}
-              </span>
-            </div>
-
-            <div
-              className={cn(
-                "custom-scrollbar flex h-40 w-[5.5rem] shrink-0 flex-col gap-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5",
-                "dark:border-slate-700 dark:bg-slate-900",
-              )}
-              role="listbox"
-              aria-label="امتداد الدومين"
+            <input
+              id="domain-input"
+              value={name}
+              onChange={(e) => pushCustom(e.target.value, tld)}
+              placeholder="mystore"
+              dir="ltr"
+              disabled={disabled}
+              className="min-w-0 flex-1 border-0 bg-transparent px-4 text-left text-[15px] text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed dark:text-slate-100 dark:placeholder:text-slate-500"
+            />
+            <Select
+              value={
+                DOMAIN_TLDS.includes(tld as (typeof DOMAIN_TLDS)[number])
+                  ? tld
+                  : ".com"
+              }
+              onValueChange={(value) => pushCustom(name, value)}
+              disabled={disabled}
             >
-              {DOMAIN_TLDS.map((item) => {
-                const selected = tld === item;
-                return (
-                  <button
-                    key={item}
-                    type="button"
-                    role="option"
-                    aria-selected={selected}
-                    disabled={disabled}
-                    onClick={() => pushCustom(name, item)}
-                    className={cn(
-                      "rounded-xl px-2 py-1.5 text-left text-[13px] font-medium transition-colors",
-                      selected
-                        ? "bg-[#00b7ff]/15 text-[#008fc7] dark:bg-[#00b7ff]/20 dark:text-[#33c5ff]"
-                        : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
-                    )}
-                  >
+              <SelectTrigger
+                aria-label="امتداد الدومين"
+                className={cn(
+                  "h-full w-[6.25rem] shrink-0 rounded-none border-0 border-s border-slate-200/80 bg-slate-200/70 px-3 text-[15px] font-medium text-slate-700 shadow-none",
+                  "focus-visible:ring-0 focus-visible:ring-offset-0",
+                  "dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-800",
+                )}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" align="end" className="min-w-[6.5rem]">
+                {DOMAIN_TLDS.map((item) => (
+                  <SelectItem key={item} value={item} dir="ltr">
                     {item}
-                  </button>
-                );
-              })}
-            </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
       </div>
