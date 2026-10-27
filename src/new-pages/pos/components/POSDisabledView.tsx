@@ -7,7 +7,7 @@ import TitleBar from "@/components/table/title-bar";
  * Why POS is closed. Two different answers that used to be one.
  *
  * `setting` is the store's own «متجر فعلي» switch, which the merchant can flip
- * themselves. `plan` is the platform's refusal — POS is PLUS-only and the gate
+ * themselves. `plan` is the platform's refusal — POS is Grow (code PLUS) only and the gate
  * also withdraws it when the term lapses — and telling that merchant to go and
  * change a setting sends them somewhere that cannot help them.
  */
@@ -25,7 +25,7 @@ const POSDisabledView = ({
       <TitleBar
         description={
           isPlan
-            ? "نقطة البيع متاحة في باقة MEL PLUS"
+            ? "نقطة البيع متاحة في باقة Grow"
             : "نقطة البيع متاحة للمتاجر الفعلية فقط"
         }
       />
@@ -34,7 +34,7 @@ const POSDisabledView = ({
         <div
           className={
             isPlan
-              ? "mb-4 flex size-16 items-center justify-center rounded-full bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300"
+              ? "mb-4 flex size-16 items-center justify-center rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
               : "mb-4 flex size-16 items-center justify-center rounded-full bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"
           }
         >
@@ -49,7 +49,7 @@ const POSDisabledView = ({
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
             نقطة البيع (POS) متاحة في باقة{" "}
             <span className="font-semibold text-slate-700 dark:text-slate-200">
-              MEL PLUS
+              Grow
             </span>
             . إن كان اشتراكك منتهياً، جدّده لاستعادة مزايا باقتك.
           </p>
@@ -65,11 +65,8 @@ const POSDisabledView = ({
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           {isPlan ? (
-            <Button
-              asChild
-              className="rounded-full bg-violet-600 hover:bg-violet-700"
-            >
-              <Link to="/settings/general">
+            <Button asChild className="rounded-full bg-sky-500 hover:bg-sky-600">
+              <Link to="/settings/subscription">
                 <Rocket className="size-4" />
                 إدارة الاشتراك
               </Link>

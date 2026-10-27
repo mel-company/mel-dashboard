@@ -4,7 +4,7 @@ import {
   useQueryClient,
   useInfiniteQuery,
 } from "@tanstack/react-query";
-import { orderAPI } from "../endpoints/order.endpoints";
+import { orderAPI, type PosOrderRequest } from "../endpoints/order.endpoints";
 
 /**
  * Query key factory for orders
@@ -174,6 +174,20 @@ export const useCheckoutOrder = () => {
       queryClient.invalidateQueries({
         queryKey: [...orderKeys.all, "filter-cursor"],
       });
+    },
+  });
+};
+
+/**
+ * POS sale. Also refreshes the product lists, since the sale took stock.
+ */
+export const useCreatePosOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation<any, Error, PosOrderRequest>({
+    mutationFn: (order) => orderAPI.createPosOrder(order),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orderKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 };
