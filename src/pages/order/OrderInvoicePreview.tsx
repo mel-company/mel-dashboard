@@ -198,6 +198,36 @@ const InvoicePaper = ({
   </article>
 );
 
+/**
+ * The store logo as a PNG data URL for the PDF, or null.
+ *
+ * react-pdf draws only PNG and JPEG and fetches the file itself, while store
+ * logos are often WebP; going through a canvas covers both. The CDN allows
+ * the dashboard's origin, and a logo that still fails leaves the PDF with the
+ * store name alone rather than no PDF.
+ */
+function logoAsPng(src: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const size = 256;
+        const scale = Math.min(size / img.width, size / img.height, 1);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/png"));
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
 export default function OrderInvoicePreview() {
   const [order, setOrder] = useState<any | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -226,8 +256,9 @@ export default function OrderInvoicePreview() {
     if (!invoice) return;
     setIsDownloading(true);
     try {
+      const logo = store.logo ? await logoAsPng(store.logo) : null;
       const blob = await pdf(
-        <OrderInvoicePDF invoice={invoice} store={store} />,
+        <OrderInvoicePDF invoice={invoice} store={{ ...store, logo }} />,
       ).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");

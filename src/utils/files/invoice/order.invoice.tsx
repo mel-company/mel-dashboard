@@ -1,14 +1,23 @@
-import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
-import CairoRegular from "../../../assets/fonts/Cairo-Regular.ttf";
-import CairoBold from "../../../assets/fonts/Cairo-Bold.ttf";
-import { formatCurrency } from "@/utils/format-currency";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  Image,
+  StyleSheet,
+  Font,
+} from "@react-pdf/renderer";
+import { formatNumber } from "@/utils/format-currency";
+import type { Style } from "@react-pdf/types";
 import type { InvoiceStore, OrderInvoice } from "./order-invoice-model";
 
+// Same face as the dashboard and the invoice preview page (src/index.css).
+const DIATYPE = "/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC";
 Font.register({
-  family: "Cairo",
+  family: "Diatype",
   fonts: [
-    { src: CairoRegular, fontWeight: 400 },
-    { src: CairoBold, fontWeight: 700 },
+    { src: `${DIATYPE}-REGULAR-TRIAL.OTF`, fontWeight: 400 },
+    { src: `${DIATYPE}-BOLD-TRIAL.OTF`, fontWeight: 700 },
   ],
 });
 
@@ -18,17 +27,38 @@ const MUTED = "#64748b";
 const FAINT = "#94a3b8";
 const RULE = "#e2e8f0";
 
+/**
+ * The characters ABC Diatype Arabic has glyphs for. fontkit throws while
+ * embedding the font if any other one (an emoji in a product name, say) is
+ * drawn, and the whole download fails.
+ */
+const UNSUPPORTED =
+  /[^\n\u0020-\u007E\u00A0-\u00AC\u00AE-\u017E\u060C\u061B\u061F\u0621-\u063A\u0640-\u0656\u0660-\u0671\u0679\u067E\u0686\u0688\u0691\u0695\u0698\u06A1\u06A4\u06A9\u06AF\u06B5\u06BA\u06BE\u06C1-\u06C3\u06C6\u06CC\u06CE\u06D2-\u06D5\u06F0-\u06F9\u2013\u2014\u2018\u2019\u201C\u201D\u2022\u2026]/g;
+
+/**
+ * Text the merchant or customer typed. The trailing space works around a
+ * react-pdf bug that repeats the last Arabic letters of a right-to-left line
+ * ending in Latin ("قميص قطني 100% Cotton" came out "قطنيني").
+ */
+const typed = (text: string) => `${text.replace(UNSUPPORTED, "").trim()} `;
+
 // RTL by hand: react-pdf has no `dir`, so rows run `row-reverse` and text
 // aligns right, which puts the first child on the right as on the page.
+// Text the merchant or customer typed also sets `direction: "rtl"` (it is
+// not inherited) so mixed text like "قميص 100% Cotton" keeps its order.
 const styles = StyleSheet.create({
   page: {
     paddingVertical: 40,
     paddingHorizontal: 44,
-    fontFamily: "Cairo",
+    fontFamily: "Diatype",
     fontSize: 10,
     color: BODY,
   },
   row: { flexDirection: "row-reverse", justifyContent: "space-between" },
+  money: { flexDirection: "row", alignItems: "baseline" },
+  currency: { marginLeft: 3 },
+  brand: { flexDirection: "row-reverse", alignItems: "center" },
+  logo: { width: 48, height: 48, marginLeft: 10, objectFit: "contain" },
   header: {
     flexDirection: "row-reverse",
     justifyContent: "space-between",
@@ -37,7 +67,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: RULE,
   },
-  storeName: { fontSize: 16, fontWeight: 700, color: INK, textAlign: "right" },
+  storeName: {
+    direction: "rtl",
+    fontSize: 16,
+    fontWeight: 700,
+    color: INK,
+    textAlign: "right",
+  },
   storePhone: { fontSize: 10, color: MUTED, textAlign: "right" },
   title: { fontSize: 20, fontWeight: 700, color: INK, textAlign: "left" },
   meta: { fontSize: 10, color: MUTED, textAlign: "left" },
@@ -50,11 +86,37 @@ const styles = StyleSheet.create({
     borderBottomColor: RULE,
   },
   caption: { fontSize: 8, color: FAINT, textAlign: "right", marginBottom: 4 },
-  strong: { fontSize: 11, fontWeight: 700, color: INK, textAlign: "right" },
-  text: { fontSize: 10, color: BODY, textAlign: "right" },
+  strong: {
+    lineHeight: 1.6,
+    direction: "rtl",
+    fontSize: 11,
+    fontWeight: 700,
+    color: INK,
+    textAlign: "right",
+  },
+  text: {
+    lineHeight: 1.6,
+    direction: "rtl",
+    fontSize: 10,
+    color: BODY,
+    textAlign: "right",
+  },
   factRow: { flexDirection: "row-reverse", marginBottom: 3 },
-  factLabel: { width: 70, fontSize: 9, color: FAINT, textAlign: "right" },
-  factValue: { fontSize: 10, fontWeight: 700, color: BODY, textAlign: "right" },
+  factLabel: {
+    lineHeight: 1.6,
+    width: 70,
+    fontSize: 9,
+    color: FAINT,
+    textAlign: "right",
+  },
+  factValue: {
+    lineHeight: 1.6,
+    direction: "rtl",
+    fontSize: 10,
+    fontWeight: 700,
+    color: BODY,
+    textAlign: "right",
+  },
   table: { marginTop: 18 },
   thead: {
     flexDirection: "row-reverse",
@@ -70,13 +132,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
   },
-  td: { fontSize: 10, color: BODY, textAlign: "right" },
+  td: { direction: "rtl", fontSize: 10, color: BODY, textAlign: "right" },
   colIndex: { width: 18 },
   colName: { flex: 1 },
   colQty: { width: 44, textAlign: "center" },
   colUnit: { width: 86 },
+  // A right-aligned cell holding a row: the row hugs the cell's right edge.
+  cellEnd: { alignItems: "flex-end" },
   colTotal: { width: 92 },
-  variant: { fontSize: 8, color: MUTED, textAlign: "right" },
+  variant: { direction: "rtl", fontSize: 8, color: MUTED, textAlign: "right" },
   struck: {
     fontSize: 8,
     color: FAINT,
@@ -116,10 +180,33 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: FAINT,
     textAlign: "center",
+    direction: "rtl",
   },
 });
 
-const money = (value: number) => formatCurrency(value);
+/**
+ * An amount as the dashboard shows it: the figure, then «د.ع», read left to
+ * right. As one string react-pdf runs it through the bidi algorithm and the
+ * currency flips to the figure's left on some lines and not others, so the
+ * two halves are separate runs in a left-to-right row.
+ */
+const Money = ({
+  value,
+  negative,
+  style,
+}: {
+  value: number;
+  negative?: boolean;
+  style?: Style;
+}) => (
+  <View style={styles.money}>
+    <Text style={style}>
+      {negative ? "-" : ""}
+      {formatNumber(value)}
+    </Text>
+    <Text style={[style ?? {}, styles.currency]}>د.ع</Text>
+  </View>
+);
 
 export const OrderInvoicePDF = ({
   invoice,
@@ -133,11 +220,18 @@ export const OrderInvoicePDF = ({
     <Document title={`فاتورة ${invoice.code}`}>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.storeName}>{store?.name || "المتجر"}</Text>
-            {store?.phone ? (
-              <Text style={styles.storePhone}>{store.phone}</Text>
+          <View style={styles.brand}>
+            {store?.logo ? (
+              <Image src={store.logo} style={styles.logo} />
             ) : null}
+            <View style={styles.cellEnd}>
+              <Text style={styles.storeName}>
+                {typed(store?.name || "المتجر")}
+              </Text>
+              {store?.phone ? (
+                <Text style={styles.storePhone}>{typed(store.phone)}</Text>
+              ) : null}
+            </View>
           </View>
           <View>
             <Text style={styles.title}>فاتورة</Text>
@@ -147,17 +241,17 @@ export const OrderInvoicePDF = ({
         </View>
 
         <View style={styles.parties}>
-          <View>
+          <View style={styles.cellEnd}>
             <Text style={styles.caption}>إلى</Text>
-            <Text style={styles.strong}>{invoice.customerName}</Text>
+            <Text style={styles.strong}>{typed(invoice.customerName)}</Text>
             {invoice.customerPhone ? (
-              <Text style={styles.text}>{invoice.customerPhone}</Text>
+              <Text style={styles.text}>{typed(invoice.customerPhone)}</Text>
             ) : null}
             {invoice.address ? (
-              <Text style={styles.text}>{invoice.address}</Text>
+              <Text style={styles.text}>{typed(invoice.address)}</Text>
             ) : null}
             {invoice.nearestPoint ? (
-              <Text style={styles.text}>{invoice.nearestPoint}</Text>
+              <Text style={styles.text}>{typed(invoice.nearestPoint)}</Text>
             ) : null}
           </View>
           <View>
@@ -198,22 +292,23 @@ export const OrderInvoicePDF = ({
                 </Text>
                 <View style={styles.colName}>
                   <Text style={[styles.td, { fontWeight: 700, color: INK }]}>
-                    {line.name}
+                    {typed(line.name)}
                   </Text>
                   {line.variant ? (
-                    <Text style={styles.variant}>{line.variant}</Text>
+                    <Text style={styles.variant}>{typed(line.variant)}</Text>
                   ) : null}
                 </View>
                 <Text style={[styles.td, styles.colQty]}>{line.quantity}</Text>
-                <Text style={[styles.td, styles.colUnit]}>
-                  {money(line.unitPrice)}
-                </Text>
-                <View style={styles.colTotal}>
-                  <Text style={[styles.td, { fontWeight: 700, color: INK }]}>
-                    {money(line.total)}
-                  </Text>
+                <View style={[styles.colUnit, styles.cellEnd]}>
+                  <Money value={line.unitPrice} style={styles.td} />
+                </View>
+                <View style={[styles.colTotal, styles.cellEnd]}>
+                  <Money
+                    value={line.total}
+                    style={{ ...styles.td, fontWeight: 700, color: INK }}
+                  />
                   {line.before != null ? (
-                    <Text style={styles.struck}>{money(line.before)}</Text>
+                    <Money value={line.before} style={styles.struck} />
                   ) : null}
                 </View>
               </View>
@@ -226,40 +321,40 @@ export const OrderInvoicePDF = ({
             {invoice.note ? (
               <>
                 <Text style={styles.caption}>ملاحظات</Text>
-                <Text style={styles.text}>{invoice.note}</Text>
+                <Text style={styles.text}>{typed(invoice.note)}</Text>
               </>
             ) : null}
           </View>
           <View style={styles.totals}>
             <View style={styles.totalRow}>
               <Text style={{ color: MUTED }}>المجموع الفرعي</Text>
-              <Text>{money(invoice.subtotal)}</Text>
+              <Money value={invoice.subtotal} />
             </View>
             {invoice.productDiscount > 0 ? (
               <View style={styles.totalRow}>
                 <Text style={{ color: MUTED }}>خصم المنتجات</Text>
-                <Text>- {money(invoice.productDiscount)}</Text>
+                <Money value={invoice.productDiscount} negative />
               </View>
             ) : null}
             {invoice.couponDiscount > 0 ? (
               <View style={styles.totalRow}>
                 <Text style={{ color: MUTED }}>خصم الكوبون</Text>
-                <Text>- {money(invoice.couponDiscount)}</Text>
+                <Money value={invoice.couponDiscount} negative />
               </View>
             ) : null}
             <View style={styles.totalRow}>
               <Text style={{ color: MUTED }}>التوصيل</Text>
-              <Text>{money(invoice.delivery)}</Text>
+              <Money value={invoice.delivery} />
             </View>
             <View style={styles.grandRow}>
               <Text style={styles.grandLabel}>الإجمالي</Text>
-              <Text style={styles.grandValue}>{money(invoice.total)}</Text>
+              <Money value={invoice.total} style={styles.grandValue} />
             </View>
           </View>
         </View>
 
         <Text style={styles.footer} fixed>
-          شكراً لتسوقكم{store?.name ? ` من ${store.name}` : ""}
+          {typed(`شكراً لتسوقكم${store?.name ? ` من ${store.name}` : ""}`)}
         </Text>
       </Page>
     </Document>
