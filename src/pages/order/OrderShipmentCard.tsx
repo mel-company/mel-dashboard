@@ -47,6 +47,7 @@ import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
 import CourierLogo from "@/components/CourierLogo";
+import Hint from "@/components/Hint";
 import { usePlanFeature } from "@/hooks/use-plan-limits";
 import { PlanFeatureUpgrade } from "@/components/plan/PlanFeatureUpgrade";
 
@@ -456,94 +457,104 @@ const OrderShipmentCard = ({
 
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {capabilities?.getShipment ? (
-                <ActionBtn
-                  disabled={syncShipment.isPending}
-                  onClick={() =>
-                    run(
-                      syncShipment.mutateAsync(),
-                      "تم تحديث حالة الطرد.",
-                      "تعذر تحديث حالة الطرد.",
-                    )
-                  }
-                >
-                  {syncShipment.isPending ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <RefreshCw className="size-3.5" />
-                  )}
-                  تحديث الحالة
-                </ActionBtn>
+                <Hint text="يسأل شركة الشحن عن آخر حالة للطرد ويحدّثها هنا.">
+                  <ActionBtn
+                    disabled={syncShipment.isPending}
+                    onClick={() =>
+                      run(
+                        syncShipment.mutateAsync(),
+                        "تم تحديث حالة الطرد.",
+                        "تعذر تحديث حالة الطرد.",
+                      )
+                    }
+                  >
+                    {syncShipment.isPending ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-3.5" />
+                    )}
+                    تحديث الحالة
+                  </ActionBtn>
+                </Hint>
               ) : null}
 
               {capabilities?.track ? (
-                <ActionBtn onClick={() => setShowTracking((v) => !v)}>
-                  <Route className="size-3.5" />
-                  {showTracking ? "إخفاء المسار" : "عرض المسار"}
-                </ActionBtn>
+                <Hint text="يعرض محطات الطرد كما سجّلتها شركة الشحن.">
+                  <ActionBtn onClick={() => setShowTracking((v) => !v)}>
+                    <Route className="size-3.5" />
+                    {showTracking ? "إخفاء المسار" : "عرض المسار"}
+                  </ActionBtn>
+                </Hint>
               ) : null}
 
               {capabilities?.label ? (
-                <ActionBtn
-                  disabled={shipmentLabel.isPending}
-                  onClick={async () => {
-                    try {
-                      // Prime accepts A5; A4 was the old default and 422s.
-                      const result = await shipmentLabel.mutateAsync("A5");
-                      if (result?.labelUrl?.startsWith("data:")) {
-                        openDataUrl(result.labelUrl, `sticker-${orderId}.pdf`);
-                      } else if (result?.labelUrl) {
-                        window.open(result.labelUrl, "_blank", "noopener");
-                      } else {
-                        toast.error("لم تُرجع الشركة رابط ملصق.");
+                <Hint text="يفتح ملصق الطرد لطباعته ولصقه على الشحنة.">
+                  <ActionBtn
+                    disabled={shipmentLabel.isPending}
+                    onClick={async () => {
+                      try {
+                        // Prime accepts A5; A4 was the old default and 422s.
+                        const result = await shipmentLabel.mutateAsync("A5");
+                        if (result?.labelUrl?.startsWith("data:")) {
+                          openDataUrl(result.labelUrl, `sticker-${orderId}.pdf`);
+                        } else if (result?.labelUrl) {
+                          window.open(result.labelUrl, "_blank", "noopener");
+                        } else {
+                          toast.error("لم تُرجع الشركة رابط ملصق.");
+                        }
+                      } catch (error) {
+                        toast.error(apiError(error, "تعذر جلب الملصق."));
                       }
-                    } catch (error) {
-                      toast.error(apiError(error, "تعذر جلب الملصق."));
-                    }
-                  }}
-                >
-                  {shipmentLabel.isPending ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Printer className="size-3.5" />
-                  )}
-                  الملصق
-                </ActionBtn>
+                    }}
+                  >
+                    {shipmentLabel.isPending ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Printer className="size-3.5" />
+                    )}
+                    الملصق
+                  </ActionBtn>
+                </Hint>
               ) : null}
 
               {shipment.labelUrl && !shipment.labelUrl.startsWith("data:") ? (
-                <ActionBtn asChild>
-                  <a
-                    href={shipment.labelUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="size-3.5" />
-                    صفحة التتبّع
-                  </a>
-                </ActionBtn>
+                <Hint text="يفتح صفحة الطرد لدى شركة الشحن.">
+                  <ActionBtn asChild>
+                    <a
+                      href={shipment.labelUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="size-3.5" />
+                      صفحة التتبّع
+                    </a>
+                  </ActionBtn>
+                </Hint>
               ) : null}
 
               {!statusDriven &&
               capabilities?.cancelShipment &&
               !PARCEL_TERMINAL_STATUSES.includes(shipment.status) ? (
-                <ActionBtn
-                  className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-950/40"
-                  disabled={cancelShipment.isPending}
-                  onClick={() =>
-                    run(
-                      cancelShipment.mutateAsync(),
-                      "تم سحب الطرد.",
-                      "تعذر سحب الطرد.",
-                    )
-                  }
-                >
-                  {cancelShipment.isPending ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Ban className="size-3.5" />
-                  )}
-                  سحب الطرد
-                </ActionBtn>
+                <Hint text="يلغي الطرد لدى شركة الشحن. حالة الطلب لا تتغيّر.">
+                  <ActionBtn
+                    className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                    disabled={cancelShipment.isPending}
+                    onClick={() =>
+                      run(
+                        cancelShipment.mutateAsync(),
+                        "تم سحب الطرد.",
+                        "تعذر سحب الطرد.",
+                      )
+                    }
+                  >
+                    {cancelShipment.isPending ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Ban className="size-3.5" />
+                    )}
+                    سحب الطرد
+                  </ActionBtn>
+                </Hint>
               ) : null}
             </div>
 
@@ -688,24 +699,26 @@ const OrderShipmentCard = ({
             {!courierAllowed ? (
               <PlanFeatureUpgrade feature="courier_integrations" />
             ) : statusDriven && orderStatus === "PROCESSING" ? null : (
-            <Button
-              className="h-12 w-full gap-2 rounded-[14px] bg-sky-600 text-base font-bold text-white hover:bg-sky-700"
-              disabled={createShipment.isPending || !courier.accountReady}
-              onClick={() =>
-                run(
-                  createShipment.mutateAsync({ options }),
-                  "تم تسجيل الطرد لدى شركة الشحن.",
-                  "تعذر تسجيل الطرد.",
-                )
-              }
-            >
-              {createShipment.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Truck className="size-4" />
-              )}
-              تسجيل الطرد لدى {courier.displayName}
-            </Button>
+            <Hint text="يرسل بيانات الطلب إلى شركة الشحن ليُسجَّل الطرد عندها، دون تغيير حالة الطلب.">
+              <Button
+                className="h-12 w-full gap-2 rounded-[14px] bg-sky-600 text-base font-bold text-white hover:bg-sky-700"
+                disabled={createShipment.isPending || !courier.accountReady}
+                onClick={() =>
+                  run(
+                    createShipment.mutateAsync({ options }),
+                    "تم تسجيل الطرد لدى شركة الشحن.",
+                    "تعذر تسجيل الطرد.",
+                  )
+                }
+              >
+                {createShipment.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Truck className="size-4" />
+                )}
+                تسجيل الطرد لدى {courier.displayName}
+              </Button>
+            </Hint>
             )}
 
             {!capabilities?.quote ? (

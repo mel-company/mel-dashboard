@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import Hint from "@/components/Hint";
 import {
   useUpdateDeliveryAddress,
   useUpdateOrder,
@@ -330,15 +331,17 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
           parcel quietly goes to the wrong district. */}
       {dirty ? (
         <div className="mt-5 flex flex-wrap items-center justify-start gap-3">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving || needsRegion}
-            className="flex h-11 items-center justify-center gap-2 rounded-[14px] bg-linear-to-l from-[#b282ff] to-[#33c5ff] px-6 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
-            حفظ التعديلات
-          </button>
+          <Hint text="يحفظ عنوان التوصيل الجديد على الطلب.">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving || needsRegion}
+              className="flex h-11 items-center justify-center gap-2 rounded-[14px] bg-linear-to-l from-[#b282ff] to-[#33c5ff] px-6 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
+              حفظ التعديلات
+            </button>
+          </Hint>
           {needsRegion ? (
             <span className="text-xs text-amber-600 dark:text-amber-400">
               اختر المنطقة في المحافظة الجديدة قبل الحفظ
