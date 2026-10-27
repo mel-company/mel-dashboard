@@ -518,7 +518,13 @@ const OrderDetailsSheet = ({
         has seen the live parcel named here.
       */}
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
-        <DialogContent className="text-right" dir="rtl">
+        {/* The sheet sits at z-[60]; at the default z-50 this confirm opened
+          behind it and the cancel button looked dead. */}
+        <DialogContent
+          className="z-[70] text-right"
+          overlayClassName="z-[70]"
+          dir="rtl"
+        >
           <DialogHeader className="text-right">
             <DialogTitle className="text-right">تأكيد إلغاء الطلب</DialogTitle>
             <DialogDescription className="text-right">
