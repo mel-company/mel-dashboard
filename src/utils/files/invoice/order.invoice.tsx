@@ -6,6 +6,7 @@ import {
   Image,
   StyleSheet,
   Font,
+  Link,
 } from "@react-pdf/renderer";
 import { formatNumber } from "@/utils/format-currency";
 import type { Style } from "@react-pdf/types";
@@ -169,18 +170,33 @@ const styles = StyleSheet.create({
   grandLabel: { fontSize: 11, fontWeight: 700, color: INK },
   grandValue: { fontSize: 14, fontWeight: 700, color: INK },
   note: { flex: 1, marginLeft: 24 },
+  // Absolute children: a flex row inside a `fixed` footer lost the
+  // thank-you line and overflowed the page edge.
   footer: {
     position: "absolute",
-    bottom: 28,
+    bottom: 24,
     left: 44,
     right: 44,
-    paddingTop: 8,
+    height: 22,
     borderTopWidth: 1,
     borderTopColor: RULE,
+  },
+  footerText: { fontSize: 8, color: FAINT, direction: "rtl" },
+  thanks: {
+    position: "absolute",
+    top: 8,
+    right: 0,
+    width: "60%",
+    textAlign: "right",
+  },
+  promo: { position: "absolute", top: 8, left: 0, flexDirection: "row" },
+  promoText: { fontSize: 8, color: FAINT },
+  promoLink: {
     fontSize: 8,
-    color: FAINT,
-    textAlign: "center",
-    direction: "rtl",
+    fontWeight: 700,
+    color: MUTED,
+    textDecoration: "none",
+    marginRight: 3,
   },
 });
 
@@ -353,9 +369,17 @@ export const OrderInvoicePDF = ({
           </View>
         </View>
 
-        <Text style={styles.footer} fixed>
-          {typed(`شكراً لتسوقكم${store?.name ? ` من ${store.name}` : ""}`)}
-        </Text>
+        <View style={styles.footer} fixed>
+          <Text style={[styles.footerText, styles.thanks]}>
+            {typed(`شكراً لتسوقكم${store?.name ? ` من ${store.name}` : ""}`)}
+          </Text>
+          <View style={styles.promo}>
+            <Link src="https://mel.iq" style={styles.promoLink}>
+              mel.iq
+            </Link>
+            <Text style={styles.promoText}>انشئ متجرك بدقائق</Text>
+          </View>
+        </View>
       </Page>
     </Document>
   );

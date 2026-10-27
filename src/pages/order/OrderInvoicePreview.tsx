@@ -32,7 +32,11 @@ const TotalRow = ({
   <div className="flex items-center justify-between py-1.5 text-sm">
     <span className="text-slate-500">{label}</span>
     <span className="font-semibold text-slate-800">
-      {negative ? <Ltr>- {formatCurrency(value)}</Ltr> : <Money value={value} />}
+      {negative ? (
+        <Ltr>- {formatCurrency(value)}</Ltr>
+      ) : (
+        <Money value={value} />
+      )}
     </span>
   </div>
 );
@@ -115,7 +119,9 @@ const InvoicePaper = ({
         <tr className="bg-slate-100 text-xs text-slate-500">
           <th className="w-8 px-2 py-2.5 sm:px-3 font-semibold">#</th>
           <th className="px-2 py-2.5 sm:px-3 font-semibold">المنتج</th>
-          <th className="px-2 py-2.5 sm:px-3 text-center font-semibold">الكمية</th>
+          <th className="px-2 py-2.5 sm:px-3 text-center font-semibold">
+            الكمية
+          </th>
           <th className="px-2 py-2.5 sm:px-3 font-semibold">سعر الوحدة</th>
           <th className="px-2 py-2.5 sm:px-3 font-semibold">المجموع</th>
         </tr>
@@ -192,8 +198,20 @@ const InvoicePaper = ({
       </div>
     </section>
 
-    <footer className="mt-10 border-t border-slate-200 pt-4 text-center text-xs text-slate-400">
-      شكراً لتسوقكم{store.name ? ` من ${store.name}` : ""}
+    <footer className="mt-10 flex items-center justify-between gap-4 border-t border-slate-200 pt-4 text-xs text-slate-400">
+      <span>شكراً لتسوقكم{store.name ? ` من ${store.name}` : ""}</span>
+      <span>
+        انشئ متجرك بدقائق{" "}
+        <a
+          href="https://mel.iq"
+          target="_blank"
+          rel="noreferrer"
+          dir="ltr"
+          className="font-semibold text-slate-500"
+        >
+          mel.iq
+        </a>
+      </span>
     </footer>
   </article>
 );
@@ -217,7 +235,9 @@ function logoAsPng(src: string): Promise<string | null> {
         const canvas = document.createElement("canvas");
         canvas.width = Math.max(1, Math.round(img.width * scale));
         canvas.height = Math.max(1, Math.round(img.height * scale));
-        canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas
+          .getContext("2d")
+          ?.drawImage(img, 0, 0, canvas.width, canvas.height);
         resolve(canvas.toDataURL("image/png"));
       } catch {
         resolve(null);
