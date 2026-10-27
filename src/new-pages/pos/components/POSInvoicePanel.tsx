@@ -138,12 +138,12 @@ const POSInvoicePanel = ({
               الفاتورة فارغة. اختر منتجاً من القائمة لإضافته.
             </p>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full table-fixed text-sm">
               <thead className="sticky top-0 z-[1] bg-slate-50 text-xs text-slate-500 dark:bg-slate-900">
                 <tr>
                   <th className="px-3 py-2 text-right font-medium">المنتج</th>
-                  <th className="px-2 py-2 text-center font-medium">الكمية</th>
-                  <th className="px-2 py-2 text-left font-medium">المجموع</th>
+                  <th className="w-[92px] px-1 py-2 text-center font-medium">الكمية</th>
+                  <th className="w-[104px] py-2 pe-1 ps-2 text-left font-medium">المجموع</th>
                 </tr>
               </thead>
               <tbody>
@@ -160,8 +160,8 @@ const POSInvoicePanel = ({
                       key={`${item.product.id}-${item.variant?.id ?? "d"}`}
                       className="border-t border-slate-100 dark:border-slate-800"
                     >
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
+                      <td className="py-2 pe-1 ps-3">
+                        <div className="flex min-w-0 items-center gap-2">
                           <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-900">
                             {imageSrc ? (
                               <img
@@ -173,8 +173,11 @@ const POSInvoicePanel = ({
                               <Package className="size-4 text-slate-400" />
                             )}
                           </div>
-                          <div className="min-w-0">
-                            <p className="line-clamp-1 font-medium text-slate-900 dark:text-slate-50">
+                          <div className="min-w-0 flex-1">
+                            <p
+                              title={item.product.title}
+                              className="line-clamp-2 font-medium leading-5 text-slate-900 [overflow-wrap:anywhere] dark:text-slate-50"
+                            >
                               {item.product.title}
                             </p>
                             {item.variant ? (
@@ -188,7 +191,7 @@ const POSInvoicePanel = ({
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 py-2">
+                      <td className="px-1 py-2">
                         <div className="mx-auto flex w-fit items-center rounded-lg border border-slate-200 dark:border-slate-800">
                           <button
                             type="button"

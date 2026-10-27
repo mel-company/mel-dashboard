@@ -58,7 +58,9 @@ const POSProductCard = ({ product, baseUrl, onAdd }: POSProductCardProps) => {
       </div>
 
       <div className="flex flex-1 flex-col gap-0.5 p-3">
-        <h3 className="line-clamp-2 text-sm font-medium leading-5 text-slate-900 dark:text-slate-50">
+        <h3
+          title={product.title}
+          className="line-clamp-2 text-sm [overflow-wrap:anywhere] font-medium leading-5 text-slate-900 dark:text-slate-50">
           {product.title}
         </h3>
         {category ? (

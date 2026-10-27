@@ -113,7 +113,7 @@ const POSAddItemDialog = ({
                 )}
               </div>
               <div className="min-w-0">
-                <DialogTitle className="line-clamp-2 text-base font-bold text-slate-900 dark:text-slate-50">
+                <DialogTitle className="line-clamp-2 text-base [overflow-wrap:anywhere] font-bold text-slate-900 dark:text-slate-50">
                   {product.title}
                 </DialogTitle>
                 <p className="mt-0.5 text-xs text-slate-500">
