@@ -6,14 +6,14 @@ import {
 } from "@/hooks/use-plan-limits";
 import { useEffect, useRef, useState } from "react";
 import {
+  Ban,
   CheckCircle2,
   Loader2,
   Package,
   Printer,
-  Trash2,
   Truck,
+  Undo2,
   X,
-  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -41,9 +41,11 @@ import StatusGlyph from "@/components/table/status-glyph";
 import Ltr from "@/components/Ltr";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
-import { isParcelLive } from "@/api/types/shipping";
 import {
-  useDeleteOrder,
+  isParcelLive,
+  type CreateShipmentOptions,
+} from "@/api/types/shipping";
+import {
   useFetchOrder,
   useFetchOrderLogs,
   useUpdateStatusToCancelled,
@@ -51,7 +53,13 @@ import {
   useUpdateStatusToProcessing,
   useUpdateStatusToShipped,
 } from "@/api/wrappers/order.wrappers";
-import { useActiveCourier, useOrderShipment } from "@/api/wrappers/shipping.wrappers";
+import {
+  useActiveCourier,
+  useCancelShipment,
+  useCreateShipment,
+  useOrderShipment,
+} from "@/api/wrappers/shipping.wrappers";
+import { usePlanFeature } from "@/hooks/use-plan-limits";
 import { useAutoDispatchOnShip } from "@/hooks/use-auto-dispatch-on-ship";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "@/pages/order/OrderInvoicePreview";
 import OrderShipmentCard from "@/pages/order/OrderShipmentCard";
@@ -91,7 +99,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   imageBaseUrl?: string | null;
   calculateTotal?: (products: any[]) => number;
-  /** Refresh the list behind the drawer after a delete. */
+  /** Refresh the list behind the drawer after a status change. */
   onChanged?: () => void;
 };
 
@@ -111,8 +119,10 @@ const OrderDetailsSheet = ({
   const open = !!seed;
   const id = seed?.id ?? "";
   const [tab, setTab] = useState("info");
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [cancelOpen, setCancelOpen] = useState(false);
+  /** Which confirm is open: cancelling the order, or withdrawing its parcel. */
+  const [confirm, setConfirm] = useState<"cancel" | "withdraw" | null>(null);
+  /** Boxy size / fragile, Modon replacement — sent with «شحن الطلب». */
+  const [shipOptions, setShipOptions] = useState<CreateShipmentOptions>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // The row already carries enough to paint the header and the summary, so the
@@ -130,7 +140,9 @@ const OrderDetailsSheet = ({
   const { data: shipment } = useOrderShipment(id, open);
   const { data: courier } = useActiveCourier(open);
   const { dispatchIfNeeded, isDispatching } = useAutoDispatchOnShip(id, open);
-  const { mutate: deleteOrder, isPending: isDeleting } = useDeleteOrder();
+  const courierAllowed = usePlanFeature("courier_integrations");
+  const createShipment = useCreateShipment(id);
+  const cancelShipment = useCancelShipment(id);
   const { mutate: toProcessing, isPending: isToProcessing } =
     useUpdateStatusToProcessing();
   const { mutate: toShipped, isPending: isToShipped } =
@@ -145,14 +157,31 @@ const OrderDetailsSheet = ({
     isToShipped ||
     isToDelivered ||
     isToCancelled ||
-    isDispatching;
+    isDispatching ||
+    createShipment.isPending ||
+    cancelShipment.isPending;
   const liveParcel = shipment && isParcelLive(shipment) ? shipment : null;
+  // Asked of the parcel's own courier, not the store's current one.
+  const canWithdraw = !!liveParcel?.courier?.capabilities?.cancelShipment;
+  const parcelCourierName =
+    liveParcel?.courier?.displayName ?? liveParcel?.courierCode ?? "";
+  /**
+   * «شحن الطلب» registers the parcel first and only then marks the order
+   * shipped, so a refused parcel leaves the order in «قيد المعالجة» instead
+   * of «تم الشحن» with nothing on the van.
+   */
+  const dispatchFirst =
+    courier?.selected === true &&
+    courier.integrated === true &&
+    courier.accountReady &&
+    courierAllowed &&
+    !liveParcel;
 
   useEffect(() => {
     if (!open) {
       setTab("info");
-      setConfirmingDelete(false);
-      setCancelOpen(false);
+      setConfirm(null);
+      setShipOptions({});
     }
   }, [open]);
 
@@ -167,6 +196,7 @@ const OrderDetailsSheet = ({
   const status = getOrderStatusMeta(order?.status);
   const { date, time } = formatOrderDateParts(order?.createdAt);
   const baseUrl = imageBaseUrl ?? order?.baseUrl ?? "";
+  const orderStatus = String(order?.status ?? "").toUpperCase();
 
   const handlePrint = () => {
     if (!order) return;
@@ -181,23 +211,6 @@ const OrderDetailsSheet = ({
       "orderInvoicePreview",
       "width=900,height=900,scrollbars=yes,resizable=yes",
     );
-  };
-
-  const handleDelete = () => {
-    if (!id) return;
-    if (!confirmingDelete) {
-      setConfirmingDelete(true);
-      return;
-    }
-    deleteOrder(id, {
-      onSuccess: () => {
-        toast.success("تم حذف الطلب");
-        onOpenChange(false);
-        onChanged?.();
-      },
-      onError: (err: unknown) =>
-        toast.error(apiErrorMessage(err, "فشل في حذف الطلب")),
-    });
   };
 
   const afterStatusChange = (message: string) => {
@@ -220,6 +233,36 @@ const OrderDetailsSheet = ({
     }
 
     if (target === "SHIPPED") {
+      if (dispatchFirst) {
+        createShipment.mutate(
+          {
+            options: shipOptions,
+            // A withdrawn parcel still holds the order's row; replace it.
+            ...(shipment ? { force: true } : {}),
+          },
+          {
+            onSuccess: () =>
+              toShipped(id, {
+                onSuccess: () =>
+                  afterStatusChange(
+                    `تم تسجيل الطرد لدى ${courier.displayName || "شركة الشحن"} وشحن الطلب`,
+                  ),
+                onError: (err) =>
+                  toast.error(
+                    apiErrorMessage(
+                      err,
+                      "سُجّل الطرد، لكن تعذر تحديث حالة الطلب إلى تم الشحن",
+                    ),
+                  ),
+              }),
+            onError: (err) =>
+              toast.error(
+                apiErrorMessage(err, "تعذر تسجيل الطرد لدى شركة الشحن"),
+              ),
+          },
+        );
+        return;
+      }
       toShipped(id, {
         onSuccess: () => {
           afterStatusChange("تم تحديث حالة الطلب إلى تم الشحن");
@@ -242,22 +285,72 @@ const OrderDetailsSheet = ({
       return;
     }
 
-    toCancelled(
-      { id, force: !!liveParcel },
-      {
-        onSuccess: () => {
-          setCancelOpen(false);
-          afterStatusChange("تم إلغاء الطلب بنجاح");
+    const cancelOrder = (force: boolean) =>
+      toCancelled(
+        { id, force },
+        {
+          onSuccess: () => {
+            setConfirm(null);
+            afterStatusChange("تم إلغاء الطلب وإرجاع الكميات إلى المخزون");
+          },
+          onError: (err) =>
+            toast.error(apiErrorMessage(err, "فشل في إلغاء الطلب")),
         },
+      );
+
+    // A parcel the courier can take back is withdrawn first, so cancelling
+    // never leaves a driver delivering an order the store has dropped. Only
+    // a courier with no withdrawal API needs the forced cancel.
+    if (liveParcel && canWithdraw) {
+      cancelShipment.mutate(undefined, {
+        onSuccess: () => cancelOrder(false),
         onError: (err) =>
-          toast.error(apiErrorMessage(err, "فشل في إلغاء الطلب")),
-      },
-    );
+          toast.error(
+            apiErrorMessage(err, "تعذر سحب الطرد، فلم يُلغَ الطلب"),
+          ),
+      });
+      return;
+    }
+    cancelOrder(!!liveParcel);
   };
 
-  const orderStatus = String(order?.status ?? "").toUpperCase();
+  /**
+   * «سحب من الشحن»: the courier takes the parcel back and the order returns
+   * to «قيد المعالجة», where it can be shipped again or cancelled.
+   */
+  const handleWithdraw = () => {
+    if (!id) return;
+    cancelShipment.mutate(undefined, {
+      onSuccess: () => {
+        setConfirm(null);
+        if (orderStatus !== "SHIPPED") {
+          afterStatusChange("تم سحب الطرد من شركة الشحن");
+          return;
+        }
+        toProcessing(id, {
+          onSuccess: () =>
+            afterStatusChange("تم سحب الطرد وأُعيد الطلب إلى قيد المعالجة"),
+          onError: (err) =>
+            toast.error(
+              apiErrorMessage(
+                err,
+                "سُحب الطرد، لكن تعذر إرجاع الطلب إلى قيد المعالجة",
+              ),
+            ),
+        });
+      },
+      onError: (err) => toast.error(apiErrorMessage(err, "تعذر سحب الطرد")),
+    });
+  };
+
   const canCancel =
     orderStatus !== "DELIVERED" && orderStatus !== "CANCELLED";
+  /**
+   * The courier has the parcel and has not delivered it. The server refuses
+   * «تم التسليم» then (sync promotes the order itself once the courier
+   * reports delivery), so the button waits instead of failing.
+   */
+  const awaitingCourier = orderStatus === "SHIPPED" && !!liveParcel;
 
   const nextStatusAction =
     orderStatus === "PENDING"
@@ -286,10 +379,16 @@ const OrderDetailsSheet = ({
   const financialCard = (
     <OrderFinancialCard order={order} calculateTotal={calculateTotal} />
   );
+  // A withdrawn parcel on a reopened order is history, not its delivery.
+  const shownParcel =
+    shipment &&
+    (liveParcel || (orderStatus !== "PENDING" && orderStatus !== "PROCESSING"))
+      ? shipment
+      : null;
   const deliveryCard = (
     <OrderDeliveryCard
       order={order}
-      shipment={shipment}
+      shipment={shownParcel}
       /**
        * The company holding **this parcel** first, and the store's current one
        * only when there is no parcel. A merchant who switches courier leaves
@@ -297,10 +396,17 @@ const OrderDetailsSheet = ({
        * over someone else's parcel is simply wrong.
        */
       courierName={
-        shipment
-          ? (shipment.courier?.displayName ?? shipment.courierCode)
+        shownParcel
+          ? (shownParcel.courier?.displayName ?? shownParcel.courierCode)
           : courier?.selected
             ? courier.deliveryCompanyName
+            : null
+      }
+      courierLogo={
+        shownParcel
+          ? shownParcel.courier?.logo
+          : courier?.selected && courier.integrated
+            ? courier.logo
             : null
       }
     />
@@ -308,73 +414,62 @@ const OrderDetailsSheet = ({
 
   const StatusIcon = nextStatusAction?.icon;
 
-  // Status first (complete the order), then print / delete — the sheet used
-  // to only expose print+delete, so merchants could not advance PENDING → …
-  // → DELIVERED from the list drawer at all.
-  const actions = (
+  /**
+   * By status: the step that moves the order on, «سحب من الشحن» while a
+   * parcel is with a courier that can take it back, then cancel. Print
+   * lives in the header so it is there for every status.
+   */
+  const actions = nextStatusAction || canCancel ? (
     <div className="flex flex-col items-stretch gap-3">
       {nextStatusAction ? (
-        <button
-          type="button"
-          onClick={nextStatusAction.onClick}
-          disabled={isUpdatingStatus}
-          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 text-base font-bold text-white transition-opacity hover:bg-sky-700 disabled:opacity-50"
-        >
-          {isUpdatingStatus ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : StatusIcon ? (
-            <StatusIcon className="size-4" />
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={nextStatusAction.onClick}
+            disabled={isUpdatingStatus || awaitingCourier}
+            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 text-base font-bold text-white transition-colors hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-[#1a224c] dark:disabled:text-[#4a5596]"
+          >
+            {isUpdatingStatus ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : StatusIcon ? (
+              <StatusIcon className="size-4" />
+            ) : null}
+            {nextStatusAction.label}
+          </button>
+          {awaitingCourier ? (
+            <p className="text-center text-xs leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
+              يُؤكَّد التسليم تلقائياً حين تسلّم {parcelCourierName} الطرد. حدّث
+              حالة الطرد من بطاقة الشحن.
+            </p>
           ) : null}
-          {nextStatusAction.label}
-        </button>
+        </div>
       ) : null}
 
-      {/* RTL: `flex-row` puts the first child rightmost, so طباعة الفاتورة
-          lands on the right and حذف الطلب on the left, as drawn. */}
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+      {canWithdraw && canCancel ? (
         <button
           type="button"
-          onClick={handlePrint}
-          className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-base font-bold text-white transition-opacity hover:opacity-90"
+          onClick={() => setConfirm("withdraw")}
+          disabled={isUpdatingStatus}
+          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/60 bg-transparent text-base font-bold text-amber-700 transition-colors hover:bg-amber-500/10 disabled:opacity-50 dark:border-amber-400/40 dark:text-amber-300"
         >
-          <span className="flex size-8 items-center justify-center rounded-xl bg-white/20">
-            <Printer className="size-4" />
-          </span>
-          طباعة الفاتورة
+          <Undo2 className="size-4" />
+          سحب من الشحن
         </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={isDeleting || isUpdatingStatus}
-          className={cn(
-            "flex h-[52px] items-center justify-center gap-2 rounded-2xl border px-5 text-base font-bold transition-colors disabled:opacity-50 sm:w-auto sm:flex-1",
-            confirmingDelete
-              ? "border-transparent bg-[#ff5252] text-white hover:bg-[#ff3b3b]"
-              : "border-[#ff5252]/30 text-[#ff5252] hover:bg-[#ff5252]/10",
-          )}
-        >
-          {isDeleting ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Trash2 className="size-4" />
-          )}
-          {confirmingDelete ? "تأكيد الحذف" : "حذف الطلب"}
-        </button>
-      </div>
+      ) : null}
 
       {canCancel ? (
         <button
           type="button"
-          onClick={() => setCancelOpen(true)}
+          onClick={() => setConfirm("cancel")}
           disabled={isUpdatingStatus}
-          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 text-base font-bold text-rose-600 transition-colors hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50"
+          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-[#ff5252]/50 bg-transparent text-base font-bold text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50"
         >
-          <XCircle className="size-4" />
+          <Ban className="size-4" />
           إلغاء الطلب
         </button>
       ) : null}
     </div>
-  );
+  ) : null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -382,6 +477,9 @@ const OrderDetailsSheet = ({
         side={isMobile ? "bottom" : "left"}
         dir="rtl"
         showCloseButton={false}
+        // Radix focuses the first button on open, which is now print in the
+        // header, and it opened looking pressed. Nothing needs focus first.
+        onOpenAutoFocus={(event) => event.preventDefault()}
         // On touch Radix judges an outside tap at `click`, by which time the
         // cancel confirm has already closed, so dismissing it (تراجع, the X or
         // its backdrop) also read as a tap outside the sheet and closed it.
@@ -396,7 +494,7 @@ const OrderDetailsSheet = ({
           }
         }}
         className={cn(
-          "z-[60] flex flex-col gap-0 border-0 p-0 text-foreground",
+          "z-[60] flex flex-col gap-0 border-0 p-0 text-foreground outline-none",
           "bg-slate-50 dark:bg-[#12183b]",
           isMobile
             ? cn(
@@ -445,6 +543,15 @@ const OrderDetailsSheet = ({
             </span>
             <button
               type="button"
+              onClick={handlePrint}
+              aria-label="طباعة الفاتورة"
+              className="flex h-9 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 sm:px-3.5 dark:border-[#2a3160] dark:bg-[#0a0e27] dark:text-[#e4e7fc] dark:hover:bg-[#12183b]"
+            >
+              <Printer className="size-4" />
+              <span className="hidden sm:inline">طباعة الفاتورة</span>
+            </button>
+            <button
+              type="button"
               onClick={() => onOpenChange(false)}
               aria-label="إغلاق"
               className="flex size-9 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 dark:text-[#4a5596] dark:hover:bg-white/5 dark:hover:text-[#e4e7fc]"
@@ -483,7 +590,12 @@ const OrderDetailsSheet = ({
                 {invoiceCard}
                 {financialCard}
                 {deliveryCard}
-                <OrderShipmentCard order={order} onUpdated={() => refetch()} />
+                <OrderShipmentCard
+                  order={order}
+                  onUpdated={() => refetch()}
+                  shipOptions={shipOptions}
+                  onShipOptionsChange={setShipOptions}
+                />
                 <section className="rounded-[24px] bg-white p-4 dark:bg-[#0a0e27]">
                   <h3 className="mb-3 text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
                     سجل الطلب
@@ -511,7 +623,12 @@ const OrderDetailsSheet = ({
                     imageBaseUrl={baseUrl}
                     variant="table"
                   />
-                  <OrderShipmentCard order={order} onUpdated={() => refetch()} />
+                  <OrderShipmentCard
+                  order={order}
+                  onUpdated={() => refetch()}
+                  shipOptions={shipOptions}
+                  onShipOptionsChange={setShipOptions}
+                />
                 </div>
                 <div className="min-w-0 space-y-4">
                   {financialCard}
@@ -525,12 +642,15 @@ const OrderDetailsSheet = ({
       </SheetContent>
 
       {/*
-        إلغاء الطلب — confirmed, and loudest where a parcel is in the air.
-        Same acknowledgement the full order page uses: cancel returns stock
-        but does not notify the courier unless force is sent after the merchant
-        has seen the live parcel named here.
+        إلغاء الطلب / سحب من الشحن — both confirmed, and both name the parcel
+        when there is one. Cancelling returns the stock; a parcel the courier
+        can take back is withdrawn first, and only a courier with no
+        withdrawal API needs the forced cancel and a phone call.
       */}
-      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+      <Dialog
+        open={confirm !== null}
+        onOpenChange={(next) => !next && setConfirm(null)}
+      >
         {/* The sheet sits at z-[60]; at the default z-50 this confirm opened
           behind it and the cancel button looked dead. */}
         <DialogContent
@@ -539,9 +659,13 @@ const OrderDetailsSheet = ({
           dir="rtl"
         >
           <DialogHeader className="text-right">
-            <DialogTitle className="text-right">تأكيد إلغاء الطلب</DialogTitle>
+            <DialogTitle className="text-right">
+              {confirm === "withdraw" ? "سحب الطرد من الشحن" : "تأكيد إلغاء الطلب"}
+            </DialogTitle>
             <DialogDescription className="text-right">
-              الإلغاء نهائي ولا يمكن التراجع عنه، وتُرجَع الكميات إلى المخزون.
+              {confirm === "withdraw"
+                ? "ستُطلب من شركة الشحن استعادة الطرد، ويعود الطلب إلى «قيد المعالجة» لتعيد شحنه أو تلغيه. ترفض الشركة السحب إن كان الطرد قد سُلّم للسائق."
+                : "الإلغاء نهائي ولا يمكن التراجع عنه، وتُرجَع الكميات إلى المخزون."}
             </DialogDescription>
           </DialogHeader>
 
@@ -550,16 +674,15 @@ const OrderDetailsSheet = ({
               <Truck className="mt-0.5 size-4 shrink-0" />
               <div className="space-y-1">
                 <p className="font-bold">
-                  هذا الطلب ما زال لديه طرد نشط لدى{" "}
-                  {liveParcel.courier?.displayName ?? liveParcel.courierCode}
+                  الطرد <Ltr>{liveParcel.externalId}</Ltr> لدى {parcelCourierName}
                 </p>
-                <p className="text-xs">
-                  رقم الطرد <Ltr>{liveParcel.externalId}</Ltr>. الإلغاء هنا لا
-                  يُبلِغ الشركة —{" "}
-                  {liveParcel.courier?.capabilities?.cancelShipment
-                    ? "اسحب الطرد من بطاقة الشحن أولاً، أو ألغِ الطلب ثم تابع الطرد مع الشركة."
-                    : "لا تدعم الشركة السحب عبر النظام، فاتصل بها لإيقاف التسليم."}
-                </p>
+                {confirm === "cancel" ? (
+                  <p className="text-xs">
+                    {canWithdraw
+                      ? "سيُسحب الطرد من الشركة أولاً، ثم يُلغى الطلب."
+                      : "لا تدعم الشركة السحب عبر النظام: الإلغاء هنا لا يُبلغها، فاتصل بها لإيقاف التسليم."}
+                  </p>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -567,22 +690,32 @@ const OrderDetailsSheet = ({
           <DialogFooter className="gap-2">
             <Button
               variant="secondary"
-              onClick={() => setCancelOpen(false)}
-              disabled={isToCancelled}
+              onClick={() => setConfirm(null)}
+              disabled={isUpdatingStatus}
             >
               تراجع
             </Button>
             <Button
               variant="destructive"
-              disabled={isToCancelled}
-              onClick={() => handleStatusUpdate("CANCELLED")}
+              className={cn(
+                confirm === "withdraw" &&
+                  "bg-amber-600 hover:bg-amber-700 dark:bg-amber-600",
+              )}
+              disabled={isUpdatingStatus}
+              onClick={() =>
+                confirm === "withdraw"
+                  ? handleWithdraw()
+                  : handleStatusUpdate("CANCELLED")
+              }
             >
-              {isToCancelled ? (
+              {isUpdatingStatus ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  جاري الإلغاء...
+                  {confirm === "withdraw" ? "جاري السحب..." : "جاري الإلغاء..."}
                 </>
-              ) : liveParcel ? (
+              ) : confirm === "withdraw" ? (
+                "سحب الطرد"
+              ) : liveParcel && !canWithdraw ? (
                 "إلغاء الطلب رغم وجود الطرد"
               ) : (
                 "تأكيد الإلغاء"

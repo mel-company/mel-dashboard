@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Route,
   Truck,
+  Wine,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -39,11 +40,13 @@ import type {
 } from "@/api/types/shipping";
 import {
   formatCourierStatusLabel,
+  isParcelLive,
   PARCEL_TERMINAL_STATUSES,
 } from "@/api/types/shipping";
 import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
+import CourierLogo from "@/components/CourierLogo";
 import { usePlanFeature } from "@/hooks/use-plan-limits";
 import { PlanFeatureUpgrade } from "@/components/plan/PlanFeatureUpgrade";
 
@@ -184,9 +187,23 @@ const ActionBtn = ({
 type Props = {
   order: Record<string, unknown>;
   onUpdated?: () => void;
+  /**
+   * Given by the order drawer, which owns the shipping steps. The card then
+   * follows the order's status: nothing to do before «بدء المعالجة», the
+   * parcel options while processing (sent by the drawer's «شحن الطلب»), and
+   * the parcel itself once shipped. Withdrawing lives with the drawer's
+   * actions too. Without it the card keeps its own buttons.
+   */
+  shipOptions?: CreateShipmentOptions;
+  onShipOptionsChange?: (options: CreateShipmentOptions) => void;
 };
 
-const OrderShipmentCard = ({ order, onUpdated }: Props) => {
+const OrderShipmentCard = ({
+  order,
+  onUpdated,
+  shipOptions,
+  onShipOptionsChange,
+}: Props) => {
   const orderId = String(order.id ?? "");
 
   const { data: courier, isLoading: courierLoading } = useActiveCourier();
@@ -199,7 +216,14 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
     showTracking,
   );
 
-  const [options, setOptions] = useState<CreateShipmentOptions>({});
+  const [ownOptions, setOwnOptions] = useState<CreateShipmentOptions>({});
+  const statusDriven = !!onShipOptionsChange;
+  const options = statusDriven ? (shipOptions ?? {}) : ownOptions;
+  const setOptions = (
+    update: (current: CreateShipmentOptions) => CreateShipmentOptions,
+  ) =>
+    statusDriven ? onShipOptionsChange(update(options)) : setOwnOptions(update);
+  const orderStatus = String(order.status ?? "").toUpperCase();
 
   const createShipment = useCreateShipment(orderId);
   // Sending a parcel into the courier's system is a plan feature.
@@ -210,18 +234,32 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
 
   const integrated = courier?.selected === true && courier.integrated === true;
 
+  const showParcel =
+    !!shipment &&
+    !(
+      statusDriven &&
+      !isParcelLive(shipment) &&
+      (orderStatus === "PENDING" || orderStatus === "PROCESSING")
+    );
+
   const parcelCourier = shipment?.courier ?? null;
-  const capabilities = shipment
+  const capabilities = showParcel && shipment
     ? (parcelCourier?.capabilities ?? null)
     : integrated
       ? courier.capabilities
       : null;
 
-  const courierName = shipment
+  const courierName = showParcel && shipment
     ? (parcelCourier?.displayName ?? shipment.courierCode)
     : integrated
       ? courier.deliveryCompanyName || courier.displayName
       : "";
+
+  const courierLogo = showParcel && shipment
+    ? (parcelCourier?.logo ?? null)
+    : integrated
+      ? (courier.logo ?? null)
+      : null;
 
   const parcelFromOtherCourier =
     !!shipment && integrated && shipment.courierCode !== courier.code;
@@ -281,14 +319,16 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
     <section className="rounded-[24px] bg-white p-4 sm:p-5 dark:bg-[#0a0e27]">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-[12px] bg-sky-50 text-sky-600 dark:bg-[#33c5ff]/10 dark:text-[#33c5ff]">
-            <Truck className="size-4" />
-          </span>
+          <CourierLogo
+            logo={courierLogo}
+            className="size-9 rounded-[12px] p-0"
+            iconClassName="size-4"
+          />
           <div className="min-w-0 text-right">
             <h3 className="truncate text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
               الشحن عبر {courierName}
             </h3>
-            {shipment ? (
+            {showParcel && shipment ? (
               <p className="mt-0.5 text-[11px] text-slate-400 dark:text-[#a4b1fa]">
                 حالة الشركة:{" "}
                 <span className="font-semibold text-slate-600 dark:text-[#e4e7fc]">
@@ -298,7 +338,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
             ) : null}
           </div>
         </div>
-        {shipment ? (
+        {showParcel && shipment ? (
           <span
             className={cn(
               "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-xs font-bold",
@@ -368,7 +408,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
           </div>
         ) : null}
 
-        {shipment ? (
+        {showParcel && shipment ? (
           <>
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               <Meta label="رقم الطرد">
@@ -483,7 +523,8 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                 </ActionBtn>
               ) : null}
 
-              {capabilities?.cancelShipment &&
+              {!statusDriven &&
+              capabilities?.cancelShipment &&
               !PARCEL_TERMINAL_STATUSES.includes(shipment.status) ? (
                 <ActionBtn
                   className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-950/40"
@@ -511,7 +552,8 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                 لم يعد هذا الطرد مرتبطاً بتكامل فعّال ({shipment.courierCode}) —
                 الأرقام أعلاه هي ما تحتاجه للاتصال بالشركة مباشرة.
               </p>
-            ) : !capabilities?.cancelShipment ? (
+            ) : !capabilities?.cancelShipment &&
+              !PARCEL_TERMINAL_STATUSES.includes(shipment.status) ? (
               <p className="text-[11px] leading-relaxed text-slate-400 dark:text-[#a4b1fa]">
                 لا تدعم {courierName} سحب الطرد عبر النظام — اتصل بهم مباشرة.
               </p>
@@ -559,11 +601,28 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
               </div>
             ) : null}
           </>
+        ) : statusDriven &&
+          (orderStatus === "PENDING" ||
+            orderStatus === "DELIVERED" ||
+            orderStatus === "CANCELLED") ? (
+          <p className="text-sm leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
+            {orderStatus === "PENDING"
+              ? `ابدأ معالجة الطلب أولاً، ثم يُسجَّل الطرد لدى ${courierName} من زر «شحن الطلب».`
+              : orderStatus === "CANCELLED"
+                ? "الطلب ملغى، فلا طرد لتسجيله."
+                : "سُلّم الطلب دون طرد مسجّل لدى شركة الشحن."}
+          </p>
         ) : (
           <>
+            {statusDriven && shipment ? (
+              <p className="text-xs leading-relaxed text-slate-400 dark:text-[#a4b1fa]">
+                سُحب الطرد السابق (<Ltr>{shipment.externalId ?? "—"}</Ltr>).
+              </p>
+            ) : null}
             <p className="text-sm leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
-              لم يُسجَّل هذا الطلب لدى شركة الشحن بعد. يمكنك تسجيله من هنا أو من
-              زر «شحن الطلب» أعلى الإجراءات.
+              {statusDriven && orderStatus === "PROCESSING"
+                ? `يُسجَّل الطرد لدى ${courierName} عند الضغط على «شحن الطلب».`
+                : "لم يُسجَّل هذا الطلب لدى شركة الشحن بعد. يمكنك تسجيله من هنا أو من زر «شحن الطلب» أعلى الإجراءات."}
             </p>
 
             {courier.code === "boxy" ? (
@@ -602,6 +661,7 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
                       }
                       className="size-4 rounded"
                     />
+                    <Wine className="size-4 text-amber-600 dark:text-amber-300" />
                     قابل للكسر
                   </label>
                 </div>
@@ -627,9 +687,9 @@ const OrderShipmentCard = ({ order, onUpdated }: Props) => {
 
             {!courierAllowed ? (
               <PlanFeatureUpgrade feature="courier_integrations" />
-            ) : (
+            ) : statusDriven && orderStatus === "PROCESSING" ? null : (
             <Button
-              className="h-12 w-full gap-2 rounded-[14px] text-base font-bold"
+              className="h-12 w-full gap-2 rounded-[14px] bg-sky-600 text-base font-bold text-white hover:bg-sky-700"
               disabled={createShipment.isPending || !courier.accountReady}
               onClick={() =>
                 run(

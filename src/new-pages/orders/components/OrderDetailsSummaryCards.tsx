@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ReactNode } from "react";
-import { Percent, Truck } from "lucide-react";
+import { Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
+import CourierLogo from "@/components/CourierLogo";
 import { formatCurrency, formatNumber } from "@/utils/format-currency";
 import { getOrderProductCount, getOrderStatusMeta, getOrderTotal } from "../utils";
 import {
@@ -63,21 +64,34 @@ export const OrderFinancialCard = ({
   calculateTotal,
   onAddDiscount,
 }: FinancialProps) => {
-  const count = getOrderProductCount(order);
+  // Pieces, not lines: `_count.products` counts order lines, so 3 × shirt
+  // read «1 قطعة» once the detail call had loaded the lines.
+  const lines: any[] = Array.isArray(order?.products) ? order.products : [];
+  const count = lines.length
+    ? lines.reduce((sum, line) => sum + (Number(line?.quantity) || 1), 0)
+    : getOrderProductCount(order);
   const goods = Number(
     order?.pricing?.subtotalAfterProductDiscounts ??
       order?.pricing?.subtotal ??
       (calculateTotal ? calculateTotal(order?.products ?? []) : 0),
   ) || 0;
   const delivery = Number(order?.deliveryFee ?? 0) || 0;
+  const coupon = Number(order?.pricing?.couponDiscountTotal ?? 0) || 0;
+  const pricedTotal = order?.pricing?.totalPrice;
   const apiTotal = Number(getOrderTotal(order, calculateTotal)) || 0;
+  // `pricing.totalPrice` is goods after discounts and coupons, *without*
+  // delivery, so the shopper's bill is that plus the fee. Reading it as the
+  // whole bill dropped the delivery fee from every order with a coupon.
+  //
   // When the API's total is just the goods line but delivery is listed
   // separately, the card used to show «1,000» next to a «3,000» shipping
   // row — look like a broken sum. Prefer goods+delivery in that case.
   const total =
-    delivery > 0 && Math.abs(apiTotal - goods) < 0.01
-      ? goods + delivery
-      : apiTotal || goods + delivery;
+    pricedTotal != null && !Number.isNaN(Number(pricedTotal))
+      ? Number(pricedTotal) + delivery
+      : delivery > 0 && Math.abs(apiTotal - goods) < 0.01
+        ? goods + delivery
+        : apiTotal || goods + delivery;
 
   return (
     <section className="rounded-[24px] bg-white p-4 sm:p-5 dark:bg-[#0a0e27]">
@@ -99,14 +113,19 @@ export const OrderFinancialCard = ({
         ) : null}
       </header>
 
-      <Row label="أجمالي المنتجات">{formatNumber(count)} قطعة</Row>
+      <Row label="إجمالي المنتجات">{formatNumber(count)} قطعة</Row>
       <Row label="سعر المنتجات">
         <Ltr>{formatCurrency(goods)}</Ltr>
       </Row>
+      {coupon > 0 ? (
+        <Row label="خصم الكوبون">
+          <Ltr>-{formatCurrency(coupon)}</Ltr>
+        </Row>
+      ) : null}
       <Row label="سعر التوصيل">
         <Ltr>{formatCurrency(delivery)}</Ltr>
       </Row>
-      <Row label="اجمالي السعر" emphasis divider={false}>
+      <Row label="إجمالي السعر" emphasis divider={false}>
         <Ltr>{formatCurrency(total)}</Ltr>
       </Row>
     </section>
@@ -125,6 +144,7 @@ type DeliveryProps = {
    */
   shipment?: CourierShipment | null;
   courierName?: string | null;
+  courierLogo?: string | null;
 };
 
 /** تفاصيل التوصيل — the parcel's identifiers with the courier. */
@@ -132,6 +152,7 @@ export const OrderDeliveryCard = ({
   order,
   shipment,
   courierName,
+  courierLogo,
 }: DeliveryProps) => {
   const orderStatus = getOrderStatusMeta(order?.status);
   const trackingNumber = shipment?.externalId ?? null;
@@ -154,7 +175,13 @@ export const OrderDeliveryCard = ({
           تفاصيل التوصيل
         </h3>
         <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-[#e4e7fc]">
-          <Truck className="size-4 text-rose-500" />
+          {courierName?.trim() ? (
+            <CourierLogo
+              logo={courierLogo}
+              className="size-7 rounded-lg p-0"
+              iconClassName="size-4"
+            />
+          ) : null}
           {courierName?.trim() || "—"}
         </span>
       </header>

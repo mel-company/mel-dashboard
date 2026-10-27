@@ -128,12 +128,17 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
       localizedName(order?.state?.name),
     [stateList, stateId, order?.state?.name],
   );
+  const movedProvince = stateId !== (order?.stateId ?? "");
   const regionLabel = useMemo(
     () =>
       localizedName(regionList.find((r) => r?.id === regionId)?.name) ||
-      localizedName(order?.region?.name),
-    [regionList, regionId, order?.region?.name],
+      // The order's old city is only a fair placeholder in its own province;
+      // after a province change it read as if that city were still picked.
+      (movedProvince ? "" : localizedName(order?.region?.name)),
+    [regionList, regionId, movedProvince, order?.region?.name],
   );
+  // A new province with no city saves an order the courier cannot route.
+  const needsRegion = movedProvince && !!stateId && !regionId;
 
   const syncCustomerLocation = () => {
     // List API reads `user.location`, which stays null unless something writes
@@ -156,7 +161,7 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
   };
 
   const handleSave = () => {
-    if (!order?.id || !dirty) return;
+    if (!order?.id || !dirty || needsRegion) return;
 
     const done = () => {
       toast.success("تم حفظ التعديلات");
@@ -168,7 +173,9 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
         {
           stateId: stateId || undefined,
           regionId: regionId || undefined,
-          nearest_point: nearestPoint || undefined,
+          // Sent as typed, "" included: `|| undefined` meant a cleared field
+          // was never saved and the save button never went away.
+          nearest_point: nearestPoint,
         },
         {
           onSuccess: () => {
@@ -231,10 +238,22 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
           <ReadOnly value={customer?.name} />
         </Field>
         <Field label="رقم الهاتف">
-          <ReadOnly value={customer?.phone} ltr />
-        </Field>
-        <Field label="البريد الالكتروني">
-          <ReadOnly value={customer?.email} ltr />
+          {customer?.phone?.trim() ? (
+            // Calling the customer is the most common thing done from here.
+            <a
+              href={`tel:${customer.phone.trim()}`}
+              className={cn(
+                pillClass,
+                "text-sky-600 hover:bg-slate-100 dark:text-[#33c5ff] dark:hover:bg-[#1a224c]",
+              )}
+            >
+              <span className="truncate" dir="ltr">
+                {customer.phone.trim()}
+              </span>
+            </a>
+          ) : (
+            <ReadOnly value={customer?.phone} ltr />
+          )}
         </Field>
         <Field label="طريقة الدفع">
           <ReadOnly value={payment.label} />
@@ -293,7 +312,7 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
             )}
           />
         </Field>
-        <Field label="الملاحظات">
+        <Field label="الملاحظات" className="sm:col-span-2">
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -310,16 +329,21 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
       {/* Saving is an act: an address that rewrites itself on blur is how a
           parcel quietly goes to the wrong district. */}
       {dirty ? (
-        <div className="mt-5 flex justify-start">
+        <div className="mt-5 flex flex-wrap items-center justify-start gap-3">
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || needsRegion}
             className="flex h-11 items-center justify-center gap-2 rounded-[14px] bg-linear-to-l from-[#b282ff] to-[#33c5ff] px-6 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
             حفظ التعديلات
           </button>
+          {needsRegion ? (
+            <span className="text-xs text-amber-600 dark:text-amber-400">
+              اختر المنطقة في المحافظة الجديدة قبل الحفظ
+            </span>
+          ) : null}
         </div>
       ) : null}
     </section>

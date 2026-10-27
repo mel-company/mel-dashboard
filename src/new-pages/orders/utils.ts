@@ -126,7 +126,9 @@ export function formatOrderStatusTransition(
   newValue?: string | null,
 ): string | null {
   if (!oldValue || !newValue) return null;
-  return `${getOrderStatusLabel(oldValue)} → ${getOrderStatusLabel(newValue)}`;
+  // Arabic reads right to left, so the arrow points left, from the old
+  // status to the new one; «→» pointed back at the old status.
+  return `${getOrderStatusLabel(oldValue)} ← ${getOrderStatusLabel(newValue)}`;
 }
 
 export function formatOrderCode(id?: string | number | null) {
@@ -156,6 +158,7 @@ export function getOrderTotal(order: any, fallbackCalculate?: (products: any[]) 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: "نقداً",
   cod: "دفع عند الاستلام",
+  cash_on_delivery: "دفع عند الاستلام",
   card: "بطاقة الائتمان",
   credit_card: "بطاقة الائتمان",
   creditcard: "بطاقة الائتمان",
@@ -183,7 +186,18 @@ export function getOrderPaymentLabel(order: any): {
     order?.paymentType ??
     "";
 
+  // The backend now returns the method the shopper picked; an order without
+  // one was placed with no online method, which is settled on delivery.
+  const noMethodPicked =
+    typeof order === "object" &&
+    order !== null &&
+    "paymentMethod" in order &&
+    order.paymentMethod == null &&
+    order.paymentState !== "PAID";
+
   const cashOnDelivery =
+    noMethodPicked ||
+    order?.paymentMethod?.code === "cash_on_delivery" ||
     order?.cashOnDelivery === true ||
     order?.cash_on_delivery === true ||
     order?.payOnDelivery === true;

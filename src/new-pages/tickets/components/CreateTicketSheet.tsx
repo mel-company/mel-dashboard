@@ -191,7 +191,7 @@ const CreateTicketSheet = ({ open, onOpenChange }: CreateTicketSheetProps) => {
                     >
                       <SelectValue placeholder="اختيار نوع التذكرة" />
                     </SelectTrigger>
-                    <SelectContent className="z-[70]">
+                    <SelectContent>
                       {TICKET_TYPES.map((item) => (
                         <SelectItem key={item.value} value={item.value}>
                           {item.label}
