@@ -248,10 +248,43 @@ function logoAsPng(src: string): Promise<string | null> {
   });
 }
 
+/**
+ * The invoice is a paper page, so it stays light in dark mode. ThemeProvider
+ * puts `dark` on <html> after this mounts (and again when the system theme
+ * changes), so an observer keeps taking it off; the theme is restored on
+ * leaving.
+ */
+function useLightTheme() {
+  useEffect(() => {
+    const root = document.documentElement;
+    const wasDark = root.classList.contains("dark");
+    const forceLight = () => {
+      if (!root.classList.contains("dark")) return;
+      root.classList.remove("dark");
+      root.classList.add("light");
+    };
+    forceLight();
+    const prevScheme = root.style.colorScheme;
+    root.style.colorScheme = "light";
+    const observer = new MutationObserver(forceLight);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => {
+      observer.disconnect();
+      root.style.colorScheme = prevScheme;
+      if (wasDark) {
+        root.classList.remove("light");
+        root.classList.add("dark");
+      }
+    };
+  }, []);
+}
+
 export default function OrderInvoicePreview() {
   const [order, setOrder] = useState<any | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const { data: storeDetails } = useFetchStoreDetails();
+
+  useLightTheme();
 
   useEffect(() => {
     try {
