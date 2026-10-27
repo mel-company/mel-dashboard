@@ -31,7 +31,7 @@ const PeriodSwitch = ({ value, onChange, discounts }: PeriodSwitchProps) => (
           <span
             className={cn(
               "text-[11px] font-normal",
-              off > 0 ? "text-blue-600 dark:text-blue-400" : "invisible",
+              off > 0 ? "text-emerald-600 dark:text-emerald-400" : "invisible",
             )}
           >
             وفّر {off}%

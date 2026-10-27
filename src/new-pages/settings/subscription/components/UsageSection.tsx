@@ -49,7 +49,9 @@ const UsageSection = () => {
                 <div
                   className={cn(
                     "h-full rounded-full",
-                    usage.reached ? "bg-amber-500" : "bg-blue-600",
+                    usage.reached
+                      ? "bg-amber-500"
+                      : "bg-slate-900 dark:bg-slate-200",
                   )}
                   style={{ width: `${pct}%` }}
                 />

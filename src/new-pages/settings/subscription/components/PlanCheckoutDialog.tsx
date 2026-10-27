@@ -153,7 +153,7 @@ const PlanCheckoutDialog = ({
             )}
           </div>
           {why && (
-            <p className="mt-1 text-[13px] text-blue-600 dark:text-blue-400">
+            <p className="mt-1 text-[13px] text-emerald-600 dark:text-emerald-400">
               {why}
             </p>
           )}

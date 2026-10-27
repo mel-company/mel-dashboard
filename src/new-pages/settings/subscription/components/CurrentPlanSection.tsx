@@ -63,10 +63,10 @@ const CurrentPlanSection = ({
 
   return (
     <SettingsCard>
-      <div className="rounded-2xl bg-blue-600 p-5 text-white">
+      <div className="rounded-2xl bg-slate-50 p-5 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[13px] text-white/70">باقتك الحالية</p>
+            <p className="text-[13px] text-slate-500">باقتك الحالية</p>
             <p className="mt-1 truncate text-3xl font-extrabold">
               {plan?.name ?? "—"}
             </p>
@@ -74,14 +74,16 @@ const CurrentPlanSection = ({
           <span
             className={cn(
               "shrink-0 rounded-full px-3 py-1 text-xs font-medium",
-              active ? "bg-white/15 text-white" : "bg-amber-400 text-amber-950",
+              active
+                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
             )}
           >
             {STATUS_LABELS[status] ?? status}
           </span>
         </div>
-        <p className="mt-4 text-sm text-white/80">
-          <span className="text-lg font-bold text-white">
+        <p className="mt-4 text-sm text-slate-500">
+          <span className="text-lg font-bold text-slate-900 dark:text-slate-50">
             {formatCurrency(plan?.monthly_price ?? 0)}
           </span>{" "}
           شهرياً
@@ -106,7 +108,7 @@ const CurrentPlanSection = ({
               "h-full rounded-full",
               endingSoon || remainingDays === 0
                 ? "bg-amber-500"
-                : "bg-blue-600",
+                : "bg-slate-900 dark:bg-slate-200",
             )}
             style={{ width: `${leftPct}%` }}
           />
@@ -135,7 +137,7 @@ const CurrentPlanSection = ({
       <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[13px] dark:border-slate-800">
         <button
           type="button"
-          className="flex items-center gap-1.5 font-medium text-slate-700 hover:text-blue-600 dark:text-slate-300"
+          className="flex items-center gap-1.5 font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300"
           onClick={onShowPayments}
         >
           <ReceiptText className="size-4" />

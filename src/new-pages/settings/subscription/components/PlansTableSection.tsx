@@ -83,7 +83,7 @@ const PlansTableSection = ({
               className={cn(
                 "flex flex-col rounded-2xl border p-5",
                 current
-                  ? "border-blue-600 ring-1 ring-blue-600"
+                  ? "border-slate-900 ring-1 ring-slate-900 dark:border-slate-200 dark:ring-slate-200"
                   : "border-slate-200 dark:border-slate-800",
               )}
             >
@@ -92,7 +92,7 @@ const PlansTableSection = ({
                   {plan.name}
                 </p>
                 {current && (
-                  <span className="rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-medium text-white">
+                  <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-medium text-white dark:bg-slate-100 dark:text-slate-900">
                     باقتك الحالية
                   </span>
                 )}
@@ -116,7 +116,7 @@ const PlansTableSection = ({
                     {formatCurrency(Math.round(price / months))} للشهر
                   </>
                 ) : intro ? (
-                  <span className="text-blue-600 dark:text-blue-400">
+                  <span className="text-emerald-600 dark:text-emerald-400">
                     {intro}
                   </span>
                 ) : null}
@@ -125,7 +125,7 @@ const PlansTableSection = ({
               <ul className="mt-4 flex-1 space-y-2 border-t border-slate-100 pt-4 text-[13px] text-slate-700 dark:border-slate-800 dark:text-slate-300">
                 {planHighlights(plan).map((line) => (
                   <li key={line} className="flex gap-2">
-                    <Check className="mt-0.5 size-4 shrink-0 text-blue-600" />
+                    <Check className="mt-0.5 size-4 shrink-0 text-slate-400" />
                     <span>{line}</span>
                   </li>
                 ))}
