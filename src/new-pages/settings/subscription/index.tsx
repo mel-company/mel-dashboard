@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import SettingsCard from "@/new-pages/settings/components/SettingsCard";
 import StorePlanSummaryCard from "@/new-pages/settings/components/StorePlanSummaryCard";
 import { useFetchStoreSubscription } from "@/api/wrappers/subscription.wrapper";
 import CurrentPlanSection from "./components/CurrentPlanSection";
 import PlansTableSection from "./components/PlansTableSection";
 import UsageSection from "./components/UsageSection";
-import CreditsSection from "./components/CreditsSection";
 import PaymentHistorySection from "./components/PaymentHistorySection";
 import PlanCheckoutDialog from "./components/PlanCheckoutDialog";
 
@@ -16,30 +21,22 @@ type Checkout = {
 };
 
 /**
- * Settings → «الاشتراك»: the plan, renewing it for 1, 3 or 12 months,
- * switching plans, usage against the plan's limits, AI credits and past
- * payments, laid out like the other settings tabs.
- *
- * It used to be one card in the store tab, with monthly renewal only and no
- * history.
+ * Settings → «الاشتراك»: the plan card, days to renewal with renew and
+ * change-plan, and the plan's limits. The plans side by side and the payment
+ * history open in dialogs, so the tab stays short.
  */
 const SubscriptionSettingsContent = () => {
   const { data: subscription, isLoading } = useFetchStoreSubscription();
   const [checkout, setCheckout] = useState<Checkout | null>(null);
+  const [plansOpen, setPlansOpen] = useState(false);
+  const [paymentsOpen, setPaymentsOpen] = useState(false);
 
   const currentPlan = subscription?.plan
-    ? { id: subscription.plan.id as string, name: subscription.plan.name as string }
+    ? {
+        id: subscription.plan.id as string,
+        name: subscription.plan.name as string,
+      }
     : null;
-  const upgradeTo =
-    subscription?.upgradeTo?.planId && subscription.upgradeTo.planId !== currentPlan?.id
-      ? {
-          id: subscription.upgradeTo.planId as string,
-          name: subscription.upgradeTo.planName as string,
-        }
-      : null;
-  const openUpgrade = upgradeTo
-    ? () => setCheckout({ type: "CHANGE_PLAN", plan: upgradeTo })
-    : undefined;
 
   if (isLoading) {
     return (
@@ -50,41 +47,73 @@ const SubscriptionSettingsContent = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 items-start gap-[18px] xl:grid-cols-12">
-      <div className="space-y-4 xl:col-span-4">
+    <div className="mx-auto grid w-full max-w-5xl grid-cols-1 items-start gap-[18px] lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
+      {/* Phone order: plan card, subscription, limits. */}
+      <div className="lg:col-start-1 lg:row-start-1">
         <StorePlanSummaryCard />
-        <CreditsSection />
       </div>
-
-      <div className="flex flex-col gap-[18px] xl:col-span-8">
+      <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
         {subscription ? (
           <CurrentPlanSection
             subscription={subscription}
             onRenew={() =>
               currentPlan && setCheckout({ type: "RENEWAL", plan: currentPlan })
             }
-            onUpgrade={openUpgrade}
-            upgradeName={upgradeTo?.name}
+            onChangePlan={() => setPlansOpen(true)}
+            onShowPayments={() => setPaymentsOpen(true)}
           />
         ) : (
-          <SettingsCard title="معلومات الاشتراك">
+          <SettingsCard title="الاشتراك">
             <p className="text-sm text-slate-500">
-              لا يوجد اشتراك لهذا المتجر. اختر باقة من الجدول أدناه.
+              لا يوجد اشتراك لهذا المتجر.
             </p>
+            <button
+              type="button"
+              className="mt-3 text-sm text-blue-600 underline"
+              onClick={() => setPlansOpen(true)}
+            >
+              اختر باقة
+            </button>
           </SettingsCard>
         )}
-        <UsageSection onUpgrade={openUpgrade} />
-        <PlansTableSection
-          currentPlanId={currentPlan?.id ?? null}
-          onChoose={(plan) =>
-            setCheckout({
-              type: plan.id === currentPlan?.id ? "RENEWAL" : "CHANGE_PLAN",
-              plan,
-            })
-          }
-        />
-        <PaymentHistorySection />
       </div>
+
+      <div className="lg:col-start-1 lg:row-start-2">
+        <UsageSection />
+      </div>
+
+      <Dialog open={plansOpen} onOpenChange={setPlansOpen}>
+        <DialogContent
+          className="max-h-[90dvh] overflow-y-auto text-right sm:max-w-3xl"
+          dir="rtl"
+        >
+          <DialogHeader>
+            <DialogTitle className="text-right">الباقات</DialogTitle>
+          </DialogHeader>
+          <PlansTableSection
+            currentPlanId={currentPlan?.id ?? null}
+            onChoose={(plan) => {
+              setPlansOpen(false);
+              setCheckout({
+                type: plan.id === currentPlan?.id ? "RENEWAL" : "CHANGE_PLAN",
+                plan,
+              });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={paymentsOpen} onOpenChange={setPaymentsOpen}>
+        <DialogContent
+          className="max-h-[90dvh] overflow-y-auto text-right sm:max-w-3xl"
+          dir="rtl"
+        >
+          <DialogHeader>
+            <DialogTitle className="text-right">سجل المدفوعات</DialogTitle>
+          </DialogHeader>
+          <PaymentHistorySection />
+        </DialogContent>
+      </Dialog>
 
       {/* Keyed so each checkout starts on the monthly period. */}
       <PlanCheckoutDialog

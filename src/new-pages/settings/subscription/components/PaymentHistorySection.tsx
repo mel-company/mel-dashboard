@@ -1,5 +1,4 @@
 import { useStorePaymentHistory } from "@/api/wrappers/platform-payment.wrapper";
-import SettingsCard from "@/new-pages/settings/components/SettingsCard";
 import { paymentProviderLabel } from "@/new-pages/settings/components/PaymentProviderPicker";
 import { billingPeriodLabel } from "@/utils/subscription-quote";
 import { formatCurrency } from "@/utils/format-currency";
@@ -35,15 +34,15 @@ const PaymentHistorySection = () => {
   if (isLoading) return null;
   if (isError) {
     return (
-      <SettingsCard title="سجل المدفوعات">
+      <div>
         <p className="text-sm text-slate-500">تعذر تحميل سجل المدفوعات.</p>
-      </SettingsCard>
+      </div>
     );
   }
   const rows = data ?? [];
 
   return (
-    <SettingsCard title="سجل المدفوعات">
+    <div>
       {rows.length === 0 ? (
         <p className="text-sm text-slate-500">لا توجد مدفوعات بعد.</p>
       ) : (
@@ -91,7 +90,7 @@ const PaymentHistorySection = () => {
           </table>
         </div>
       )}
-    </SettingsCard>
+    </div>
   );
 };
 

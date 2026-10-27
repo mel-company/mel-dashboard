@@ -14,7 +14,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import SettingsCard from "@/new-pages/settings/components/SettingsCard";
-import { billingPeriodLabel } from "@/utils/subscription-quote";
 import { formatCurrency } from "@/utils/format-currency";
 import { cn } from "@/lib/utils";
 import { formatDay, primaryButtonClass } from "./table";
@@ -33,8 +32,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 type CurrentPlanSectionProps = {
   subscription: any;
   onRenew: () => void;
-  onUpgrade?: () => void;
-  upgradeName?: string | null;
+  onChangePlan: () => void;
+  onShowPayments: () => void;
 };
 
 /** A label and its value in the settings page's grey pill row. */
@@ -51,8 +50,8 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
 const CurrentPlanSection = ({
   subscription,
   onRenew,
-  onUpgrade,
-  upgradeName,
+  onChangePlan,
+  onShowPayments,
 }: CurrentPlanSectionProps) => {
   const queryClient = useQueryClient();
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -61,7 +60,6 @@ const CurrentPlanSection = ({
   const plan = subscription.plan;
   const status = String(subscription.status ?? "").toUpperCase();
   const remainingDays = Math.max(0, Number(subscription.remainingDays ?? 0));
-  const lastPayment = subscription.lastPayment ?? null;
   const canCancel = status === "ACTIVE" || status === "PAUSED";
   const endingSoon = status === "ACTIVE" && remainingDays <= 7;
 
@@ -76,11 +74,16 @@ const CurrentPlanSection = ({
   const leftPct = Math.min(100, Math.max(0, (remainingDays / termDays) * 100));
 
   return (
-    <SettingsCard title="معلومات الاشتراك">
+    <SettingsCard title="الاشتراك">
       <div className="mb-4 rounded-[14px] bg-slate-100 px-4 py-3.5 dark:bg-slate-900">
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-[13px] text-slate-500 dark:text-slate-400">
             {remainingDays > 0 ? "المتبقي حتى التجديد" : "انتهى الاشتراك"}
+            {status !== "ACTIVE" && remainingDays > 0 && (
+              <span className="ms-2 text-amber-600">
+                {STATUS_LABELS[status] ?? ""}
+              </span>
+            )}
           </p>
           <p>
             <span className="text-2xl font-bold tabular-nums text-slate-900 dark:text-slate-50">
@@ -100,48 +103,33 @@ const CurrentPlanSection = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Row label="الباقة">{plan?.name ?? "—"}</Row>
-        <Row label="الحالة">
-          <span
-            className={cn(
-              status === "ACTIVE" && !endingSoon ? "text-emerald-600" : "text-amber-600",
-            )}
-          >
-            {STATUS_LABELS[status] ?? "غير معروف"}
-            {endingSoon ? " — ينتهي قريباً" : ""}
-          </span>
-        </Row>
-        <Row label="سعر الباقة">{formatCurrency(plan?.monthly_price ?? 0)} شهرياً</Row>
-        <Row label="بداية الاشتراك">{formatDay(subscription.start_at)}</Row>
+      <div className="space-y-2">
         <Row label={remainingDays > 0 ? "التجديد القادم" : "انتهى في"}>
           {formatDay(subscription.end_at)}
         </Row>
-        <Row label="آخر دفعة">
-          {lastPayment
-            ? `${lastPayment.amount > 0 ? formatCurrency(lastPayment.amount) : "مجاناً"} · ${
-                billingPeriodLabel(lastPayment.billingPeriod) ?? ""
-              }`
-            : "—"}
-        </Row>
+        <Row label="سعر الباقة">{formatCurrency(plan?.monthly_price ?? 0)} شهرياً</Row>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Button className={cn(primaryButtonClass, "h-11 px-6")} onClick={onRenew}>
           تجديد الاشتراك
         </Button>
-        {onUpgrade && (
-          <Button
-            variant="outline"
-            className="h-11 rounded-full border-blue-600 px-6 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950"
-            onClick={onUpgrade}
-          >
-            الترقية إلى {upgradeName ?? "نمو"}
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          className="h-11 rounded-full border-blue-600 px-6 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950"
+          onClick={onChangePlan}
+        >
+          تغيير الباقة
+        </Button>
+      </div>
+
+      <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+        <button type="button" className="underline" onClick={onShowPayments}>
+          سجل المدفوعات
+        </button>
         <button
           type="button"
-          className="ms-auto text-xs text-slate-500 underline disabled:opacity-50"
+          className="underline disabled:opacity-50"
           disabled={!canCancel}
           onClick={() => setCancelOpen(true)}
         >

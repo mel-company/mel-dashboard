@@ -1,7 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { useFetchPlans } from "@/api/wrappers/plan.wrappers";
 import { Button } from "@/components/ui/button";
-import SettingsCard from "@/new-pages/settings/components/SettingsCard";
 import { formatCurrency } from "@/utils/format-currency";
 import { introText, planHighlights } from "@/utils/plan-card-lines";
 import { cn } from "@/lib/utils";
@@ -29,11 +28,11 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
 
   if (isLoading) {
     return (
-      <SettingsCard title="الباقات">
+      <div>
         <div className="flex h-24 items-center justify-center">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
-      </SettingsCard>
+      </div>
     );
   }
   if (plans.length === 0) return null;
@@ -43,7 +42,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
     plan.id === currentPlanId ? "bg-blue-600/5 dark:bg-blue-500/10" : "";
 
   return (
-    <SettingsCard title="الباقات">
+    <div>
       <div className="overflow-x-auto">
         <table className={tableClass}>
           <thead>
@@ -133,7 +132,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
           </tbody>
         </table>
       </div>
-    </SettingsCard>
+    </div>
   );
 };
 
