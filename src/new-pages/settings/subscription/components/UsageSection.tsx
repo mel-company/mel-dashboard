@@ -45,7 +45,7 @@ const UsageSection = ({ onUpgrade }: { onUpgrade?: () => void }) => {
   const anyReached = ROWS.some((row) => limits[row.key]?.reached);
 
   return (
-    <SettingsCard>
+    <SettingsCard title="استهلاك الباقة">
       <table className={tableClass}>
         <thead>
           <tr className={headRowClass}>

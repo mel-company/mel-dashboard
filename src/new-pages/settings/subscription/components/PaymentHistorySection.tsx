@@ -35,7 +35,7 @@ const PaymentHistorySection = () => {
   if (isLoading) return null;
   if (isError) {
     return (
-      <SettingsCard>
+      <SettingsCard title="سجل المدفوعات">
         <p className="text-sm text-slate-500">تعذر تحميل سجل المدفوعات.</p>
       </SettingsCard>
     );
@@ -43,7 +43,7 @@ const PaymentHistorySection = () => {
   const rows = data ?? [];
 
   return (
-    <SettingsCard>
+    <SettingsCard title="سجل المدفوعات">
       {rows.length === 0 ? (
         <p className="text-sm text-slate-500">لا توجد مدفوعات بعد.</p>
       ) : (

@@ -26,7 +26,6 @@ const PAGE_SUBTITLES: Record<string, string> = {
   "/categories": "تمتلك حركات جديدة في قائمة الفئات",
   "/customers": "أفضل عملائك في مكان واحد",
   "/settings": "خصص إعدادات متجرك",
-  "/subscription": "باقتك وتجديدها ومدفوعاتك",
 };
 
 const actionBtnClass =

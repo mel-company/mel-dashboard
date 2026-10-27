@@ -36,7 +36,6 @@ import EditDiscount from "../pages/discount/EditDiscount";
 import CategorieGroups from "../pages/category/category-group/CategorieGroups";
 import CategoryGroupDetails from "../pages/category/category-group/CategoryGroupDetails";
 import EditCategoryGroup from "../pages/category/category-group/EditCategoryGroup";
-import SubscriptionPage from "../new-pages/subscription";
 import POS from "../new-pages/pos";
 import EditorPage from "../new-pages/editor";
 import Coupons from "../pages/coupone/Coupons";
@@ -60,8 +59,8 @@ export interface RouteConfig {
 export const mainRoutes: RouteConfig[] = [
     { path: "/", element: <Home /> },
     { path: "/stats", element: <Stats /> },
-    { path: "/subscription", element: <SubscriptionPage /> },
-    { path: "/plans", element: <Navigate to="/subscription" replace /> },
+    { path: "/subscription", element: <Navigate to="/settings/subscription" replace /> },
+    { path: "/plans", element: <Navigate to="/settings/subscription" replace /> },
     { path: "/app-store", element: <AppStore /> },
     { path: "/accounting", element: <Accounting /> },
     { path: "/pos", element: <POS /> },
@@ -218,6 +217,7 @@ export const mainRoutes: RouteConfig[] = [
 export const settingsRoutes: RouteConfig[] = [
     { path: "general", element: <SettingsPage /> },
     { path: "store", element: <SettingsPage /> },
+    { path: "subscription", element: <SettingsPage /> },
 ];
 
 export const publicRoutes: RouteConfig[] = [

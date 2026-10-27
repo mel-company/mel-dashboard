@@ -138,7 +138,7 @@ const baseApps: AppItem[] = [
   {
     label: "الاشتراك",
     enLabel: "Subscription",
-    path: "/subscription",
+    path: "/settings/subscription",
     icon: CreditCard,
     gradient: "from-blue-500 to-blue-600",
     description: "الباقة والتجديد والمدفوعات",

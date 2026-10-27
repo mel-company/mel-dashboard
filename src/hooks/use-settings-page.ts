@@ -20,7 +20,7 @@ function getApiErrorMessage(error: Error, fallback: string) {
   return apiError.response?.data?.message || fallback;
 }
 
-export type SettingsTab = "general" | "store";
+export type SettingsTab = "general" | "store" | "subscription";
 
 export interface StoreFormData {
   storeName: string;
@@ -66,7 +66,9 @@ export function useSettingsPage() {
 
   const activeTab: SettingsTab = location.pathname.includes("/settings/store")
     ? "store"
-    : "general";
+    : location.pathname.includes("/settings/subscription")
+      ? "subscription"
+      : "general";
 
   const {
     data: storeDetails,
@@ -144,7 +146,7 @@ export function useSettingsPage() {
 
   const handleTabChange = useCallback(
     (tab: SettingsTab) => {
-      navigate(tab === "store" ? "/settings/store" : "/settings/general");
+      navigate(`/settings/${tab}`);
     },
     [navigate],
   );

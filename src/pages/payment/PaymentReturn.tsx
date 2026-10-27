@@ -67,7 +67,7 @@ export default function PaymentReturn() {
     if (!paymentId) {
       settled.current = true;
       toast.error("معرف الدفع مفقود");
-      navigate("/subscription", { replace: true });
+      navigate("/settings/subscription", { replace: true });
       return;
     }
 
@@ -79,7 +79,7 @@ export default function PaymentReturn() {
         !!sessionStorage.getItem(DOMAIN_PURCHASE_RETURN_KEY);
       sessionStorage.removeItem(LAST_PAYMENT_ID_KEY);
       sessionStorage.removeItem(DOMAIN_PURCHASE_RETURN_KEY);
-      navigate(wasDomain ? "/settings/store" : "/subscription", {
+      navigate(wasDomain ? "/settings/store" : "/settings/subscription", {
         replace: true,
       });
       return;
@@ -107,7 +107,7 @@ export default function PaymentReturn() {
     queryClient.invalidateQueries({ queryKey: planKeys.all });
     queryClient.invalidateQueries({ queryKey: platformPaymentKeys.all });
     toast.success("تم الدفع بنجاح وتم تحديث الاشتراك");
-    navigate("/subscription", { replace: true });
+    navigate("/settings/subscription", { replace: true });
   }, [paymentId, result, status, type, navigate, queryClient]);
 
   return (

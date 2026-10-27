@@ -29,7 +29,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
 
   if (isLoading) {
     return (
-      <SettingsCard>
+      <SettingsCard title="الباقات">
         <div className="flex h-24 items-center justify-center">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
@@ -43,7 +43,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
     plan.id === currentPlanId ? "bg-blue-600/5 dark:bg-blue-500/10" : "";
 
   return (
-    <SettingsCard>
+    <SettingsCard title="الباقات">
       <div className="overflow-x-auto">
         <table className={tableClass}>
           <thead>
