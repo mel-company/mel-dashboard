@@ -6,17 +6,11 @@ import {
 } from "@/api/wrappers/subscription.wrapper";
 import { planKeys } from "@/api/wrappers/plan.wrappers";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import SettingsCard from "@/new-pages/settings/components/SettingsCard";
 import { formatCurrency } from "@/utils/format-currency";
 import { cn } from "@/lib/utils";
 import { formatDay, primaryButtonClass } from "./table";
+import SubscriptionDialog from "./SubscriptionDialog";
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: "نشط",
@@ -30,6 +24,7 @@ const STATUS_LABELS: Record<string, string> = {
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type CurrentPlanSectionProps = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   subscription: any;
   onRenew: () => void;
   onChangePlan: () => void;
@@ -137,18 +132,16 @@ const CurrentPlanSection = ({
         </button>
       </div>
 
-      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
-        <DialogContent className="text-right" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-right">إلغاء الباقة</DialogTitle>
-            <DialogDescription className="text-right">
-              هل أنت متأكد من إلغاء اشتراكك؟ سيتوقف الوصول إلى الخدمات في نهاية
-              فترة الاشتراك الحالية.
-            </DialogDescription>
-          </DialogHeader>
+      <SubscriptionDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        title="إلغاء الباقة"
+        description="هل أنت متأكد من إلغاء اشتراكك؟ سيتوقف الوصول إلى الخدمات في نهاية فترة الاشتراك الحالية."
+      >
           <div className="flex justify-start gap-2">
             <Button
               variant="destructive"
+              className="h-11 rounded-full px-6"
               disabled={cancel.isPending}
               onClick={() =>
                 cancel.mutate(undefined, {
@@ -162,12 +155,15 @@ const CurrentPlanSection = ({
             >
               {cancel.isPending ? "جاري الإلغاء..." : "تأكيد الإلغاء"}
             </Button>
-            <Button variant="secondary" onClick={() => setCancelOpen(false)}>
+            <Button
+              variant="secondary"
+              className="h-11 rounded-full px-6"
+              onClick={() => setCancelOpen(false)}
+            >
               تراجع
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+      </SubscriptionDialog>
     </SettingsCard>
   );
 };

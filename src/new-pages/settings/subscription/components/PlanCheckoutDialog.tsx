@@ -2,13 +2,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   useInitStorePlatformPayment,
@@ -38,6 +31,7 @@ import {
   primaryButtonClass,
   tableClass,
 } from "./table";
+import SubscriptionDialog from "./SubscriptionDialog";
 
 type PlanCheckoutDialogProps = {
   open: boolean;
@@ -127,17 +121,17 @@ const PlanCheckoutDialog = ({
     type === "CHANGE_PLAN" ? `التبديل إلى باقة ${plan?.name ?? ""}` : "تجديد الاشتراك";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg text-right" dir="rtl">
-        <DialogHeader>
-          <DialogTitle className="text-right">{title}</DialogTitle>
-          <DialogDescription className="text-right">
-            {type === "CHANGE_PLAN"
-              ? "تبدأ الباقة الجديدة فوراً وتُطبَّق حدودها، والأيام المتبقية من اشتراكك الحالي تنتقل إليها."
-              : "تُضاف المدة إلى نهاية اشتراكك الحالي."}
-          </DialogDescription>
-        </DialogHeader>
-
+    <SubscriptionDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={
+        type === "CHANGE_PLAN"
+          ? "تبدأ الباقة الجديدة فوراً وتُطبَّق حدودها، والأيام المتبقية من اشتراكك الحالي تنتقل إليها."
+          : "تُضاف المدة إلى نهاية اشتراكك الحالي."
+      }
+    >
+      <div className="space-y-4">
         <div className="grid grid-cols-3 gap-2">
           {BILLING_PERIODS.map((period) => (
             <button
@@ -193,9 +187,9 @@ const PlanCheckoutDialog = ({
           />
         )}
 
-        <div className="flex justify-start gap-2">
+        <div className="flex flex-wrap justify-start gap-2">
           <Button
-            className={primaryButtonClass}
+            className={cn(primaryButtonClass, "h-11 px-6")}
             disabled={!plan || initPayment.isPending || quote.isLoading}
             onClick={handlePay}
           >
@@ -214,14 +208,14 @@ const PlanCheckoutDialog = ({
           </Button>
           <Button
             variant="secondary"
-            className="rounded-full"
+            className="h-11 rounded-full px-6"
             onClick={() => onOpenChange(false)}
           >
             تراجع
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </SubscriptionDialog>
   );
 };
 

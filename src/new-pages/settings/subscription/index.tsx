@@ -1,11 +1,5 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import SettingsCard from "@/new-pages/settings/components/SettingsCard";
 import StorePlanSummaryCard from "@/new-pages/settings/components/StorePlanSummaryCard";
 import { useFetchStoreSubscription } from "@/api/wrappers/subscription.wrapper";
@@ -14,6 +8,7 @@ import PlansTableSection from "./components/PlansTableSection";
 import UsageSection from "./components/UsageSection";
 import PaymentHistorySection from "./components/PaymentHistorySection";
 import PlanCheckoutDialog from "./components/PlanCheckoutDialog";
+import SubscriptionDialog from "./components/SubscriptionDialog";
 
 type Checkout = {
   type: "RENEWAL" | "CHANGE_PLAN";
@@ -82,14 +77,13 @@ const SubscriptionSettingsContent = () => {
         <UsageSection />
       </div>
 
-      <Dialog open={plansOpen} onOpenChange={setPlansOpen}>
-        <DialogContent
-          className="max-h-[90dvh] overflow-y-auto text-right sm:max-w-3xl"
-          dir="rtl"
-        >
-          <DialogHeader>
-            <DialogTitle className="text-right">الباقات</DialogTitle>
-          </DialogHeader>
+      <SubscriptionDialog
+        open={plansOpen}
+        onOpenChange={setPlansOpen}
+        title="الباقات"
+        description="اختر باقة للتجديد أو التبديل."
+        className="sm:max-w-3xl"
+      >
           <PlansTableSection
             currentPlanId={currentPlan?.id ?? null}
             onChoose={(plan) => {
@@ -100,20 +94,16 @@ const SubscriptionSettingsContent = () => {
               });
             }}
           />
-        </DialogContent>
-      </Dialog>
+      </SubscriptionDialog>
 
-      <Dialog open={paymentsOpen} onOpenChange={setPaymentsOpen}>
-        <DialogContent
-          className="max-h-[90dvh] overflow-y-auto text-right sm:max-w-3xl"
-          dir="rtl"
-        >
-          <DialogHeader>
-            <DialogTitle className="text-right">سجل المدفوعات</DialogTitle>
-          </DialogHeader>
-          <PaymentHistorySection />
-        </DialogContent>
-      </Dialog>
+      <SubscriptionDialog
+        open={paymentsOpen}
+        onOpenChange={setPaymentsOpen}
+        title="سجل المدفوعات"
+        className="sm:max-w-3xl"
+      >
+        <PaymentHistorySection />
+      </SubscriptionDialog>
 
       {/* Keyed so each checkout starts on the monthly period. */}
       <PlanCheckoutDialog

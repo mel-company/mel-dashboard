@@ -47,15 +47,15 @@ const PaymentHistorySection = () => {
         <p className="text-sm text-slate-500">لا توجد مدفوعات بعد.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className={cn(tableClass, "min-w-[640px]")}>
+          <table className={cn(tableClass, "sm:min-w-[640px]")}>
             <thead>
               <tr className={headRowClass}>
                 <th className={thClass}>التاريخ</th>
                 <th className={thClass}>العملية</th>
-                <th className={thClass}>الباقة</th>
-                <th className={thClass}>المدة</th>
+                <th className={cn(thClass, "hidden sm:table-cell")}>الباقة</th>
+                <th className={cn(thClass, "hidden sm:table-cell")}>المدة</th>
                 <th className={thClass}>المبلغ</th>
-                <th className={thClass}>الدفع عبر</th>
+                <th className={cn(thClass, "hidden sm:table-cell")}>الدفع عبر</th>
                 <th className={thClass}>الحالة</th>
               </tr>
             </thead>
@@ -64,16 +64,16 @@ const PaymentHistorySection = () => {
                 <tr key={row.id}>
                   <td className={cellClass}>{formatDay(row.paidAt ?? row.createdAt)}</td>
                   <td className={cellClass}>{TYPE_LABELS[row.type] ?? row.type}</td>
-                  <td className={cellClass}>{row.plan?.name ?? "—"}</td>
-                  <td className={cellClass}>
+                  <td className={cn(cellClass, "hidden sm:table-cell")}>{row.plan?.name ?? "—"}</td>
+                  <td className={cn(cellClass, "hidden sm:table-cell")}>
                     {row.type === "DOMAIN_REGISTRATION"
                       ? "—"
                       : billingPeriodLabel(row.billingPeriod) ?? "—"}
                   </td>
-                  <td className={cellClass}>
+                  <td className={cn(cellClass, "whitespace-nowrap")}>
                     {row.amount > 0 ? formatCurrency(row.amount) : "مجاناً"}
                   </td>
-                  <td className={cellClass}>
+                  <td className={cn(cellClass, "hidden sm:table-cell")}>
                     {row.amount > 0 ? paymentProviderLabel(row.provider) : "—"}
                   </td>
                   <td
