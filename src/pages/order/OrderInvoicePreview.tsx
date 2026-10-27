@@ -206,7 +206,6 @@ export default function OrderInvoicePreview() {
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setOrder(JSON.parse(raw));
     } catch {
       setOrder(null);
@@ -295,4 +294,5 @@ export default function OrderInvoicePreview() {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ORDER_INVOICE_PREVIEW_STORAGE_KEY = STORAGE_KEY;
