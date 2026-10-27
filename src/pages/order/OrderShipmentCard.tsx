@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Route,
   Truck,
+  Wine,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -45,6 +46,7 @@ import {
 import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
 import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
+import CourierLogo from "@/components/CourierLogo";
 import { usePlanFeature } from "@/hooks/use-plan-limits";
 import { PlanFeatureUpgrade } from "@/components/plan/PlanFeatureUpgrade";
 
@@ -253,6 +255,12 @@ const OrderShipmentCard = ({
       ? courier.deliveryCompanyName || courier.displayName
       : "";
 
+  const courierLogo = showParcel && shipment
+    ? (parcelCourier?.logo ?? null)
+    : integrated
+      ? (courier.logo ?? null)
+      : null;
+
   const parcelFromOtherCourier =
     !!shipment && integrated && shipment.courierCode !== courier.code;
 
@@ -311,9 +319,11 @@ const OrderShipmentCard = ({
     <section className="rounded-[24px] bg-white p-4 sm:p-5 dark:bg-[#0a0e27]">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-[12px] bg-sky-50 text-sky-600 dark:bg-[#33c5ff]/10 dark:text-[#33c5ff]">
-            <Truck className="size-4" />
-          </span>
+          <CourierLogo
+            logo={courierLogo}
+            className="size-9 rounded-[12px] p-1"
+            iconClassName="size-4"
+          />
           <div className="min-w-0 text-right">
             <h3 className="truncate text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
               الشحن عبر {courierName}
@@ -651,6 +661,7 @@ const OrderShipmentCard = ({
                       }
                       className="size-4 rounded"
                     />
+                    <Wine className="size-4 text-amber-600 dark:text-amber-300" />
                     قابل للكسر
                   </label>
                 </div>

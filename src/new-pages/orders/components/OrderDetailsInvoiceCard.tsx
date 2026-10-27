@@ -255,9 +255,6 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
             <ReadOnly value={customer?.phone} ltr />
           )}
         </Field>
-        <Field label="البريد الالكتروني">
-          <ReadOnly value={customer?.email} ltr />
-        </Field>
         <Field label="طريقة الدفع">
           <ReadOnly value={payment.label} />
         </Field>
@@ -315,7 +312,7 @@ const OrderDetailsInvoiceCard = ({ order, onSaved }: Props) => {
             )}
           />
         </Field>
-        <Field label="الملاحظات">
+        <Field label="الملاحظات" className="sm:col-span-2">
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}

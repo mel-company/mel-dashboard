@@ -402,6 +402,13 @@ const OrderDetailsSheet = ({
             ? courier.deliveryCompanyName
             : null
       }
+      courierLogo={
+        shownParcel
+          ? shownParcel.courier?.logo
+          : courier?.selected && courier.integrated
+            ? courier.logo
+            : null
+      }
     />
   );
 

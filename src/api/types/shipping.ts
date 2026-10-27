@@ -256,6 +256,8 @@ export type ActiveCourier =
       integrated: true;
       deliveryCompanyId: string;
       deliveryCompanyName: string;
+      /** Admin-uploaded logo, else the catalogue's; null draws a parcel icon. */
+      logo?: string | null;
       code: string;
       displayName: string;
       /**
@@ -346,6 +348,7 @@ export interface CourierShipment {
   courier: {
     code: string;
     displayName: string;
+    logo?: string | null;
     capabilities: CourierCapabilities;
   } | null;
 }

@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ReactNode } from "react";
-import { Percent, Truck } from "lucide-react";
+import { Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Ltr from "@/components/Ltr";
+import CourierLogo from "@/components/CourierLogo";
 import { formatCurrency, formatNumber } from "@/utils/format-currency";
 import { getOrderProductCount, getOrderStatusMeta, getOrderTotal } from "../utils";
 import {
@@ -143,6 +144,7 @@ type DeliveryProps = {
    */
   shipment?: CourierShipment | null;
   courierName?: string | null;
+  courierLogo?: string | null;
 };
 
 /** تفاصيل التوصيل — the parcel's identifiers with the courier. */
@@ -150,6 +152,7 @@ export const OrderDeliveryCard = ({
   order,
   shipment,
   courierName,
+  courierLogo,
 }: DeliveryProps) => {
   const orderStatus = getOrderStatusMeta(order?.status);
   const trackingNumber = shipment?.externalId ?? null;
@@ -172,7 +175,13 @@ export const OrderDeliveryCard = ({
           تفاصيل التوصيل
         </h3>
         <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-[#e4e7fc]">
-          <Truck className="size-4 text-rose-500" />
+          {courierName?.trim() ? (
+            <CourierLogo
+              logo={courierLogo}
+              className="size-7 rounded-lg p-1"
+              iconClassName="size-4"
+            />
+          ) : null}
           {courierName?.trim() || "—"}
         </span>
       </header>
