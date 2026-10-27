@@ -156,6 +156,14 @@ const OrderDetailsSheet = ({
     }
   }, [open]);
 
+  // «تأكيد الحذف» stayed armed for as long as the drawer was open, so a stray
+  // tap minutes later deleted the order with no second look. Disarm it.
+  useEffect(() => {
+    if (!confirmingDelete) return;
+    const timer = window.setTimeout(() => setConfirmingDelete(false), 4000);
+    return () => window.clearTimeout(timer);
+  }, [confirmingDelete]);
+
   // Switching tabs keeps the scroll offset otherwise, so the products tab
   // opens half way down and its header is never seen.
   useEffect(() => {

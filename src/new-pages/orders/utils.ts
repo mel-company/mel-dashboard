@@ -126,7 +126,9 @@ export function formatOrderStatusTransition(
   newValue?: string | null,
 ): string | null {
   if (!oldValue || !newValue) return null;
-  return `${getOrderStatusLabel(oldValue)} → ${getOrderStatusLabel(newValue)}`;
+  // Arabic reads right to left, so the arrow points left, from the old
+  // status to the new one; «→» pointed back at the old status.
+  return `${getOrderStatusLabel(oldValue)} ← ${getOrderStatusLabel(newValue)}`;
 }
 
 export function formatOrderCode(id?: string | number | null) {

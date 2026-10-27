@@ -41,6 +41,55 @@ function lineUnitPrice(item: any): number {
   return Number(item?.price) || 0;
 }
 
+/**
+ * Which variant was bought («أحمر · XL»). Without it a merchant packing a
+ * shirt ordered in three sizes could not tell the lines apart.
+ */
+function lineVariant(item: any): string {
+  const values: any[] = item?.variant?.optionValues ?? [];
+  return values
+    .map((v) => String(v?.label ?? v?.value ?? "").trim())
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * The line as the order is priced: after its product or category discount,
+ * which the detail call returns per line. Price × quantity alone made the
+ * lines add up to more than «سعر المنتجات» whenever a discount applied.
+ */
+function lineTotals(item: any): { total: number; before: number | null } {
+  const before = lineUnitPrice(item) * lineQuantity(item);
+  const after = Number(item?.lineTotalAfterDiscount);
+  if (item?.lineTotalAfterDiscount == null || Number.isNaN(after)) {
+    return { total: before, before: null };
+  }
+  return { total: after, before: after < before - 0.005 ? before : null };
+}
+
+const LineTotal = ({ item }: { item: any }) => {
+  const { total, before } = lineTotals(item);
+  return (
+    <>
+      <Ltr>{formatCurrency(total)}</Ltr>
+      {before != null ? (
+        <span className="block text-[11px] font-normal text-slate-400 line-through dark:text-[#a4b1fa]">
+          <Ltr>{formatCurrency(before)}</Ltr>
+        </span>
+      ) : null}
+    </>
+  );
+};
+
+const LineVariant = ({ item }: { item: any }) => {
+  const label = lineVariant(item);
+  return label ? (
+    <p className="mt-1 text-xs font-medium text-violet-600 dark:text-[#b282ff]">
+      {label}
+    </p>
+  ) : null;
+};
+
 const Thumb = ({
   item,
   imageBaseUrl,
@@ -89,9 +138,6 @@ const OrderDetailsItems = ({ order, imageBaseUrl, variant }: Props) => {
           <h3 className="text-lg font-bold text-slate-900 dark:text-[#e4e7fc]">
             المنتجات
           </h3>
-          <p className="mt-0.5 text-xs text-slate-400 dark:text-[#a4b1fa]">
-            البيانات في عمود واحد لسهولة القراءة على الهاتف
-          </p>
         </header>
 
         <div className="flex flex-col gap-3">
@@ -103,6 +149,7 @@ const OrderDetailsItems = ({ order, imageBaseUrl, variant }: Props) => {
               <h4 className="text-[15px] font-bold text-slate-900 dark:text-[#e4e7fc]">
                 {lineName(item)}
               </h4>
+              <LineVariant item={item} />
               {lineDescription(item) ? (
                 <p className="mt-1 line-clamp-1 text-xs text-slate-400 dark:text-[#a4b1fa]">
                   {lineDescription(item)}
@@ -127,13 +174,11 @@ const OrderDetailsItems = ({ order, imageBaseUrl, variant }: Props) => {
                   </dt>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <dd className="text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
-                    <Ltr>
-                      {formatCurrency(lineUnitPrice(item) * lineQuantity(item))}
-                    </Ltr>
+                  <dd className="text-left text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
+                    <LineTotal item={item} />
                   </dd>
                   <dt className="text-sm text-slate-500 dark:text-[#a4b1fa]">
-                    أجمالي السعر
+                    إجمالي السعر
                   </dt>
                 </div>
               </dl>
@@ -165,10 +210,10 @@ const OrderDetailsItems = ({ order, imageBaseUrl, variant }: Props) => {
           <thead>
             <tr className="border-b border-slate-100 dark:border-[#1f2448]">
               <th className={cn(th, "w-20")}>الصورة</th>
-              <th className={th}>معلومات الفئة</th>
+              <th className={th}>المنتج</th>
               <th className={cn(th, "w-20")}>عدد</th>
               <th className={cn(th, "w-32")}>سعر مفرد</th>
-              <th className={cn(th, "w-36")}>أجمالي السعر</th>
+              <th className={cn(th, "w-36")}>إجمالي السعر</th>
             </tr>
           </thead>
           <tbody>
@@ -184,6 +229,7 @@ const OrderDetailsItems = ({ order, imageBaseUrl, variant }: Props) => {
                   <p className="text-sm font-semibold text-slate-900 dark:text-[#e4e7fc]">
                     {lineName(item)}
                   </p>
+                  <LineVariant item={item} />
                   {lineDescription(item) ? (
                     <p className="mt-0.5 line-clamp-1 text-xs text-slate-400 dark:text-[#a4b1fa]">
                       {lineDescription(item)}
@@ -197,9 +243,7 @@ const OrderDetailsItems = ({ order, imageBaseUrl, variant }: Props) => {
                   <Ltr>{formatCurrency(lineUnitPrice(item))}</Ltr>
                 </td>
                 <td className={cn(td, "text-sm font-bold text-slate-900 dark:text-[#e4e7fc]")}>
-                  <Ltr>
-                    {formatCurrency(lineUnitPrice(item) * lineQuantity(item))}
-                  </Ltr>
+                  <LineTotal item={item} />
                 </td>
               </tr>
             ))}
@@ -207,9 +251,11 @@ const OrderDetailsItems = ({ order, imageBaseUrl, variant }: Props) => {
         </table>
       </div>
 
-      <div className="mt-4 shrink-0 border-t border-slate-100 pt-4 dark:border-white/6">
-        <Pagination {...paginationProps} />
-      </div>
+      {paginationProps.totalPages > 1 ? (
+        <div className="mt-4 shrink-0 border-t border-slate-100 pt-4 dark:border-white/6">
+          <Pagination {...paginationProps} />
+        </div>
+      ) : null}
     </section>
   );
 };

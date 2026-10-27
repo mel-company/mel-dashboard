@@ -32,7 +32,7 @@ const OrderDetailsTimeline = ({ logs, isLoading }: Props) => {
 
   if (!logs?.length) {
     return (
-      <p className="rounded-2xl bg-slate-50 px-4 py-6 text-center text-xs text-slate-400 dark:bg-[#0a0e27] dark:text-[#a4b1fa]">
+      <p className="rounded-2xl bg-slate-50 px-4 py-6 text-center text-xs text-slate-400 dark:bg-[#12183b] dark:text-[#a4b1fa]">
         لا يوجد سجل لهذا الطلب
       </p>
     );
@@ -44,8 +44,11 @@ const OrderDetailsTimeline = ({ logs, isLoading }: Props) => {
         const { date, time } = formatOrderDateParts(log?.createdAt);
         // The transition is the one change worth surfacing here; the rest of
         // a log's changes belong to the fields they edited.
+        // Only a status change reads as «قيد المعالجة → تم الشحن»; any
+        // other field run through the status labels comes out as nonsense.
         const transition = (log?.changes ?? []).find(
-          (c: any) => c?.oldValue && c?.newValue,
+          (c: any) =>
+            (!c?.field || c.field === "status") && c?.oldValue && c?.newValue,
         );
         const transitionLabel = transition
           ? formatOrderStatusTransition(
@@ -57,7 +60,7 @@ const OrderDetailsTimeline = ({ logs, isLoading }: Props) => {
         return (
           <div
             key={log?.id ?? `${log?.action}-${log?.createdAt}`}
-            className="rounded-2xl bg-slate-50 px-4 py-3 text-right dark:bg-[#0a0e27]"
+            className="rounded-2xl bg-slate-50 px-4 py-3 text-right dark:bg-[#12183b]"
           >
             <p className="text-[13px] font-semibold text-slate-900 dark:text-[#e4e7fc]">
               {formatOrderLogMessage(log)}
