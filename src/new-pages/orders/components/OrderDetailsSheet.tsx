@@ -382,6 +382,19 @@ const OrderDetailsSheet = ({
         side={isMobile ? "bottom" : "left"}
         dir="rtl"
         showCloseButton={false}
+        // On touch Radix judges an outside tap at `click`, by which time the
+        // cancel confirm has already closed, so dismissing it (تراجع, the X or
+        // its backdrop) also read as a tap outside the sheet and closed it.
+        onInteractOutside={(event) => {
+          const target = event.target as Element | null;
+          if (
+            target?.closest?.(
+              '[data-slot="dialog-content"], [data-slot="dialog-overlay"]',
+            )
+          ) {
+            event.preventDefault();
+          }
+        }}
         className={cn(
           "z-[60] flex flex-col gap-0 border-0 p-0 text-foreground",
           "bg-slate-50 dark:bg-[#12183b]",
