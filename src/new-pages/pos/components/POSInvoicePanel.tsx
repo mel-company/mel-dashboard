@@ -115,7 +115,7 @@ const POSInvoicePanel = ({
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
         <h2 className="text-base font-bold text-slate-900 dark:text-slate-50">
           الفاتورة
-          <span className="ms-2 text-sm font-normal text-slate-500 tabular-nums">
+          <span className="ms-2 text-sm font-normal text-slate-500 dark:text-slate-300 tabular-nums">
             {itemCount} قطعة
           </span>
         </h2>
@@ -123,7 +123,7 @@ const POSInvoicePanel = ({
           <button
             type="button"
             onClick={onClear}
-            className="text-sm text-slate-500 hover:text-rose-600"
+            className="text-sm text-slate-500 dark:text-slate-300 hover:text-rose-600"
           >
             إفراغ
           </button>
@@ -134,12 +134,12 @@ const POSInvoicePanel = ({
         {/* Lines */}
         <div className="min-h-[140px]">
           {cart.length === 0 ? (
-            <p className="px-4 py-12 text-center text-sm text-slate-500">
+            <p className="px-4 py-12 text-center text-sm text-slate-500 dark:text-slate-300">
               الفاتورة فارغة. اختر منتجاً من القائمة لإضافته.
             </p>
           ) : (
             <table className="w-full table-fixed text-sm">
-              <thead className="sticky top-0 z-[1] bg-slate-50 text-xs text-slate-500 dark:bg-slate-900">
+              <thead className="sticky top-0 z-[1] bg-slate-50 text-xs text-slate-500 dark:text-slate-300 dark:bg-slate-900">
                 <tr>
                   <th className="px-3 py-2 text-right font-medium">المنتج</th>
                   <th className="w-[92px] px-1 py-2 text-center font-medium">الكمية</th>
@@ -185,7 +185,7 @@ const POSInvoicePanel = ({
                                 {variantLabel(item.variant)}
                               </p>
                             ) : null}
-                            <p className="whitespace-nowrap text-xs text-slate-500 tabular-nums">
+                            <p className="whitespace-nowrap text-xs text-slate-500 dark:text-slate-300 tabular-nums">
                               {formatNumber(unit)}
                             </p>
                           </div>
@@ -256,14 +256,14 @@ const POSInvoicePanel = ({
                     "h-9 rounded-lg text-sm font-medium transition-colors",
                     form.fulfilment === value
                       ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
-                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
+                      : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-300",
                   )}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-300">
               {isDelivery
                 ? "يُنشأ طلب قيد الانتظار، والدفع عند الاستلام عبر شركة الشحن."
                 : "يُسجّل الطلب مدفوعاً ومُسلّماً فوراً، بدون شحن."}
@@ -359,7 +359,7 @@ const POSInvoicePanel = ({
                   dir="ltr"
                 />
                 {coupon.status === "checking" ? (
-                  <p className="text-xs text-slate-500">جاري التحقق…</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-300">جاري التحقق…</p>
                 ) : coupon.status === "valid" ? (
                   <p className="text-xs text-emerald-600">
                     الرمز صالح، الخصم {formatPosPrice(coupon.discount)}
@@ -414,7 +414,7 @@ const POSInvoicePanel = ({
           {submitLabel}
         </Button>
         {blockedReason && cart.length > 0 ? (
-          <p className="text-center text-xs text-slate-500">{blockedReason}</p>
+          <p className="text-center text-xs text-slate-500 dark:text-slate-300">{blockedReason}</p>
         ) : null}
       </div>
     </div>
@@ -432,7 +432,7 @@ function Field({
 }) {
   return (
     <div className={cn("space-y-1", className)}>
-      <Label className="block text-right text-xs font-medium text-slate-500">
+      <Label className="block text-right text-xs font-medium text-slate-500 dark:text-slate-300">
         {label}
       </Label>
       {children}

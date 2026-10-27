@@ -419,7 +419,7 @@ const POS = () => {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur lg:hidden dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex max-w-lg items-center gap-3">
           <div className="min-w-0 flex-1 text-right">
-            <p className="text-xs text-slate-500 tabular-nums">
+            <p className="text-xs text-slate-500 dark:text-slate-300 tabular-nums">
               {itemCount} قطعة
             </p>
             <p className="truncate text-lg font-extrabold tabular-nums text-slate-900 dark:text-white">

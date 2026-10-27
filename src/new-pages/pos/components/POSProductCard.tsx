@@ -64,7 +64,7 @@ const POSProductCard = ({ product, baseUrl, onAdd }: POSProductCardProps) => {
           {product.title}
         </h3>
         {category ? (
-          <p className="line-clamp-1 text-xs text-slate-500">{category}</p>
+          <p className="line-clamp-1 text-xs text-slate-500 dark:text-slate-300">{category}</p>
         ) : null}
         <p className="mt-auto pt-1 text-sm font-bold tabular-nums text-slate-900 dark:text-slate-50">
           {formatPosPrice(product.price)}

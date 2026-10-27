@@ -53,7 +53,7 @@ const POSProductGrid = ({
           <p className="font-medium text-slate-600 dark:text-slate-300">
             لا توجد منتجات
           </p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
             جرّب فئة أخرى أو غيّر كلمة البحث
           </p>
         </div>
