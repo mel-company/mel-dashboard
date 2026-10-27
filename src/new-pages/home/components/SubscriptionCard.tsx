@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { formatCount } from "@/utils/format-currency";
 import { formatDateParts } from "@/utils/format-date";
 
@@ -55,7 +56,10 @@ const SubscriptionCard = ({
   );
 
   return (
-    <div className="relative min-h-[176px] overflow-hidden rounded-[18px] bg-[#00b7ff] p-5 text-white dark:bg-linear-to-l dark:from-[#33c5ff] dark:to-[#b282ff]">
+    <Link
+      to="/subscription"
+      aria-label="إدارة الاشتراك"
+      className="relative block min-h-[176px] overflow-hidden rounded-[18px] bg-[#00b7ff] p-5 text-white dark:bg-linear-to-l dark:from-[#33c5ff] dark:to-[#b282ff]">
       {/* RTL: expiry leads on the right, the plan chip sits opposite. */}
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -112,7 +116,7 @@ const SubscriptionCard = ({
         aria-hidden
         className="pointer-events-none absolute -bottom-8 -left-8 size-32 rounded-full bg-white/10 blur-2xl"
       />
-    </div>
+    </Link>
   );
 };
 

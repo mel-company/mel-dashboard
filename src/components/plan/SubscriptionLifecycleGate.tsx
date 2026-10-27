@@ -34,8 +34,8 @@ export function SubscriptionLifecycleGate({
 
   // Prefer the renew settings surface; fall back to the standalone screen
   // if something already redirected here in a loop-safe way.
-  if (location.pathname !== "/settings/store") {
-    return <Navigate to="/settings/store" replace />;
+  if (location.pathname !== "/subscription") {
+    return <Navigate to="/subscription" replace />;
   }
 
   return <SubscriptionFrozenScreen />;

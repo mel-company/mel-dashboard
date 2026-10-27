@@ -89,6 +89,28 @@ export type SubscriptionQuoteQuery = {
   durationMonths?: number;
 };
 
+/** One row of the store's billing history (`GET /platform-payments/store/history`). */
+export type StorePaymentHistoryRow = {
+  id: string;
+  type: PlatformPaymentInitPayload["type"] | "CREDITS";
+  status:
+    | "PENDING"
+    | "PAID"
+    | "FAILED"
+    | "EXPIRED"
+    | "REFUNDED"
+    | "PARTIALLY_REFUNDED";
+  provider: PlatformPaymentProvider;
+  amount: number;
+  currency: string;
+  billingPeriod: BillingPeriod;
+  durationMonths: number;
+  refundedAmount: number;
+  paidAt: string | null;
+  createdAt: string;
+  plan: { id: string; code: string | null; name: string } | null;
+};
+
 export const platformPaymentAPI = {
   /** Price a period without creating anything. */
   quoteStore: async (
@@ -115,6 +137,14 @@ export const platformPaymentAPI = {
       payload,
     );
     return data;
+  },
+
+  /** The store's subscription payments, newest first. */
+  listStoreHistory: async (): Promise<StorePaymentHistoryRow[]> => {
+    const { data } = await axiosInstance.get<{ data: StorePaymentHistoryRow[] }>(
+      "/platform-payments/store/history",
+    );
+    return data?.data ?? [];
   },
 
   getStoreStatus: async (id: string): Promise<any> => {

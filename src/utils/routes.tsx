@@ -1,5 +1,5 @@
 import React from "react";
-import { Route } from "react-router-dom";
+import { Navigate, Route } from "react-router-dom";
 import Home from "../pages/home/Home";
 import Stats from "../pages/stats/Stats";
 import Products from "../new-pages/products";
@@ -36,7 +36,7 @@ import EditDiscount from "../pages/discount/EditDiscount";
 import CategorieGroups from "../pages/category/category-group/CategorieGroups";
 import CategoryGroupDetails from "../pages/category/category-group/CategoryGroupDetails";
 import EditCategoryGroup from "../pages/category/category-group/EditCategoryGroup";
-import Plans from "../pages/plan/Plans";
+import SubscriptionPage from "../new-pages/subscription";
 import POS from "../new-pages/pos";
 import EditorPage from "../new-pages/editor";
 import Coupons from "../pages/coupone/Coupons";
@@ -60,7 +60,8 @@ export interface RouteConfig {
 export const mainRoutes: RouteConfig[] = [
     { path: "/", element: <Home /> },
     { path: "/stats", element: <Stats /> },
-    { path: "/plans", element: <Plans /> },
+    { path: "/subscription", element: <SubscriptionPage /> },
+    { path: "/plans", element: <Navigate to="/subscription" replace /> },
     { path: "/app-store", element: <AppStore /> },
     { path: "/accounting", element: <Accounting /> },
     { path: "/pos", element: <POS /> },

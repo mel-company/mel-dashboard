@@ -9,6 +9,7 @@ export const platformPaymentKeys = {
   all: ["platform-payments"] as const,
   detail: (id: string) => [...platformPaymentKeys.all, id] as const,
   providers: () => [...platformPaymentKeys.all, "providers"] as const,
+  history: () => [...platformPaymentKeys.all, "history"] as const,
   quote: (query: SubscriptionQuoteQuery) =>
     [...platformPaymentKeys.all, "quote", query] as const,
 };
@@ -68,5 +69,13 @@ export const useStorePlatformPaymentStatus = (
       if (status === "PENDING") return 3000;
       return false;
     },
+  });
+};
+
+/** The store's past subscription payments, for the subscription page. */
+export const useStorePaymentHistory = () => {
+  return useQuery({
+    queryKey: platformPaymentKeys.history(),
+    queryFn: () => platformPaymentAPI.listStoreHistory(),
   });
 };

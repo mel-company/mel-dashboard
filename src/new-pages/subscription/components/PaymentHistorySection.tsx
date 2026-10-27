@@ -1,0 +1,92 @@
+import { useStorePaymentHistory } from "@/api/wrappers/platform-payment.wrapper";
+import SettingsCard from "@/new-pages/settings/components/SettingsCard";
+import { paymentProviderLabel } from "@/new-pages/settings/components/PaymentProviderPicker";
+import { billingPeriodLabel } from "@/utils/subscription-quote";
+import { formatCurrency } from "@/utils/format-currency";
+import { cn } from "@/lib/utils";
+import {
+  bodyClass,
+  cellClass,
+  formatDay,
+  headRowClass,
+  tableClass,
+  thClass,
+} from "./table";
+
+const TYPE_LABELS: Record<string, string> = {
+  INITIAL_SUBSCRIPTION: "اشتراك جديد",
+  RENEWAL: "تجديد",
+  CHANGE_PLAN: "تغيير الباقة",
+  DOMAIN_REGISTRATION: "شراء نطاق",
+  CREDITS: "شراء رصيد",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  PAID: "مدفوع",
+  FAILED: "فشل",
+  EXPIRED: "انتهت مهلته",
+  REFUNDED: "مسترد",
+  PARTIALLY_REFUNDED: "مسترد جزئياً",
+};
+
+/** The store's past subscription payments. */
+const PaymentHistorySection = () => {
+  const { data, isError, isLoading } = useStorePaymentHistory();
+  // A server older than the route answers 404: leave the section out.
+  if (isError || isLoading) return null;
+  const rows = data ?? [];
+
+  return (
+    <SettingsCard title="سجل المدفوعات">
+      {rows.length === 0 ? (
+        <p className="text-sm text-slate-500">لا توجد مدفوعات بعد.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className={cn(tableClass, "min-w-[640px]")}>
+            <thead>
+              <tr className={headRowClass}>
+                <th className={thClass}>التاريخ</th>
+                <th className={thClass}>العملية</th>
+                <th className={thClass}>الباقة</th>
+                <th className={thClass}>المدة</th>
+                <th className={thClass}>المبلغ</th>
+                <th className={thClass}>الدفع عبر</th>
+                <th className={thClass}>الحالة</th>
+              </tr>
+            </thead>
+            <tbody className={bodyClass}>
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  <td className={cellClass}>{formatDay(row.paidAt ?? row.createdAt)}</td>
+                  <td className={cellClass}>{TYPE_LABELS[row.type] ?? row.type}</td>
+                  <td className={cellClass}>{row.plan?.name ?? "—"}</td>
+                  <td className={cellClass}>
+                    {row.type === "DOMAIN_REGISTRATION"
+                      ? "—"
+                      : billingPeriodLabel(row.billingPeriod) ?? "—"}
+                  </td>
+                  <td className={cellClass}>
+                    {row.amount > 0 ? formatCurrency(row.amount) : "مجاناً"}
+                  </td>
+                  <td className={cellClass}>
+                    {row.amount > 0 ? paymentProviderLabel(row.provider) : "—"}
+                  </td>
+                  <td
+                    className={cn(
+                      cellClass,
+                      row.status === "PAID" ? "text-emerald-600" : "text-slate-500",
+                    )}
+                  >
+                    {STATUS_LABELS[row.status] ?? row.status}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </SettingsCard>
+  );
+};
+
+export default PaymentHistorySection;

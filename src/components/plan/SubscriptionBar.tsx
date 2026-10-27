@@ -57,7 +57,7 @@ export function SubscriptionBar() {
 
       <button
         type="button"
-        onClick={() => navigate("/settings/store")}
+        onClick={() => navigate("/subscription")}
         className={cn(
           "inline-flex h-9 shrink-0 items-center justify-center rounded-full px-4 text-[13px] font-bold text-white shadow-none transition-colors",
           "bg-[#00b7ff] hover:bg-[#00a3e6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70",

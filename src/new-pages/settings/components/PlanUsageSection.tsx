@@ -17,7 +17,7 @@ const ROWS: Array<{ key: LimitedResource; label: string }> = [
  * What the plan caps and how much of each this store uses, in one table. The
  * Grow-only features follow it, so a Basic merchant sees what an upgrade adds.
  */
-const PlanUsageSection = () => {
+const PlanUsageSection = ({ onUpgrade }: { onUpgrade?: () => void } = {}) => {
   const navigate = useNavigate();
   const { data } = usePlanUsage();
   if (!data?.limits) return null;
@@ -113,11 +113,15 @@ const PlanUsageSection = () => {
           </p>
           <Button
             size="sm"
-            className="rounded-full"
+            className="rounded-full bg-blue-600 text-white hover:bg-blue-700"
             onClick={() =>
-              navigate(
-                data.upgradeTo?.planId ? `/payment/${data.upgradeTo.planId}` : "/plans",
-              )
+              onUpgrade
+                ? onUpgrade()
+                : navigate(
+                    data.upgradeTo?.planId
+                      ? `/payment/${data.upgradeTo.planId}`
+                      : "/subscription",
+                  )
             }
           >
             ترقية

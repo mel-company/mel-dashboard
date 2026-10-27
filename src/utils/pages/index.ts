@@ -14,6 +14,7 @@ import {
     Settings01Icon as Settings01IconNormal,
     Notification01Icon as Notification01IconNormal,
     WebDesign01Icon as WebDesign01IconNormal,
+    CreditCardIcon as CreditCardIconNormal,
   // Figma's rail uses the two-tone icon set, not flat strokes — the second
   // tone is what gives each glyph its accent.
 } from '@hugeicons-pro/core-duotone-rounded';
@@ -32,6 +33,7 @@ import {
     Settings01Icon as Settings01IconActive,
     Notification01Icon as Notification01IconActive,
     WebDesign01Icon as WebDesign01IconActive,
+    CreditCardIcon as CreditCardIconActive,
 } from '@hugeicons-pro/core-solid-rounded';
 
 
@@ -180,6 +182,16 @@ export const pages: PageType[] = [{
     icon: {
         normal: UserMultiple03IconNormal,
         active: UserMultiple03IconActive
+    },
+},
+{
+    label: "الاشتراك",
+    slug: "/subscription",
+    apiEndpoint: "",
+    group: "إدارة النظام",
+    icon: {
+        normal: CreditCardIconNormal,
+        active: CreditCardIconActive
     },
 },
 {

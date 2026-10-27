@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { useFetchStoreSubscription } from "@/api/wrappers/subscription.wrapper";
+import { Link } from "react-router-dom";
 import Ltr from "@/components/Ltr";
 
 const formatExpiryDate = (dateString: string | undefined) => {
@@ -32,7 +33,11 @@ const StorePlanSummaryCard = () => {
   const plan = subscription.plan;
 
   return (
-    <div className="relative min-h-[176px] overflow-hidden rounded-[18px] bg-linear-to-br from-sky-500 to-violet-600 p-5 text-white shadow-md">
+    <Link
+      to="/subscription"
+      aria-label="إدارة الاشتراك"
+      className="relative block min-h-[176px] overflow-hidden rounded-[18px] bg-linear-to-br from-sky-500 to-violet-600 p-5 text-white shadow-md"
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm text-white/50">تاريخ النفاذ</p>
@@ -61,7 +66,7 @@ const StorePlanSummaryCard = () => {
           </p>
         )}
       </div>
-    </div>
+    </Link>
   );
 };
 

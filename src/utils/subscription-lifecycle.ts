@@ -13,6 +13,7 @@ export type SubscriptionLifecycleErrorCode =
 
 /** Paths a FROZEN merchant may still open in the dashboard. */
 const FROZEN_ALLOWED_PREFIXES = [
+  "/subscription",
   "/settings/store",
   "/payment",
   "/tickets",
