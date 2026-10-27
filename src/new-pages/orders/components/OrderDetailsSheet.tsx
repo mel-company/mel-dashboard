@@ -452,11 +452,11 @@ const OrderDetailsSheet = ({
 
       {/* RTL: `flex-row` puts the first child rightmost, so طباعة الفاتورة
           lands on the right and إلغاء الطلب on the left, as drawn. */}
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-row items-center gap-3">
         <button
           type="button"
           onClick={handlePrint}
-          className="flex h-[52px] items-center justify-center gap-2 rounded-2xl border border-slate-300 sm:flex-1 bg-white text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 dark:border-[#2a3160] dark:bg-[#0a0e27] dark:text-[#e4e7fc] dark:hover:bg-[#12183b]"
+          className="flex h-[52px] items-center justify-center gap-2 rounded-2xl border border-slate-300 min-w-0 flex-1 px-3 bg-white text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 dark:border-[#2a3160] dark:bg-[#0a0e27] dark:text-[#e4e7fc] dark:hover:bg-[#12183b]"
         >
           <Printer className="size-4" />
           طباعة الفاتورة
@@ -466,7 +466,7 @@ const OrderDetailsSheet = ({
             type="button"
             onClick={() => setConfirm("cancel")}
             disabled={isUpdatingStatus}
-            className="flex h-[52px] items-center justify-center gap-2 rounded-2xl border border-[#ff5252]/50 bg-transparent px-5 text-base font-bold text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50 sm:w-auto sm:flex-1"
+            className="flex h-[52px] items-center justify-center gap-2 rounded-2xl border border-[#ff5252]/50 bg-transparent min-w-0 flex-1 px-3 text-base font-bold text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50"
           >
             <Ban className="size-4" />
             إلغاء الطلب
