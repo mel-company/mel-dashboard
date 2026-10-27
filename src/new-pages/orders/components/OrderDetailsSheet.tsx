@@ -420,7 +420,7 @@ const OrderDetailsSheet = ({
             type="button"
             onClick={nextStatusAction.onClick}
             disabled={isUpdatingStatus || awaitingCourier}
-            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 text-base font-bold text-white transition-opacity hover:bg-sky-700 disabled:opacity-50"
+            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 text-base font-bold text-white transition-colors hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-[#1a224c] dark:disabled:text-[#4a5596]"
           >
             {isUpdatingStatus ? (
               <Loader2 className="size-4 animate-spin" />
@@ -443,7 +443,7 @@ const OrderDetailsSheet = ({
           type="button"
           onClick={() => setConfirm("withdraw")}
           disabled={isUpdatingStatus}
-          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 text-base font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50"
+          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/60 bg-transparent text-base font-bold text-amber-700 transition-colors hover:bg-amber-500/10 disabled:opacity-50 dark:border-amber-400/40 dark:text-amber-300"
         >
           <Undo2 className="size-4" />
           سحب من الشحن
@@ -456,11 +456,9 @@ const OrderDetailsSheet = ({
         <button
           type="button"
           onClick={handlePrint}
-          className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-base font-bold text-white transition-opacity hover:opacity-90"
+          className="flex h-[52px] items-center justify-center gap-2 rounded-2xl border border-slate-300 sm:flex-1 bg-white text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 dark:border-[#2a3160] dark:bg-[#0a0e27] dark:text-[#e4e7fc] dark:hover:bg-[#12183b]"
         >
-          <span className="flex size-8 items-center justify-center rounded-xl bg-white/20">
-            <Printer className="size-4" />
-          </span>
+          <Printer className="size-4" />
           طباعة الفاتورة
         </button>
         {canCancel ? (
@@ -468,7 +466,7 @@ const OrderDetailsSheet = ({
             type="button"
             onClick={() => setConfirm("cancel")}
             disabled={isUpdatingStatus}
-            className="flex h-[52px] items-center justify-center gap-2 rounded-2xl border border-[#ff5252]/30 px-5 text-base font-bold text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50 sm:w-auto sm:flex-1"
+            className="flex h-[52px] items-center justify-center gap-2 rounded-2xl border border-[#ff5252]/50 bg-transparent px-5 text-base font-bold text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50 sm:w-auto sm:flex-1"
           >
             <Ban className="size-4" />
             إلغاء الطلب
@@ -692,6 +690,10 @@ const OrderDetailsSheet = ({
             </Button>
             <Button
               variant="destructive"
+              className={cn(
+                confirm === "withdraw" &&
+                  "bg-amber-600 hover:bg-amber-700 dark:bg-amber-600",
+              )}
               disabled={isUpdatingStatus}
               onClick={() =>
                 confirm === "withdraw"

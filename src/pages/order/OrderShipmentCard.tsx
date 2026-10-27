@@ -678,7 +678,7 @@ const OrderShipmentCard = ({
               <PlanFeatureUpgrade feature="courier_integrations" />
             ) : statusDriven && orderStatus === "PROCESSING" ? null : (
             <Button
-              className="h-12 w-full gap-2 rounded-[14px] text-base font-bold"
+              className="h-12 w-full gap-2 rounded-[14px] bg-sky-600 text-base font-bold text-white hover:bg-sky-700"
               disabled={createShipment.isPending || !courier.accountReady}
               onClick={() =>
                 run(
