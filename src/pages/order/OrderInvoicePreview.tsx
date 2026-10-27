@@ -281,7 +281,6 @@ function useLightTheme() {
 
 export default function OrderInvoicePreview() {
   const [order, setOrder] = useState<any | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
   const { data: storeDetails } = useFetchStoreDetails();
 
   useLightTheme();
@@ -305,22 +304,61 @@ export default function OrderInvoicePreview() {
     phone: storeDetails?.phone,
   };
 
+  const [busy, setBusy] = useState<"print" | "download" | null>(null);
+
+  const buildPdf = async () => {
+    const logo = store.logo ? await logoAsPng(store.logo) : null;
+    return pdf(
+      <OrderInvoicePDF invoice={invoice!} store={{ ...store, logo }} />,
+    ).toBlob();
+  };
+
   const handleDownloadPdf = async () => {
     if (!invoice) return;
-    setIsDownloading(true);
+    setBusy("download");
     try {
-      const logo = store.logo ? await logoAsPng(store.logo) : null;
-      const blob = await pdf(
-        <OrderInvoicePDF invoice={invoice} store={{ ...store, logo }} />,
-      ).toBlob();
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(await buildPdf());
       const link = document.createElement("a");
       link.href = url;
       link.download = `invoice-${invoice.code.replace("#", "")}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
     } finally {
-      setIsDownloading(false);
+      setBusy(null);
+    }
+  };
+
+  /**
+   * Prints the PDF itself rather than this page, so the paper matches the
+   * downloaded invoice exactly (the page lost its margins and backgrounds
+   * in the browser's print view). Browsers that won't print a PDF from a
+   * frame get it in a new tab with their own print button.
+   */
+  const handlePrint = async () => {
+    if (!invoice) return;
+    setBusy("print");
+    try {
+      const url = URL.createObjectURL(await buildPdf());
+      const frame = document.createElement("iframe");
+      frame.style.cssText =
+        "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+      frame.src = url;
+      frame.onload = () => {
+        try {
+          frame.contentWindow?.focus();
+          frame.contentWindow?.print();
+        } catch {
+          window.open(url, "_blank");
+        }
+        // Long enough for the print dialog to have read the file.
+        setTimeout(() => {
+          frame.remove();
+          URL.revokeObjectURL(url);
+        }, 60_000);
+      };
+      document.body.appendChild(frame);
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -353,19 +391,24 @@ export default function OrderInvoicePreview() {
       <div className="mx-auto mb-4 flex max-w-[820px] flex-wrap items-center justify-end gap-2 print:hidden">
         <button
           type="button"
-          onClick={() => window.print()}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+          onClick={handlePrint}
+          disabled={busy !== null}
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
         >
-          <Printer className="size-4" />
+          {busy === "print" ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Printer className="size-4" />
+          )}
           طباعة
         </button>
         <button
           type="button"
           onClick={handleDownloadPdf}
-          disabled={isDownloading}
+          disabled={busy !== null}
           className="inline-flex h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60"
         >
-          {isDownloading ? (
+          {busy === "download" ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
             <Download className="size-4" />
@@ -374,6 +417,9 @@ export default function OrderInvoicePreview() {
         </button>
       </div>
       <InvoicePaper invoice={invoice} store={store} />
+      {/* For the browser's own print (Ctrl+P): A4 margins, keep the greys. */}
+      <style>{`@page { size: A4; margin: 14mm; }
+        @media print { * { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }`}</style>
     </div>
   );
 }
