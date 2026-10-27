@@ -46,11 +46,18 @@ const Row = ({ label, bucket }: { label: string; bucket: Bucket }) => {
 /** What is left of this month's AI builds and editor credits. */
 const CreditsSection = () => {
   const { data, isError } = useStoreCreditBalance();
-  if (!data || isError) return null;
+  if (isError) {
+    return (
+      <SettingsCard>
+        <p className="text-sm text-slate-500">تعذر تحميل رصيد الذكاء الاصطناعي.</p>
+      </SettingsCard>
+    );
+  }
+  if (!data) return null;
 
   if (data.unlimited) {
     return (
-      <SettingsCard title="رصيد الذكاء الاصطناعي">
+      <SettingsCard>
         <p className="text-sm text-slate-700 dark:text-slate-300">
           حسابك بلا حدود
           {data.daily
@@ -62,7 +69,7 @@ const CreditsSection = () => {
   }
 
   return (
-    <SettingsCard title="رصيد الذكاء الاصطناعي">
+    <SettingsCard>
       <div className="overflow-x-auto">
         <table className={tableClass}>
           <thead>

@@ -1,12 +1,19 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import {
+  AiMagicIcon,
+  Analytics01Icon,
+  Invoice01Icon,
+  Layers01Icon,
+} from "@hugeicons-pro/core-duotone-rounded";
 import PagePanel from "@/components/PagePanel";
 import TitleBar from "@/components/table/title-bar";
+import SwitchTab from "@/components/table/switch-tab";
 import SettingsCard from "@/new-pages/settings/components/SettingsCard";
-import PlanUsageSection from "@/new-pages/settings/components/PlanUsageSection";
 import { useFetchStoreSubscription } from "@/api/wrappers/subscription.wrapper";
 import CurrentPlanSection from "./components/CurrentPlanSection";
 import PlansTableSection from "./components/PlansTableSection";
+import UsageSection from "./components/UsageSection";
 import CreditsSection from "./components/CreditsSection";
 import PaymentHistorySection from "./components/PaymentHistorySection";
 import PlanCheckoutDialog from "./components/PlanCheckoutDialog";
@@ -16,10 +23,19 @@ type Checkout = {
   plan: { id: string; name: string };
 };
 
+type Tab = "usage" | "plans" | "credits" | "payments";
+
+const TABS = [
+  { value: "usage", label: "الاستهلاك", icon: Analytics01Icon },
+  { value: "plans", label: "الباقات", icon: Layers01Icon },
+  { value: "credits", label: "الرصيد", icon: AiMagicIcon },
+  { value: "payments", label: "المدفوعات", icon: Invoice01Icon },
+];
+
 /**
- * Everything about the store's plan in one page: what it is on, renewing it
- * for 1, 3 or 12 months, switching between plans, usage against the plan's
- * limits, AI credits and past payments.
+ * Everything about the store's plan in one page: the plan at a glance with
+ * renew and upgrade, then tabs for usage, the plans side by side, AI credits
+ * and past payments.
  *
  * It used to be one card under the second tab of Settings, with monthly
  * renewal only and no history.
@@ -27,6 +43,7 @@ type Checkout = {
 const SubscriptionPage = () => {
   const { data: subscription, isLoading } = useFetchStoreSubscription();
   const [checkout, setCheckout] = useState<Checkout | null>(null);
+  const [tab, setTab] = useState<Tab>("usage");
 
   const currentPlan = subscription?.plan
     ? { id: subscription.plan.id as string, name: subscription.plan.name as string }
@@ -38,6 +55,9 @@ const SubscriptionPage = () => {
           name: subscription.upgradeTo.planName as string,
         }
       : null;
+  const openUpgrade = upgradeTo
+    ? () => setCheckout({ type: "CHANGE_PLAN", plan: upgradeTo })
+    : undefined;
 
   return (
     <PagePanel className="flex min-h-0 flex-col gap-4">
@@ -48,39 +68,34 @@ const SubscriptionPage = () => {
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
-          <div className="flex flex-col gap-4">
-            {subscription ? (
-              <CurrentPlanSection
-                subscription={subscription}
-                onRenew={() =>
-                  currentPlan && setCheckout({ type: "RENEWAL", plan: currentPlan })
-                }
-                onUpgrade={
-                  upgradeTo
-                    ? () => setCheckout({ type: "CHANGE_PLAN", plan: upgradeTo })
-                    : undefined
-                }
-                upgradeName={upgradeTo?.name}
-              />
-            ) : (
-              <SettingsCard title="باقتك الحالية">
-                <p className="text-sm text-slate-500">
-                  لا يوجد اشتراك لهذا المتجر. اختر باقة من الجدول.
-                </p>
-              </SettingsCard>
-            )}
-            <PlanUsageSection
-              onUpgrade={
-                upgradeTo
-                  ? () => setCheckout({ type: "CHANGE_PLAN", plan: upgradeTo })
-                  : undefined
+        <>
+          {subscription ? (
+            <CurrentPlanSection
+              subscription={subscription}
+              onRenew={() =>
+                currentPlan && setCheckout({ type: "RENEWAL", plan: currentPlan })
               }
+              onUpgrade={openUpgrade}
+              upgradeName={upgradeTo?.name}
             />
-            <CreditsSection />
+          ) : (
+            <SettingsCard title="باقتك الحالية">
+              <p className="text-sm text-slate-500">
+                لا يوجد اشتراك لهذا المتجر. اختر باقة من تبويب «الباقات».
+              </p>
+            </SettingsCard>
+          )}
+
+          <div className="-mx-1 flex justify-start overflow-x-auto px-1">
+            <SwitchTab
+              selected={tab}
+              options={TABS}
+              onChange={(value) => setTab(value as Tab)}
+            />
           </div>
 
-          <div className="flex flex-col gap-4">
+          {tab === "usage" && <UsageSection onUpgrade={openUpgrade} />}
+          {tab === "plans" && (
             <PlansTableSection
               currentPlanId={currentPlan?.id ?? null}
               onChoose={(plan) =>
@@ -90,11 +105,10 @@ const SubscriptionPage = () => {
                 })
               }
             />
-          </div>
-          <div className="xl:col-span-2">
-            <PaymentHistorySection />
-          </div>
-        </div>
+          )}
+          {tab === "credits" && <CreditsSection />}
+          {tab === "payments" && <PaymentHistorySection />}
+        </>
       )}
 
       {/* Keyed so each checkout starts on the monthly period. */}

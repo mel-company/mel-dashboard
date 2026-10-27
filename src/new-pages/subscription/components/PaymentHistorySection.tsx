@@ -32,12 +32,18 @@ const STATUS_LABELS: Record<string, string> = {
 /** The store's past subscription payments. */
 const PaymentHistorySection = () => {
   const { data, isError, isLoading } = useStorePaymentHistory();
-  // A server older than the route answers 404: leave the section out.
-  if (isError || isLoading) return null;
+  if (isLoading) return null;
+  if (isError) {
+    return (
+      <SettingsCard>
+        <p className="text-sm text-slate-500">تعذر تحميل سجل المدفوعات.</p>
+      </SettingsCard>
+    );
+  }
   const rows = data ?? [];
 
   return (
-    <SettingsCard title="سجل المدفوعات">
+    <SettingsCard>
       {rows.length === 0 ? (
         <p className="text-sm text-slate-500">لا توجد مدفوعات بعد.</p>
       ) : (

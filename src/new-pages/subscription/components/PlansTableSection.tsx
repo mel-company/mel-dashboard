@@ -29,7 +29,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
 
   if (isLoading) {
     return (
-      <SettingsCard title="الباقات">
+      <SettingsCard>
         <div className="flex h-24 items-center justify-center">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
@@ -39,16 +39,18 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
   if (plans.length === 0) return null;
 
   const anyIntro = plans.some((plan) => introText(plan));
+  const col = (plan: any) =>
+    plan.id === currentPlanId ? "bg-blue-600/5 dark:bg-blue-500/10" : "";
 
   return (
-    <SettingsCard title="الباقات">
+    <SettingsCard>
       <div className="overflow-x-auto">
-        <table className={cn(tableClass, "min-w-[480px]")}>
+        <table className={tableClass}>
           <thead>
             <tr className={headRowClass}>
-              <th className={cn(thClass, "w-32")} />
+              <th className={cn(thClass, "w-20 sm:w-32")} />
               {plans.map((plan) => (
-                <th key={plan.id} className={cn(thClass, "pe-4 align-bottom")}>
+                <th key={plan.id} className={cn(thClass, "pe-4 align-bottom", col(plan))}>
                   <span className="text-base font-bold text-slate-900 dark:text-slate-50">
                     {plan.name}
                   </span>
@@ -65,7 +67,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
             <tr>
               <td className={labelCellClass}>شهرياً</td>
               {plans.map((plan) => (
-                <td key={plan.id} className={cn(cellClass, "font-bold")}>
+                <td key={plan.id} className={cn(cellClass, "font-bold", col(plan))}>
                   {formatCurrency(plan.monthly_price)}
                 </td>
               ))}
@@ -73,7 +75,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
             <tr>
               <td className={labelCellClass}>3 أشهر</td>
               {plans.map((plan) => (
-                <td key={plan.id} className={cellClass}>
+                <td key={plan.id} className={cn(cellClass, col(plan))}>
                   {formatCurrency(plan.pricing?.quarterly?.price ?? plan.monthly_price * 3)}
                   {discountNote(plan.pricing?.quarterly?.discountPercent)}
                 </td>
@@ -82,7 +84,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
             <tr>
               <td className={labelCellClass}>سنة</td>
               {plans.map((plan) => (
-                <td key={plan.id} className={cellClass}>
+                <td key={plan.id} className={cn(cellClass, col(plan))}>
                   {formatCurrency(plan.pricing?.yearly?.price ?? plan.yearly_price)}
                   {discountNote(plan.pricing?.yearly?.discountPercent)}
                 </td>
@@ -92,7 +94,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
               <tr>
                 <td className={labelCellClass}>عرض البداية</td>
                 {plans.map((plan) => (
-                  <td key={plan.id} className={cellClass}>
+                  <td key={plan.id} className={cn(cellClass, col(plan))}>
                     {introText(plan)?.replace("للمشتركين الجدد: ", "") ?? "—"}
                   </td>
                 ))}
@@ -101,8 +103,8 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
             <tr>
               <td className={cn(labelCellClass, "align-top")}>تشمل</td>
               {plans.map((plan) => (
-                <td key={plan.id} className={cn(cellClass, "align-top")}>
-                  <ul className="space-y-1">
+                <td key={plan.id} className={cn(cellClass, "align-top", col(plan))}>
+                  <ul className="space-y-1 text-start">
                     {planHighlights(plan).map((line) => (
                       <li key={line}>{line}</li>
                     ))}
@@ -113,7 +115,7 @@ const PlansTableSection = ({ currentPlanId, onChoose }: PlansTableSectionProps) 
             <tr>
               <td />
               {plans.map((plan) => (
-                <td key={plan.id} className="py-3 pe-4">
+                <td key={plan.id} className={cn("py-3 pe-4", col(plan))}>
                   {plan.id === currentPlanId ? (
                     <span className="text-xs text-slate-500">باقتك الحالية</span>
                   ) : (
