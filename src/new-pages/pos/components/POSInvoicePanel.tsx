@@ -144,7 +144,6 @@ const POSInvoicePanel = ({
                   <th className="px-3 py-2 text-right font-medium">المنتج</th>
                   <th className="px-2 py-2 text-center font-medium">الكمية</th>
                   <th className="px-2 py-2 text-left font-medium">المجموع</th>
-                  <th className="w-9 px-1 py-2" aria-label="حذف" />
                 </tr>
               </thead>
               <tbody>
@@ -215,18 +214,18 @@ const POSInvoicePanel = ({
                           </button>
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-2 py-2 text-left font-medium tabular-nums">
-                        {formatNumber(unit * item.quantity)}
-                      </td>
-                      <td className="px-1 py-2">
-                        <button
-                          type="button"
-                          className="flex size-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
-                          onClick={() => onRemove(index)}
-                          aria-label="حذف"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
+                      <td className="whitespace-nowrap py-2 pe-1 ps-2 text-left font-medium tabular-nums">
+                        <div className="flex items-center justify-end gap-1">
+                          {formatNumber(unit * item.quantity)}
+                          <button
+                            type="button"
+                            className="flex size-7 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                            onClick={() => onRemove(index)}
+                            aria-label="حذف"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
