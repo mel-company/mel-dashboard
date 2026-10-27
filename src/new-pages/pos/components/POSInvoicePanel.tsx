@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/utils/format-currency";
 import type { CartItem } from "../utils";
 import {
   formatPosPrice,
@@ -183,7 +184,7 @@ const POSInvoicePanel = ({
                               </p>
                             ) : null}
                             <p className="whitespace-nowrap text-xs text-slate-500 tabular-nums">
-                              {formatPosPrice(unit)}
+                              {formatNumber(unit)}
                             </p>
                           </div>
                         </div>
@@ -215,7 +216,7 @@ const POSInvoicePanel = ({
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-2 py-2 text-left font-medium tabular-nums">
-                        {formatPosPrice(unit * item.quantity)}
+                        {formatNumber(unit * item.quantity)}
                       </td>
                       <td className="px-1 py-2">
                         <button
