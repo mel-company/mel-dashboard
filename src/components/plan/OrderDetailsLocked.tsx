@@ -33,7 +33,7 @@ export function OrderDetailsLocked({ compact = false }: { compact?: boolean }) {
       <Button
         size="lg"
         className="rounded-full px-6"
-        onClick={() => navigate("/settings/store")}
+        onClick={() => navigate("/settings/subscription")}
       >
         تجديد الاشتراك
       </Button>

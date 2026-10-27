@@ -3,6 +3,7 @@ import { Outlet, useLocation, Navigate } from "react-router-dom";
 const ALLOWED_SETTINGS_PATHS = [
   "/settings/general",
   "/settings/store",
+  "/settings/subscription",
 ] as const;
 
 const SettingsLayout = () => {

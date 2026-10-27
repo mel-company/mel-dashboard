@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Ticket,
   Palette,
+  CreditCard,
 } from "lucide-react";
 import {
   Dialog,
@@ -133,6 +134,14 @@ const baseApps: AppItem[] = [
     icon: Users2,
     gradient: "from-indigo-500 to-indigo-600",
     description: "إدارة الموظفين",
+  },
+  {
+    label: "الاشتراك",
+    enLabel: "Subscription",
+    path: "/settings/subscription",
+    icon: CreditCard,
+    gradient: "from-blue-500 to-blue-600",
+    description: "الباقة والتجديد والمدفوعات",
   },
   {
     label: "الإعدادات",

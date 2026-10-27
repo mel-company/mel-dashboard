@@ -3,7 +3,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useStorePlatformPaymentStatus } from "@/api/wrappers/platform-payment.wrapper";
+import {
+  platformPaymentKeys,
+  useStorePlatformPaymentStatus,
+} from "@/api/wrappers/platform-payment.wrapper";
+import { planKeys } from "@/api/wrappers/plan.wrappers";
 import { subscriptionKeys } from "@/api/wrappers/subscription.wrapper";
 import { domainAPI } from "@/api/endpoints/domain.endpoints";
 import { domainKeys } from "@/api/wrappers/domain.wrappers";
@@ -63,16 +67,21 @@ export default function PaymentReturn() {
     if (!paymentId) {
       settled.current = true;
       toast.error("معرف الدفع مفقود");
-      navigate("/settings/store", { replace: true });
+      navigate("/settings/subscription", { replace: true });
       return;
     }
 
     if (result === "failure" || status === "FAILED" || status === "EXPIRED") {
       settled.current = true;
       toast.error("فشلت عملية الدفع. حاول مرة أخرى.");
+      const wasDomain =
+        type === "DOMAIN_REGISTRATION" ||
+        !!sessionStorage.getItem(DOMAIN_PURCHASE_RETURN_KEY);
       sessionStorage.removeItem(LAST_PAYMENT_ID_KEY);
       sessionStorage.removeItem(DOMAIN_PURCHASE_RETURN_KEY);
-      navigate("/settings/store", { replace: true });
+      navigate(wasDomain ? "/settings/store" : "/settings/subscription", {
+        replace: true,
+      });
       return;
     }
 
@@ -94,11 +103,11 @@ export default function PaymentReturn() {
       return;
     }
 
-    queryClient.invalidateQueries({
-      queryKey: subscriptionKeys.detail("store"),
-    });
+    queryClient.invalidateQueries({ queryKey: subscriptionKeys.all });
+    queryClient.invalidateQueries({ queryKey: planKeys.all });
+    queryClient.invalidateQueries({ queryKey: platformPaymentKeys.all });
     toast.success("تم الدفع بنجاح وتم تحديث الاشتراك");
-    navigate("/settings/store", { replace: true });
+    navigate("/settings/subscription", { replace: true });
   }, [paymentId, result, status, type, navigate, queryClient]);
 
   return (
