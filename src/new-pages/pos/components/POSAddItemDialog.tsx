@@ -116,7 +116,7 @@ const POSAddItemDialog = ({
                 <DialogTitle className="line-clamp-2 text-base [overflow-wrap:anywhere] font-bold text-slate-900 dark:text-slate-50">
                   {product.title}
                 </DialogTitle>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
                   {category ? `${category} · ` : ""}
                   <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                     {formatPosPrice(price)}
@@ -141,7 +141,7 @@ const POSAddItemDialog = ({
           ) : choices.length > 0 ? (
             <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-xs text-slate-500 dark:bg-slate-900">
+                <thead className="bg-slate-50 text-xs text-slate-500 dark:text-slate-300 dark:bg-slate-900">
                   <tr>
                     <th className="px-3 py-2 text-right font-medium">النوع</th>
                     <th className="px-3 py-2 text-center font-medium">السعر</th>
@@ -201,7 +201,7 @@ const POSAddItemDialog = ({
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                   الكمية
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-300">
                   {needsChoice
                     ? "اختر النوع أولاً"
                     : left === null
@@ -254,7 +254,7 @@ const POSAddItemDialog = ({
             <Button
               type="button"
               variant="ghost"
-              className="h-11 flex-1 rounded-xl text-slate-500"
+              className="h-11 flex-1 rounded-xl text-slate-500 dark:text-slate-300"
               onClick={() => onOpenChange(false)}
             >
               إلغاء
