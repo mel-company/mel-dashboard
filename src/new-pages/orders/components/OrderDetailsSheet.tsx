@@ -12,6 +12,7 @@ import {
   Package,
   Printer,
   Truck,
+  RotateCcw,
   Undo2,
   X,
 } from "lucide-react";
@@ -223,9 +224,16 @@ const OrderDetailsSheet = ({
     if (!id) return;
 
     if (target === "PROCESSING") {
+      // From «مرفوض» this is a reopen: the server takes the stock back, or
+      // refuses and names the product the shelf can no longer fill.
+      const reopening = orderStatus === "CANCELLED";
       toProcessing(id, {
         onSuccess: () =>
-          afterStatusChange("تم تحديث حالة الطلب إلى قيد المعالجة"),
+          afterStatusChange(
+            reopening
+              ? "أُعيد فتح الطلب — صار قيد المعالجة ويمكن شحنه من جديد"
+              : "تم تحديث حالة الطلب إلى قيد المعالجة",
+          ),
         onError: (err) =>
           toast.error(apiErrorMessage(err, "فشل تحديث حالة الطلب")),
       });
@@ -371,7 +379,13 @@ const OrderDetailsSheet = ({
               icon: CheckCircle2,
               onClick: () => handleStatusUpdate("DELIVERED"),
             }
-          : null;
+          : orderStatus === "CANCELLED"
+            ? {
+                label: "إعادة فتح الطلب",
+                icon: RotateCcw,
+                onClick: () => handleStatusUpdate("PROCESSING"),
+              }
+            : null;
 
   const invoiceCard = (
     <OrderDetailsInvoiceCard order={order} onSaved={() => refetch()} />
@@ -417,7 +431,8 @@ const OrderDetailsSheet = ({
   /**
    * By status: the step that moves the order on, «سحب من الشحن» while a
    * parcel is with a courier that can take it back, then cancel. Print
-   * lives in the header so it is there for every status.
+   * lives in the header so it is there for every status. A cancelled order
+   * offers «إعادة فتح الطلب», which takes it back to processing.
    */
   const actions = nextStatusAction || canCancel ? (
     <div className="flex flex-col items-stretch gap-3">
