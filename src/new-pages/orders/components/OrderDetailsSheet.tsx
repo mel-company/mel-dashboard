@@ -12,6 +12,7 @@ import {
   Package,
   Printer,
   Truck,
+  RotateCcw,
   Undo2,
   X,
 } from "lucide-react";
@@ -41,6 +42,7 @@ import StatusGlyph from "@/components/table/status-glyph";
 import Ltr from "@/components/Ltr";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
+import Hint from "@/components/Hint";
 import {
   isParcelLive,
   type CreateShipmentOptions,
@@ -223,9 +225,16 @@ const OrderDetailsSheet = ({
     if (!id) return;
 
     if (target === "PROCESSING") {
+      // From «مرفوض» this is a reopen: the server takes the stock back, or
+      // refuses and names the product the shelf can no longer fill.
+      const reopening = orderStatus === "CANCELLED";
       toProcessing(id, {
         onSuccess: () =>
-          afterStatusChange("تم تحديث حالة الطلب إلى قيد المعالجة"),
+          afterStatusChange(
+            reopening
+              ? "أُعيد فتح الطلب — صار قيد المعالجة ويمكن شحنه من جديد"
+              : "تم تحديث حالة الطلب إلى قيد المعالجة",
+          ),
         onError: (err) =>
           toast.error(apiErrorMessage(err, "فشل تحديث حالة الطلب")),
       });
@@ -356,22 +365,34 @@ const OrderDetailsSheet = ({
     orderStatus === "PENDING"
       ? {
           label: "بدء المعالجة",
+          hint: "ينقل الطلب إلى «قيد المعالجة» لتجهيزه للشحن.",
           icon: Package,
           onClick: () => handleStatusUpdate("PROCESSING"),
         }
       : orderStatus === "PROCESSING"
         ? {
             label: "شحن الطلب",
+            hint: dispatchFirst
+              ? `يسجّل الطرد لدى ${courier.displayName || "شركة الشحن"} ثم يحوّل الطلب إلى «قيد التوصيل».`
+              : "يحوّل الطلب إلى «قيد التوصيل».",
             icon: Truck,
             onClick: () => handleStatusUpdate("SHIPPED"),
           }
         : orderStatus === "SHIPPED"
           ? {
               label: "تأكيد التسليم",
+              hint: "يعلّم الطلب «تم التوصيل». بعدها لا تتغيّر حالته.",
               icon: CheckCircle2,
               onClick: () => handleStatusUpdate("DELIVERED"),
             }
-          : null;
+          : orderStatus === "CANCELLED"
+            ? {
+                label: "إعادة فتح الطلب",
+                hint: "يعيد الطلب إلى «قيد المعالجة» ويحجز منتجاته من المخزون مجدداً، لتشحنه من جديد.",
+                icon: RotateCcw,
+                onClick: () => handleStatusUpdate("PROCESSING"),
+              }
+            : null;
 
   const invoiceCard = (
     <OrderDetailsInvoiceCard order={order} onSaved={() => refetch()} />
@@ -417,25 +438,28 @@ const OrderDetailsSheet = ({
   /**
    * By status: the step that moves the order on, «سحب من الشحن» while a
    * parcel is with a courier that can take it back, then cancel. Print
-   * lives in the header so it is there for every status.
+   * lives in the header so it is there for every status. A cancelled order
+   * offers «إعادة فتح الطلب», which takes it back to processing.
    */
   const actions = nextStatusAction || canCancel ? (
     <div className="flex flex-col items-stretch gap-3">
       {nextStatusAction ? (
         <div className="space-y-2">
-          <button
-            type="button"
-            onClick={nextStatusAction.onClick}
-            disabled={isUpdatingStatus || awaitingCourier}
-            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 text-base font-bold text-white transition-colors hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-[#1a224c] dark:disabled:text-[#4a5596]"
-          >
-            {isUpdatingStatus ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : StatusIcon ? (
-              <StatusIcon className="size-4" />
-            ) : null}
-            {nextStatusAction.label}
-          </button>
+          <Hint text={nextStatusAction.hint}>
+            <button
+              type="button"
+              onClick={nextStatusAction.onClick}
+              disabled={isUpdatingStatus || awaitingCourier}
+              className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-sky-600 text-base font-bold text-white transition-colors hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-[#1a224c] dark:disabled:text-[#4a5596]"
+            >
+              {isUpdatingStatus ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : StatusIcon ? (
+                <StatusIcon className="size-4" />
+              ) : null}
+              {nextStatusAction.label}
+            </button>
+          </Hint>
           {awaitingCourier ? (
             <p className="text-center text-xs leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
               يُؤكَّد التسليم تلقائياً حين تسلّم {parcelCourierName} الطرد. حدّث
@@ -446,27 +470,31 @@ const OrderDetailsSheet = ({
       ) : null}
 
       {canWithdraw && canCancel ? (
-        <button
-          type="button"
-          onClick={() => setConfirm("withdraw")}
-          disabled={isUpdatingStatus}
-          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/60 bg-transparent text-base font-bold text-amber-700 transition-colors hover:bg-amber-500/10 disabled:opacity-50 dark:border-amber-400/40 dark:text-amber-300"
-        >
-          <Undo2 className="size-4" />
-          سحب من الشحن
-        </button>
+        <Hint text="يلغي الطرد لدى شركة الشحن ويعيد الطلب إلى «قيد المعالجة». الطلب نفسه لا يُلغى.">
+          <button
+            type="button"
+            onClick={() => setConfirm("withdraw")}
+            disabled={isUpdatingStatus}
+            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/60 bg-transparent text-base font-bold text-amber-700 transition-colors hover:bg-amber-500/10 disabled:opacity-50 dark:border-amber-400/40 dark:text-amber-300"
+          >
+            <Undo2 className="size-4" />
+            سحب من الشحن
+          </button>
+        </Hint>
       ) : null}
 
       {canCancel ? (
-        <button
-          type="button"
-          onClick={() => setConfirm("cancel")}
-          disabled={isUpdatingStatus}
-          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-[#ff5252]/50 bg-transparent text-base font-bold text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50"
-        >
-          <Ban className="size-4" />
-          إلغاء الطلب
-        </button>
+        <Hint text="يلغي الطلب ويعيد منتجاته إلى المخزون، ويسحب الطرد من شركة الشحن إن كان معها. يمكنك إعادة فتحه لاحقاً.">
+          <button
+            type="button"
+            onClick={() => setConfirm("cancel")}
+            disabled={isUpdatingStatus}
+            className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-[#ff5252]/50 bg-transparent text-base font-bold text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50"
+          >
+            <Ban className="size-4" />
+            إلغاء الطلب
+          </button>
+        </Hint>
       ) : null}
     </div>
   ) : null;
@@ -541,23 +569,27 @@ const OrderDetailsSheet = ({
               <StatusGlyph tone={status.tone} />
               {status.label}
             </span>
-            <button
-              type="button"
-              onClick={handlePrint}
-              aria-label="طباعة الفاتورة"
-              className="flex h-9 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 sm:px-3.5 dark:border-[#2a3160] dark:bg-[#0a0e27] dark:text-[#e4e7fc] dark:hover:bg-[#12183b]"
-            >
-              <Printer className="size-4" />
-              <span className="hidden sm:inline">طباعة الفاتورة</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              aria-label="إغلاق"
-              className="flex size-9 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 dark:text-[#4a5596] dark:hover:bg-white/5 dark:hover:text-[#e4e7fc]"
-            >
-              <X className="size-4" />
-            </button>
+            <Hint text="يفتح الفاتورة لطباعتها أو حفظها PDF." side="bottom">
+              <button
+                type="button"
+                onClick={handlePrint}
+                aria-label="طباعة الفاتورة"
+                className="flex h-9 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 sm:px-3.5 dark:border-[#2a3160] dark:bg-[#0a0e27] dark:text-[#e4e7fc] dark:hover:bg-[#12183b]"
+              >
+                <Printer className="size-4" />
+                <span className="hidden sm:inline">طباعة الفاتورة</span>
+              </button>
+            </Hint>
+            <Hint text="إغلاق تفاصيل الطلب" side="bottom">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                aria-label="إغلاق"
+                className="flex size-9 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 dark:text-[#4a5596] dark:hover:bg-white/5 dark:hover:text-[#e4e7fc]"
+              >
+                <X className="size-4" />
+              </button>
+            </Hint>
           </div>
         </SheetHeader>
 

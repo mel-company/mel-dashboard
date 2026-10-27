@@ -3,406 +3,382 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
   Font,
+  Link,
 } from "@react-pdf/renderer";
-import CairoRegular from "../../../assets/fonts/Cairo-Regular.ttf";
-import CairoBold from "../../../assets/fonts/Cairo-Bold.ttf";
-import { formatDate } from "../../helpers";
-import { formatCurrency } from "@/utils/format-currency";
+import { formatNumber } from "@/utils/format-currency";
+import type { Style } from "@react-pdf/types";
+import type { InvoiceStore, OrderInvoice } from "./order-invoice-model";
 
+// Same face as the dashboard and the invoice preview page (src/index.css).
+const DIATYPE = "/fonts/ABCDIATYPEARABIC/ABCDIATYPEARABIC";
 Font.register({
-  family: "Cairo",
+  family: "Diatype",
   fonts: [
-    { src: CairoRegular, fontWeight: 400 },
-    { src: CairoBold, fontWeight: 700 },
+    { src: `${DIATYPE}-REGULAR-TRIAL.OTF`, fontWeight: 400 },
+    { src: `${DIATYPE}-BOLD-TRIAL.OTF`, fontWeight: 700 },
   ],
 });
 
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  PROCESSING: "قيد المعالجة",
-  SHIPPED: "تم الشحن",
-  DELIVERED: "تم التسليم",
-  CANCELLED: "ملغي",
-};
+const INK = "#0f172a";
+const BODY = "#334155";
+const MUTED = "#64748b";
+const FAINT = "#94a3b8";
+const RULE = "#e2e8f0";
 
+/**
+ * The characters ABC Diatype Arabic has glyphs for. fontkit throws while
+ * embedding the font if any other one (an emoji in a product name, say) is
+ * drawn, and the whole download fails.
+ */
+const UNSUPPORTED =
+  /[^\n\u0020-\u007E\u00A0-\u00AC\u00AE-\u017E\u060C\u061B\u061F\u0621-\u063A\u0640-\u0656\u0660-\u0671\u0679\u067E\u0686\u0688\u0691\u0695\u0698\u06A1\u06A4\u06A9\u06AF\u06B5\u06BA\u06BE\u06C1-\u06C3\u06C6\u06CC\u06CE\u06D2-\u06D5\u06F0-\u06F9\u2013\u2014\u2018\u2019\u201C\u201D\u2022\u2026]/g;
+
+/**
+ * Text the merchant or customer typed. The trailing space works around a
+ * react-pdf bug that repeats the last Arabic letters of a right-to-left line
+ * ending in Latin ("قميص قطني 100% Cotton" came out "قطنيني").
+ */
+const typed = (text: string) => `${text.replace(UNSUPPORTED, "").trim()} `;
+
+// RTL by hand: react-pdf has no `dir`, so rows run `row-reverse` and text
+// aligns right, which puts the first child on the right as on the page.
+// Text the merchant or customer typed also sets `direction: "rtl"` (it is
+// not inherited) so mixed text like "قميص 100% Cotton" keeps its order.
 const styles = StyleSheet.create({
   page: {
-    padding: 36,
-    direction: "rtl",
-    fontFamily: "Cairo",
-    backgroundColor: "#ffffff",
-    fontSize: 11,
+    paddingVertical: 40,
+    paddingHorizontal: 44,
+    fontFamily: "Diatype",
+    fontSize: 10,
+    color: BODY,
   },
+  row: { flexDirection: "row-reverse", justifyContent: "space-between" },
+  money: { flexDirection: "row", alignItems: "baseline" },
+  currency: { marginLeft: 3 },
+  brand: { flexDirection: "row-reverse", alignItems: "center" },
+  logo: { width: 48, height: 48, marginLeft: 10, objectFit: "contain" },
   header: {
-    marginBottom: 20,
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingBottom: 16,
-    borderBottomWidth: 2,
-    borderBottomColor: "#1e40af",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 700,
-    color: "#1e40af",
-    textAlign: "center",
-    marginBottom: 6,
-  },
-  orderId: {
-    fontSize: 12,
-    color: "#6b7280",
-    textAlign: "center",
-  },
-  section: {
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "#1f2937",
-    marginBottom: 10,
-    paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomColor: RULE,
+  },
+  storeName: {
+    direction: "rtl",
+    fontSize: 16,
+    fontWeight: 700,
+    color: INK,
     textAlign: "right",
   },
-  row: {
-    flexDirection: "row",
+  storePhone: { fontSize: 10, color: MUTED, textAlign: "right" },
+  title: { fontSize: 20, fontWeight: 700, color: INK, textAlign: "left" },
+  meta: { fontSize: 10, color: MUTED, textAlign: "left" },
+  metaStrong: { fontSize: 10, color: BODY, fontWeight: 700, textAlign: "left" },
+  parties: {
+    flexDirection: "row-reverse",
     justifyContent: "space-between",
-    marginBottom: 2,
-    paddingVertical: 4,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: RULE,
   },
-  label: {
-    fontSize: 10,
-    color: "#6b7280",
-    width: "35%",
-    textAlign: "right",
-  },
-  value: {
-    fontSize: 11,
-    color: "#1f2937",
-    fontWeight: 700,
-    width: "65%",
-    textAlign: "right",
-  },
-  statusBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 4,
-    alignSelf: "flex-end",
-  },
-  statusBadgeText: {
-    fontSize: 10,
-    fontWeight: 700,
-    color: "#1f2937",
-  },
-  statusPending: { backgroundColor: "#fef3c7", color: "#92400e" },
-  statusProcessing: { backgroundColor: "#dbeafe", color: "#1e40af" },
-  statusShipped: { backgroundColor: "#ede9fe", color: "#5b21b6" },
-  statusDelivered: { backgroundColor: "#d1fae5", color: "#065f46" },
-  statusCancelled: { backgroundColor: "#fee2e2", color: "#991b1b" },
-  infoBox: {
-    backgroundColor: "#f9fafb",
-    padding: 12,
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 10,
-    color: "#4b5563",
+  caption: { fontSize: 8, color: FAINT, textAlign: "right", marginBottom: 4 },
+  strong: {
     lineHeight: 1.6,
-    textAlign: "right",
-  },
-  table: {
-    marginTop: 8,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: "#1e40af",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderTopRightRadius: 4,
-    borderTopLeftRadius: 4,
-  },
-  tableHeaderCell: {
-    fontSize: 9,
+    direction: "rtl",
+    fontSize: 11,
     fontWeight: 700,
-    color: "#ffffff",
-    flex: 1,
+    color: INK,
     textAlign: "right",
   },
-  tableRow: {
-    flexDirection: "row",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+  text: {
+    lineHeight: 1.6,
+    direction: "rtl",
+    fontSize: 10,
+    color: BODY,
+    textAlign: "right",
+  },
+  factRow: { flexDirection: "row-reverse", marginBottom: 3 },
+  factLabel: {
+    lineHeight: 1.6,
+    width: 70,
+    fontSize: 9,
+    color: FAINT,
+    textAlign: "right",
+  },
+  factValue: {
+    lineHeight: 1.6,
+    direction: "rtl",
+    fontSize: 10,
+    fontWeight: 700,
+    color: BODY,
+    textAlign: "right",
+  },
+  table: { marginTop: 18 },
+  thead: {
+    flexDirection: "row-reverse",
+    backgroundColor: "#f1f5f9",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  th: { fontSize: 8, fontWeight: 700, color: MUTED, textAlign: "right" },
+  tr: {
+    flexDirection: "row-reverse",
+    paddingVertical: 7,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomColor: "#f1f5f9",
   },
-  tableRowAlt: {
-    backgroundColor: "#f9fafb",
-  },
-  tableCell: {
-    fontSize: 9,
-    color: "#374151",
-    flex: 1,
+  td: { direction: "rtl", fontSize: 10, color: BODY, textAlign: "right" },
+  colIndex: { width: 18 },
+  colName: { flex: 1 },
+  colQty: { width: 44, textAlign: "center" },
+  colUnit: { width: 86 },
+  // A right-aligned cell holding a row: the row hugs the cell's right edge.
+  cellEnd: { alignItems: "flex-end" },
+  colTotal: { width: 92 },
+  variant: { direction: "rtl", fontSize: 8, color: MUTED, textAlign: "right" },
+  struck: {
+    fontSize: 8,
+    color: FAINT,
+    textDecoration: "line-through",
     textAlign: "right",
   },
-  totalsRow: {
-    flexDirection: "row",
+  bottom: {
+    flexDirection: "row-reverse",
     justifyContent: "space-between",
-    marginTop: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#f3f4f6",
-    borderRadius: 4,
+    marginTop: 16,
   },
+  totals: { width: 210 },
   totalRow: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     justifyContent: "space-between",
-    marginTop: 12,
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingHorizontal: 14,
-    backgroundColor: "#1e40af",
-    borderRadius: 4,
+    paddingVertical: 3,
   },
-  totalLabel: {
-    fontSize: 12,
-    color: "#ffffff",
-    fontWeight: 700,
+  grandRow: {
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    marginTop: 6,
+    paddingTop: 8,
+    borderTopWidth: 1.5,
+    borderTopColor: INK,
   },
-  totalValue: {
-    fontSize: 14,
-    color: "#ffffff",
-    fontWeight: 700,
-  },
+  grandLabel: { fontSize: 11, fontWeight: 700, color: INK },
+  grandValue: { fontSize: 14, fontWeight: 700, color: INK },
+  note: { flex: 1, marginLeft: 24 },
+  // Absolute children: a flex row inside a `fixed` footer lost the
+  // thank-you line and overflowed the page edge.
   footer: {
-    marginTop: 28,
-    paddingTop: 14,
+    position: "absolute",
+    bottom: 24,
+    left: 44,
+    right: 44,
+    height: 22,
     borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
-    textAlign: "center",
+    borderTopColor: RULE,
   },
-  footerText: {
-    fontSize: 9,
-    color: "#9ca3af",
-    lineHeight: 1.5,
+  footerText: { fontSize: 8, color: FAINT, direction: "rtl" },
+  thanks: {
+    position: "absolute",
+    top: 8,
+    right: 0,
+    width: "60%",
+    textAlign: "right",
+  },
+  promo: { position: "absolute", top: 8, left: 0, flexDirection: "row" },
+  promoText: { fontSize: 8, color: FAINT },
+  promoLink: {
+    fontSize: 8,
+    fontWeight: 700,
+    color: MUTED,
+    textDecoration: "none",
+    marginRight: 3,
   },
 });
 
-const getStatusStyle = (status: string) => {
-  const s = (status || "").toUpperCase();
-  if (s === "PENDING") return styles.statusPending;
-  if (s === "PROCESSING") return styles.statusProcessing;
-  if (s === "SHIPPED") return styles.statusShipped;
-  if (s === "DELIVERED") return styles.statusDelivered;
-  if (s === "CANCELLED") return styles.statusCancelled;
-  return styles.statusPending;
-};
-
-export type OrderInvoiceData = {
-  id: string;
-  status?: string;
-  createdAt?: string;
-  note?: string;
-  nearest_point?: string;
-  country?: { name?: { ar?: string } };
-  state?: { name?: { arabic?: string } };
-  region?: { name?: { arabic?: string } };
-  customer?: {
-    id?: string;
-    user?: {
-      name?: string;
-      phone?: string;
-      email?: string;
-      location?: string;
-    };
-  };
-  products?: Array<{
-    id?: string;
-    quantity?: number;
-    price?: number;
-    product?: { title?: string };
-    variant?: { optionValues?: Array<{ label?: string; value?: string }> };
-  }>;
-};
-
-const DELIVERY_FEE = 5000;
+/**
+ * An amount as the dashboard shows it: the figure, then «د.ع», read left to
+ * right. As one string react-pdf runs it through the bidi algorithm and the
+ * currency flips to the figure's left on some lines and not others, so the
+ * two halves are separate runs in a left-to-right row.
+ */
+const Money = ({
+  value,
+  negative,
+  style,
+}: {
+  value: number;
+  negative?: boolean;
+  style?: Style;
+}) => (
+  <View style={styles.money}>
+    <Text style={style}>
+      {negative ? "-" : ""}
+      {formatNumber(value)}
+    </Text>
+    <Text style={[style ?? {}, styles.currency]}>د.ع</Text>
+  </View>
+);
 
 export const OrderInvoicePDF = ({
-  order,
+  invoice,
   store,
 }: {
-  order: OrderInvoiceData;
-  store?: { name?: string; address?: string; phone?: string; email?: string };
+  invoice: OrderInvoice;
+  store?: InvoiceStore;
 }) => {
-  const customer = order.customer?.user;
-  const products = order.products ?? [];
-  const subtotal = products.reduce(
-    (sum, p) => sum + (p.price ?? 0) * (p.quantity ?? 0),
-    0
-  );
-  const total = subtotal + DELIVERY_FEE;
-  const statusLabel =
-    STATUS_LABELS[(order.status || "").toUpperCase()] || order.status || "—";
-  const statusStyle = getStatusStyle(order.status || "");
-
-  const addressParts = [
-    order.nearest_point,
-    order.region?.name?.arabic,
-    order.state?.name?.arabic,
-    order.country?.name?.ar,
-  ].filter(Boolean);
-  const deliveryAddress = addressParts.join("، ") || "—";
-
-  const createdDate = order.createdAt
-    ? formatDate(order.createdAt)?.date || order.createdAt
-    : "—";
-
+  const pieces = invoice.lines.reduce((sum, l) => sum + l.quantity, 0);
   return (
-    <Document title={`فاتورة طلب #${String(order.id).slice(0, 8)}`}>
+    <Document title={`فاتورة ${invoice.code}`}>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
         <View style={styles.header}>
-          {store?.name && (
-            <Text
-              style={{
-                fontSize: 14,
-                color: "#6b7280",
-                textAlign: "right",
-                marginBottom: 4,
-              }}
-            >
-              {store.name}
-            </Text>
-          )}
-          <Text style={styles.title}>فاتورة الطلب</Text>
-          <Text style={styles.orderId}>
-            تاريخ: {createdDate}
-          </Text>
-        </View>
-
-        {/* Order status */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>حالة الطلب</Text>
-          <View style={styles.row}>
-            <View style={[styles.statusBadge, statusStyle]}>
-              <Text style={styles.statusBadgeText}>{statusLabel}</Text>
-            </View>
-            <Text style={styles.label}>الحالة</Text>
-          </View>
-        </View>
-
-        {/* Customer / User */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>معلومات العميل</Text>
-          <View style={styles.row}>
-            <Text style={styles.value}>{customer?.name || "—"}</Text>
-            <Text style={styles.label}>الاسم</Text>
-          </View>
-          {customer?.phone && (
-            <View style={styles.row}>
-              <Text style={styles.value}>{customer.phone}</Text>
-              <Text style={styles.label}>الهاتف</Text>
-            </View>
-          )}
-          {customer?.email && (
-            <View style={styles.row}>
-              <Text style={styles.value}>{customer.email}</Text>
-              <Text style={styles.label}>البريد الإلكتروني</Text>
-            </View>
-          )}
-          {deliveryAddress && (
-            <View style={styles.row}>
-              <Text style={styles.value}>{deliveryAddress}</Text>
-              <Text style={styles.label}>عنوان التوصيل</Text>
-            </View>
-          )}
-          {deliveryAddress && (
-            <View style={styles.row}>
-              <Text style={styles.value}>{order.note}</Text>
-              <Text style={styles.label}>ملاحظات الطلب</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Products */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>تفاصيل المنتجات</Text>
-          <View style={styles.table}>
-            <View style={styles.tableHeader}>
-              <Text style={styles.tableHeaderCell}>المجموع</Text>
-              <Text style={styles.tableHeaderCell}>الكمية</Text>
-              <Text style={styles.tableHeaderCell}>السعر</Text>
-              <Text style={[styles.tableHeaderCell, { flex: 1.5 }]}>
-                المنتج
+          <View style={styles.brand}>
+            {store?.logo ? (
+              <Image src={store.logo} style={styles.logo} />
+            ) : null}
+            <View style={styles.cellEnd}>
+              <Text style={styles.storeName}>
+                {typed(store?.name || "المتجر")}
               </Text>
+              {store?.phone ? (
+                <Text style={styles.storePhone}>{typed(store.phone)}</Text>
+              ) : null}
             </View>
-            {products.length === 0 ? (
-              <View style={styles.tableRow}>
-                <Text style={[styles.tableCell, { flex: 1 }]}>
-                  لا توجد منتجات
-                </Text>
-              </View>
-            ) : (
-              products.map((p, i) => {
-                const qty = p.quantity ?? 0;
-                const price = p.price ?? 0;
-                const lineTotal = qty * price;
-                const variantLabel =
-                  p.variant?.optionValues
-                    ?.map((o) => o.label || o.value)
-                    .filter(Boolean)
-                    .join(" / ") || "";
-                const title =
-                  (p.product?.title || "منتج") +
-                  (variantLabel ? ` (${variantLabel})` : "");
-                return (
-                  <View
-                    key={p.id || i}
-                    style={
-                      i % 2 === 1
-                        ? [styles.tableRow, styles.tableRowAlt]
-                        : styles.tableRow
-                    }
-                  >
-                    <Text style={styles.tableCell}>
-                      {formatCurrency(lineTotal)}
-                    </Text>
-                    <Text style={styles.tableCell}>{qty}</Text>
-                    <Text style={styles.tableCell}>
-                      {formatCurrency(price)}
-                    </Text>
-                    <Text style={[styles.tableCell, { flex: 1.5 }]}>{title}</Text>
-                  </View>
-                );
-              })
-            )}
           </View>
-
-          <View style={styles.totalsRow}>
-            <Text style={styles.value}>{formatCurrency(subtotal)}</Text>
-            <Text style={styles.label}>المجموع الفرعي</Text>
-          </View>
-          <View style={styles.totalsRow}>
-            <Text style={styles.value}>{formatCurrency(DELIVERY_FEE)}</Text>
-            <Text style={styles.label}>التوصيل</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
-            <Text style={styles.totalLabel}>الإجمالي</Text>
+          <View>
+            <Text style={styles.title}>فاتورة</Text>
+            <Text style={styles.metaStrong}>{invoice.code}</Text>
+            <Text style={styles.meta}>{invoice.date}</Text>
           </View>
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>شكراً لتعاملكم معنا</Text>
-          <Text style={styles.footerText}>فاتورة إلكترونية — وثيقة معتمدة</Text>
-          {store?.name && (
-            <Text style={styles.footerText}>
-              {new Date().getFullYear()} © {store.name}
-            </Text>
+        <View style={styles.parties}>
+          <View style={styles.cellEnd}>
+            <Text style={styles.caption}>إلى</Text>
+            <Text style={styles.strong}>{typed(invoice.customerName)}</Text>
+            {invoice.customerPhone ? (
+              <Text style={styles.text}>{typed(invoice.customerPhone)}</Text>
+            ) : null}
+            {invoice.address ? (
+              <Text style={styles.text}>{typed(invoice.address)}</Text>
+            ) : null}
+            {invoice.nearestPoint ? (
+              <Text style={styles.text}>{typed(invoice.nearestPoint)}</Text>
+            ) : null}
+          </View>
+          <View>
+            <View style={styles.factRow}>
+              <Text style={styles.factLabel}>حالة الطلب</Text>
+              <Text style={styles.factValue}>{invoice.status}</Text>
+            </View>
+            {invoice.payment ? (
+              <View style={styles.factRow}>
+                <Text style={styles.factLabel}>طريقة الدفع</Text>
+                <Text style={styles.factValue}>{invoice.payment}</Text>
+              </View>
+            ) : null}
+            <View style={styles.factRow}>
+              <Text style={styles.factLabel}>عدد القطع</Text>
+              <Text style={styles.factValue}>{pieces}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.table}>
+          <View style={styles.thead}>
+            <Text style={[styles.th, styles.colIndex]}>#</Text>
+            <Text style={[styles.th, styles.colName]}>المنتج</Text>
+            <Text style={[styles.th, styles.colQty]}>الكمية</Text>
+            <Text style={[styles.th, styles.colUnit]}>سعر الوحدة</Text>
+            <Text style={[styles.th, styles.colTotal]}>المجموع</Text>
+          </View>
+          {invoice.lines.length === 0 ? (
+            <View style={styles.tr}>
+              <Text style={[styles.td, styles.colName]}>لا توجد منتجات</Text>
+            </View>
+          ) : (
+            invoice.lines.map((line, index) => (
+              <View key={line.key} style={styles.tr} wrap={false}>
+                <Text style={[styles.td, styles.colIndex, { color: FAINT }]}>
+                  {index + 1}
+                </Text>
+                <View style={styles.colName}>
+                  <Text style={[styles.td, { fontWeight: 700, color: INK }]}>
+                    {typed(line.name)}
+                  </Text>
+                  {line.variant ? (
+                    <Text style={styles.variant}>{typed(line.variant)}</Text>
+                  ) : null}
+                </View>
+                <Text style={[styles.td, styles.colQty]}>{line.quantity}</Text>
+                <View style={[styles.colUnit, styles.cellEnd]}>
+                  <Money value={line.unitPrice} style={styles.td} />
+                </View>
+                <View style={[styles.colTotal, styles.cellEnd]}>
+                  <Money
+                    value={line.total}
+                    style={{ ...styles.td, fontWeight: 700, color: INK }}
+                  />
+                  {line.before != null ? (
+                    <Money value={line.before} style={styles.struck} />
+                  ) : null}
+                </View>
+              </View>
+            ))
           )}
+        </View>
+
+        <View style={styles.bottom} wrap={false}>
+          <View style={styles.note}>
+            {invoice.note ? (
+              <>
+                <Text style={styles.caption}>ملاحظات</Text>
+                <Text style={styles.text}>{typed(invoice.note)}</Text>
+              </>
+            ) : null}
+          </View>
+          <View style={styles.totals}>
+            <View style={styles.totalRow}>
+              <Text style={{ color: MUTED }}>المجموع الفرعي</Text>
+              <Money value={invoice.subtotal} />
+            </View>
+            {invoice.productDiscount > 0 ? (
+              <View style={styles.totalRow}>
+                <Text style={{ color: MUTED }}>خصم المنتجات</Text>
+                <Money value={invoice.productDiscount} negative />
+              </View>
+            ) : null}
+            {invoice.couponDiscount > 0 ? (
+              <View style={styles.totalRow}>
+                <Text style={{ color: MUTED }}>خصم الكوبون</Text>
+                <Money value={invoice.couponDiscount} negative />
+              </View>
+            ) : null}
+            <View style={styles.totalRow}>
+              <Text style={{ color: MUTED }}>التوصيل</Text>
+              <Money value={invoice.delivery} />
+            </View>
+            <View style={styles.grandRow}>
+              <Text style={styles.grandLabel}>الإجمالي</Text>
+              <Money value={invoice.total} style={styles.grandValue} />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.footer} fixed>
+          <Text style={[styles.footerText, styles.thanks]}>
+            {typed(`شكراً لتسوقكم${store?.name ? ` من ${store.name}` : ""}`)}
+          </Text>
+          <View style={styles.promo}>
+            <Link src="https://mel.iq" style={styles.promoLink}>
+              mel.iq
+            </Link>
+            <Text style={styles.promoText}>انشئ متجرك بدقائق</Text>
+          </View>
         </View>
       </Page>
     </Document>

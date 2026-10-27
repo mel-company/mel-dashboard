@@ -1,49 +1,289 @@
-import { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useMemo, useState } from "react";
 import { pdf } from "@react-pdf/renderer";
-import { Download } from "lucide-react";
-import { OrderInvoicePDF, type OrderInvoiceData } from "@/utils/files/invoice/order.invoice";
-import { formatCurrency, AR_LATN_LOCALE } from "@/utils/format-currency";
-import { getOrderDeliveryAddressDisplay } from "@/new-pages/orders/utils";
+import { Download, Loader2, Printer } from "lucide-react";
+import { OrderInvoicePDF } from "@/utils/files/invoice/order.invoice";
+import {
+  buildOrderInvoice,
+  type OrderInvoice,
+  type InvoiceStore,
+} from "@/utils/files/invoice/order-invoice-model";
+import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import { formatCurrency } from "@/utils/format-currency";
+import Ltr from "@/components/Ltr";
 
 const STORAGE_KEY = "order-invoice-preview-data";
 
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  PROCESSING: "قيد المعالجة",
-  SHIPPED: "تم الشحن",
-  DELIVERED: "تم التسليم",
-  CANCELLED: "ملغي",
-};
+const Money = ({ value }: { value: number }) => (
+  <span className="whitespace-nowrap">
+    <Ltr>{formatCurrency(value)}</Ltr>
+  </span>
+);
 
-const DELIVERY_FEE = 5000;
+const TotalRow = ({
+  label,
+  value,
+  negative,
+}: {
+  label: string;
+  value: number;
+  negative?: boolean;
+}) => (
+  <div className="flex items-center justify-between py-1.5 text-sm">
+    <span className="text-slate-500">{label}</span>
+    <span className="font-semibold text-slate-800">
+      {negative ? (
+        <Ltr>- {formatCurrency(value)}</Ltr>
+      ) : (
+        <Money value={value} />
+      )}
+    </span>
+  </div>
+);
+
+/** The paper itself — what prints, and what the PDF mirrors. */
+const InvoicePaper = ({
+  invoice,
+  store,
+}: {
+  invoice: OrderInvoice;
+  store: InvoiceStore;
+}) => (
+  <article className="mx-auto w-full max-w-[820px] bg-white px-6 py-8 text-slate-800 shadow-sm ring-1 ring-slate-200 sm:px-10 sm:py-10 print:max-w-none print:px-0 print:py-0 print:shadow-none print:ring-0">
+    {/* RTL: the store leads on the right, the invoice's own facts sit left. */}
+    <header className="flex flex-wrap items-start justify-between gap-6 border-b border-slate-200 pb-6">
+      <div className="flex items-center gap-3">
+        {store.logo ? (
+          <img
+            src={store.logo}
+            alt=""
+            className="size-14 rounded-xl object-contain ring-1 ring-slate-200"
+          />
+        ) : null}
+        <div>
+          <p className="text-xl font-bold text-slate-900">
+            {store.name || "المتجر"}
+          </p>
+          {store.phone ? (
+            <p className="mt-0.5 text-sm text-slate-500">
+              <Ltr>{store.phone}</Ltr>
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="text-left">
+        <p className="text-2xl font-bold text-slate-900">فاتورة</p>
+        <p className="mt-1 text-sm font-semibold text-slate-700">
+          <Ltr>{invoice.code}</Ltr>
+        </p>
+        <p className="text-sm text-slate-500">
+          <Ltr>{invoice.date}</Ltr>
+        </p>
+      </div>
+    </header>
+
+    <section className="grid gap-6 border-b border-slate-200 py-6 sm:grid-cols-2">
+      <div>
+        <p className="mb-2 text-xs font-semibold text-slate-400">إلى</p>
+        <p className="font-bold text-slate-900">{invoice.customerName}</p>
+        {invoice.customerPhone ? (
+          <p className="text-sm text-slate-600">
+            <Ltr>{invoice.customerPhone}</Ltr>
+          </p>
+        ) : null}
+        {invoice.address ? (
+          <p className="mt-1 text-sm text-slate-600">{invoice.address}</p>
+        ) : null}
+        {invoice.nearestPoint ? (
+          <p className="text-sm text-slate-600">{invoice.nearestPoint}</p>
+        ) : null}
+      </div>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 self-start text-sm">
+        <dt className="text-slate-400">حالة الطلب</dt>
+        <dd className="font-semibold text-slate-800">{invoice.status}</dd>
+        {invoice.payment ? (
+          <>
+            <dt className="text-slate-400">طريقة الدفع</dt>
+            <dd className="font-semibold text-slate-800">{invoice.payment}</dd>
+          </>
+        ) : null}
+        <dt className="text-slate-400">عدد القطع</dt>
+        <dd className="font-semibold text-slate-800">
+          {invoice.lines.reduce((sum, l) => sum + l.quantity, 0)}
+        </dd>
+      </dl>
+    </section>
+
+    <table className="mt-6 w-full text-right text-sm">
+      <thead>
+        <tr className="bg-slate-100 text-xs text-slate-500">
+          <th className="w-8 px-2 py-2.5 sm:px-3 font-semibold">#</th>
+          <th className="px-2 py-2.5 sm:px-3 font-semibold">المنتج</th>
+          <th className="px-2 py-2.5 sm:px-3 text-center font-semibold">
+            الكمية
+          </th>
+          <th className="px-2 py-2.5 sm:px-3 font-semibold">سعر الوحدة</th>
+          <th className="px-2 py-2.5 sm:px-3 font-semibold">المجموع</th>
+        </tr>
+      </thead>
+      <tbody>
+        {invoice.lines.length === 0 ? (
+          <tr>
+            <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
+              لا توجد منتجات
+            </td>
+          </tr>
+        ) : (
+          invoice.lines.map((line, index) => (
+            <tr key={line.key} className="border-b border-slate-100">
+              <td className="px-2 py-3 sm:px-3 text-slate-400">{index + 1}</td>
+              <td className="px-2 py-3 sm:px-3">
+                <p className="font-semibold text-slate-900">{line.name}</p>
+                {line.variant ? (
+                  <p className="text-xs text-slate-500">{line.variant}</p>
+                ) : null}
+              </td>
+              <td className="px-2 py-3 sm:px-3 text-center">{line.quantity}</td>
+              <td className="px-2 py-3 sm:px-3 text-slate-600">
+                <Money value={line.unitPrice} />
+              </td>
+              <td className="px-2 py-3 sm:px-3 font-semibold text-slate-900">
+                <Money value={line.total} />
+                {line.before != null ? (
+                  <span className="block whitespace-nowrap text-xs font-normal text-slate-400 line-through">
+                    <Money value={line.before} />
+                  </span>
+                ) : null}
+              </td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+
+    <section className="mt-6 flex flex-wrap items-start justify-between gap-6">
+      <div className="min-w-0 flex-1">
+        {invoice.note ? (
+          <>
+            <p className="mb-1 text-xs font-semibold text-slate-400">ملاحظات</p>
+            <p className="text-sm leading-relaxed text-slate-600">
+              {invoice.note}
+            </p>
+          </>
+        ) : null}
+      </div>
+      <div className="w-full sm:w-72">
+        <TotalRow label="المجموع الفرعي" value={invoice.subtotal} />
+        {invoice.productDiscount > 0 ? (
+          <TotalRow
+            label="خصم المنتجات"
+            value={invoice.productDiscount}
+            negative
+          />
+        ) : null}
+        {invoice.couponDiscount > 0 ? (
+          <TotalRow
+            label="خصم الكوبون"
+            value={invoice.couponDiscount}
+            negative
+          />
+        ) : null}
+        <TotalRow label="التوصيل" value={invoice.delivery} />
+        <div className="mt-2 flex items-center justify-between border-t-2 border-slate-900 pt-3">
+          <span className="font-bold text-slate-900">الإجمالي</span>
+          <span className="text-xl font-bold text-slate-900">
+            <Money value={invoice.total} />
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <footer className="mt-10 flex items-center justify-between gap-4 border-t border-slate-200 pt-4 text-xs text-slate-400">
+      <span>شكراً لتسوقكم{store.name ? ` من ${store.name}` : ""}</span>
+      <span>
+        انشئ متجرك بدقائق{" "}
+        <a
+          href="https://mel.iq"
+          target="_blank"
+          rel="noreferrer"
+          dir="ltr"
+          className="font-semibold text-slate-500"
+        >
+          mel.iq
+        </a>
+      </span>
+    </footer>
+  </article>
+);
+
+/**
+ * The store logo as a PNG data URL for the PDF, or null.
+ *
+ * react-pdf draws only PNG and JPEG and fetches the file itself, while store
+ * logos are often WebP; going through a canvas covers both. The CDN allows
+ * the dashboard's origin, and a logo that still fails leaves the PDF with the
+ * store name alone rather than no PDF.
+ */
+function logoAsPng(src: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const size = 256;
+        const scale = Math.min(size / img.width, size / img.height, 1);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        canvas
+          .getContext("2d")
+          ?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/png"));
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
 
 export default function OrderInvoicePreview() {
-  const [order, setOrder] = useState<OrderInvoiceData | null>(null);
+  const [order, setOrder] = useState<any | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const { data: storeDetails } = useFetchStoreDetails();
 
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as OrderInvoiceData;
-        setOrder(parsed);
-      }
+      if (raw) setOrder(JSON.parse(raw));
     } catch {
       setOrder(null);
     }
   }, []);
 
+  const invoice = useMemo(
+    () => (order ? buildOrderInvoice(order) : null),
+    [order],
+  );
+  const store: InvoiceStore = {
+    name: storeDetails?.name,
+    logo: storeDetails?.logo,
+    phone: storeDetails?.phone,
+  };
+
   const handleDownloadPdf = async () => {
-    if (!order) return;
+    if (!invoice) return;
     setIsDownloading(true);
     try {
+      const logo = store.logo ? await logoAsPng(store.logo) : null;
       const blob = await pdf(
-        <OrderInvoicePDF order={order} />
+        <OrderInvoicePDF invoice={invoice} store={{ ...store, logo }} />,
       ).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `order-invoice-${String(order.id).slice(0, 8)}.pdf`;
+      link.download = `invoice-${invoice.code.replace("#", "")}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -51,19 +291,19 @@ export default function OrderInvoicePreview() {
     }
   };
 
-  if (order === null) {
+  if (!invoice) {
     return (
       <div
-        className="min-h-screen bg-gray-50 flex items-center justify-center p-6"
+        className="flex min-h-screen items-center justify-center bg-slate-100 p-6"
         dir="rtl"
       >
-        <div className="text-center text-gray-600">
+        <div className="text-center text-slate-600">
           <p className="text-lg font-medium">لا توجد بيانات للفاتورة</p>
-          <p className="text-sm mt-2">يرجى فتح الفاتورة من صفحة تفاصيل الطلب.</p>
+          <p className="mt-2 text-sm">افتح الفاتورة من تفاصيل الطلب.</p>
           <button
             type="button"
             onClick={() => window.close()}
-            className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+            className="mt-4 rounded-lg bg-slate-200 px-4 py-2 hover:bg-slate-300"
           >
             إغلاق
           </button>
@@ -72,191 +312,38 @@ export default function OrderInvoicePreview() {
     );
   }
 
-  const customer = order.customer?.user;
-  const products = order.products ?? [];
-  const subtotal = products.reduce(
-    (sum, p) => sum + (p.price ?? 0) * (p.quantity ?? 0),
-    0
-  );
-  const total = subtotal + DELIVERY_FEE;
-  const statusLabel =
-    STATUS_LABELS[(order.status || "").toUpperCase()] || order.status || "—";
-  const deliveryAddress = getOrderDeliveryAddressDisplay(order) || "—";
-  const createdDate = order.createdAt
-    ? new Date(order.createdAt).toLocaleDateString(AR_LATN_LOCALE)
-    : "—";
-
   return (
     <div
-      className="min-h-screen bg-gray-50 text-gray-900 p-6 sm:p-8"
+      className="min-h-screen bg-slate-100 px-3 py-6 sm:px-6 print:bg-white print:p-0"
       dir="rtl"
     >
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 pb-6 border-b-2 border-blue-600">
-          <h1 className="text-2xl font-bold text-blue-700 text-center">
-            فاتورة الطلب
-          </h1>
-          <p className="text-center text-gray-500 text-sm mt-2">
-            رقم الطلب: #{String(order.id).slice(0, 8)} — تاريخ: {createdDate}
-          </p>
-        </div>
-
-        {/* Download PDF button */}
-        <div className="mb-8 flex justify-center">
-          <button
-            type="button"
-            onClick={handleDownloadPdf}
-            disabled={isDownloading}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-xl shadow-lg transition-colors"
-          >
-            <Download className="w-5 h-5" />
-            {isDownloading ? "جاري التوليد..." : "تحميل الفاتورة PDF"}
-          </button>
-        </div>
-
-        {/* Status */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-3">حالة الطلب</h2>
-          <span className="inline-block px-4 py-2 rounded-lg bg-blue-100 text-blue-800 font-semibold">
-            {statusLabel}
-          </span>
-        </section>
-
-        {/* Customer */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <span className="w-1 h-5 bg-blue-500 rounded" />
-            معلومات العميل
-          </h2>
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-500">الاسم</span>
-              <span className="font-semibold">{customer?.name || "—"}</span>
-            </div>
-            {customer?.phone && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">الهاتف</span>
-                <span>{customer.phone}</span>
-              </div>
-            )}
-            {customer?.email && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">البريد الإلكتروني</span>
-                <span>{customer.email}</span>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Delivery address */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <span className="w-1 h-5 bg-blue-500 rounded" />
-            عنوان التوصيل
-          </h2>
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-            <p className="text-right">{deliveryAddress}</p>
-          </div>
-        </section>
-
-        {/* Notes */}
-        {order.note && (
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span className="w-1 h-5 bg-blue-500 rounded" />
-              ملاحظات الطلب
-            </h2>
-            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-              <p className="text-right">{order.note}</p>
-            </div>
-          </section>
-        )}
-
-        {/* Products */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <span className="w-1 h-5 bg-blue-500 rounded" />
-            تفاصيل المنتجات
-          </h2>
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-            <table className="w-full text-right">
-              <thead>
-                <tr className="bg-blue-700 text-white">
-                  <th className="p-3 font-semibold">المنتج</th>
-                  <th className="p-3 font-semibold">السعر</th>
-                  <th className="p-3 font-semibold">الكمية</th>
-                  <th className="p-3 font-semibold">المجموع</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="p-4 text-gray-500">
-                      لا توجد منتجات
-                    </td>
-                  </tr>
-                ) : (
-                  products.map((p, i) => {
-                    const qty = p.quantity ?? 0;
-                    const price = p.price ?? 0;
-                    const lineTotal = qty * price;
-                    const variantLabel =
-                      p.variant?.optionValues
-                        ?.map((o) => o.label || o.value)
-                        .filter(Boolean)
-                        .join(" / ") || "";
-                    const title =
-                      (p.product?.title || "منتج") +
-                      (variantLabel ? ` (${variantLabel})` : "");
-                    return (
-                      <tr
-                        key={p.id || i}
-                        className={i % 2 === 1 ? "bg-gray-50" : ""}
-                      >
-                        <td className="p-3">{title}</td>
-                        <td className="p-3">{formatCurrency(price)}</td>
-                        <td className="p-3">{qty}</td>
-                        <td className="p-3 font-semibold">
-                          {formatCurrency(lineTotal)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-            <div className="p-4 border-t border-gray-200 space-y-2">
-              <div className="flex justify-between text-gray-700">
-                <span>المجموع الفرعي</span>
-                <span>{formatCurrency(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-gray-700">
-                <span>التوصيل</span>
-                <span>{formatCurrency(DELIVERY_FEE)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold text-blue-700 pt-2 border-t">
-                <span>الإجمالي</span>
-                <span>{formatCurrency(total)}</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="flex justify-center pb-6">
-          <button
-            type="button"
-            onClick={handleDownloadPdf}
-            disabled={isDownloading}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-xl shadow-lg transition-colors"
-          >
-            <Download className="w-5 h-5" />
-            {isDownloading ? "جاري التوليد..." : "تحميل الفاتورة PDF"}
-          </button>
-        </div>
+      <div className="mx-auto mb-4 flex max-w-[820px] flex-wrap items-center justify-end gap-2 print:hidden">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+        >
+          <Printer className="size-4" />
+          طباعة
+        </button>
+        <button
+          type="button"
+          onClick={handleDownloadPdf}
+          disabled={isDownloading}
+          className="inline-flex h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60"
+        >
+          {isDownloading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Download className="size-4" />
+          )}
+          تحميل PDF
+        </button>
       </div>
+      <InvoicePaper invoice={invoice} store={store} />
     </div>
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ORDER_INVOICE_PREVIEW_STORAGE_KEY = STORAGE_KEY;
