@@ -321,7 +321,7 @@ const OrderShipmentCard = ({
         <div className="flex min-w-0 items-center gap-2.5">
           <CourierLogo
             logo={courierLogo}
-            className="size-9 rounded-[12px] p-1"
+            className="size-9 rounded-[12px] p-0"
             iconClassName="size-4"
           />
           <div className="min-w-0 text-right">

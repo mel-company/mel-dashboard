@@ -178,7 +178,7 @@ export const OrderDeliveryCard = ({
           {courierName?.trim() ? (
             <CourierLogo
               logo={courierLogo}
-              className="size-7 rounded-lg p-1"
+              className="size-7 rounded-lg p-0"
               iconClassName="size-4"
             />
           ) : null}
