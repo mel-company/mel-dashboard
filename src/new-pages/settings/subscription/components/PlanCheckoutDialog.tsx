@@ -16,21 +16,11 @@ import type {
 } from "@/api/endpoints/platform-payment.endpoint";
 import PaymentProviderPicker from "@/new-pages/settings/components/PaymentProviderPicker";
 import { LAST_PAYMENT_ID_KEY } from "@/new-pages/settings/components/DomainSettingsSection";
-import {
-  BILLING_PERIODS,
-  quoteDue,
-  quoteExplanation,
-} from "@/utils/subscription-quote";
+import { quoteDue, quoteExplanation } from "@/utils/subscription-quote";
 import { formatCurrency } from "@/utils/format-currency";
 import { cn } from "@/lib/utils";
-import {
-  bodyClass,
-  cellClass,
-  formatDay,
-  labelCellClass,
-  primaryButtonClass,
-  tableClass,
-} from "./table";
+import { formatDay, primaryButtonClass } from "./table";
+import PeriodSwitch from "./PeriodSwitch";
 import SubscriptionDialog from "./SubscriptionDialog";
 
 type PlanCheckoutDialogProps = {
@@ -38,7 +28,13 @@ type PlanCheckoutDialogProps = {
   onOpenChange: (open: boolean) => void;
   /** Renew the current plan, or switch to another one. */
   type: "RENEWAL" | "CHANGE_PLAN";
-  plan: { id: string; name: string } | null;
+  plan: {
+    id: string;
+    name: string;
+    /** Period picked in the plans dialog; monthly otherwise. */
+    billingPeriod?: BillingPeriod;
+    discounts?: Partial<Record<BillingPeriod, number>>;
+  } | null;
 };
 
 /**
@@ -55,8 +51,12 @@ const PlanCheckoutDialog = ({
   plan,
 }: PlanCheckoutDialogProps) => {
   const queryClient = useQueryClient();
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("MONTHLY");
-  const [provider, setProvider] = useState<PlatformPaymentProvider | null>(null);
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(
+    plan?.billingPeriod ?? "MONTHLY",
+  );
+  const [provider, setProvider] = useState<PlatformPaymentProvider | null>(
+    null,
+  );
   const initPayment = useInitStorePlatformPayment();
 
   const quote = useSubscriptionQuote(
@@ -118,7 +118,9 @@ const PlanCheckoutDialog = ({
   };
 
   const title =
-    type === "CHANGE_PLAN" ? `التبديل إلى باقة ${plan?.name ?? ""}` : "تجديد الاشتراك";
+    type === "CHANGE_PLAN"
+      ? `التبديل إلى باقة ${plan?.name ?? ""}`
+      : "تجديد الاشتراك";
 
   return (
     <SubscriptionDialog
@@ -132,52 +134,36 @@ const PlanCheckoutDialog = ({
       }
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-2">
-          {BILLING_PERIODS.map((period) => (
-            <button
-              key={period.value}
-              type="button"
-              onClick={() => setBillingPeriod(period.value)}
-              className={cn(
-                "rounded-xl border px-3 py-2 text-sm font-medium transition-colors",
-                billingPeriod === period.value
-                  ? "border-blue-600 bg-blue-600 text-white"
-                  : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900",
-              )}
-            >
-              {period.label}
-            </button>
-          ))}
-        </div>
+        <PeriodSwitch
+          value={billingPeriod}
+          onChange={setBillingPeriod}
+          discounts={plan?.discounts}
+        />
 
-        <table className={tableClass}>
-          <tbody className={bodyClass}>
-            <tr>
-              <td className={labelCellClass}>المستحق الآن</td>
-              <td className={cn(cellClass, "font-bold text-slate-900 dark:text-slate-50")}>
-                {quote.isLoading ? "…" : quote.isError ? "—" : due}
-              </td>
-            </tr>
+        <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900">
+          <p className="text-[13px] text-slate-500">المستحق الآن</p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3">
+            <span className="text-3xl font-bold text-slate-900 dark:text-slate-50">
+              {quote.isLoading ? "…" : quote.isError ? "—" : due}
+            </span>
             {quote.data && quote.data.savings > 0 && (
-              <tr>
-                <td className={labelCellClass}>بدون خصم</td>
-                <td className={cn(cellClass, "line-through")}>
-                  {formatCurrency(quote.data.listAmount)}
-                </td>
-              </tr>
+              <span className="text-sm text-slate-400 line-through">
+                {formatCurrency(quote.data.listAmount)}
+              </span>
             )}
-            {why && (
-              <tr>
-                <td className={labelCellClass}>التفاصيل</td>
-                <td className={cellClass}>{why}</td>
-              </tr>
-            )}
-            <tr>
-              <td className={labelCellClass}>ينتهي الاشتراك في</td>
-              <td className={cellClass}>{formatDay(quote.data?.periodEndsAt)}</td>
-            </tr>
-          </tbody>
-        </table>
+          </div>
+          {why && (
+            <p className="mt-1 text-[13px] text-blue-600 dark:text-blue-400">
+              {why}
+            </p>
+          )}
+          <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3 text-[13px] dark:border-slate-800">
+            <span className="text-slate-500">ينتهي الاشتراك في</span>
+            <span className="font-medium text-slate-900 dark:text-slate-100">
+              {formatDay(quote.data?.periodEndsAt)}
+            </span>
+          </div>
+        </div>
 
         {!isFree && (
           <PaymentProviderPicker
@@ -187,9 +173,9 @@ const PlanCheckoutDialog = ({
           />
         )}
 
-        <div className="flex flex-wrap justify-start gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Button
-            className={cn(primaryButtonClass, "h-11 px-6")}
+            className={cn(primaryButtonClass, "h-12 flex-1 text-base")}
             disabled={!plan || initPayment.isPending || quote.isLoading}
             onClick={handlePay}
           >
@@ -208,7 +194,7 @@ const PlanCheckoutDialog = ({
           </Button>
           <Button
             variant="secondary"
-            className="h-11 rounded-full px-6"
+            className="h-12 rounded-full px-6"
             onClick={() => onOpenChange(false)}
           >
             تراجع

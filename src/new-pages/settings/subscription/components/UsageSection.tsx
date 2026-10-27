@@ -30,14 +30,19 @@ const UsageSection = () => {
           return (
             <div key={row.key}>
               <div className="mb-1.5 flex items-center justify-between text-[13px]">
-                <span className="text-slate-900 dark:text-slate-100">{row.label}</span>
+                <span className="text-slate-900 dark:text-slate-100">
+                  {row.label}
+                </span>
                 <span
                   className={cn(
                     "tabular-nums",
-                    usage.reached ? "font-bold text-amber-600" : "text-slate-500",
+                    usage.reached
+                      ? "font-bold text-amber-600"
+                      : "text-slate-500",
                   )}
                 >
-                  {usage.used.toLocaleString("en-US")} من {limit.toLocaleString("en-US")}
+                  {usage.used.toLocaleString("en-US")} من{" "}
+                  {limit.toLocaleString("en-US")}
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">

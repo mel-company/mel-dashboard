@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import SettingsCard from "@/new-pages/settings/components/SettingsCard";
-import StorePlanSummaryCard from "@/new-pages/settings/components/StorePlanSummaryCard";
 import { useFetchStoreSubscription } from "@/api/wrappers/subscription.wrapper";
 import CurrentPlanSection from "./components/CurrentPlanSection";
-import PlansTableSection from "./components/PlansTableSection";
+import PlansTableSection, {
+  type ChosenPlan,
+} from "./components/PlansTableSection";
+import { periodDiscount } from "./components/plan-pricing";
 import UsageSection from "./components/UsageSection";
 import PaymentHistorySection from "./components/PaymentHistorySection";
 import PlanCheckoutDialog from "./components/PlanCheckoutDialog";
@@ -12,12 +14,13 @@ import SubscriptionDialog from "./components/SubscriptionDialog";
 
 type Checkout = {
   type: "RENEWAL" | "CHANGE_PLAN";
-  plan: { id: string; name: string };
+  plan: Omit<ChosenPlan, "billingPeriod"> &
+    Partial<Pick<ChosenPlan, "billingPeriod">>;
 };
 
 /**
- * Settings → «الاشتراك»: the plan card, days to renewal with renew and
- * change-plan, and the plan's limits. The plans side by side and the payment
+ * Settings → «الاشتراك»: the plan with days to renewal, renew and
+ * change-plan, beside the plan's limits. The plans side by side and the payment
  * history open in dialogs, so the tab stays short.
  */
 const SubscriptionSettingsContent = () => {
@@ -30,6 +33,10 @@ const SubscriptionSettingsContent = () => {
     ? {
         id: subscription.plan.id as string,
         name: subscription.plan.name as string,
+        discounts: {
+          QUARTERLY: periodDiscount(subscription.plan, "QUARTERLY"),
+          YEARLY: periodDiscount(subscription.plan, "YEARLY"),
+        },
       }
     : null;
 
@@ -42,12 +49,8 @@ const SubscriptionSettingsContent = () => {
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-5xl grid-cols-1 items-start gap-[18px] lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
-      {/* Phone order: plan card, subscription, limits. */}
-      <div className="lg:col-start-1 lg:row-start-1">
-        <StorePlanSummaryCard />
-      </div>
-      <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+    <div className="mx-auto grid w-full max-w-5xl grid-cols-1 items-start gap-[18px] lg:grid-cols-2">
+      <div>
         {subscription ? (
           <CurrentPlanSection
             subscription={subscription}
@@ -73,9 +76,7 @@ const SubscriptionSettingsContent = () => {
         )}
       </div>
 
-      <div className="lg:col-start-1 lg:row-start-2">
-        <UsageSection />
-      </div>
+      <UsageSection />
 
       <SubscriptionDialog
         open={plansOpen}
@@ -84,16 +85,16 @@ const SubscriptionSettingsContent = () => {
         description="اختر باقة للتجديد أو التبديل."
         className="sm:max-w-3xl"
       >
-          <PlansTableSection
-            currentPlanId={currentPlan?.id ?? null}
-            onChoose={(plan) => {
-              setPlansOpen(false);
-              setCheckout({
-                type: plan.id === currentPlan?.id ? "RENEWAL" : "CHANGE_PLAN",
-                plan,
-              });
-            }}
-          />
+        <PlansTableSection
+          currentPlanId={currentPlan?.id ?? null}
+          onChoose={(plan) => {
+            setPlansOpen(false);
+            setCheckout({
+              type: plan.id === currentPlan?.id ? "RENEWAL" : "CHANGE_PLAN",
+              plan,
+            });
+          }}
+        />
       </SubscriptionDialog>
 
       <SubscriptionDialog
@@ -107,7 +108,11 @@ const SubscriptionSettingsContent = () => {
 
       {/* Keyed so each checkout starts on the monthly period. */}
       <PlanCheckoutDialog
-        key={checkout ? `${checkout.type}-${checkout.plan.id}` : "closed"}
+        key={
+          checkout
+            ? `${checkout.type}-${checkout.plan.id}-${checkout.plan.billingPeriod ?? ""}`
+            : "closed"
+        }
         open={!!checkout}
         onOpenChange={(open) => !open && setCheckout(null)}
         type={checkout?.type ?? "RENEWAL"}

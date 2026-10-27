@@ -55,20 +55,28 @@ const PaymentHistorySection = () => {
                 <th className={cn(thClass, "hidden sm:table-cell")}>الباقة</th>
                 <th className={cn(thClass, "hidden sm:table-cell")}>المدة</th>
                 <th className={thClass}>المبلغ</th>
-                <th className={cn(thClass, "hidden sm:table-cell")}>الدفع عبر</th>
+                <th className={cn(thClass, "hidden sm:table-cell")}>
+                  الدفع عبر
+                </th>
                 <th className={thClass}>الحالة</th>
               </tr>
             </thead>
             <tbody className={bodyClass}>
               {rows.map((row) => (
                 <tr key={row.id}>
-                  <td className={cellClass}>{formatDay(row.paidAt ?? row.createdAt)}</td>
-                  <td className={cellClass}>{TYPE_LABELS[row.type] ?? row.type}</td>
-                  <td className={cn(cellClass, "hidden sm:table-cell")}>{row.plan?.name ?? "—"}</td>
+                  <td className={cellClass}>
+                    {formatDay(row.paidAt ?? row.createdAt)}
+                  </td>
+                  <td className={cellClass}>
+                    {TYPE_LABELS[row.type] ?? row.type}
+                  </td>
+                  <td className={cn(cellClass, "hidden sm:table-cell")}>
+                    {row.plan?.name ?? "—"}
+                  </td>
                   <td className={cn(cellClass, "hidden sm:table-cell")}>
                     {row.type === "DOMAIN_REGISTRATION"
                       ? "—"
-                      : billingPeriodLabel(row.billingPeriod) ?? "—"}
+                      : (billingPeriodLabel(row.billingPeriod) ?? "—")}
                   </td>
                   <td className={cn(cellClass, "whitespace-nowrap")}>
                     {row.amount > 0 ? formatCurrency(row.amount) : "مجاناً"}
@@ -79,7 +87,9 @@ const PaymentHistorySection = () => {
                   <td
                     className={cn(
                       cellClass,
-                      row.status === "PAID" ? "text-emerald-600" : "text-slate-500",
+                      row.status === "PAID"
+                        ? "text-emerald-600"
+                        : "text-slate-500",
                     )}
                   >
                     {STATUS_LABELS[row.status] ?? row.status}
