@@ -409,10 +409,10 @@ const OrderDetailsSheet = ({
 
   /**
    * By status: the step that moves the order on, «سحب من الشحن» while a
-   * parcel is with a courier that can take it back, then print and cancel.
-   * A delivered or cancelled order is a record, so only print is left.
+   * parcel is with a courier that can take it back, then cancel. Print
+   * lives in the header so it is there for every status.
    */
-  const actions = (
+  const actions = nextStatusAction || canCancel ? (
     <div className="flex flex-col items-stretch gap-3">
       {nextStatusAction ? (
         <div className="space-y-2">
@@ -450,31 +450,19 @@ const OrderDetailsSheet = ({
         </button>
       ) : null}
 
-      {/* RTL: `flex-row` puts the first child rightmost, so طباعة الفاتورة
-          lands on the right and إلغاء الطلب on the left, as drawn. */}
-      <div className="flex flex-row items-center gap-3">
+      {canCancel ? (
         <button
           type="button"
-          onClick={handlePrint}
-          className="flex h-[52px] items-center justify-center gap-2 rounded-2xl border border-slate-300 min-w-0 flex-1 px-3 bg-white text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 dark:border-[#2a3160] dark:bg-[#0a0e27] dark:text-[#e4e7fc] dark:hover:bg-[#12183b]"
+          onClick={() => setConfirm("cancel")}
+          disabled={isUpdatingStatus}
+          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-[#ff5252]/50 bg-transparent text-base font-bold text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50"
         >
-          <Printer className="size-4" />
-          طباعة الفاتورة
+          <Ban className="size-4" />
+          إلغاء الطلب
         </button>
-        {canCancel ? (
-          <button
-            type="button"
-            onClick={() => setConfirm("cancel")}
-            disabled={isUpdatingStatus}
-            className="flex h-[52px] items-center justify-center gap-2 rounded-2xl border border-[#ff5252]/50 bg-transparent min-w-0 flex-1 px-3 text-base font-bold text-[#ff5252] transition-colors hover:bg-[#ff5252]/10 disabled:opacity-50"
-          >
-            <Ban className="size-4" />
-            إلغاء الطلب
-          </button>
-        ) : null}
-      </div>
+      ) : null}
     </div>
-  );
+  ) : null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -482,6 +470,9 @@ const OrderDetailsSheet = ({
         side={isMobile ? "bottom" : "left"}
         dir="rtl"
         showCloseButton={false}
+        // Radix focuses the first button on open, which is now print in the
+        // header, and it opened looking pressed. Nothing needs focus first.
+        onOpenAutoFocus={(event) => event.preventDefault()}
         // On touch Radix judges an outside tap at `click`, by which time the
         // cancel confirm has already closed, so dismissing it (تراجع, the X or
         // its backdrop) also read as a tap outside the sheet and closed it.
@@ -496,7 +487,7 @@ const OrderDetailsSheet = ({
           }
         }}
         className={cn(
-          "z-[60] flex flex-col gap-0 border-0 p-0 text-foreground",
+          "z-[60] flex flex-col gap-0 border-0 p-0 text-foreground outline-none",
           "bg-slate-50 dark:bg-[#12183b]",
           isMobile
             ? cn(
@@ -543,6 +534,15 @@ const OrderDetailsSheet = ({
               <StatusGlyph tone={status.tone} />
               {status.label}
             </span>
+            <button
+              type="button"
+              onClick={handlePrint}
+              aria-label="طباعة الفاتورة"
+              className="flex h-9 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 sm:px-3.5 dark:border-[#2a3160] dark:bg-[#0a0e27] dark:text-[#e4e7fc] dark:hover:bg-[#12183b]"
+            >
+              <Printer className="size-4" />
+              <span className="hidden sm:inline">طباعة الفاتورة</span>
+            </button>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
