@@ -1,5 +1,17 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
+export type PosOrderRequest = {
+  fulfilment: "PICKUP" | "DELIVERY";
+  name?: string;
+  phone?: string;
+  stateId?: string;
+  regionId?: string;
+  nearest_point?: string;
+  note?: string;
+  couponCode?: string;
+  products: { productId: string; variantId?: string; quantity: number }[];
+};
+
 export const orderAPI = {
   /**
    * Get all orders with cursor pagination (infinite scroll)
@@ -164,6 +176,15 @@ export const orderAPI = {
       `/order/${orderId}/product/${productId}`,
       orderProduct
     );
+    return data;
+  },
+
+  /**
+   * Ring up a POS sale (POST /order/pos). The store comes from the session;
+   * PICKUP is a paid counter sale, DELIVERY a pending cash-on-delivery order.
+   */
+  createPosOrder: async (order: PosOrderRequest): Promise<any> => {
+    const { data } = await axiosInstance.post<any>("/order/pos", order);
     return data;
   },
 

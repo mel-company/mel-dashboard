@@ -7,6 +7,10 @@ export type Product = {
   price: number | null;
   image?: string;
   description?: string;
+  /** Sum of the variants' stock. Only a count when `stockTracked`. */
+  stock?: number;
+  /** False for a product with no stock row: it sells without limit. */
+  stockTracked?: boolean;
   /** Figma overlays a rating chip on the card image. */
   rating?: number;
   /** Figma shows a period trend opposite the price. */
@@ -51,15 +55,25 @@ export type ProductVariant = {
     id: string;
     label: string | null;
     value: string | null;
+    option?: { id: string; name: string } | null;
   }>;
 };
 
 export type CartItem = {
   product: Product;
   variant?: ProductVariant;
-  selectedOptions: Record<string, string>;
   quantity: number;
+  /** Units on the shelf when added; `null` when stock is not counted. */
+  stock: number | null;
 };
+
+/** «أحمر / XL» — a variant named by its option values. */
+export function variantLabel(variant: ProductVariant): string {
+  return (variant.optionValues ?? [])
+    .map((ov) => ov.label || ov.value || "")
+    .filter(Boolean)
+    .join(" / ");
+}
 
 export type Category = {
   id: string;
@@ -111,4 +125,43 @@ export function resolvePosImageUrl(
 /** @deprecated use resolvePosImageUrl */
 export function productImageUrl(baseUrl: string, image?: string | null) {
   return resolvePosImageUrl(image, baseUrl);
+}
+
+/** 07XXXXXXXXX, 7XXXXXXXXX, 9647XXXXXXXXX or +9647XXXXXXXXX. */
+export function isIraqiMobile(raw: string): boolean {
+  const digits = raw.replace(/[\s-]/g, "").replace(/^(\+|00)/, "");
+  return /^(964|0)?7\d{9}$/.test(digits);
+}
+
+/** The coupon check answers in English; the cashier reads Arabic. */
+export function posCouponMessage(message?: string | null): string {
+  const m = String(message ?? "");
+  if (/not found/i.test(m)) return "لا يوجد رمز خصم بهذا الاسم";
+  if (/not active/i.test(m)) return "رمز الخصم غير مفعّل";
+  if (/not started/i.test(m)) return "رمز الخصم لم يبدأ بعد";
+  if (/expired/i.test(m)) return "انتهت صلاحية رمز الخصم";
+  if (/usage limit/i.test(m)) return "استُنفد عدد مرات استخدام رمز الخصم";
+  const min = m.match(/Minimum order total of ([\d.]+)/i);
+  if (min) return `رمز الخصم يتطلب فاتورة لا تقل عن ${formatPosPrice(Number(min[1]))}`;
+  return "رمز الخصم غير صالح";
+}
+
+/** A refused sale, said in Arabic where the server answered in English. */
+export function posErrorMessage(error: any): string {
+  const data = error?.response?.data;
+  if (data?.code === "PLAN_UPGRADE_REQUIRED") {
+    return "نقطة البيع متاحة في باقة Grow";
+  }
+  const raw = Array.isArray(data?.message)
+    ? data.message.join("، ")
+    : String(data?.message ?? "");
+  const stock = raw.match(/Stock is not enough for product (.+?)\. Available: (\d+)/);
+  if (stock) return `المخزون لا يكفي لـ«${stock[1]}»، المتبقي ${stock[2]}`;
+  if (/not found or does not belong/i.test(raw)) {
+    return "أحد المنتجات لم يعد متاحاً، احذفه من الفاتورة وأعد إضافته";
+  }
+  if (/sold in variants/i.test(raw)) return "اختر نوع المنتج قبل البيع";
+  if (/phone/i.test(raw)) return "رقم الهاتف غير صحيح";
+  if (raw && /[؀-ۿ]/.test(raw)) return raw;
+  return "تعذّر إتمام العملية، حاول مرة أخرى";
 }

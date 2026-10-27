@@ -1,4 +1,4 @@
-import { Loader2, Package, Percent, Printer, Trash2 } from "lucide-react";
+import { Loader2, Minus, Package, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,380 +9,430 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/utils/format-currency";
 import type { CartItem } from "../utils";
 import {
   formatPosPrice,
-  getCategoryName,
   getDisplayName,
   resolvePosImageUrl,
+  variantLabel,
 } from "../utils";
-import type { POSCheckoutForm } from "./POSCheckoutDialog";
 
-type PaymentMethodOption = { id: string; name: string };
+export type POSFulfilment = "PICKUP" | "DELIVERY";
+
+export type POSInvoiceForm = {
+  fulfilment: POSFulfilment;
+  name: string;
+  phone: string;
+  stateId: string;
+  regionId: string;
+  nearest_point: string;
+  note: string;
+  couponCode: string;
+};
+
+export type POSCouponState =
+  | { status: "idle" }
+  | { status: "checking" }
+  | { status: "valid"; discount: number }
+  | { status: "invalid"; message: string };
 
 type POSInvoicePanelProps = {
   cart: CartItem[];
   baseUrl: string;
-  total: number;
-  form: POSCheckoutForm;
-  onFormChange: (patch: Partial<POSCheckoutForm>) => void;
-  paymentMethods: PaymentMethodOption[];
+  /** Adding to an existing order: no customer, no payment, just the lines. */
+  addingToOrder: boolean;
+  form: POSInvoiceForm;
+  onFormChange: (patch: Partial<POSInvoiceForm>) => void;
   states?: any[];
   regions?: any[];
-  isLoadingPaymentMethods?: boolean;
   isLoadingStates?: boolean;
   isLoadingRegions?: boolean;
-  cashOnDelivery: boolean;
-  onCashOnDeliveryChange: (value: boolean) => void;
-  showCoupon: boolean;
-  onToggleCoupon: () => void;
-  isCheckingOut: boolean;
-  isAddingProducts?: boolean;
-  onPay: () => void;
-  onCancel: () => void;
+  coupon: POSCouponState;
+  subtotal: number;
+  discount: number;
+  total: number;
+  /** Why the main button is off, shown under it. */
+  blockedReason: string | null;
+  isSubmitting: boolean;
+  onSubmit: () => void;
+  onClear: () => void;
   onUpdateQuantity: (index: number, delta: number) => void;
   onRemove: (index: number) => void;
   className?: string;
 };
 
 const fieldClass =
-  "h-12 rounded-[14px] border-0 bg-white px-4 text-right shadow-none focus-visible:ring-2 focus-visible:ring-sky-500/30 dark:bg-slate-950";
+  "h-10 rounded-xl border border-slate-200 bg-white px-3 text-right text-sm shadow-none focus-visible:ring-2 focus-visible:ring-sky-500/30 dark:border-slate-800 dark:bg-slate-950";
 
+/**
+ * The invoice: lines first, then who it is for, then what is owed.
+ *
+ * It used to open with eight customer fields — email, province and city
+ * required — for a customer standing at the counter, which on a laptop pushed
+ * the lines into a sliver and the pay button below the fold. A counter sale
+ * now asks for nothing; the address only appears for «توصيل».
+ */
 const POSInvoicePanel = ({
   cart,
   baseUrl,
-  total,
+  addingToOrder,
   form,
   onFormChange,
-  paymentMethods,
   states = [],
   regions = [],
-  isLoadingPaymentMethods,
   isLoadingStates,
   isLoadingRegions,
-  cashOnDelivery,
-  onCashOnDeliveryChange,
-  showCoupon,
-  onToggleCoupon,
-  isCheckingOut,
-  isAddingProducts,
-  onPay,
-  onCancel,
+  coupon,
+  subtotal,
+  discount,
+  total,
+  blockedReason,
+  isSubmitting,
+  onSubmit,
+  onClear,
   onUpdateQuantity,
   onRemove,
   className,
 }: POSInvoicePanelProps) => {
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const isDelivery = form.fulfilment === "DELIVERY";
+
+  const submitLabel = addingToOrder
+    ? "إضافة إلى الطلب"
+    : isDelivery
+      ? "إنشاء طلب التوصيل"
+      : "إتمام البيع";
 
   return (
-    <div className={cn("flex h-full min-h-0 flex-col gap-3", className)}>
-      <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white p-[18px] shadow-sm dark:border-slate-800 dark:bg-slate-950">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 rounded-full bg-orange-500/10 px-2 py-1">
-            <span className="text-[11px] font-medium text-orange-600">
-              دفع عند الاستلام
-            </span>
-            <Switch
-              checked={cashOnDelivery}
-              onToggle={onCashOnDeliveryChange}
-            />
-          </div>
-          <h2 className="text-xl font-medium text-slate-700 dark:text-slate-100">
-            تفاصيل الفاتورة
-          </h2>
-        </div>
+    <div
+      className={cn(
+        "flex min-h-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950",
+        className,
+      )}
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+        <h2 className="text-base font-bold text-slate-900 dark:text-slate-50">
+          الفاتورة
+          <span className="ms-2 text-sm font-normal text-slate-500 tabular-nums">
+            {itemCount} قطعة
+          </span>
+        </h2>
+        {cart.length > 0 ? (
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-sm text-slate-500 hover:text-rose-600"
+          >
+            إفراغ
+          </button>
+        ) : null}
+      </div>
 
-        <div className="grid grid-cols-1 gap-3 rounded-xl bg-slate-50 p-3 sm:grid-cols-2 dark:bg-slate-900/60">
-          <Field label="اسم العميل">
-            <Input
-              value={form.name}
-              onChange={(e) => onFormChange({ name: e.target.value })}
-              placeholder="اسم العميل الثنائي"
-              className={fieldClass}
-            />
-          </Field>
-          <Field label="رقم الهاتف">
-            <Input
-              value={form.phone}
-              onChange={(e) => onFormChange({ phone: e.target.value })}
-              placeholder="077X XXX XXXX"
-              className={fieldClass}
-              dir="ltr"
-            />
-          </Field>
-          <Field label="البريد الالكتروني">
-            <Input
-              value={form.email}
-              onChange={(e) => onFormChange({ email: e.target.value })}
-              placeholder="mel.customer@example.com"
-              className={fieldClass}
-              dir="ltr"
-            />
-          </Field>
-          <Field label="طريقة الدفع">
-            <Select
-              value={form.paymentMethodId || undefined}
-              onValueChange={(v) => onFormChange({ paymentMethodId: v })}
-              disabled={isLoadingPaymentMethods}
-            >
-              <SelectTrigger className={fieldClass}>
-                <SelectValue placeholder="اختر طريقة الدفع" />
-              </SelectTrigger>
-              <SelectContent>
-                {paymentMethods.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="المحافظة">
-            <Select
-              value={form.stateId || undefined}
-              onValueChange={(v) =>
-                onFormChange({ stateId: v, regionId: "" })
-              }
-              disabled={isLoadingStates}
-            >
-              <SelectTrigger className={fieldClass}>
-                <SelectValue placeholder="اختر المحافظة" />
-              </SelectTrigger>
-              <SelectContent>
-                {states.map((s: any) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {getDisplayName(s.name)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="المنطقة">
-            <Select
-              value={form.regionId || undefined}
-              onValueChange={(v) => onFormChange({ regionId: v })}
-              disabled={!form.stateId || isLoadingRegions}
-            >
-              <SelectTrigger className={fieldClass}>
-                <SelectValue placeholder="مثال : البلديات" />
-              </SelectTrigger>
-              <SelectContent>
-                {regions.map((r: any) => (
-                  <SelectItem key={r.id} value={r.id}>
-                    {getDisplayName(r.name)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="اقرب نقطة دالة">
-            <Input
-              value={form.nearest_point}
-              onChange={(e) => onFormChange({ nearest_point: e.target.value })}
-              placeholder="مثال : معلم مشهور او نقطة معروفة"
-              className={fieldClass}
-            />
-          </Field>
-          <Field label="الملاحظات">
-            <Input
-              value={form.note}
-              onChange={(e) => onFormChange({ note: e.target.value })}
-              placeholder="اكتب ملاحظات اضافية للسائق"
-              className={fieldClass}
-            />
-          </Field>
-        </div>
-      </section>
-
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
-        <div className="custom-scrollbar min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-[520px] text-sm">
-            <thead className="sticky top-0 z-[1] bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-300">
-              {/* RTL: the first cell sits rightmost. Every other table in the
-                  app (and Figma) starts with الصورة and ends with العمليات;
-                  this one was authored in the opposite order. */}
-              <tr className="border-b border-slate-100 dark:border-slate-800">
-                <th className="px-3 py-3.5 text-center font-medium">الصورة</th>
-                <th className="px-3 py-3.5 text-right font-medium">
-                  معلومات الفئة
-                </th>
-                <th className="px-3 py-3.5 text-center font-medium">عدد</th>
-                <th className="px-3 py-3.5 text-center font-medium">سعر مفرد</th>
-                <th className="px-3 py-3.5 text-center font-medium">
-                  أجمالي السعر
-                </th>
-                <th className="px-3 py-3.5 text-center font-medium">العمليات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cart.length === 0 ? (
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+        {/* Lines */}
+        <div className="min-h-[140px]">
+          {cart.length === 0 ? (
+            <p className="px-4 py-12 text-center text-sm text-slate-500">
+              الفاتورة فارغة. اختر منتجاً من القائمة لإضافته.
+            </p>
+          ) : (
+            <table className="w-full table-fixed text-sm">
+              <thead className="sticky top-0 z-[1] bg-slate-50 text-xs text-slate-500 dark:bg-slate-900">
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-16 text-center text-slate-500"
-                  >
-                    السلة فارغة — أضف منتجات من القائمة
-                  </td>
+                  <th className="px-3 py-2 text-right font-medium">المنتج</th>
+                  <th className="w-[92px] px-1 py-2 text-center font-medium">الكمية</th>
+                  <th className="w-[104px] py-2 pe-1 ps-2 text-left font-medium">المجموع</th>
                 </tr>
-              ) : (
-                cart.map((item, index) => {
+              </thead>
+              <tbody>
+                {cart.map((item, index) => {
                   const unit = item.variant?.price ?? item.product.price ?? 0;
-                  const lineTotal = unit * item.quantity;
                   const imageSrc = resolvePosImageUrl(
                     item.variant?.image ?? item.product.image,
                     baseUrl,
                   );
-                  const category =
-                    item.product.categories?.[0] != null
-                      ? getCategoryName(item.product.categories[0])
-                      : "—";
-
+                  const atMax =
+                    item.stock !== null && item.quantity >= item.stock;
                   return (
                     <tr
-                      key={`${item.product.id}-${item.variant?.id ?? "d"}-${index}`}
-                      className="border-b border-slate-50 dark:border-slate-900"
+                      key={`${item.product.id}-${item.variant?.id ?? "d"}`}
+                      className="border-t border-slate-100 dark:border-slate-800"
                     >
-                      <td className="px-3 py-3">
-                        <div className="mx-auto flex size-12 items-center justify-center overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-900">
-                          {imageSrc ? (
-                            <img
-                              src={imageSrc}
-                              alt=""
-                              className="size-full object-contain p-1"
-                            />
-                          ) : (
-                            <Package className="size-5 text-slate-300" />
-                          )}
+                      <td className="py-2 pe-1 ps-3">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-900">
+                            {imageSrc ? (
+                              <img
+                                src={imageSrc}
+                                alt=""
+                                className="size-full object-contain"
+                              />
+                            ) : (
+                              <Package className="size-4 text-slate-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              title={item.product.title}
+                              className="line-clamp-2 font-medium leading-5 text-slate-900 [overflow-wrap:anywhere] dark:text-slate-50"
+                            >
+                              {item.product.title}
+                            </p>
+                            {item.variant ? (
+                              <p className="line-clamp-1 text-xs text-slate-600 dark:text-slate-300">
+                                {variantLabel(item.variant)}
+                              </p>
+                            ) : null}
+                            <p className="whitespace-nowrap text-xs text-slate-500 tabular-nums">
+                              {formatNumber(unit)}
+                            </p>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-right">
-                        <p className="font-bold text-slate-900 dark:text-slate-50">
-                          {item.product.title}
-                        </p>
-                        <p className="text-xs text-slate-500">{category}</p>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-1 dark:bg-slate-900">
+                      <td className="px-1 py-2">
+                        <div className="mx-auto flex w-fit items-center rounded-lg border border-slate-200 dark:border-slate-800">
                           <button
                             type="button"
-                            className="size-7 rounded-lg text-lg leading-none"
+                            className="flex size-7 items-center justify-center text-slate-600 disabled:opacity-40 dark:text-slate-300"
                             onClick={() => onUpdateQuantity(index, -1)}
+                            disabled={item.quantity <= 1}
+                            aria-label="إنقاص"
                           >
-                            −
+                            <Minus className="size-3.5" />
                           </button>
-                          <span className="min-w-6 tabular-nums">
+                          <span className="min-w-6 text-center tabular-nums">
                             {item.quantity}
                           </span>
                           <button
                             type="button"
-                            className="size-7 rounded-lg text-lg leading-none"
+                            className="flex size-7 items-center justify-center text-slate-600 disabled:opacity-40 dark:text-slate-300"
                             onClick={() => onUpdateQuantity(index, 1)}
+                            disabled={atMax}
+                            title={atMax ? "لا يوجد مخزون إضافي" : undefined}
+                            aria-label="زيادة"
                           >
-                            +
+                            <Plus className="size-3.5" />
                           </button>
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-center tabular-nums text-slate-600">
-                        {formatPosPrice(unit)}
-                      </td>
-                      <td className="px-3 py-3 text-center font-medium tabular-nums">
-                        {formatPosPrice(lineTotal)}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <button
-                          type="button"
-                          className="inline-flex size-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500"
-                          onClick={() => onRemove(index)}
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
+                      <td className="whitespace-nowrap py-2 pe-1 ps-2 text-left font-medium tabular-nums">
+                        <div className="flex items-center justify-end gap-1">
+                          {formatNumber(unit * item.quantity)}
+                          <button
+                            type="button"
+                            className="flex size-7 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                            onClick={() => onRemove(index)}
+                            aria-label="حذف"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
-                })
-              )}
-            </tbody>
-          </table>
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        <div className="space-y-3 border-t border-slate-100 p-4 dark:border-slate-800">
-          {showCoupon ? (
-            <Input
-              value={form.couponCode}
-              onChange={(e) => onFormChange({ couponCode: e.target.value })}
-              placeholder="رمز الخصم"
-              className={fieldClass}
-            />
-          ) : null}
+        {/* Who it is for */}
+        {!addingToOrder ? (
+          <div className="space-y-3 border-t border-slate-100 p-4 dark:border-slate-800">
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
+              {(
+                [
+                  ["PICKUP", "بيع مباشر"],
+                  ["DELIVERY", "توصيل"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => onFormChange({ fulfilment: value })}
+                  className={cn(
+                    "h-9 rounded-lg text-sm font-medium transition-colors",
+                    form.fulfilment === value
+                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
+                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500">
+              {isDelivery
+                ? "يُنشأ طلب قيد الانتظار، والدفع عند الاستلام عبر شركة الشحن."
+                : "يُسجّل الطلب مدفوعاً ومُسلّماً فوراً، بدون شحن."}
+            </p>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 gap-2 rounded-2xl border-sky-500/20 bg-sky-500/10 text-sky-600"
-              onClick={onToggleCoupon}
-            >
-              أضافة خصم
-              <Percent className="size-4" />
-            </Button>
-            <div className="text-right">
-              <p className="text-sm text-slate-500">
-                أجمالي العناصر المحجوزة{" "}
-                <span className="font-bold text-slate-800 dark:text-slate-100">
-                  {itemCount}
-                </span>
-              </p>
-              <p className="text-2xl font-extrabold tabular-nums text-slate-900 dark:text-white">
-                {formatPosPrice(total)}
-              </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={isDelivery ? "اسم العميل" : "اسم العميل (اختياري)"}>
+                <Input
+                  value={form.name}
+                  onChange={(e) => onFormChange({ name: e.target.value })}
+                  placeholder="الاسم"
+                  className={fieldClass}
+                />
+              </Field>
+              <Field label={isDelivery ? "رقم الهاتف" : "رقم الهاتف (اختياري)"}>
+                <Input
+                  value={form.phone}
+                  onChange={(e) => onFormChange({ phone: e.target.value })}
+                  placeholder="07XX XXX XXXX"
+                  inputMode="tel"
+                  className={cn(fieldClass, "text-left")}
+                  dir="ltr"
+                />
+              </Field>
+              {isDelivery ? (
+                <>
+                  <Field label="المحافظة">
+                    <Select
+                      value={form.stateId || undefined}
+                      onValueChange={(v) =>
+                        onFormChange({ stateId: v, regionId: "" })
+                      }
+                      disabled={isLoadingStates}
+                    >
+                      <SelectTrigger className={cn(fieldClass, "w-full")}>
+                        <SelectValue placeholder="اختر" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {getDisplayName(s.name)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="المنطقة">
+                    <Select
+                      value={form.regionId || undefined}
+                      onValueChange={(v) => onFormChange({ regionId: v })}
+                      disabled={!form.stateId || isLoadingRegions}
+                    >
+                      <SelectTrigger className={cn(fieldClass, "w-full")}>
+                        <SelectValue
+                          placeholder={form.stateId ? "اختر" : "اختر المحافظة أولاً"}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {regions.map((r: any) => (
+                          <SelectItem key={r.id} value={r.id}>
+                            {getDisplayName(r.name)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="أقرب نقطة دالة" className="col-span-2">
+                    <Input
+                      value={form.nearest_point}
+                      onChange={(e) =>
+                        onFormChange({ nearest_point: e.target.value })
+                      }
+                      placeholder="معلم معروف قرب العنوان"
+                      className={fieldClass}
+                    />
+                  </Field>
+                </>
+              ) : null}
+              <Field label="ملاحظات" className="col-span-2">
+                <Input
+                  value={form.note}
+                  onChange={(e) => onFormChange({ note: e.target.value })}
+                  placeholder={isDelivery ? "ملاحظة للسائق" : "ملاحظة على الطلب"}
+                  className={fieldClass}
+                />
+              </Field>
+              <Field label="رمز الخصم" className="col-span-2">
+                <Input
+                  value={form.couponCode}
+                  onChange={(e) => onFormChange({ couponCode: e.target.value })}
+                  placeholder="اختياري"
+                  className={cn(fieldClass, "uppercase")}
+                  dir="ltr"
+                />
+                {coupon.status === "checking" ? (
+                  <p className="text-xs text-slate-500">جاري التحقق…</p>
+                ) : coupon.status === "valid" ? (
+                  <p className="text-xs text-emerald-600">
+                    الرمز صالح، الخصم {formatPosPrice(coupon.discount)}
+                  </p>
+                ) : coupon.status === "invalid" ? (
+                  <p className="text-xs text-rose-600">{coupon.message}</p>
+                ) : null}
+              </Field>
             </div>
           </div>
+        ) : null}
+      </div>
 
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-12 flex-1 rounded-2xl text-slate-500"
-              onClick={onCancel}
-            >
-              الغاء
-            </Button>
-            <Button
-              type="button"
-              className="h-14 flex-[2] gap-3 rounded-full bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-base font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-              disabled={
-                cart.length === 0 || isCheckingOut || !!isAddingProducts
-              }
-              onClick={onPay}
-            >
-              <span className="flex size-9 items-center justify-center rounded-full bg-white/20">
-                {isCheckingOut || isAddingProducts ? (
-                  <Loader2 className="size-5 animate-spin" />
-                ) : (
-                  <Printer className="size-5" />
-                )}
-              </span>
-              دفع الفاتورة
-            </Button>
+      {/* What is owed */}
+      <div className="space-y-3 border-t border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <dl className="space-y-1 text-sm">
+          {discount > 0 || (isDelivery && !addingToOrder) ? (
+            <div className="flex justify-between text-slate-600 dark:text-slate-300">
+              <dt>المجموع</dt>
+              <dd className="tabular-nums">{formatPosPrice(subtotal)}</dd>
+            </div>
+          ) : null}
+          {discount > 0 ? (
+            <div className="flex justify-between text-emerald-600">
+              <dt>الخصم</dt>
+              <dd className="tabular-nums">− {formatPosPrice(discount)}</dd>
+            </div>
+          ) : null}
+          {isDelivery && !addingToOrder ? (
+            <div className="flex justify-between text-slate-600 dark:text-slate-300">
+              <dt>التوصيل</dt>
+              <dd className="text-xs">تحسبه شركة الشحن عند إنشاء الطلب</dd>
+            </div>
+          ) : null}
+          <div className="flex items-baseline justify-between pt-1">
+            <dt className="font-medium text-slate-900 dark:text-slate-50">
+              الإجمالي
+            </dt>
+            <dd className="text-2xl font-extrabold tabular-nums text-slate-900 dark:text-white">
+              {formatPosPrice(total)}
+            </dd>
           </div>
-        </div>
-      </section>
+        </dl>
+
+        <Button
+          type="button"
+          className="h-12 w-full rounded-xl bg-sky-500 text-base font-bold text-white hover:bg-sky-600 disabled:opacity-50"
+          disabled={!!blockedReason || isSubmitting}
+          onClick={onSubmit}
+        >
+          {isSubmitting ? <Loader2 className="size-5 animate-spin" /> : null}
+          {submitLabel}
+        </Button>
+        {blockedReason && cart.length > 0 ? (
+          <p className="text-center text-xs text-slate-500">{blockedReason}</p>
+        ) : null}
+      </div>
     </div>
   );
 };
 
 function Field({
   label,
+  className,
   children,
 }: {
   label: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1">
-      <Label className="block px-1 text-right text-sm font-medium text-slate-500">
+    <div className={cn("space-y-1", className)}>
+      <Label className="block text-right text-xs font-medium text-slate-500">
         {label}
       </Label>
       {children}

@@ -32,8 +32,13 @@ export const couponAPI = {
     code: string;
     orderTotal: number;
     orderId?: string;
-  }): Promise<{ valid: boolean; message: string }> => {
-    const { data } = await axiosInstance.post<{ valid: boolean; message: string }>(
+  }): Promise<{ valid: boolean; message: string; discountAmount?: number }> => {
+    const { data } = await axiosInstance.post<{
+      valid: boolean;
+      message: string;
+      /** What the code takes off `orderTotal` (servers after the POS fix). */
+      discountAmount?: number;
+    }>(
       "/coupon/validate",
       params
     );
