@@ -4,7 +4,7 @@ import { useFetchPlans } from "@/api/wrappers/plan.wrappers";
 import type { BillingPeriod } from "@/api/endpoints/platform-payment.endpoint";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/format-currency";
-import { introText, planHighlights } from "@/utils/plan-card-lines";
+import { planHighlights } from "@/utils/plan-card-lines";
 import { cn } from "@/lib/utils";
 import { primaryButtonClass } from "./table";
 import { periodDiscount, periodPrice } from "./plan-pricing";
@@ -32,6 +32,21 @@ const MONTHS: Record<BillingPeriod, number> = {
   MONTHLY: 1,
   QUARTERLY: 3,
   YEARLY: 12,
+};
+
+/** The intro discount a plan change still gets, or null. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const switchOffer = (plan: any): string | null => {
+  const intro = plan.pricing?.monthly?.intro;
+  if (
+    !intro?.enabled ||
+    !(intro.discountMonths > 0 && intro.discountPercent > 0)
+  ) {
+    return null;
+  }
+  return `خصم ${intro.discountPercent}% لأول ${
+    intro.discountMonths === 1 ? "شهر" : `${intro.discountMonths} أشهر`
+  }`;
 };
 
 /** The plans on sale side by side (stacked on a phone), priced for one period. */
@@ -73,10 +88,10 @@ const PlansTableSection = ({
           const price = periodPrice(plan, period);
           const months = MONTHS[period];
           const listPrice = Number(plan.monthly_price ?? 0) * months;
+          // A store here already has a subscription: switching never opens
+          // with the free month, so only the discounted months are an offer.
           const intro =
-            period === "MONTHLY"
-              ? introText(plan)?.replace("للمشتركين الجدد: ", "")
-              : null;
+            period === "MONTHLY" && !current ? switchOffer(plan) : null;
           return (
             <div
               key={plan.id}
