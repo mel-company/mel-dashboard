@@ -30,15 +30,18 @@ import PaymentProviderPicker, {
 } from "./PaymentProviderPicker";
 import {
   useFindDomainDetails,
+  useRemoveCustomDomain,
   useUpdateDomain,
 } from "@/api/wrappers/domain.wrappers";
 import { useLogout } from "@/api/wrappers/auth.wrappers";
 import { useInitStorePlatformPayment } from "@/api/wrappers/platform-payment.wrapper";
 import type { PlatformPaymentProvider } from "@/api/endpoints/platform-payment.endpoint";
+import type { StoreDomainLink } from "@/api/endpoints/domain.endpoints";
 import { normalizePlatformSlug, useDomainCheck } from "@/hooks/useDomainCheck";
 import { formatUsd, getDomainPurchasePricing } from "@/utils/domainPricing";
 import { AR_LATN_LOCALE } from "@/utils/format-currency";
 import { getLoginUrlAfterSlugRename } from "@/utils/tenant-subdomain";
+import StoreDomainLinks from "./StoreDomainLinks";
 
 export const DOMAIN_PURCHASE_RETURN_KEY = "mel_domain_purchase_return";
 export const LAST_PAYMENT_ID_KEY = "mel_last_platform_payment_id";
@@ -78,6 +81,7 @@ type DomainSettingsSectionProps = {
 const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
   const { data: domainDetails, isLoading } = useFindDomainDetails();
   const updateDomain = useUpdateDomain();
+  const removeCustomDomain = useRemoveCustomDomain();
   const logout = useLogout();
   const initPayment = useInitStorePlatformPayment();
   // Buying or linking a domain is Grow-only; the platform subdomain is not.
@@ -87,6 +91,7 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
   const [paymentProvider, setPaymentProvider] =
     useState<PlatformPaymentProvider | null>(null);
   const [confirmRenameOpen, setConfirmRenameOpen] = useState(false);
+  const [confirmRemoveCustomOpen, setConfirmRemoveCustomOpen] = useState(false);
 
   const {
     domain,
@@ -104,6 +109,28 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
   const domainType = domainPath === "buy" ? "custom" : "subdomain";
   const platformSlug = normalizePlatformSlug(domainDetails?.domain);
   const customDomain = domainDetails?.customDomain?.trim() || "";
+
+  const storeLinks: StoreDomainLink[] = useMemo(() => {
+    if (domainDetails?.links?.length) return domainDetails.links;
+    const links: StoreDomainLink[] = [];
+    if (platformSlug) {
+      links.push({
+        type: "platform",
+        label: "رابط MEL",
+        url: `https://${platformSlug}.mel.iq`,
+        primary: !customDomain,
+      });
+    }
+    if (customDomain) {
+      links.push({
+        type: "custom",
+        label: "النطاق المخصص",
+        url: `https://${customDomain}`,
+        primary: true,
+      });
+    }
+    return links;
+  }, [domainDetails?.links, platformSlug, customDomain]);
 
   const lastUpdate = domainDetails?.domain_last_update;
   const renameCooldown = useMemo(() => {
@@ -290,6 +317,23 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
     );
   };
 
+  const confirmRemoveCustomDomain = () => {
+    removeCustomDomain.mutate(undefined, {
+      onSuccess: () => {
+        setConfirmRemoveCustomOpen(false);
+        toast.success("تم إلغاء النطاق المخصص. متجرك يبقى على رابط MEL.");
+      },
+      onError: (error: any) => {
+        const message = error?.response?.data?.message;
+        toast.error(
+          Array.isArray(message)
+            ? message.join(" — ")
+            : message || "تعذر إلغاء النطاق المخصص",
+        );
+      },
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -343,6 +387,14 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
           }
         />
       </div>
+
+      <StoreDomainLinks
+        links={storeLinks}
+        removingCustom={removeCustomDomain.isPending}
+        onRemoveCustom={
+          customDomain ? () => setConfirmRemoveCustomOpen(true) : undefined
+        }
+      />
 
       <DomainPathPicker value={domainPath} onChange={selectPath} />
 
@@ -558,6 +610,56 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
               className="h-11 rounded-2xl"
             >
               إلغاء
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={confirmRemoveCustomOpen}
+        onOpenChange={(open) => {
+          if (removeCustomDomain.isPending) return;
+          setConfirmRemoveCustomOpen(open);
+        }}
+      >
+        <DialogContent className="max-w-md text-right" dir="rtl">
+          <DialogHeader className="space-y-2 text-right">
+            <DialogTitle className="text-right">إلغاء النطاق المخصص</DialogTitle>
+            <DialogDescription className="text-right text-[13px] leading-relaxed">
+              سيتم فك ربط{" "}
+              <span dir="ltr" className="font-medium">
+                {customDomain}
+              </span>{" "}
+              عن المتجر. رابط MEL يبقى يعمل كالمعتاد.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-2 sm:flex-row-reverse">
+            <Button
+              type="button"
+              onClick={confirmRemoveCustomDomain}
+              disabled={removeCustomDomain.isPending}
+              className="h-11 gap-2 rounded-2xl bg-red-600 text-white hover:bg-red-700"
+            >
+              {removeCustomDomain.isPending && (
+                <HugeiconsIcon
+                  icon={Loading03Icon}
+                  size={16}
+                  className="animate-spin"
+                />
+              )}
+              {removeCustomDomain.isPending
+                ? "جاري الإلغاء..."
+                : "تأكيد الإلغاء"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={removeCustomDomain.isPending}
+              onClick={() => setConfirmRemoveCustomOpen(false)}
+              className="h-11 rounded-2xl"
+            >
+              رجوع
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -10,6 +10,13 @@ export type DomainDnsRecord = {
 
 export type CustomHostnameStatus = "pending" | "active" | "failed";
 
+export type StoreDomainLink = {
+  type: "platform" | "custom";
+  label: string;
+  url: string;
+  primary: boolean;
+};
+
 /** Shape of the server's `toCustomDomainResponse` — domain-details, attach and status all return it. */
 export type CustomDomainResponse = {
   name: string | null;
@@ -18,6 +25,7 @@ export type CustomDomainResponse = {
   domain_last_update: string | null;
   storeUrl: string | null;
   platformUrl: string | null;
+  links?: StoreDomainLink[];
   ssl: {
     status: CustomHostnameStatus;
     hostnameStatus: string | null;
@@ -120,6 +128,14 @@ export const domainAPI = {
   getCustomDomainStatus: async (): Promise<CustomDomainResponse> => {
     const { data } = await axiosInstance.get<CustomDomainResponse>(
       "/domain/custom-domain/status",
+    );
+    return data;
+  },
+
+  /** Detach the custom domain and clear Cloudflare Custom Hostnames. */
+  removeCustomDomain: async (): Promise<CustomDomainResponse> => {
+    const { data } = await axiosInstance.delete<CustomDomainResponse>(
+      "/domain/custom-domain",
     );
     return data;
   },

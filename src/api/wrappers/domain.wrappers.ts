@@ -65,6 +65,20 @@ export const useSetCustomDomain = () => {
   });
 };
 
+/** Detach the custom domain; platform slug URL remains. */
+export const useRemoveCustomDomain = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<CustomDomainResponse, Error, void>({
+    mutationFn: () => domainAPI.removeCustomDomain(),
+    onSuccess: (data) => {
+      queryClient.setQueryData(domainKeys.detail(), data);
+      queryClient.removeQueries({ queryKey: domainKeys.customStatus() });
+      queryClient.invalidateQueries({ queryKey: domainKeys.all });
+    },
+  });
+};
+
 const STATUS_POLL_MS = 15_000;
 /** ~5 minutes of polling; past that the merchant refreshes by hand. */
 const STATUS_POLL_LIMIT = 20;
