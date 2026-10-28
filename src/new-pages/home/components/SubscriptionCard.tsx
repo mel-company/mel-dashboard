@@ -57,7 +57,7 @@ const SubscriptionCard = ({
 
   return (
     <Link
-      to="/settings/subscription"
+      to="/settings/store"
       aria-label="إدارة الاشتراك"
       className="relative block min-h-[176px] overflow-hidden rounded-[18px] bg-[#00b7ff] p-5 text-white dark:bg-linear-to-l dark:from-[#33c5ff] dark:to-[#b282ff]">
       {/* RTL: expiry leads on the right, the plan chip sits opposite. */}

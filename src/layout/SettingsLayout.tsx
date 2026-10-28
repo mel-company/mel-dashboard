@@ -3,7 +3,6 @@ import { Outlet, useLocation, Navigate } from "react-router-dom";
 const ALLOWED_SETTINGS_PATHS = [
   "/settings/general",
   "/settings/store",
-  "/settings/subscription",
 ] as const;
 
 const SettingsLayout = () => {
@@ -11,6 +10,11 @@ const SettingsLayout = () => {
 
   if (location.pathname === "/settings") {
     return <Navigate to="/settings/general" replace />;
+  }
+
+  // The plan used to have its own tab; old links land on store settings.
+  if (location.pathname === "/settings/subscription") {
+    return <Navigate to="/settings/store" replace />;
   }
 
   if (

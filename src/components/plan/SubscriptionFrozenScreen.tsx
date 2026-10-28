@@ -30,7 +30,7 @@ export function SubscriptionFrozenScreen() {
         <Button
           size="lg"
           className="rounded-full bg-[#00b7ff] px-6 font-bold text-white hover:bg-[#00a3e6]"
-          onClick={() => navigate("/settings/subscription")}
+          onClick={() => navigate("/settings/store")}
         >
           تجديد الاشتراك
         </Button>
