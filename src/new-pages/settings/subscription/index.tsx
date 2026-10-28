@@ -233,7 +233,7 @@ const SubscriptionInfoSection = () => {
     <SettingsCard title="معلومات الاشتراك">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_300px]">
         {/* The term */}
-        <div className={cn(panelClass, "flex flex-col")}>
+        <div className={cn(panelClass, "flex min-w-0 flex-col")}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-lg font-bold text-slate-900 dark:text-slate-50">
@@ -335,7 +335,7 @@ const SubscriptionInfoSection = () => {
         </div>
 
         {/* What the plan includes */}
-        <div className={panelClass}>
+        <div className={cn(panelClass, "min-w-0")}>
           <div className="flex items-center justify-between gap-2">
             <p className="font-bold text-slate-900 dark:text-slate-50">
               المميزات الفعّالة
@@ -352,7 +352,7 @@ const SubscriptionInfoSection = () => {
                   size={16}
                   className="mt-0.5 shrink-0 text-emerald-500"
                 />
-                <span>{line}</span>
+                <span className="min-w-0 [overflow-wrap:anywhere]">{line}</span>
               </li>
             ))}
           </ul>
@@ -377,7 +377,9 @@ const SubscriptionInfoSection = () => {
                 الترقية القادمة
               </span>
               <span className="mt-1.5 block text-xs leading-5 text-slate-500">
-                رقّي لباقة {upgradeTo.planName} للحصول على مزايا أكثر
+                <span className="[overflow-wrap:anywhere]">
+                  رقّي لباقة {upgradeTo.planName} للحصول على مزايا أكثر
+                </span>
               </span>
             </button>
           )}

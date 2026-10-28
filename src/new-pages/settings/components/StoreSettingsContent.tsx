@@ -1,7 +1,6 @@
 import StorePlanSummaryCard from "./StorePlanSummaryCard";
 import StoreIntegrationsSection from "./StoreIntegrationsSection";
 import PoliciesSection from "./PoliciesSection";
-import StorePixelsSection from "./StorePixelsSection";
 import SubscriptionInfoSection from "../subscription";
 import { usePlanUsage } from "@/hooks/use-plan-limits";
 import { isFrozenPhase } from "@/utils/subscription-lifecycle";
@@ -29,7 +28,6 @@ const StoreSettingsContent = () => {
           <SubscriptionInfoSection />
         </div>
         <StoreIntegrationsSection />
-        <StorePixelsSection />
       </div>
 
       <div className="flex flex-col gap-[18px] xl:col-span-8">
