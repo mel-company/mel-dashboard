@@ -67,19 +67,16 @@ export default function PaymentReturn() {
     if (!paymentId) {
       settled.current = true;
       toast.error("معرف الدفع مفقود");
-      navigate("/settings/subscription", { replace: true });
+      navigate("/settings/store", { replace: true });
       return;
     }
 
     if (result === "failure" || status === "FAILED" || status === "EXPIRED") {
       settled.current = true;
       toast.error("فشلت عملية الدفع. حاول مرة أخرى.");
-      const wasDomain =
-        type === "DOMAIN_REGISTRATION" ||
-        !!sessionStorage.getItem(DOMAIN_PURCHASE_RETURN_KEY);
       sessionStorage.removeItem(LAST_PAYMENT_ID_KEY);
       sessionStorage.removeItem(DOMAIN_PURCHASE_RETURN_KEY);
-      navigate(wasDomain ? "/settings/store" : "/settings/subscription", {
+      navigate("/settings/store", {
         replace: true,
       });
       return;
@@ -107,7 +104,7 @@ export default function PaymentReturn() {
     queryClient.invalidateQueries({ queryKey: planKeys.all });
     queryClient.invalidateQueries({ queryKey: platformPaymentKeys.all });
     toast.success("تم الدفع بنجاح وتم تحديث الاشتراك");
-    navigate("/settings/subscription", { replace: true });
+    navigate("/settings/store", { replace: true });
   }, [paymentId, result, status, type, navigate, queryClient]);
 
   return (

@@ -141,7 +141,7 @@ const PlansTableSection = ({
                 {planHighlights(plan).map((line) => (
                   <li key={line} className="flex gap-2">
                     <Check className="mt-0.5 size-4 shrink-0 text-slate-400" />
-                    <span>{line}</span>
+                    <span className="min-w-0 [overflow-wrap:anywhere]">{line}</span>
                   </li>
                 ))}
               </ul>

@@ -66,7 +66,7 @@ const POSDisabledView = ({
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           {isPlan ? (
             <Button asChild className="rounded-full bg-sky-500 hover:bg-sky-600">
-              <Link to="/settings/subscription">
+              <Link to="/settings/store">
                 <Rocket className="size-4" />
                 إدارة الاشتراك
               </Link>

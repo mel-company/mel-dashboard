@@ -64,7 +64,7 @@ const Payment = () => {
 
     if (plan?.is_free) {
       toast.info("الباقة المجانية لا تحتاج دفع");
-      navigate("/settings/subscription");
+      navigate("/settings/store");
       return;
     }
 
@@ -91,7 +91,7 @@ const Payment = () => {
                 ? "تم الدفع بنجاح وتم تحديث الباقة"
                 : "تم تحديث الباقة — لا مبلغ مستحق",
             );
-            navigate("/settings/subscription");
+            navigate("/settings/store");
             return;
           }
 
@@ -142,7 +142,7 @@ const Payment = () => {
         <p className="text-muted-foreground mb-4">
           الخطة التي تحاول الدفع لها غير موجودة.
         </p>
-        <Button onClick={() => navigate("/settings/subscription")} variant="outline">
+        <Button onClick={() => navigate("/settings/store")} variant="outline">
           العودة إلى الخطط
         </Button>
       </div>
@@ -153,7 +153,7 @@ const Payment = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => navigate("/settings/subscription")}
+          onClick={() => navigate("/settings/store")}
           variant="ghost"
           size="sm"
           className="gap-2"

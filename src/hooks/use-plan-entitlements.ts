@@ -49,7 +49,7 @@ export function usePlanEntitlements() {
       });
       return;
     }
-    navigate("/settings/subscription");
+    navigate("/settings/store");
   };
 
   const handleUpgradeError = (err: unknown, fallback = "حدث خطأ") => {

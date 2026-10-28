@@ -9,7 +9,7 @@ export const labelCellClass =
 export const cellClass =
   "py-2.5 pe-4 tabular-nums text-slate-700 dark:text-slate-300";
 export const primaryButtonClass =
-  "rounded-full bg-blue-600 text-white hover:bg-blue-700";
+  "rounded-full bg-linear-to-l from-[#b282ff] to-[#33c5ff] text-white hover:opacity-90";
 
 export const formatDay = (value?: string | null) => {
   if (!value) return "—";

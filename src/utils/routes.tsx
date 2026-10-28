@@ -59,8 +59,8 @@ export interface RouteConfig {
 export const mainRoutes: RouteConfig[] = [
     { path: "/", element: <Home /> },
     { path: "/stats", element: <Stats /> },
-    { path: "/subscription", element: <Navigate to="/settings/subscription" replace /> },
-    { path: "/plans", element: <Navigate to="/settings/subscription" replace /> },
+    { path: "/subscription", element: <Navigate to="/settings/store" replace /> },
+    { path: "/plans", element: <Navigate to="/settings/store" replace /> },
     { path: "/app-store", element: <AppStore /> },
     { path: "/accounting", element: <Accounting /> },
     { path: "/pos", element: <POS /> },
@@ -217,7 +217,6 @@ export const mainRoutes: RouteConfig[] = [
 export const settingsRoutes: RouteConfig[] = [
     { path: "general", element: <SettingsPage /> },
     { path: "store", element: <SettingsPage /> },
-    { path: "subscription", element: <SettingsPage /> },
 ];
 
 export const publicRoutes: RouteConfig[] = [

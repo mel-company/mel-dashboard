@@ -4,10 +4,8 @@ import SwitchTab from "@/components/table/switch-tab";
 import { useSettingsPage } from "@/hooks/use-settings-page";
 import StoreSettingsContent from "./components/StoreSettingsContent";
 import GeneralSettingsContent from "./components/GeneralSettingsContent";
-import SubscriptionSettingsContent from "./subscription";
 import PagePanel from "@/components/PagePanel";
 import {
-  CreditCardIcon,
   Settings01Icon,
   Store01Icon,
 } from "@hugeicons-pro/core-duotone-rounded";
@@ -23,9 +21,7 @@ const SettingsPage = () => {
             accent="violet"
             selected={actions.activeTab}
             onChange={(value) =>
-              actions.handleTabChange(
-                value as "general" | "store" | "subscription",
-              )
+              actions.handleTabChange(value as "general" | "store")
             }
             options={[
               {
@@ -38,19 +34,12 @@ const SettingsPage = () => {
                 value: "store",
                 icon: Store01Icon,
               },
-              {
-                label: "الاشتراك",
-                value: "subscription",
-                icon: CreditCardIcon,
-              },
             ]}
           />
         </div>
       </TitleBar>
 
-      {actions.activeTab === "subscription" ? (
-        <SubscriptionSettingsContent />
-      ) : actions.activeTab === "store" ? (
+      {actions.activeTab === "store" ? (
         <StoreSettingsContent />
       ) : actions.isGeneralLoading ? (
         <div className="flex min-h-[400px] items-center justify-center">
