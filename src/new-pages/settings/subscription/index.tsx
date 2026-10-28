@@ -46,9 +46,6 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-/** Feature lines shown before «+ N مميزات أخرى». */
-const FEATURES_SHOWN = 6;
-
 const panelClass = "rounded-2xl bg-slate-50 p-5 dark:bg-slate-900";
 
 /**
@@ -66,7 +63,6 @@ const SubscriptionInfoSection = () => {
   const [plansOpen, setPlansOpen] = useState(false);
   const [paymentsOpen, setPaymentsOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [showAllFeatures, setShowAllFeatures] = useState(false);
 
   if (isLoading) {
     return (
@@ -223,8 +219,6 @@ const SubscriptionInfoSection = () => {
   const price = periodPrice(catalogPlan, period);
 
   const features = planHighlights(catalogPlan);
-  const shown = showAllFeatures ? features : features.slice(0, FEATURES_SHOWN);
-  const hidden = features.length - FEATURES_SHOWN;
   const upgradeTo = subscription.upgradeAvailable
     ? subscription.upgradeTo
     : null;
@@ -344,8 +338,9 @@ const SubscriptionInfoSection = () => {
               {features.length}
             </span>
           </div>
-          <ul className="mt-3 space-y-2 text-[13px] text-slate-700 dark:text-slate-300">
-            {shown.map((line) => (
+          {/* A long list scrolls inside the panel instead of growing the card. */}
+          <ul className="mt-3 max-h-64 space-y-2 overflow-y-auto overscroll-contain pe-1 text-[13px] text-slate-700 dark:text-slate-300">
+            {features.map((line) => (
               <li key={line} className="flex gap-2">
                 <HugeiconsIcon
                   icon={CheckmarkCircle02Icon}
@@ -356,15 +351,6 @@ const SubscriptionInfoSection = () => {
               </li>
             ))}
           </ul>
-          {hidden > 0 && (
-            <button
-              type="button"
-              className="mt-3 text-xs font-medium text-sky-500 hover:text-sky-600"
-              onClick={() => setShowAllFeatures((v) => !v)}
-            >
-              {showAllFeatures ? "عرض أقل" : `+ ${hidden} مميزات أخرى`}
-            </button>
-          )}
 
           {upgradeTo && (
             <button
