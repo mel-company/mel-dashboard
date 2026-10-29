@@ -148,7 +148,10 @@ const StoreIntegrationsSection = () => {
   const updatePaymentMethodsMutation = useUpdatePaymentMethods();
   const upsertMutation = useUpsertStorePaymentMethod();
 
-  const [domainDialogOpen, setDomainDialogOpen] = useState(false);
+  const [domainDialogOpen, setDomainDialogOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("domain_connect") === "1";
+  });
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
   const [shippingSettingsOpen, setShippingSettingsOpen] = useState(false);
   const { data: activeCourier } = useActiveCourier();

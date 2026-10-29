@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -42,10 +42,63 @@ const BringYourOwnDomain = ({
   const [result, setResult] = useState<DomainConnectDiscovery | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attached, setAttached] = useState<CustomDomainResponse | null>(null);
+  const resumeStarted = useRef(false);
 
   const discoverMutation = useDiscoverDomainConnect();
   const startMutation = useStartDomainConnect();
   const attachMutation = useSetCustomDomain();
+
+  // After Domain Connect redirects back to /settings?domain_connect=1, finish
+  // the attach that Cloudflare DNS alone never did.
+  useEffect(() => {
+    if (resumeStarted.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("domain_connect") !== "1") return;
+    resumeStarted.current = true;
+
+    let pendingDomain = "";
+    try {
+      const raw = sessionStorage.getItem("mel_domain_connect_pending");
+      pendingDomain = raw
+        ? (JSON.parse(raw) as { domain?: string }).domain?.trim().toLowerCase() ||
+          ""
+        : "";
+    } catch {
+      pendingDomain = "";
+    }
+    pendingDomain =
+      pendingDomain ||
+      params.get("domain")?.trim().toLowerCase().replace(/^www\./, "") ||
+      "";
+
+    if (!pendingDomain) {
+      toast.error("ما لقينا الدومين بعد العودة من Cloudflare");
+      return;
+    }
+
+    attachMutation.mutate(
+      { domain: pendingDomain },
+      {
+        onSuccess: (data) => {
+          sessionStorage.removeItem("mel_domain_connect_pending");
+          setAttached(data);
+          setDomain(pendingDomain);
+          toast.success("تم ربط الدومين بعد تفويض Cloudflare");
+          const url = new URL(window.location.href);
+          url.searchParams.delete("domain_connect");
+          window.history.replaceState({}, "", url.pathname + url.search);
+        },
+        onError: (err: any) => {
+          const message = err?.response?.data?.message;
+          toast.error(
+            Array.isArray(message)
+              ? message.join(" — ")
+              : message || "تعذر إكمال الربط بعد Cloudflare",
+          );
+        },
+      },
+    );
+  }, [attachMutation]);
 
   const onCheck = () => {
     const trimmed = domain.trim().toLowerCase();
@@ -76,8 +129,16 @@ const BringYourOwnDomain = ({
       return;
     }
 
+    // Return to this dashboard host after Cloudflare — store JWT stays here.
+    // Pending domain is picked up on mount so attach runs after redirect.
+    const redirectUri = `${window.location.origin}/settings?domain_connect=1`;
+    sessionStorage.setItem(
+      "mel_domain_connect_pending",
+      JSON.stringify({ domain: target }),
+    );
+
     startMutation.mutate(
-      { domain: target },
+      { domain: target, redirectUri },
       {
         onSuccess: (data) => {
           if (!data?.applyUrl) {

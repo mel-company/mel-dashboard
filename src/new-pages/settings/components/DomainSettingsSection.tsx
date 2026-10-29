@@ -87,7 +87,12 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
   // Buying or linking a domain is Grow-only; the platform subdomain is not.
   const hasCustomDomain = usePlanFeature("custom_domain");
 
-  const [domainPath, setDomainPath] = useState<DomainPath>("subdomain");
+  const [domainPath, setDomainPath] = useState<DomainPath>(() =>
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("domain_connect") === "1"
+      ? "owned"
+      : "subdomain",
+  );
   const [paymentProvider, setPaymentProvider] =
     useState<PlatformPaymentProvider | null>(null);
   const [confirmRenameOpen, setConfirmRenameOpen] = useState(false);
@@ -110,14 +115,18 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
   const platformSlug = normalizePlatformSlug(domainDetails?.domain);
   const customDomain = domainDetails?.customDomain?.trim() || "";
 
+  // Always rebuild from domain + customDomain. Trusting `links[]` alone hid the
+  // custom URL when an older/partial payload returned platform-only links.
   const storeLinks: StoreDomainLink[] = useMemo(() => {
-    if (domainDetails?.links?.length) return domainDetails.links;
     const links: StoreDomainLink[] = [];
-    if (platformSlug) {
+    const platformUrl =
+      domainDetails?.platformUrl ||
+      (platformSlug ? `https://${platformSlug}.mel.iq` : null);
+    if (platformUrl) {
       links.push({
         type: "platform",
         label: "رابط MEL",
-        url: `https://${platformSlug}.mel.iq`,
+        url: platformUrl,
         primary: !customDomain,
       });
     }
@@ -129,8 +138,13 @@ const DomainSettingsSection = ({ onClose }: DomainSettingsSectionProps) => {
         primary: true,
       });
     }
-    return links;
-  }, [domainDetails?.links, platformSlug, customDomain]);
+    return links.length ? links : domainDetails?.links ?? [];
+  }, [
+    domainDetails?.links,
+    domainDetails?.platformUrl,
+    platformSlug,
+    customDomain,
+  ]);
 
   const lastUpdate = domainDetails?.domain_last_update;
   const renameCooldown = useMemo(() => {
