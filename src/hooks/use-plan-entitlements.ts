@@ -55,7 +55,10 @@ export function usePlanEntitlements() {
   const handleUpgradeError = (err: unknown, fallback = "حدث خطأ") => {
     if (isPlanUpgradeRequiredError(err)) {
       const body = err.response.data;
-      toast.error(body.message || "هذه الميزة تتطلب MEL PLUS");
+      toast.error(
+        body.message ||
+          `هذه الميزة تتطلب باقة ${body.upgrade?.planName || entitlementsQuery.data?.upgradeTo?.planName || "نمو"}`,
+      );
       goUpgrade(body.feature);
       return true;
     }
