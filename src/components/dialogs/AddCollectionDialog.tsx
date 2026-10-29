@@ -32,9 +32,7 @@ type Props = {
  * Two things are deliberately absent next to `AddCategoryDialog`.
  *
  * **No image.** A collection has none, so this dialog skips the file input,
- * the 50MB validation, the `tempImageUrl` plumbing and the multipart fallback
- * — and, notably, the `resolveTempImageUrl` guard that makes the category
- * dialog refuse to open at all for a store that has not uploaded a logo.
+ * the 50MB validation and the multipart fallback.
  *
  * **No second request.** The category and group dialogs create the entity and
  * then link its children in `onSuccess`, which leaves a named-but-empty

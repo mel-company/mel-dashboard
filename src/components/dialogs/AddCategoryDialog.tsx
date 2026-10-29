@@ -12,8 +12,6 @@ import {
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Switch } from "@/components/ui/switch";
 import { useCreateCategory } from "@/api/wrappers/category.wrappers";
-import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
-import { resolveTempImageUrl } from "@/utils/resolve-temp-image-url";
 import { cn } from "@/lib/utils";
 import { withImageEditor } from "@/lib/image-edit/queue";
 
@@ -39,7 +37,6 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: createCategory, isPending } = useCreateCategory();
-  const { data: storeDetails } = useFetchStoreDetails();
 
   const reset = () => {
     setName("");
@@ -75,17 +72,9 @@ const AddCategoryDialog = ({ open, onOpenChange }: Props) => {
     formData.append("name", name.trim());
     formData.append("description", description.trim());
     formData.append("enabled", enabled.toString());
-    if (imageFile) {
-      const tempImageUrl = resolveTempImageUrl(storeDetails);
-      if (!tempImageUrl) {
-        toast.error(
-          "تعذر تجهيز صورة الفئة. ارفع شعار المتجر من الإعدادات ثم حاول مرة أخرى.",
-        );
-        return;
-      }
-      formData.append("image", imageFile);
-      formData.append("tempImageUrl", tempImageUrl);
-    }
+    // The image goes up as the multipart file. The backend never reads a
+    // placeholder URL, so a store without a logo can still add one.
+    if (imageFile) formData.append("image", imageFile);
 
     createCategory(formData, {
       onSuccess: () => {
