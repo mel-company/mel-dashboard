@@ -7,6 +7,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import {
   Ban,
+  Bike,
   CheckCircle2,
   Loader2,
   Package,
@@ -16,6 +17,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
+import CourierLogo from "@/components/CourierLogo";
 import { toast } from "sonner";
 import {
   File01Icon,
@@ -125,6 +127,10 @@ const OrderDetailsSheet = ({
   const [confirm, setConfirm] = useState<"cancel" | "withdraw" | null>(null);
   /** Boxy size / fragile, Modon replacement — sent with «شحن الطلب». */
   const [shipOptions, setShipOptions] = useState<CreateShipmentOptions>({});
+  /** Per-order: store courier (default) or merchant delivers by hand. */
+  const [shipFulfillment, setShipFulfillment] = useState<"courier" | "self">(
+    "courier",
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // The row already carries enough to paint the header and the summary, so the
@@ -173,6 +179,7 @@ const OrderDetailsSheet = ({
    * of «تم الشحن» with nothing on the van.
    */
   const dispatchFirst =
+    shipFulfillment === "courier" &&
     courier?.selected === true &&
     courier.integrated === true &&
     courier.accountReady &&
@@ -184,6 +191,7 @@ const OrderDetailsSheet = ({
       setTab("info");
       setConfirm(null);
       setShipOptions({});
+      setShipFulfillment("courier");
     }
   }, [open]);
 
@@ -242,6 +250,17 @@ const OrderDetailsSheet = ({
     }
 
     if (target === "SHIPPED") {
+      if (shipFulfillment === "self") {
+        toShipped(id, {
+          onSuccess: () =>
+            afterStatusChange(
+              "تم شحن الطلب بتوصيل ذاتي — أوصله بنفسك دون تسجيل طرد",
+            ),
+          onError: (err) =>
+            toast.error(apiErrorMessage(err, "فشل تحديث حالة الطلب")),
+        });
+        return;
+      }
       if (dispatchFirst) {
         createShipment.mutate(
           {
@@ -371,11 +390,15 @@ const OrderDetailsSheet = ({
         }
       : orderStatus === "PROCESSING"
         ? {
-            label: "شحن الطلب",
-            hint: dispatchFirst
-              ? `يسجّل الطرد لدى ${courier.displayName || "شركة الشحن"} ثم يحوّل الطلب إلى «قيد التوصيل».`
-              : "يحوّل الطلب إلى «قيد التوصيل».",
-            icon: Truck,
+            label:
+              shipFulfillment === "self" ? "شحن بتوصيل ذاتي" : "شحن عبر الشركة",
+            hint:
+              shipFulfillment === "self"
+                ? "يحوّل الطلب إلى «قيد التوصيل» دون تسجيل طرد لدى شركة الشحن."
+                : dispatchFirst
+                  ? `يسجّل الطرد لدى ${courier.displayName || "شركة الشحن"} ثم يحوّل الطلب إلى «قيد التوصيل».`
+                  : "يحوّل الطلب إلى «قيد التوصيل».",
+            icon: shipFulfillment === "self" ? Bike : Truck,
             onClick: () => handleStatusUpdate("SHIPPED"),
           }
         : orderStatus === "SHIPPED"
@@ -441,8 +464,73 @@ const OrderDetailsSheet = ({
    * lives in the header so it is there for every status. A cancelled order
    * offers «إعادة فتح الطلب», which takes it back to processing.
    */
+  const shipModePicker =
+    orderStatus === "PROCESSING" ? (
+      <div role="radiogroup" aria-label="طريقة التوصيل" className="grid gap-2">
+        <p className="text-sm font-medium text-slate-500 dark:text-[#a4b1fa]">
+          طريقة التوصيل لهذا الطلب
+        </p>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={shipFulfillment === "courier"}
+          onClick={() => setShipFulfillment("courier")}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-right transition-colors",
+            shipFulfillment === "courier"
+              ? "border-sky-500 bg-sky-500/10"
+              : "border-slate-200 hover:border-slate-300 dark:border-[#2a3160] dark:hover:border-[#3a4578]",
+          )}
+        >
+          <CourierLogo
+            logo={
+              courier?.selected && courier.integrated ? courier.logo : null
+            }
+            className="size-9 rounded-xl p-1"
+            iconClassName="size-4"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
+              عبر شركة التوصيل
+            </span>
+            <span className="mt-0.5 block text-xs text-slate-500 dark:text-[#a4b1fa]">
+              {courier?.selected
+                ? courier.deliveryCompanyName ||
+                  (courier.integrated ? courier.displayName : "شركة الشحن")
+                : "اختر شركة من الإعدادات أولاً"}
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={shipFulfillment === "self"}
+          onClick={() => setShipFulfillment("self")}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-right transition-colors",
+            shipFulfillment === "self"
+              ? "border-sky-500 bg-sky-500/10"
+              : "border-slate-200 hover:border-slate-300 dark:border-[#2a3160] dark:hover:border-[#3a4578]",
+          )}
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+            <Bike className="size-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
+              توصيل ذاتي
+            </span>
+            <span className="mt-0.5 block text-xs text-slate-500 dark:text-[#a4b1fa]">
+              أوصّله بنفسي بدون تسجيل طرد لدى الشركة
+            </span>
+          </span>
+        </button>
+      </div>
+    ) : null;
+
   const actions = nextStatusAction || canCancel ? (
     <div className="flex flex-col items-stretch gap-3">
+      {shipModePicker}
       {nextStatusAction ? (
         <div className="space-y-2">
           <Hint text={nextStatusAction.hint}>
@@ -627,6 +715,7 @@ const OrderDetailsSheet = ({
                   onUpdated={() => refetch()}
                   shipOptions={shipOptions}
                   onShipOptionsChange={setShipOptions}
+                  fulfillmentMode={shipFulfillment}
                 />
                 <section className="rounded-[24px] bg-white p-4 dark:bg-[#0a0e27]">
                   <h3 className="mb-3 text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
@@ -660,6 +749,7 @@ const OrderDetailsSheet = ({
                   onUpdated={() => refetch()}
                   shipOptions={shipOptions}
                   onShipOptionsChange={setShipOptions}
+                  fulfillmentMode={shipFulfillment}
                 />
                 </div>
                 <div className="min-w-0 space-y-4">

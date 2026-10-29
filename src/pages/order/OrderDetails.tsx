@@ -37,7 +37,10 @@ import {
   Plus,
   TruckIcon,
   Ticket,
+  Bike,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import CourierLogo from "@/components/CourierLogo";
 import { AR_LATN_LOCALE, formatCount, formatCurrency } from "@/utils/format-currency";
 import {
   useFetchOrder,
@@ -55,6 +58,7 @@ import ErrorPage from "../miscellaneous/ErrorPage";
 import OrderDetailsLocked from "@/components/plan/OrderDetailsLocked";
 import {
   isSubscriptionExpiredError,
+  usePlanFeature,
   usePlanUsage,
 } from "@/hooks/use-plan-limits";
 import OrderDetailsSkeleton from "./OrderDetailsSkeleton";
@@ -63,9 +67,15 @@ import EditProductVariantDialog from "./EditProductVariantDialog";
 import RemoveOrderProduct from "./RemoveOrderProduct";
 import UseCouponDialog from "./UseCouponDialog";
 import OrderShipmentCard from "./OrderShipmentCard";
-import { useOrderShipment } from "@/api/wrappers/shipping.wrappers";
+import {
+  useActiveCourier,
+  useOrderShipment,
+} from "@/api/wrappers/shipping.wrappers";
 import { isParcelLive } from "@/api/types/shipping";
 import { useAutoDispatchOnShip } from "@/hooks/use-auto-dispatch-on-ship";
+
+/** How this order leaves the store — company is the store default. */
+type ShipFulfillment = "courier" | "self";
 import { ORDER_INVOICE_PREVIEW_STORAGE_KEY } from "./OrderInvoicePreview";
 import { toast } from "sonner";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
@@ -95,6 +105,9 @@ const OrderDetails = () => {
   const [productToRemove, setProductToRemove] = useState<any | null>(null);
   const [isUseCouponDialogOpen, setIsUseCouponDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  /** Per-order: use the store's courier (default) or deliver by hand. */
+  const [shipFulfillment, setShipFulfillment] =
+    useState<ShipFulfillment>("courier");
 
   const {
     data: order,
@@ -111,6 +124,8 @@ const OrderDetails = () => {
     id ?? "",
     !!id
   );
+  const { data: courier } = useActiveCourier(!!id);
+  const courierAllowed = usePlanFeature("courier_integrations");
 
   const { mutate: updateOrder } = useUpdateOrder();
   const { mutate: deleteOrder, isPending: isDeleting } = useDeleteOrder();
@@ -332,11 +347,17 @@ const OrderDetails = () => {
         });
       },
       SHIPPED: () => {
+        const selfDelivery = shipFulfillment === "self";
         updateStatusToShipped(id, {
           onSuccess: () => {
-            toast.success("تم تحديث حالة الطلب إلى تم الشحن");
+            toast.success(
+              selfDelivery
+                ? "تم شحن الطلب بتوصيل ذاتي — أوصله بنفسك دون تسجيل طرد"
+                : "تم تحديث حالة الطلب إلى تم الشحن",
+            );
             refetch();
-            dispatchIfNeeded();
+            // Self-delivery skips the courier; company path still auto-dispatches.
+            if (!selfDelivery) dispatchIfNeeded();
           },
           onError: (error: any) => {
             toast.error(
@@ -922,7 +943,13 @@ const OrderDetails = () => {
             </CardContent>
           </Card>
 
-          <OrderShipmentCard order={order} onUpdated={() => refetch()} />
+          <OrderShipmentCard
+            order={order}
+            onUpdated={() => refetch()}
+            fulfillmentMode={
+              order.status === "PROCESSING" ? shipFulfillment : "courier"
+            }
+          />
 
           {/* Notes */}
           {order.note && (
@@ -1097,15 +1124,96 @@ const OrderDetails = () => {
                 </Button>
               )}
               {order.status === "PROCESSING" && (
-                <Button
-                  className="h-12 w-full gap-2"
-                  variant="brand"
-                  onClick={() => handleStatusUpdate("SHIPPED")}
-                  disabled={isUpdatingStatus}
-                >
-                  <Truck className="size-4" />
-                  شحن الطلب
-                </Button>
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-right text-muted-foreground">
+                    طريقة التوصيل لهذا الطلب
+                  </p>
+                  <div
+                    role="radiogroup"
+                    aria-label="طريقة التوصيل"
+                    className="grid gap-2"
+                  >
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={shipFulfillment === "courier"}
+                      onClick={() => setShipFulfillment("courier")}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-right transition-colors",
+                        shipFulfillment === "courier"
+                          ? "border-sky-500 bg-sky-500/10"
+                          : "border-border hover:border-slate-300 dark:hover:border-slate-600",
+                      )}
+                    >
+                      <CourierLogo
+                        logo={
+                          courier?.selected && courier.integrated
+                            ? courier.logo
+                            : null
+                        }
+                        className="size-9 rounded-xl p-1"
+                        iconClassName="size-4"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold">
+                          عبر شركة التوصيل
+                        </span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          {courier?.selected
+                            ? courier.deliveryCompanyName ||
+                              ("displayName" in courier
+                                ? courier.displayName
+                                : "شركة الشحن")
+                            : "اختر شركة من الإعدادات أولاً"}
+                          {courier?.selected &&
+                          courier.integrated &&
+                          courierAllowed
+                            ? " — يُسجَّل الطرد تلقائياً"
+                            : ""}
+                        </span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={shipFulfillment === "self"}
+                      onClick={() => setShipFulfillment("self")}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-right transition-colors",
+                        shipFulfillment === "self"
+                          ? "border-sky-500 bg-sky-500/10"
+                          : "border-border hover:border-slate-300 dark:hover:border-slate-600",
+                      )}
+                    >
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+                        <Bike className="size-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold">
+                          توصيل ذاتي
+                        </span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          أوصّله بنفسي بدون تسجيل طرد لدى الشركة
+                        </span>
+                      </span>
+                    </button>
+                  </div>
+                  <Button
+                    className="h-12 w-full gap-2"
+                    variant="brand"
+                    onClick={() => handleStatusUpdate("SHIPPED")}
+                    disabled={isUpdatingStatus}
+                  >
+                    {shipFulfillment === "self" ? (
+                      <Bike className="size-4" />
+                    ) : (
+                      <Truck className="size-4" />
+                    )}
+                    {shipFulfillment === "self"
+                      ? "شحن بتوصيل ذاتي"
+                      : "شحن عبر الشركة"}
+                  </Button>
+                </div>
               )}
               {order.status === "SHIPPED" && (
                 <Button

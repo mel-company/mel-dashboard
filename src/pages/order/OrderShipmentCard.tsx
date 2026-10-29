@@ -197,6 +197,11 @@ type Props = {
    */
   shipOptions?: CreateShipmentOptions;
   onShipOptionsChange?: (options: CreateShipmentOptions) => void;
+  /**
+   * Per-order fulfillment. `self` skips courier registration (merchant
+   * delivers by hand). Default `courier` keeps the store's company path.
+   */
+  fulfillmentMode?: "courier" | "self";
 };
 
 const OrderShipmentCard = ({
@@ -204,6 +209,7 @@ const OrderShipmentCard = ({
   onUpdated,
   shipOptions,
   onShipOptionsChange,
+  fulfillmentMode = "courier",
 }: Props) => {
   const orderId = String(order.id ?? "");
 
@@ -297,6 +303,28 @@ const OrderShipmentCard = ({
     );
   }
 
+  // While processing with «توصيل ذاتي», hide courier parcel options entirely.
+  if (
+    fulfillmentMode === "self" &&
+    !showParcel &&
+    orderStatus === "PROCESSING"
+  ) {
+    return (
+      <section className="rounded-[24px] bg-white p-5 dark:bg-[#0a0e27]">
+        <header className="mb-3 flex items-center gap-2">
+          <Truck className="size-4 text-emerald-600" />
+          <h3 className="text-base font-bold text-slate-900 dark:text-[#e4e7fc]">
+            توصيل ذاتي
+          </h3>
+        </header>
+        <p className="text-sm leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
+          اخترت توصيل هذا الطلب بنفسك. عند الضغط على «شحن بتوصيل ذاتي» تتغيّر
+          حالة الطلب دون تسجيل طرد لدى شركة الشحن.
+        </p>
+      </section>
+    );
+  }
+
   if (!courier || courier.selected === false || courier.integrated === false) {
     return (
       <section className="rounded-[24px] bg-white p-5 dark:bg-[#0a0e27]">
@@ -308,7 +336,7 @@ const OrderShipmentCard = ({
         </header>
         <p className="text-sm leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
           {courier && courier.selected === false
-            ? "لم تختر شركة شحن بعد. اخترها من الإعدادات لتتمكن من شحن الطلبات."
+            ? "لم تختر شركة شحن بعد. اخترها من الإعدادات لتتمكن من شحن الطلبات، أو اختر توصيل ذاتي لهذا الطلب."
             : (courier?.reason ??
               "لا يمكن الشحن من هنا لهذا المتجر حاليًا.")}
         </p>
@@ -632,8 +660,10 @@ const OrderShipmentCard = ({
             ) : null}
             <p className="text-sm leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
               {statusDriven && orderStatus === "PROCESSING"
-                ? `يُسجَّل الطرد لدى ${courierName} عند الضغط على «شحن الطلب».`
-                : "لم يُسجَّل هذا الطلب لدى شركة الشحن بعد. يمكنك تسجيله من هنا أو من زر «شحن الطلب» أعلى الإجراءات."}
+                ? `يُسجَّل الطرد لدى ${courierName} عند الضغط على «شحن عبر الشركة».`
+                : orderStatus === "SHIPPED" || orderStatus === "DELIVERED"
+                  ? "لا يوجد طرد مسجّل لدى شركة الشحن — غالباً توصيل ذاتي. يمكنك تسجيل طرد هنا إن أردت إرساله عبر الشركة لاحقاً."
+                  : "لم يُسجَّل هذا الطلب لدى شركة الشحن بعد. يمكنك تسجيله من هنا أو من زر الشحن أعلى الإجراءات."}
             </p>
 
             {courier.code === "boxy" ? (

@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import type { ReactNode } from "react";
 import { Package, X } from "lucide-react";
 import ErrorPage from "@/pages/miscellaneous/ErrorPage";
 import EmptyPage from "@/pages/miscellaneous/EmptyPage";
@@ -6,7 +7,6 @@ import OrdersSkeleton from "@/pages/order/OrdersSkeleton";
 import OrderFilterDialog from "@/pages/order/OrderFilterDialog";
 import OrderTable from "./OrderTable";
 import OrderCard from "./OrderCard";
-import OrderDetailsSheet from "./OrderDetailsSheet";
 import LoadMore from "@/components/table/load-more";
 
 interface OrdersContentProps {
@@ -15,19 +15,14 @@ interface OrdersContentProps {
 }
 
 const OrdersContent = ({ actions, toolbar }: OrdersContentProps) => {
-  // Figma opens an order as an edge drawer over the list, not as a page.
-  const [detailsOrder, setDetailsOrder] = useState<any | null>(null);
+  const navigate = useNavigate();
+  const openOrder = (order: { id?: string }) => {
+    if (!order?.id) return;
+    navigate(`/orders/${order.id}`);
+  };
 
   return (
     <>
-      <OrderDetailsSheet
-        order={detailsOrder}
-        onOpenChange={(open) => !open && setDetailsOrder(null)}
-        imageBaseUrl={actions.imageBaseUrl}
-        calculateTotal={actions.calculateTotal}
-        onChanged={() => actions.refetch?.()}
-      />
-
       <OrderFilterDialog
         open={actions.isFilterDialogOpen}
         onOpenChange={actions.setIsFilterDialogOpen}
@@ -68,7 +63,7 @@ const OrdersContent = ({ actions, toolbar }: OrdersContentProps) => {
                     order={order}
                     imageBaseUrl={actions.imageBaseUrl}
                     calculateTotal={actions.calculateTotal}
-                    onClick={() => setDetailsOrder(order)}
+                    onClick={() => openOrder(order)}
                   />
                 ))}
               </div>
@@ -83,7 +78,7 @@ const OrdersContent = ({ actions, toolbar }: OrdersContentProps) => {
               orders={actions.orders}
               imageBaseUrl={actions.imageBaseUrl}
               calculateTotal={actions.calculateTotal}
-              onOpenOrder={setDetailsOrder}
+              onOpenOrder={openOrder}
             />
           </div>
         </>
