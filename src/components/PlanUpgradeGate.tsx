@@ -26,7 +26,7 @@ export function PlanUpgradeGate({
   className,
 }: PlanUpgradeGateProps) {
   const { messageFor, goUpgrade, upgradeTo, isLoading } = usePlanEntitlements();
-  const planName = upgradeTo?.planName || "MEL PLUS";
+  const planName = upgradeTo?.planName || "نمو";
   const body =
     message ||
     messageFor(feature) ||

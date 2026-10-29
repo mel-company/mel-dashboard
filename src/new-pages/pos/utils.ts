@@ -150,7 +150,10 @@ export function posCouponMessage(message?: string | null): string {
 export function posErrorMessage(error: any): string {
   const data = error?.response?.data;
   if (data?.code === "PLAN_UPGRADE_REQUIRED") {
-    return "نقطة البيع متاحة في باقة Grow";
+    // The server's message names the plan as saved in admin.
+    return typeof data.message === "string" && data.message
+      ? data.message
+      : `نقطة البيع متاحة في باقة ${data.upgrade?.planName || "نمو"}`;
   }
   const raw = Array.isArray(data?.message)
     ? data.message.join("، ")

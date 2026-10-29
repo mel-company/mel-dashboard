@@ -549,13 +549,11 @@ const AppsGrid = () => {
                 </div>
               </div>
               <DialogTitle className="text-center text-xl">
-                ترقية إلى {upgradeTo?.planName || "MEL PLUS"}
+                ترقية إلى {upgradeTo?.planName || "نمو"}
               </DialogTitle>
               <DialogDescription className="text-center text-base">
-                {upgradeFeature
-                  ? messageFor(upgradeFeature) ||
-                    "هذه الميزة متاحة في MEL PLUS فقط."
-                  : "هذه الميزة متاحة في MEL PLUS فقط."}
+                {(upgradeFeature && messageFor(upgradeFeature)) ||
+                  `هذه الميزة متاحة في باقة ${upgradeTo?.planName || "نمو"} فقط.`}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4 flex justify-center gap-2">

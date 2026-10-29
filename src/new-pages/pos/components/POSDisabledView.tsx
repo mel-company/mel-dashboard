@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { MapPin, Rocket, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TitleBar from "@/components/table/title-bar";
+import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 
 /**
  * Why POS is closed. Two different answers that used to be one.
@@ -19,13 +20,15 @@ const POSDisabledView = ({
   reason?: PosDisabledReason;
 }) => {
   const isPlan = reason === "plan";
+  const { upgradeTo } = usePlanEntitlements();
+  const planName = upgradeTo?.planName || "نمو";
 
   return (
     <div className="space-y-6">
       <TitleBar
         description={
           isPlan
-            ? "نقطة البيع متاحة في باقة Grow"
+            ? `نقطة البيع متاحة في باقة ${planName}`
             : "نقطة البيع متاحة للمتاجر الفعلية فقط"
         }
       />
@@ -49,7 +52,7 @@ const POSDisabledView = ({
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
             نقطة البيع (POS) متاحة في باقة{" "}
             <span className="font-semibold text-slate-700 dark:text-slate-200">
-              Grow
+              {planName}
             </span>
             . إن كان اشتراكك منتهياً، جدّده لاستعادة مزايا باقتك.
           </p>
