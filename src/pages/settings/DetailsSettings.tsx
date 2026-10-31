@@ -123,8 +123,14 @@ const DetailsSettings = ({}: Props) => {
 
     // Call the update mutation
     updateStoreDetails(updateData, {
-      onSuccess: () => {
-        toast.success("تم حفظ الإعدادات بنجاح");
+      onSuccess: (data: any) => {
+        // A new name or description is carried to the live store, its tab
+        // title and its Google / WhatsApp preview by a background redeploy.
+        toast.success(
+          data?.storefrontRepublishing
+            ? "تم الحفظ، وسيظهر الاسم والوصف الجديد في متجرك ونتائج البحث خلال دقيقة"
+            : "تم حفظ الإعدادات بنجاح",
+        );
       },
       onError: (error: any) => {
         toast.error(
@@ -274,6 +280,9 @@ const DetailsSettings = ({}: Props) => {
                 rows={4}
                 className="text-right"
               />
+              <p className="text-xs text-muted-foreground">
+                الاسم والوصف يظهران أيضاً في عنوان المتجر ونتائج Google ومعاينة الروابط
+              </p>
             </div>
           </CardContent>
         </Card>
