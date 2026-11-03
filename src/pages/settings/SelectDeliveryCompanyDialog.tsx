@@ -97,10 +97,18 @@ const blockerFor = (
   }
 
   if (!entry.zonesMapped) {
+    /**
+     * Soft: the server already accepts the choice (with a log warning). Hard-
+     * blocking here stranded merchants on a courier that worked for login but
+     * had no province table yet — and Al-Zaeem is the platform default.
+     * Dispatch still needs the map; the amber copy says so before the 30-day
+     * lock attaches.
+     */
     return {
       title: `لا تغطي ${entry.displayName} أي محافظة بعد`,
       detail:
-        "لم تُربط مناطق التوصيل لهذه الشركة على المنصة، فسيُرفض شحن أي طلب. تواصل مع الدعم.",
+        "لم تُربط مناطق التوصيل لهذه الشركة على المنصة بعد؛ الشحن قد يُرفض حتى يكتمل الربط. يمكنك اختيارها الآن.",
+      soft: true,
     };
   }
 

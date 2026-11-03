@@ -310,6 +310,8 @@ const StoreIntegrationsSection = () => {
   };
 
   const subdomain = domainDetails?.domain?.trim() || "";
+  const customDomain = domainDetails?.customDomain?.trim() || "";
+  const platformHost = subdomain ? `${subdomain}.mel.iq` : "";
 
   const deliveryCompany = storeDetails?.deliveryCompany;
   const deliveryCompanyName = deliveryCompany?.name ?? "لم يتم التحديد";
@@ -320,22 +322,49 @@ const StoreIntegrationsSection = () => {
         <SettingsCard title="نطاق الموقع الالكتروني">
           <button
             type="button"
-            className="w-full space-y-2 text-right"
+            className="w-full space-y-3 text-right"
             onClick={() => setDomainDialogOpen(true)}
           >
-            <p className="px-1 text-sm font-medium text-slate-900 dark:text-slate-100">
-              النطاق
-            </p>
-            <SettingsInput
-              readOnly
-              value={subdomain ? `${subdomain}.mel.iq` : "—"}
-              dir="ltr"
-              className="cursor-pointer text-center"
-            />
-
-
-
-
+            {customDomain ? (
+              <>
+                <div className="space-y-2">
+                  <p className="px-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+                    النطاق المخصص
+                  </p>
+                  <SettingsInput
+                    readOnly
+                    value={customDomain}
+                    dir="ltr"
+                    className="cursor-pointer text-center"
+                  />
+                </div>
+                {platformHost ? (
+                  <div className="space-y-2">
+                    <p className="px-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      رابط MEL
+                    </p>
+                    <SettingsInput
+                      readOnly
+                      value={platformHost}
+                      dir="ltr"
+                      className="cursor-pointer text-center text-slate-500 dark:text-slate-400"
+                    />
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div className="space-y-2">
+                <p className="px-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+                  النطاق
+                </p>
+                <SettingsInput
+                  readOnly
+                  value={platformHost || "—"}
+                  dir="ltr"
+                  className="cursor-pointer text-center"
+                />
+              </div>
+            )}
           </button>
         </SettingsCard>
 
