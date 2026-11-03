@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
+import { useEnsureCourierBranch } from "@/api/wrappers/shipping.wrappers";
 import {
   usePrimeSetupStatus,
   type PrimeSetupStep,
@@ -27,9 +28,36 @@ type Props = {
 
 const stepAction = (
   step: PrimeSetupStep,
-  handlers: { onOpenLocation?: () => void; onRequestPhone?: () => void },
+  handlers: {
+    onOpenLocation?: () => void;
+    onRequestPhone?: () => void;
+    onEnsure?: () => void;
+    ensuring?: boolean;
+    companyName?: string;
+  },
 ) => {
   if (step.done || !step.action) return null;
+
+  if (step.action === "ensure" && handlers.onEnsure) {
+    return (
+      <Button
+        type="button"
+        size="sm"
+        onClick={handlers.onEnsure}
+        disabled={handlers.ensuring}
+        className="mt-2 h-9 gap-1.5 rounded-xl bg-sky-600 text-white hover:bg-sky-700"
+      >
+        {handlers.ensuring ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <CheckCircle2 className="size-3.5" />
+        )}
+        {handlers.ensuring
+          ? "جاري التفعيل…"
+          : `تفعيل الشحن لدى ${handlers.companyName || "Prime"}`}
+      </Button>
+    );
+  }
 
   if (step.action === "location" && handlers.onOpenLocation) {
     return (
@@ -54,7 +82,7 @@ const stepAction = (
         onClick={() => {
           handlers.onRequestPhone?.();
           toast.info(
-            "افتح تبويب «الإعدادات العامة» وأضف رقم الهاتف، ثم ارجع واحفظ موقع الفرع.",
+            "افتح تبويب «الإعدادات العامة» وأضف رقم الهاتف، ثم ارجع لتفعيل الشحن.",
           );
         }}
         className="mt-2 h-9 gap-1.5 rounded-xl border-amber-300 bg-white text-amber-900 hover:bg-amber-50"
@@ -87,11 +115,28 @@ const stepAction = (
 const PrimeIntegrationCard = ({ onOpenLocation, onRequestPhone }: Props) => {
   const { data: storeDetails } = useFetchStoreDetails();
   const setup = usePrimeSetupStatus();
+  const ensureBranch = useEnsureCourierBranch();
 
   const deliveryCompany = storeDetails?.deliveryCompany;
   const website = deliveryCompany?.website || PRIME_WEBSITE;
   const logo = deliveryCompany?.logo;
   const companyName = deliveryCompany?.name || setup.displayName || "Prime";
+
+  const activate = async () => {
+    try {
+      await ensureBranch.mutateAsync();
+      toast.success(`تم تفعيل الشحن لدى ${companyName}.`);
+    } catch (error) {
+      const message = (
+        error as { response?: { data?: { message?: unknown } } }
+      )?.response?.data?.message;
+      toast.error(
+        typeof message === "string" && message.trim()
+          ? message
+          : "تعذر التفعيل. تأكد من الهاتف وموقع الفرع وحاول مرة أخرى.",
+      );
+    }
+  };
 
   return (
     <div className="mt-3 space-y-3 rounded-2xl border border-sky-100 bg-sky-50/60 p-4 dark:border-sky-900/50 dark:bg-sky-950/30">
@@ -180,22 +225,18 @@ const PrimeIntegrationCard = ({ onOpenLocation, onRequestPhone }: Props) => {
                 >
                   {step.detail}
                 </p>
-                {stepAction(step, { onOpenLocation, onRequestPhone })}
+                {stepAction(step, {
+                  onOpenLocation,
+                  onRequestPhone,
+                  onEnsure: activate,
+                  ensuring: ensureBranch.isPending,
+                  companyName,
+                })}
               </div>
             </div>
           </li>
         ))}
       </ol>
-
-      {setup.isReady && setup.merchantLoginId ? (
-        <div
-          className="rounded-xl bg-white/80 px-3 py-2 text-[11px] text-slate-600 dark:bg-slate-900/60 dark:text-slate-300"
-          dir="ltr"
-        >
-          <p>merchant: {setup.merchantLoginId}</p>
-          {setup.senderId != null && <p>senderId: {setup.senderId}</p>}
-        </div>
-      ) : null}
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" asChild>

@@ -345,13 +345,17 @@ const OrderDetailsSheet = ({
   /**
    * «سحب من الشحن»: the courier takes the parcel back and the order returns
    * to «قيد المعالجة», where it can be shipped again or cancelled.
+   *
+   * Always land on PROCESSING — a parcel can exist while the order is still
+   * PENDING (API / interrupted ship), and leaving it there hides «شحن عبر
+   * الشركة» until the merchant notices «بدء المعالجة».
    */
   const handleWithdraw = () => {
     if (!id) return;
     cancelShipment.mutate(undefined, {
       onSuccess: () => {
         setConfirm(null);
-        if (orderStatus !== "SHIPPED") {
+        if (orderStatus === "PROCESSING") {
           afterStatusChange("تم سحب الطرد من شركة الشحن");
           return;
         }

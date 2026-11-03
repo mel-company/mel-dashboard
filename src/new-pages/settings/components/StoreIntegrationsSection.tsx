@@ -19,10 +19,7 @@ import DomainSettingsSection from "./DomainSettingsSection";
 import ShippingSettingsDialog from "./ShippingSettingsDialog";
 import { AlertTriangle, Lock } from "lucide-react";
 import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
-import {
-  useActiveCourier,
-  useCourierBranch,
-} from "@/api/wrappers/shipping.wrappers";
+import { useCourierSetupStatus } from "@/hooks/use-courier-setup-status";
 import settingsGearIcon from "@/assets/settings/settings-gear.svg";
 import moneyIcon from "@/assets/settings/money.svg";
 import qiCardIcon from "@/assets/settings/qi-card.svg";
@@ -154,14 +151,10 @@ const StoreIntegrationsSection = () => {
   });
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
   const [shippingSettingsOpen, setShippingSettingsOpen] = useState(false);
-  const { data: activeCourier } = useActiveCourier();
-  const { data: courierBranch } = useCourierBranch();
-  const shippingNeedsSetup =
-    (activeCourier?.selected &&
-      activeCourier.integrated &&
-      !activeCourier.accountReady &&
-      !!activeCourier.capabilities?.branch) ||
-    (!!courierBranch && courierBranch.location?.latitude == null);
+  // Setup checklist comes from GET /shipping/couriers/setup — no local rules.
+  const { setup, ready: shippingReady, next: shippingNext } =
+    useCourierSetupStatus();
+  const shippingNeedsSetup = !!setup?.selected && !shippingReady;
   const [optimisticCod, setOptimisticCod] = useState<boolean | null>(null);
 
   const asList = (value: unknown): any[] =>
@@ -511,7 +504,9 @@ const StoreIntegrationsSection = () => {
             >
               <AlertTriangle className="size-4 shrink-0" />
               <span className="flex-1">
-                حدّد موقع الفرع لتتمكن من شحن الطلبات
+                {shippingNext?.titleAr ||
+                  setup?.summaryAr ||
+                  "أكمل إعدادات التوصيل لتتمكن من شحن الطلبات"}
               </span>
               <img src={chevronIcon} alt="" className="size-5 shrink-0" />
             </button>

@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Settings2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useFetchStoreDetails } from "@/api/wrappers/store.wrappers";
-import { isPrimeDelivery } from "@/api/types/store";
 import BranchLocationField from "./BranchLocationField";
-import PrimeIntegrationCard from "./PrimeIntegrationCard";
+import CourierSetupCard from "./CourierSetupCard";
 import CourierAccountCard from "./CourierAccountCard";
 
 type Props = {
@@ -13,15 +12,19 @@ type Props = {
 };
 
 /**
- * إعدادات شركة التوصيل — everything about the store's courier integration,
- * behind the gear on the delivery card rather than stacked on the page:
- * the branch location (which opens the branch at Prime/Boxy), Prime's
- * checklist, and the store's account at the courier.
+ * إعدادات شركة التوصيل — checklist من /shipping/couriers/setup، موقع الفرع،
+ * وحساب التاجر لدى الشركة (مدن/وسيط).
  */
 const ShippingSettingsDialog = ({ open, onOpenChange }: Props) => {
   const { data: storeDetails } = useFetchStoreDetails();
   const companyName = storeDetails?.deliveryCompany?.name;
   const [locationOpen, setLocationOpen] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const focusCredentials = () => {
+    const node = scrollRef.current?.querySelector("#courier-credentials");
+    node?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   return (
     <Dialog
@@ -36,7 +39,7 @@ const ShippingSettingsDialog = ({ open, onOpenChange }: Props) => {
         showCloseButton={false}
         className="max-h-[90vh] gap-0 overflow-hidden rounded-3xl border-0 bg-white p-0 sm:max-w-lg dark:bg-slate-950"
       >
-        <div className="max-h-[90vh] overflow-y-auto p-5 sm:p-6">
+        <div ref={scrollRef} className="max-h-[90vh] overflow-y-auto p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <div className="flex size-10 items-center justify-center rounded-2xl bg-sky-100 text-[#00b7ff] dark:bg-sky-950/50 dark:text-sky-300">
@@ -62,20 +65,19 @@ const ShippingSettingsDialog = ({ open, onOpenChange }: Props) => {
           </div>
 
           <div className="space-y-4">
-            {isPrimeDelivery(storeDetails) ? (
-              <PrimeIntegrationCard
-                onOpenLocation={() => setLocationOpen(true)}
-                onRequestPhone={() => onOpenChange(false)}
-              />
-            ) : null}
+            {/* شروط التفعيل من GET /shipping/couriers/setup — نفس البطاقة لكل شركة */}
+            <CourierSetupCard
+              onOpenLocation={() => setLocationOpen(true)}
+              onRequestPhone={() => onOpenChange(false)}
+              onRequestCredentials={focusCredentials}
+            />
 
             <BranchLocationField
               open={locationOpen}
               onOpenChange={setLocationOpen}
             />
 
-            {/* Whether the store can ship at all, and the own-login link for
-                the two couriers that accept one. */}
+            {/* ربط الحساب الخاص (مدن / وسيط) — يظهر فقط إن قبلت الشركة ذلك */}
             <CourierAccountCard embedded />
           </div>
         </div>

@@ -200,6 +200,9 @@ export const useUpdateDeliveryCompany = () => {
        */
       queryClient.invalidateQueries({ queryKey: shippingKeys.activeCourier() });
       queryClient.invalidateQueries({ queryKey: shippingKeys.accounts() });
+      queryClient.invalidateQueries({
+        queryKey: [...shippingKeys.all, "setup"],
+      });
     },
   });
 };

@@ -506,3 +506,52 @@ export interface SaveCourierBranchInput {
   stateId?: string;
   regionId?: string;
 }
+
+/** Successful `POST /shipping/couriers/branch/ensure` (422 carries setup + errorAr). */
+export interface EnsureCourierBranchResult extends CourierBranchLocation {
+  ok: true;
+  ensure: {
+    provisioned: boolean;
+    skipped?: string;
+    errorAr?: string;
+  };
+  setup: CourierSetup;
+}
+
+/** What the merchant should press for an incomplete setup step. */
+export type CourierSetupAction =
+  | "phone"
+  | "location"
+  | "ensure"
+  | "credentials"
+  | "support"
+  | null;
+
+/**
+ * One condition on `GET /shipping/couriers/setup`.
+ * Render top-to-bottom; map `action` to a button.
+ */
+export interface CourierSetupRequirement {
+  id: string;
+  titleAr: string;
+  detailAr: string;
+  done: boolean;
+  blocking: boolean;
+  action: CourierSetupAction;
+  /** سبب الفشل تحت الخطوة — يظهر بالأحمر. */
+  errorAr?: string | null;
+}
+
+/** Merchant checklist — `GET /shipping/couriers/setup`. */
+export interface CourierSetup {
+  selected: boolean;
+  courierCode: string | null;
+  displayName: string | null;
+  companyName: string | null;
+  ready: boolean;
+  summaryAr: string;
+  /** خطأ عام أعلى البطاقة. */
+  errorAr: string | null;
+  requirements: CourierSetupRequirement[];
+  next: CourierSetupRequirement | null;
+}

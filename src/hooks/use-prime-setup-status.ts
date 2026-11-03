@@ -21,7 +21,7 @@ export type PrimeSetupStep = {
   /** Soft steps do not block the merchant alone (ops / platform). */
   blocking: boolean;
   /** What the merchant should press next, when not done. */
-  action?: "phone" | "location" | "support";
+  action?: "phone" | "location" | "ensure" | "support";
 };
 
 export type PrimeSetupStatus = {
@@ -118,10 +118,16 @@ export function usePrimeSetupStatus(): PrimeSetupStatus {
         title: `فتح الفرع لدى ${displayName}`,
         detail: hasBranch
           ? `فرعك مسجّل لدى ${displayName}`
-          : "احفظ موقع الفرع لفتحه تلقائياً لدى الشركة",
+          : hasPhone && hasLocation
+            ? "بيانات متجرك جاهزة — اضغط التفعيل لفتح الفرع تلقائياً"
+            : "بعد حفظ الهاتف والموقع، يُفتح الفرع بضغطة واحدة",
         done: hasBranch,
         blocking: true,
-        action: hasBranch ? undefined : "location",
+        action: hasBranch
+          ? undefined
+          : hasPhone && hasLocation
+            ? "ensure"
+            : "location",
       },
       {
         id: "zones",

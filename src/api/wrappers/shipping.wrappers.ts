@@ -13,6 +13,8 @@ export const shippingKeys = {
   activeCourier: () => [...shippingKeys.all, "active-courier"] as const,
   accounts: () => [...shippingKeys.all, "accounts"] as const,
   branch: () => [...shippingKeys.all, "branch"] as const,
+  setup: (code?: string) =>
+    [...shippingKeys.all, "setup", code ?? "active"] as const,
   shipment: (orderId: string) =>
     [...shippingKeys.all, "shipment", orderId] as const,
   tracking: (orderId: string) =>
@@ -127,6 +129,9 @@ const useCredentialMutation = <TArgs, TResult>(
       void queryClient.invalidateQueries({
         queryKey: shippingKeys.activeCourier(),
       });
+      void queryClient.invalidateQueries({
+        queryKey: [...shippingKeys.all, "setup"],
+      });
     },
   });
 };
@@ -150,6 +155,14 @@ export const useCourierBranch = (enabled = true) =>
     enabled,
   });
 
+/** شروط تفعيل شركة الشحن — مصدر واحد للداشبورد. */
+export const useCourierSetup = (code?: string, enabled = true) =>
+  useQuery({
+    queryKey: shippingKeys.setup(code),
+    queryFn: () => shippingAPI.getSetup(code),
+    enabled,
+  });
+
 /**
  * Moving the branch rewrites the store's address and origin province, and for
  * Prime and Boxy the store's ids at the courier — so the store details, the
@@ -166,7 +179,44 @@ export const useSaveCourierBranch = () => {
       void queryClient.invalidateQueries({
         queryKey: shippingKeys.activeCourier(),
       });
+      void queryClient.invalidateQueries({
+        queryKey: [...shippingKeys.all, "setup"],
+      });
       void queryClient.invalidateQueries({ queryKey: storeKeys.all });
+    },
+  });
+};
+
+/** One-tap finish for Al-Zaeem (and retry for Prime/Boxy) — no form. */
+export const useEnsureCourierBranch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => shippingAPI.ensureBranch(),
+    onSuccess: (data) => {
+      queryClient.setQueryData(shippingKeys.branch(), data);
+      if (data?.setup) {
+        queryClient.setQueryData(shippingKeys.setup(), data.setup);
+      }
+      void queryClient.invalidateQueries({ queryKey: shippingKeys.accounts() });
+      void queryClient.invalidateQueries({
+        queryKey: shippingKeys.activeCourier(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [...shippingKeys.all, "setup"],
+      });
+      void queryClient.invalidateQueries({ queryKey: storeKeys.all });
+    },
+    onError: (error: unknown) => {
+      // 422 returns { errorAr, setup } — paint that checklist immediately.
+      // Do not invalidate/refetch here: a fresh GET can wipe step.errorAr
+      // before the merchant sees why ensure failed.
+      const setup = (
+        error as { response?: { data?: { setup?: unknown } } }
+      )?.response?.data?.setup;
+      if (setup && typeof setup === "object") {
+        queryClient.setQueryData(shippingKeys.setup(), setup);
+      }
     },
   });
 };

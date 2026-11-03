@@ -4,6 +4,8 @@ import type {
   CourierAccountSummary,
   CourierAccountView,
   CourierBranchLocation,
+  CourierSetup,
+  EnsureCourierBranchResult,
   SaveCourierBranchInput,
   CourierShipment,
   CourierTrackingEvent,
@@ -168,6 +170,18 @@ export const shippingAPI = {
     return data;
   },
 
+  /**
+   * شروط تفعيل الشحن مرتبة للداشبورد.
+   * `code` اختياري لمعاينة شركة غير المختارة حالياً.
+   */
+  getSetup: async (code?: string): Promise<CourierSetup> => {
+    const { data } = await axiosInstance.get<CourierSetup>(
+      "/shipping/couriers/setup",
+      code ? { params: { code } } : undefined,
+    );
+    return data;
+  },
+
   /** موقع فرع المتجر، وهل لديه فرع لدى شركة الشحن. */
   getBranch: async (): Promise<CourierBranchLocation> => {
     const { data } = await axiosInstance.get<CourierBranchLocation>(
@@ -190,6 +204,17 @@ export const shippingAPI = {
     const { data } = await axiosInstance.put<CourierBranchLocation>(
       "/shipping/couriers/branch",
       body,
+    );
+    return data;
+  },
+
+  /**
+   * One tap: finish courier registration from the store's existing phone /
+   * location. No form body — Al-Zaeem needs only a phone.
+   */
+  ensureBranch: async (): Promise<EnsureCourierBranchResult> => {
+    const { data } = await axiosInstance.post<EnsureCourierBranchResult>(
+      "/shipping/couriers/branch/ensure",
     );
     return data;
   },
