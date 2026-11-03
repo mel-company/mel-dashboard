@@ -175,7 +175,7 @@ export const pages: PageType[] = [{
 {
     label: "الموظفين",
     slug: "/employees",
-    apiEndpoint: "employee",
+    apiEndpoint: "employee/cursor",
     group: "إدارة النظام",
     icon: {
         normal: UserMultiple03IconNormal,

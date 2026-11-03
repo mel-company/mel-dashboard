@@ -1,215 +1,237 @@
-import { UserAvatar } from "@/components/UserAvatar";
-import { useParams } from "react-router-dom";
-import { dmy_employees } from "@/data/dummy";
+import { useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  User,
-  Phone,
+  ArrowRight,
+  Loader2,
   Mail,
-  Briefcase,
-  Edit,
+  Phone,
+  Shield,
   Trash2,
-  Calendar,
-  Lock,
+  User,
 } from "lucide-react";
-import { useState } from "react";
+import { toast } from "sonner";
 import PagePanel from "@/components/PagePanel";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/UserAvatar";
+import {
+  useDeleteEmployee,
+  useFetchEmployee,
+  useFetchEmployeeRoleTemplates,
+  useUpdateEmployee,
+} from "@/api/wrappers/employee.wrappers";
+import type { EmployeeRoleTemplateKey } from "@/api/endpoints/employee.endpoints";
+import { cn } from "@/lib/utils";
+import EmployeeDeleteModal from "@/new-pages/employees/components/EmployeeDeleteModal";
+
+function getErrorMessage(err: unknown, fallback: string): string {
+  const message = (
+    err as { response?: { data?: { message?: string | string[] } } }
+  )?.response?.data?.message;
+  if (Array.isArray(message)) return message.join("، ");
+  if (typeof message === "string") return message;
+  return fallback;
+}
+
+function templateKeyFromRoleName(
+  roleName?: string,
+): EmployeeRoleTemplateKey | null {
+  if (roleName === "مسؤول الداتا") return "DATA";
+  if (roleName === "مسؤول الطلبات") return "ORDERS";
+  return null;
+}
 
 const EmployeeDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  const employee = dmy_employees.find((e) => e.id === Number(id));
-  // @ts-ignore
-  const [isCommingSoon, setIsCommingSoon] = useState(true);
+  const { id = "" } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { data: employee, isLoading, error, refetch } = useFetchEmployee(id);
+  const { data: templates = [] } = useFetchEmployeeRoleTemplates();
+  const { mutate: updateEmployee, isPending: isUpdating } = useUpdateEmployee();
+  const { mutate: deleteEmployee, isPending: isDeleting } = useDeleteEmployee();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
-  if (isCommingSoon) {
+  const currentKey = useMemo(
+    () => templateKeyFromRoleName(employee?.role?.name),
+    [employee?.role?.name],
+  );
+
+  if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Lock className="size-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">قريباً</h2>
-        <p className="text-muted-foreground mb-4">
-          هذا التطبيق قيد التطوير وسيكون متاحاً قريباً. شكراً لصبرك!
-        </p>
-      </div>
+      <PagePanel className="flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-slate-400" />
+      </PagePanel>
     );
   }
 
-  if (!employee) {
+  if (error || !employee) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <User className="size-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">الموظف غير موجود</h2>
-        <p className="text-muted-foreground mb-4">
+      <PagePanel className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-center">
+        <User className="size-12 text-muted-foreground" />
+        <h2 className="text-xl font-semibold">الموظف غير موجود</h2>
+        <p className="text-sm text-muted-foreground">
           الموظف الذي تبحث عنه غير موجود أو تم حذفه.
         </p>
-      </div>
+        <Button variant="brand-soft" onClick={() => navigate("/employees")}>
+          العودة إلى الموظفين
+        </Button>
+      </PagePanel>
     );
   }
 
+  const user = employee.user;
+  const permissions = employee.role?.permissions ?? [];
+
+  const handleRoleChange = (key: EmployeeRoleTemplateKey) => {
+    if (key === currentKey) return;
+    updateEmployee(
+      { id, data: { roleTemplate: key } },
+      {
+        onSuccess: () => {
+          toast.success("تم تحديث دور الموظف");
+          refetch();
+        },
+        onError: (err) => {
+          toast.error(getErrorMessage(err, "فشل تحديث الدور"));
+        },
+      },
+    );
+  };
+
   return (
-    <PagePanel className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Employee Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Employee Header Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl text-right">
-                {employee.name}
-              </CardTitle>
-              <CardDescription className="text-right">
-                موظف رقم #{employee.id}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="relative h-64 flex items-center justify-center w-full overflow-hidden rounded-lg bg-dark-blue/10">
-                <UserAvatar
-                  seed={String(employee.id)}
-                  alt={employee.name}
-                  className="size-32 shadow-lg ring-4 ring-white/70"
-                />
-              </div>
+    <PagePanel className="mx-auto max-w-3xl space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <Button
+          type="button"
+          variant="brand-soft"
+          className="h-11 gap-2"
+          onClick={() => navigate("/employees")}
+        >
+          <ArrowRight className="size-4" />
+          رجوع
+        </Button>
+        <Button
+          type="button"
+          variant="destructive-outline"
+          className="h-11 gap-2"
+          onClick={() => setDeleteOpen(true)}
+        >
+          <Trash2 className="size-4" />
+          حذف
+        </Button>
+      </div>
 
-              <Separator />
-
-              {/* Employee Information */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                  <Briefcase className="size-5 text-primary" />
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">المنصب</p>
-                    <p className="text-lg font-bold">{employee.role}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                  <Phone className="size-5 text-primary" />
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">رقم الهاتف</p>
-                    <p className="text-lg font-bold">{employee.phone}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-4 rounded-lg border bg-card sm:col-span-2">
-                  <Mail className="size-5 text-primary" />
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">
-                      البريد الإلكتروني
-                    </p>
-                    <p className="text-lg font-bold">{employee.email}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Additional Info Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">معلومات إضافية</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
-                  <Badge variant="secondary" className="text-sm">
-                    #{employee.id}
-                  </Badge>
-                  <span className="text-sm font-medium text-muted-foreground text-right">
-                    رقم الموظف
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
-                  <Badge variant="outline" className="gap-1">
-                    <Briefcase className="size-3" />
-                    {employee.role}
-                  </Badge>
-                  <span className="text-sm font-medium text-muted-foreground text-right">
-                    المنصب
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar Info */}
-        <div className="space-y-6">
-          {/* Quick Info Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">معلومات سريعة</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-sm">
-                  #{employee.id}
-                </Badge>
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  رقم الموظف
-                </span>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <Badge variant="outline" className="gap-1 text-sm">
-                  <Briefcase className="size-3" />
-                  {employee.role}
-                </Badge>
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  المنصب
-                </span>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Phone className="size-4 text-muted-foreground" />
-                  <span className="text-sm">{employee.phone}</span>
-                </div>
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  الهاتف
-                </span>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 max-w-xs">
-                  <Mail className="size-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm line-clamp-1">{employee.email}</span>
-                </div>
-                <span className="text-sm font-medium text-muted-foreground text-right">
-                  البريد
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">الإجراءات</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button className="w-full gap-2" variant="default">
-                <Edit className="size-4" />
-                تعديل الموظف
-              </Button>
-              <Button className="w-full gap-2" variant="outline">
-                <Calendar className="size-4" />
-                عرض الجدول الزمني
-              </Button>
-              <Button className="w-full gap-2" variant="destructive">
-                <Trash2 className="size-4" />
-                حذف الموظف
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="rounded-[28px] bg-white p-6 dark:bg-[#0a0e27]">
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
+          <UserAvatar
+            seed={String(employee.id)}
+            alt={user?.name ?? "موظف"}
+            className="size-24 shadow-md ring-4 ring-white/70 dark:ring-white/10"
+          />
+          <div className="min-w-0 flex-1 space-y-3 text-center sm:text-right">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-[#f0f2ff]">
+                {user?.name ?? "—"}
+              </h1>
+              <Badge variant="outline" className="mt-2 rounded-full px-3 py-1">
+                {employee.role?.name ?? "موظف"}
+              </Badge>
+            </div>
+            <div className="flex flex-col gap-2 text-sm text-slate-600 dark:text-[#a4b1fa]">
+              <p className="inline-flex items-center justify-center gap-2 sm:justify-start" dir="ltr">
+                <Phone className="size-4" />
+                {user?.phone ?? "—"}
+              </p>
+              {user?.email && !String(user.email).endsWith("@employees.mel.local") ? (
+                <p className="inline-flex items-center justify-center gap-2 sm:justify-start" dir="ltr">
+                  <Mail className="size-4" />
+                  {user.email}
+                </p>
+              ) : null}
+            </div>
+          </div>
         </div>
       </div>
+
+      <div className="space-y-3 rounded-[28px] bg-white p-6 dark:bg-[#0a0e27]">
+        <div className="flex items-center gap-2 text-slate-900 dark:text-[#f0f2ff]">
+          <Shield className="size-5" />
+          <h2 className="text-lg font-semibold">تغيير الدور</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {templates.map((t: any) => {
+            const selected = currentKey === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                disabled={isUpdating}
+                onClick={() => handleRoleChange(t.key)}
+                className={cn(
+                  "rounded-2xl border p-4 text-right transition disabled:opacity-60",
+                  selected
+                    ? "border-[#00b7ff] bg-[#00b7ff]/8 ring-2 ring-[#00b7ff]/25"
+                    : "border-slate-100 bg-slate-50 hover:border-slate-200 dark:border-white/8 dark:bg-white/[0.03]",
+                )}
+              >
+                <p className="font-semibold text-slate-900 dark:text-[#f0f2ff]">
+                  {t.name}
+                </p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-[#a4b1fa]">
+                  {t.description}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {permissions.length > 0 ? (
+        <div className="space-y-3 rounded-[28px] bg-white p-6 dark:bg-[#0a0e27]">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-[#f0f2ff]">
+            الصلاحيات
+          </h2>
+          <div className="divide-y divide-slate-100 dark:divide-white/6">
+            {permissions.map((p: any) => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between gap-3 py-3 text-sm"
+              >
+                <span className="font-medium text-slate-800 dark:text-[#e4e7fc]">
+                  {p.module?.name ?? "—"}
+                </span>
+                <span className="text-xs text-slate-400 dark:text-[#4a5596]">
+                  {[
+                    p.view && "عرض",
+                    p.add && "إضافة",
+                    p.edit && "تعديل",
+                    p.delete && "حذف",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "بدون صلاحية"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <EmployeeDeleteModal
+        deleteId={deleteOpen ? id : null}
+        setDeleteId={(v) => setDeleteOpen(!!v)}
+        isDeleting={isDeleting}
+        employeeName={user?.name}
+        handleDelete={() => {
+          deleteEmployee(id, {
+            onSuccess: () => {
+              toast.success("تم حذف الموظف");
+              navigate("/employees");
+            },
+            onError: (err) => {
+              toast.error(getErrorMessage(err, "فشل حذف الموظف"));
+            },
+          });
+        }}
+      />
     </PagePanel>
   );
 };

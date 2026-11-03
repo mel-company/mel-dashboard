@@ -1,10 +1,24 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
+export type EmployeeRoleTemplateKey = "DATA" | "ORDERS";
+
+export type CreateEmployeePayload = {
+  name: string;
+  phone: string;
+  email?: string;
+  roleTemplate: EmployeeRoleTemplateKey;
+};
+
+export type UpdateEmployeePayload = {
+  roleTemplate?: EmployeeRoleTemplateKey;
+};
+
 export const employeeAPI = {
-  /**
-   * Get all employees with optional filtering and pagination
-   */
-  fetchAll: async (params?: any): Promise<any> => {
+  fetchAll: async (params?: {
+    storeId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<any> => {
     const { data } = await axiosInstance.get<any>("/employee", {
       params: {
         ...(params?.storeId && { storeId: params.storeId }),
@@ -15,33 +29,42 @@ export const employeeAPI = {
     return data;
   },
 
-  /**
-   * Get a single employee by ID
-   */
+  fetchCursor: async (params?: {
+    cursor?: string;
+    limit?: number;
+    query?: string;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/employee/cursor", {
+      params,
+    });
+    return data;
+  },
+
+  fetchStats: async (): Promise<any> => {
+    const { data } = await axiosInstance.get<any>("/employee/stats");
+    return data;
+  },
+
+  fetchRoleTemplates: async (): Promise<any[]> => {
+    const { data } = await axiosInstance.get<any[]>("/employee/role-templates");
+    return data;
+  },
+
   fetchOne: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.get<any>(`/employee/${id}`);
     return data;
   },
 
-  /**
-   * Create a new employee
-   */
-  create: async (employee: any): Promise<any> => {
+  create: async (employee: CreateEmployeePayload): Promise<any> => {
     const { data } = await axiosInstance.post<any>("/employee", employee);
     return data;
   },
 
-  /**
-   * Update an existing employee
-   */
-  update: async (id: string, employee: any): Promise<any> => {
+  update: async (id: string, employee: UpdateEmployeePayload): Promise<any> => {
     const { data } = await axiosInstance.put<any>(`/employee/${id}`, employee);
     return data;
   },
 
-  /**
-   * Delete an employee (soft delete)
-   */
   delete: async (id: string): Promise<any> => {
     const { data } = await axiosInstance.delete<any>(`/employee/${id}`);
     return data;
