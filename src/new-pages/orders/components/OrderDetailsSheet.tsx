@@ -127,9 +127,9 @@ const OrderDetailsSheet = ({
   const [confirm, setConfirm] = useState<"cancel" | "withdraw" | null>(null);
   /** Boxy size / fragile, Modon replacement — sent with «شحن الطلب». */
   const [shipOptions, setShipOptions] = useState<CreateShipmentOptions>({});
-  /** Per-order: store courier (default) or merchant delivers by hand. */
+  /** Per-order: self-delivery first (default), or store courier. */
   const [shipFulfillment, setShipFulfillment] = useState<"courier" | "self">(
-    "courier",
+    "self",
   );
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -473,6 +473,30 @@ const OrderDetailsSheet = ({
         <button
           type="button"
           role="radio"
+          aria-checked={shipFulfillment === "self"}
+          onClick={() => setShipFulfillment("self")}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-right transition-colors",
+            shipFulfillment === "self"
+              ? "border-sky-500 bg-sky-500/10"
+              : "border-slate-200 hover:border-slate-300 dark:border-[#2a3160] dark:hover:border-[#3a4578]",
+          )}
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+            <Bike className="size-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
+              توصيل ذاتي
+            </span>
+            <span className="mt-0.5 block text-xs text-slate-500 dark:text-[#a4b1fa]">
+              أوصّله بنفسي بدون تسجيل طرد لدى الشركة
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          role="radio"
           aria-checked={shipFulfillment === "courier"}
           onClick={() => setShipFulfillment("courier")}
           className={cn(
@@ -498,30 +522,6 @@ const OrderDetailsSheet = ({
                 ? courier.deliveryCompanyName ||
                   (courier.integrated ? courier.displayName : "شركة الشحن")
                 : "اختر شركة من الإعدادات أولاً"}
-            </span>
-          </span>
-        </button>
-        <button
-          type="button"
-          role="radio"
-          aria-checked={shipFulfillment === "self"}
-          onClick={() => setShipFulfillment("self")}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-right transition-colors",
-            shipFulfillment === "self"
-              ? "border-sky-500 bg-sky-500/10"
-              : "border-slate-200 hover:border-slate-300 dark:border-[#2a3160] dark:hover:border-[#3a4578]",
-          )}
-        >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
-            <Bike className="size-4" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-bold text-slate-900 dark:text-[#e4e7fc]">
-              توصيل ذاتي
-            </span>
-            <span className="mt-0.5 block text-xs text-slate-500 dark:text-[#a4b1fa]">
-              أوصّله بنفسي بدون تسجيل طرد لدى الشركة
             </span>
           </span>
         </button>

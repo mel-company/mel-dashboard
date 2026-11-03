@@ -107,7 +107,7 @@ const OrderDetails = () => {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   /** Per-order: use the store's courier (default) or deliver by hand. */
   const [shipFulfillment, setShipFulfillment] =
-    useState<ShipFulfillment>("courier");
+    useState<ShipFulfillment>("self");
 
   const {
     data: order,
@@ -1136,6 +1136,30 @@ const OrderDetails = () => {
                     <button
                       type="button"
                       role="radio"
+                      aria-checked={shipFulfillment === "self"}
+                      onClick={() => setShipFulfillment("self")}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-right transition-colors",
+                        shipFulfillment === "self"
+                          ? "border-sky-500 bg-sky-500/10"
+                          : "border-border hover:border-slate-300 dark:hover:border-slate-600",
+                      )}
+                    >
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+                        <Bike className="size-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold">
+                          توصيل ذاتي
+                        </span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          أوصّله بنفسي بدون تسجيل طرد لدى الشركة
+                        </span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      role="radio"
                       aria-checked={shipFulfillment === "courier"}
                       onClick={() => setShipFulfillment("courier")}
                       className={cn(
@@ -1170,30 +1194,6 @@ const OrderDetails = () => {
                           courierAllowed
                             ? " — يُسجَّل الطرد تلقائياً"
                             : ""}
-                        </span>
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={shipFulfillment === "self"}
-                      onClick={() => setShipFulfillment("self")}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-right transition-colors",
-                        shipFulfillment === "self"
-                          ? "border-sky-500 bg-sky-500/10"
-                          : "border-border hover:border-slate-300 dark:hover:border-slate-600",
-                      )}
-                    >
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
-                        <Bike className="size-4" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-bold">
-                          توصيل ذاتي
-                        </span>
-                        <span className="mt-0.5 block text-xs text-muted-foreground">
-                          أوصّله بنفسي بدون تسجيل طرد لدى الشركة
                         </span>
                       </span>
                     </button>
