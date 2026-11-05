@@ -10,7 +10,7 @@ const EmployeeTableHeader = () => {
         <TableHead className={cn(thClass, "w-14")}> </TableHead>
         <TableHead className={cn(thClass, "w-24")}>المعرف</TableHead>
         <TableHead className={cn(thClass, "min-w-[180px]")}>اسم الموظف</TableHead>
-        <TableHead className={cn(thClass, "min-w-[140px]")}>رقم الهاتف</TableHead>
+        <TableHead className={cn(thClass, "min-w-[180px]")}>الإيميل</TableHead>
         <TableHead className={cn(thClass, "min-w-[160px]")}>الدور</TableHead>
         <TableHead className={cn(thClass, "w-32")}>العمليات</TableHead>
       </TableRow>

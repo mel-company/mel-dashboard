@@ -51,13 +51,12 @@ const EmployeeRow = ({ employee, rowIndex, onDelete }: EmployeeRowProps) => {
         </p>
       </TableCell>
       <TableCell
-        className={cn(
-          tdClass,
-          "tabular-nums text-slate-800 dark:text-[#e4e7fc]",
-        )}
+        className={cn(tdClass, "text-slate-800 dark:text-[#e4e7fc]")}
         dir="ltr"
       >
-        {user?.phone ?? "—"}
+        {user?.email && !String(user.email).endsWith("@employees.mel.local")
+          ? user.email
+          : user?.phone ?? "—"}
       </TableCell>
       <TableCell className={tdClass}>
         <Badge

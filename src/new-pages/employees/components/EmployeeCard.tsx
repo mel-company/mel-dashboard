@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Phone, Trash2 } from "lucide-react";
+import { Mail, Trash2 } from "lucide-react";
 
 type EmployeeCardProps = {
   employee: any;
@@ -34,11 +34,13 @@ const EmployeeCard = ({ employee, onClick, onDelete }: EmployeeCardProps) => {
             {user?.name ?? "—"}
           </p>
           <p
-            className="flex items-center gap-1.5 text-sm tabular-nums text-slate-500 dark:text-[#a4b1fa]"
+            className="flex items-center gap-1.5 truncate text-sm text-slate-500 dark:text-[#a4b1fa]"
             dir="ltr"
           >
-            <Phone className="size-3.5" />
-            {user?.phone ?? "—"}
+            <Mail className="size-3.5 shrink-0" />
+            {user?.email && !String(user.email).endsWith("@employees.mel.local")
+              ? user.email
+              : user?.phone ?? "—"}
           </p>
         </div>
         <Badge

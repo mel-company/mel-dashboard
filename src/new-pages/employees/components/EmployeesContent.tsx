@@ -88,7 +88,7 @@ const EmptyCard = ({ actions }: { actions: any }) => {
       title={hasSearch ? "لا توجد نتائج" : "لا يوجد موظفون بعد"}
       description={
         hasSearch
-          ? "جرّب البحث باسم أو رقم هاتف آخر"
+          ? "جرّب البحث باسم أو إيميل آخر"
           : "ادعُ مسؤول داتا أو مسؤول طلبات عبر الإيميل ضمن مقاعد خطتك"
       }
       icon={<User className="size-7 text-muted-foreground" />}
@@ -101,7 +101,7 @@ const EmptyCard = ({ actions }: { actions: any }) => {
               variant: "outline" as const,
             }
           : {
-              label: "إضافة موظف",
+              label: "دعوة موظف",
               to: "/employees/add",
             }
       }
