@@ -216,7 +216,9 @@ const OTP = () => {
                   key={index}
                   index={index}
                   className={cn(
-                    "size-14 rounded-2xl border-white/10 bg-[#12183b] text-xl font-bold text-white shadow-none",
+                    "size-14 rounded-2xl text-xl font-bold shadow-none",
+                    "border-slate-200 bg-slate-50 text-slate-900",
+                    "dark:border-white/10 dark:bg-[#12183b] dark:text-white",
                     "data-[active=true]:border-[#00b7ff] data-[active=true]:ring-[#00b7ff]/30",
                   )}
                 />
@@ -246,7 +248,7 @@ const OTP = () => {
             variant="ghost"
             onClick={handleResend}
             disabled={cooldown > 0 || isResendingOtp || !phone || !store}
-            className="h-11 rounded-2xl text-[#a4b1fa] hover:bg-white/5 hover:text-white"
+            className="h-11 rounded-2xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-[#a4b1fa] dark:hover:bg-white/5 dark:hover:text-white"
           >
             {isResendingOtp
               ? "جاري الإرسال…"
@@ -258,7 +260,7 @@ const OTP = () => {
             type="button"
             variant="ghost"
             onClick={() => navigate("/login")}
-            className="h-11 gap-2 rounded-2xl text-[#a4b1fa] hover:bg-white/5 hover:text-white"
+            className="h-11 gap-2 rounded-2xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-[#a4b1fa] dark:hover:bg-white/5 dark:hover:text-white"
           >
             <ArrowRight className="size-4" />
             تعديل الرقم

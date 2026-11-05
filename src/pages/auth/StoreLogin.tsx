@@ -70,8 +70,11 @@ const DEFAULT_COUNTRY_IRAQ: CountryOption = {
 
 const PAGE_SIZE = 10;
 
-const fieldClass =
-  "h-12 rounded-2xl border-white/10 bg-[#12183b] text-[#e4e7fc] placeholder:text-[#4a5596] focus-visible:border-[#00b7ff]/50 focus-visible:ring-[#00b7ff]/25";
+const fieldClass = cn(
+  "h-12 rounded-2xl focus-visible:border-[#00b7ff]/50 focus-visible:ring-[#00b7ff]/25",
+  "border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400",
+  "dark:border-white/10 dark:bg-[#12183b] dark:text-[#e4e7fc] dark:placeholder:text-[#4a5596]",
+);
 
 const StoreLogin = () => {
   const navigate = useNavigate();
@@ -265,12 +268,12 @@ const StoreLogin = () => {
       <form onSubmit={handleSubmit} className="space-y-5">
         {!isProduction ? (
           isLoadingStores ? (
-            <div className="flex h-12 items-center justify-center rounded-2xl bg-[#12183b]">
+            <div className="flex h-12 items-center justify-center rounded-2xl bg-slate-50 dark:bg-[#12183b]">
               <Loader2 className="size-5 animate-spin text-[#00b7ff]" />
             </div>
           ) : (
             <div className="space-y-2">
-              <label className="block text-right text-[13px] font-medium text-[#a4b1fa]">
+              <label className="block text-right text-[13px] font-medium text-slate-500 dark:text-[#a4b1fa]">
                 المتجر (تطوير)
               </label>
               <Select
@@ -283,7 +286,7 @@ const StoreLogin = () => {
                   <SelectValue placeholder="اختر المتجر" />
                   <Store className="size-4 text-[#00b7ff]" />
                 </SelectTrigger>
-                <SelectContent className="border-white/10 bg-[#12183b] text-[#e4e7fc]">
+                <SelectContent className="border-slate-200 bg-white text-slate-900 dark:border-white/10 dark:bg-[#12183b] dark:text-[#e4e7fc]">
                   {stores?.data?.map((store: any) => (
                     <SelectItem key={store.id} value={String(store.id)}>
                       {store.name} — {store.domain}
@@ -298,25 +301,11 @@ const StoreLogin = () => {
         <div className="space-y-2">
           <label
             htmlFor="phone"
-            className="block text-right text-[13px] font-medium text-[#a4b1fa]"
+            className="block text-right text-[13px] font-medium text-slate-500 dark:text-[#a4b1fa]"
           >
             رقم الهاتف
           </label>
-          <div className="flex items-stretch gap-2">
-            <div className="relative min-w-0 flex-1">
-              <Input
-                id="phone"
-                type="tel"
-                inputMode="tel"
-                placeholder="7XXXXXXXXX"
-                value={phone}
-                onChange={(e) => setPhone(normalizePhone(e.target.value))}
-                className={cn(fieldClass, "px-4 text-left")}
-                dir="ltr"
-                autoComplete="tel"
-                required
-              />
-            </div>
+          <div className="flex items-stretch gap-2" dir="ltr">
             <DropdownMenu open={countryOpen} onOpenChange={setCountryOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -324,30 +313,30 @@ const StoreLogin = () => {
                   variant="outline"
                   className={cn(
                     fieldClass,
-                    "min-w-[7.5rem] shrink-0 justify-between gap-1.5 px-3 hover:bg-[#1a224c] hover:text-[#e4e7fc]",
+                    "min-w-[5.5rem] shrink-0 justify-between gap-1 px-3 hover:bg-slate-100 dark:hover:bg-[#1a224c] dark:hover:text-[#e4e7fc]",
                   )}
                 >
-                  <span className="truncate text-[13px]">
+                  <span className="truncate text-[13px] tabular-nums">
                     {selectedCountry?.phoneCode
                       ? `+${String(selectedCountry.phoneCode).replace(/^\+/, "")}`
-                      : "الدولة"}
+                      : "—"}
                   </span>
                   <ChevronDown className="size-4 shrink-0 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="w-[min(100vw-2rem,280px)] border-white/10 bg-[#0a0e27] p-0 text-[#e4e7fc]"
+                className="w-[min(100vw-2rem,280px)] border-slate-200 bg-white p-0 text-slate-900 dark:border-white/10 dark:bg-[#0a0e27] dark:text-[#e4e7fc]"
                 onCloseAutoFocus={(e) => e.preventDefault()}
               >
-                <div className="border-b border-white/8 p-2">
+                <div className="border-b border-slate-100 p-2 dark:border-white/8">
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#4a5596]" />
+                    <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-slate-400 dark:text-[#4a5596]" />
                     <Input
                       placeholder="بحث عن دولة"
                       value={countrySearchQuery}
                       onChange={(e) => setCountrySearchQuery(e.target.value)}
-                      className="h-9 border-white/10 bg-[#12183b] pl-8 pr-3 text-right text-[#e4e7fc] placeholder:text-[#4a5596]"
+                      className="h-9 border-slate-200 bg-slate-50 pl-8 pr-3 text-right text-slate-900 placeholder:text-slate-400 dark:border-white/10 dark:bg-[#12183b] dark:text-[#e4e7fc] dark:placeholder:text-[#4a5596]"
                       dir="auto"
                       onPointerDown={(e) => e.stopPropagation()}
                     />
@@ -362,7 +351,7 @@ const StoreLogin = () => {
                       <Loader2 className="size-5 animate-spin text-[#00b7ff]" />
                     </div>
                   ) : countries.length === 0 ? (
-                    <div className="py-6 text-center text-sm text-[#a4b1fa]">
+                    <div className="py-6 text-center text-sm text-slate-500 dark:text-[#a4b1fa]">
                       لا توجد نتائج
                     </div>
                   ) : (
@@ -371,9 +360,9 @@ const StoreLogin = () => {
                         key={c.id}
                         type="button"
                         className={cn(
-                          "flex w-full items-center justify-between gap-2 px-3 py-2.5 text-right text-sm transition-colors hover:bg-white/5",
+                          "flex w-full items-center justify-between gap-2 px-3 py-2.5 text-right text-sm transition-colors hover:bg-slate-50 dark:hover:bg-white/5",
                           selectedCountry?.id === c.id &&
-                            "bg-[#00b7ff]/10 text-[#33c5ff]",
+                            "bg-[#00b7ff]/10 text-[#0090c9] dark:text-[#33c5ff]",
                         )}
                         onClick={() => {
                           setSelectedCountry(c);
@@ -393,7 +382,7 @@ const StoreLogin = () => {
                         size="sm"
                         onClick={() => fetchNextPage()}
                         disabled={isFetchingNextPage}
-                        className="gap-2 text-[#a4b1fa] hover:text-white"
+                        className="gap-2 text-slate-500 hover:text-slate-900 dark:text-[#a4b1fa] dark:hover:text-white"
                       >
                         {isFetchingNextPage ? (
                           <>
@@ -409,8 +398,20 @@ const StoreLogin = () => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Input
+              id="phone"
+              type="tel"
+              inputMode="tel"
+              placeholder="7XXXXXXXXX"
+              value={phone}
+              onChange={(e) => setPhone(normalizePhone(e.target.value))}
+              className={cn(fieldClass, "min-w-0 flex-1 px-4 text-left")}
+              dir="ltr"
+              autoComplete="tel"
+              required
+            />
           </div>
-          <div className="flex items-center justify-between text-[11px] text-[#4a5596]">
+          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-[#4a5596]">
             <span>بدون مسافات أو أصفار بادئة</span>
             <span dir="ltr">{phoneDigitsCount} رقم</span>
           </div>
