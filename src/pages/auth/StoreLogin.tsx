@@ -4,22 +4,13 @@ import { toast } from "sonner";
 import {
   ChevronDown,
   Loader2,
-  Phone,
   Search,
   ShieldCheck,
   Store,
 } from "lucide-react";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
-// import LogoLight from "../../assets/imgs/logo/mel-light.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useFetchDevStores } from "@/api/wrappers/store.wrappers";
 import {
   Select,
@@ -33,18 +24,17 @@ import {
   useFetchAllCursor,
   useSearchCursor,
 } from "@/api/wrappers/country.wrappers";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import AuthShell from "./AuthShell";
 
 const normalizePhone = (value: string) => value.replace(/[^\d+]/g, "");
 
 const isValidPhone = (phone: string) => {
-  // very permissive: allow +country and 10-15 digits total
   const digits = phone.replace(/\D/g, "");
   return digits.length >= 10 && digits.length <= 15;
 };
@@ -79,6 +69,9 @@ const DEFAULT_COUNTRY_IRAQ: CountryOption = {
 };
 
 const PAGE_SIZE = 10;
+
+const fieldClass =
+  "h-12 rounded-2xl border-white/10 bg-[#12183b] text-[#e4e7fc] placeholder:text-[#4a5596] focus-visible:border-[#00b7ff]/50 focus-visible:ring-[#00b7ff]/25";
 
 const StoreLogin = () => {
   const navigate = useNavigate();
@@ -151,14 +144,11 @@ const StoreLogin = () => {
   }, [countryOpen, hasNextPage, loadMoreCallback, countries.length]);
 
   const isLoggedIn = localStorage.getItem("lgd") === "true";
-
   const isProduction = import.meta.env.VITE_ENVIRONMENT === "production";
-
   const subdomain = getTenantSubdomain();
   const isAzyaaHost = window.location.hostname === "azyaa.mel.iq";
 
   const { data: stores, isLoading: isLoadingStores } = useFetchDevStores();
-
   const { mutate: login, isPending: isLoginPending } = useLogin();
 
   const selectedStore = useMemo(() => {
@@ -184,7 +174,7 @@ const StoreLogin = () => {
     if (isAzyaaHost) {
       setPhone("+9647717504243");
     }
-  }, [subdomain, isAzyaaHost, stores?.data]);
+  }, [subdomain, isAzyaaHost, isLoggedIn, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,270 +225,216 @@ const StoreLogin = () => {
         : selectedStore?.name || subdomain || null;
 
     setIsLoading(true);
-    try {
-      login(
-        {
-          phone: normalized,
-          store: {
-            name: storeName,
-            domain: storeDomain,
-          },
+    login(
+      {
+        phone: normalized,
+        store: {
+          name: storeName,
+          domain: storeDomain,
         },
-        {
-          onSuccess: (data) => {
-            const storeParam = storeDomain || selectedStore?.domain || "";
-            const url = `/otp?phone=${encodeURIComponent(normalized)}&store=${encodeURIComponent(storeParam)}`;
+      },
+      {
+        onSuccess: (data) => {
+          const storeParam = storeDomain || selectedStore?.domain || "";
+          const url = `/otp?phone=${encodeURIComponent(normalized)}&store=${encodeURIComponent(storeParam)}`;
 
-            navigate(url, {
-              state: data?.codeOnlyOnDev
-                ? { v_code: String(data.codeOnlyOnDev) }
-                : undefined,
-            });
-          },
-          onError: (error: any) => {
-            toast.error(
-              error?.response?.data?.message ||
-                "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى",
-            );
-          },
-          onSettled: () => setIsLoading(false),
+          navigate(url, {
+            state: data?.codeOnlyOnDev
+              ? { v_code: String(data.codeOnlyOnDev) }
+              : undefined,
+          });
         },
-      );
-      return;
-    } finally {
-      // we end loading in onSettled, but keep this as a safety net
-      setIsLoading(false);
-    }
+        onError: (error: any) => {
+          toast.error(
+            error?.response?.data?.message ||
+              "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى",
+          );
+        },
+        onSettled: () => setIsLoading(false),
+      },
+    );
   };
 
-  // Don't show login form until auth check is done; avoids flashing form before redirect
-  // if (isLoadingUser || user) {
-  //   return (
-  //     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30">
-  //       <div className="flex flex-col items-center gap-0">
-  //         <div className="relative flex items-center justify-center w-40 h-40">
-  //           <img
-  //             src={LogoLight}
-  //             alt="Mel"
-  //             className="relative animate-pulse z-10 w-full h-full object-contain"
-  //           />
-  //         </div>
-  //         <div className="flex flex-col items-center gap-3">
-  //           <div className="flex gap-1.5">
-  //             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-  //             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-  //             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  const busy = isLoading || isLoginPending;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
-      <Card className="w-full max-w-md shadow-xl border-0">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-            <Phone className="w-8 h-8 text-white" />
-          </div>
-          <CardTitle className="text-3xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            تسجيل دخول المتجر
-          </CardTitle>
-          <CardDescription className="text-base">
-            أدخل رقم الهاتف وسنرسل لك رمز تحقق مكوّن من 4 أرقام
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Dev Only */}
-
-            {isProduction ? null : isLoadingStores ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-              </div>
-            ) : (
-              <div className="flex gap-x-2 items-center justify-center">
-                <Select
-                  value={selectedStoreId}
-                  onValueChange={setSelectedStoreId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر المتجر" />
-                    {!selectedStoreId && (
-                      <p className="text-sm font-medium text-foreground">
-                        اختر المتجر
-                      </p>
-                    )}
-                    <Store className="w-4 h-4 ml-2" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stores?.data?.map((store: any) => (
-                      <SelectItem key={store.id} value={String(store.id)}>
-                        {store.name} - {store.domain}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                رقم الهاتف
-              </label>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="relative flex-1">
-                  <Input
-                    id="phone"
-                    type="tel"
-                    inputMode="tel"
-                    placeholder="07XXXXXXXXX"
-                    value={phone}
-                    onChange={(e) => setPhone(normalizePhone(e.target.value))}
-                    className="pr-10"
-                    dir="ltr"
-                    autoComplete="tel"
-                    required
-                  />
-                </div>
-                <DropdownMenu open={countryOpen} onOpenChange={setCountryOpen}>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="min-w-[140px] justify-between shrink-0"
-                    >
-                      {selectedCountry ? (
-                        <span className="truncate text-foreground">
-                          {getCountryLabel(selectedCountry)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          اختر الدولة
-                        </span>
-                      )}
-                      <ChevronDown className="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    className="w-(--radix-dropdown-menu-trigger-width) min-w-[200px] p-0"
-                    onCloseAutoFocus={(e) => e.preventDefault()}
-                  >
-                    <div className="p-2 border-b">
-                      <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          placeholder="بحث"
-                          value={countrySearchQuery}
-                          onChange={(e) =>
-                            setCountrySearchQuery(e.target.value)
-                          }
-                          className="pl-8 pr-3 h-9 text-right"
-                          dir="auto"
-                          onPointerDown={(e) => e.stopPropagation()}
-                        />
-                      </div>
-                    </div>
-                    <div
-                      ref={scrollContainerRef}
-                      className="max-h-[220px] overflow-y-auto"
-                    >
-                      {isLoadingCountries ? (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                        </div>
-                      ) : countries.length === 0 ? (
-                        <div className="py-6 text-center text-sm text-muted-foreground">
-                          لا توجد نتائج
-                        </div>
-                      ) : (
-                        countries.map((c: CountryOption) => (
-                          <button
-                            key={c.id}
-                            type="button"
-                            className={cn(
-                              "w-full px-3 py-2 text-right text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center justify-between gap-2",
-                              selectedCountry?.id === c.id && "bg-accent",
-                            )}
-                            onClick={() => {
-                              setSelectedCountry(c);
-                              setCountryOpen(false);
-                              setCountrySearchQuery("");
-                            }}
-                          >
-                            <span className="truncate">
-                              {getCountryLabel(c)}
-                            </span>
-                          </button>
-                        ))
-                      )}
-                      {hasNextPage && (
-                        <div
-                          ref={loadMoreRef}
-                          className="py-3 flex justify-center"
-                        >
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => fetchNextPage()}
-                            disabled={isFetchingNextPage}
-                            className="gap-2"
-                          >
-                            {isFetchingNextPage ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                جاري التحميل...
-                              </>
-                            ) : (
-                              "تحميل المزيد"
-                            )}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="text-xs text-muted-foreground flex items-center justify-between">
-                <span>أدخل الرقم بدون مسافات</span>
-                <span dir="ltr">{phoneDigitsCount} digits</span>
-              </div>
+    <AuthShell
+      title="أهلاً بك"
+      description="أدخل رقم هاتفك وسنرسل رمز تحقق مكوّن من 4 أرقام للدخول إلى لوحة المتجر."
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {!isProduction ? (
+          isLoadingStores ? (
+            <div className="flex h-12 items-center justify-center rounded-2xl bg-[#12183b]">
+              <Loader2 className="size-5 animate-spin text-[#00b7ff]" />
             </div>
+          ) : (
+            <div className="space-y-2">
+              <label className="block text-right text-[13px] font-medium text-[#a4b1fa]">
+                المتجر (تطوير)
+              </label>
+              <Select
+                value={selectedStoreId}
+                onValueChange={setSelectedStoreId}
+              >
+                <SelectTrigger
+                  className={cn(fieldClass, "w-full justify-between px-4")}
+                >
+                  <SelectValue placeholder="اختر المتجر" />
+                  <Store className="size-4 text-[#00b7ff]" />
+                </SelectTrigger>
+                <SelectContent className="border-white/10 bg-[#12183b] text-[#e4e7fc]">
+                  {stores?.data?.map((store: any) => (
+                    <SelectItem key={store.id} value={String(store.id)}>
+                      {store.name} — {store.domain}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )
+        ) : null}
 
-            <Button
-              type="submit"
-              className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              disabled={isLoading || isLoginPending}
-            >
-              {isLoading || isLoginPending ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  جاري الإرسال...
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4 ml-2" />
-                  إرسال رمز التحقق
-                </>
-              )}
-            </Button>
+        <div className="space-y-2">
+          <label
+            htmlFor="phone"
+            className="block text-right text-[13px] font-medium text-[#a4b1fa]"
+          >
+            رقم الهاتف
+          </label>
+          <div className="flex items-stretch gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                placeholder="7XXXXXXXXX"
+                value={phone}
+                onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                className={cn(fieldClass, "px-4 text-left")}
+                dir="ltr"
+                autoComplete="tel"
+                required
+              />
+            </div>
+            <DropdownMenu open={countryOpen} onOpenChange={setCountryOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    fieldClass,
+                    "min-w-[7.5rem] shrink-0 justify-between gap-1.5 px-3 hover:bg-[#1a224c] hover:text-[#e4e7fc]",
+                  )}
+                >
+                  <span className="truncate text-[13px]">
+                    {selectedCountry?.phoneCode
+                      ? `+${String(selectedCountry.phoneCode).replace(/^\+/, "")}`
+                      : "الدولة"}
+                  </span>
+                  <ChevronDown className="size-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="w-[min(100vw-2rem,280px)] border-white/10 bg-[#0a0e27] p-0 text-[#e4e7fc]"
+                onCloseAutoFocus={(e) => e.preventDefault()}
+              >
+                <div className="border-b border-white/8 p-2">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#4a5596]" />
+                    <Input
+                      placeholder="بحث عن دولة"
+                      value={countrySearchQuery}
+                      onChange={(e) => setCountrySearchQuery(e.target.value)}
+                      className="h-9 border-white/10 bg-[#12183b] pl-8 pr-3 text-right text-[#e4e7fc] placeholder:text-[#4a5596]"
+                      dir="auto"
+                      onPointerDown={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+                <div
+                  ref={scrollContainerRef}
+                  className="max-h-[220px] overflow-y-auto"
+                >
+                  {isLoadingCountries ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="size-5 animate-spin text-[#00b7ff]" />
+                    </div>
+                  ) : countries.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-[#a4b1fa]">
+                      لا توجد نتائج
+                    </div>
+                  ) : (
+                    countries.map((c: CountryOption) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className={cn(
+                          "flex w-full items-center justify-between gap-2 px-3 py-2.5 text-right text-sm transition-colors hover:bg-white/5",
+                          selectedCountry?.id === c.id &&
+                            "bg-[#00b7ff]/10 text-[#33c5ff]",
+                        )}
+                        onClick={() => {
+                          setSelectedCountry(c);
+                          setCountryOpen(false);
+                          setCountrySearchQuery("");
+                        }}
+                      >
+                        <span className="truncate">{getCountryLabel(c)}</span>
+                      </button>
+                    ))
+                  )}
+                  {hasNextPage ? (
+                    <div ref={loadMoreRef} className="flex justify-center py-3">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => fetchNextPage()}
+                        disabled={isFetchingNextPage}
+                        className="gap-2 text-[#a4b1fa] hover:text-white"
+                      >
+                        {isFetchingNextPage ? (
+                          <>
+                            <Loader2 className="size-4 animate-spin" />
+                            جاري التحميل…
+                          </>
+                        ) : (
+                          "تحميل المزيد"
+                        )}
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center justify-between text-[11px] text-[#4a5596]">
+            <span>بدون مسافات أو أصفار بادئة</span>
+            <span dir="ltr">{phoneDigitsCount} رقم</span>
+          </div>
+        </div>
 
-            {/* <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => navigate("/login")}
-            >
-              <ArrowLeft className="w-4 h-4 ml-2" />
-              تسجيل دخول الإدارة
-            </Button> */}
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <Button
+          type="submit"
+          disabled={busy}
+          className="h-12 w-full gap-2 rounded-2xl bg-[#00b7ff] text-base font-bold text-[#06091a] shadow-[0_12px_40px_-12px_rgba(0,183,255,0.55)] transition hover:bg-[#33c5ff] hover:text-[#06091a] disabled:opacity-60"
+        >
+          {busy ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              جاري الإرسال…
+            </>
+          ) : (
+            <>
+              <ShieldCheck className="size-4" />
+              إرسال رمز التحقق
+            </>
+          )}
+        </Button>
+      </form>
+    </AuthShell>
   );
 };
 

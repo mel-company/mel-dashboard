@@ -1,16 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   InputOTP,
   InputOTPGroup,
@@ -24,6 +17,8 @@ import {
 import { establishAuthSession } from "@/utils/auth-session";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
+import AuthShell from "./AuthShell";
+import { cn } from "@/lib/utils";
 
 type OtpLocationState = {
   v_code?: string;
@@ -184,82 +179,93 @@ const OTP = () => {
     );
   };
 
+  const busy = isVerifying || isVerifyingPending;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
-      <Card className="w-full max-w-md shadow-xl border-0">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-            <ShieldCheck className="w-8 h-8 text-white" />
-          </div>
-          <CardTitle className="text-3xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            رمز التحقق
-          </CardTitle>
-          <CardDescription className="text-base">
-            أدخل رمز التحقق المكوّن من 4 أرقام
-            {maskedPhone ? (
-              <>
-                {" "}
-                المرسل إلى <span dir="ltr">{maskedPhone}</span>
-              </>
-            ) : null}
-          </CardDescription>
-        </CardHeader>
+    <AuthShell
+      title="رمز التحقق"
+      description={
+        <>
+          أدخل الرمز المكوّن من 4 أرقام
+          {maskedPhone ? (
+            <>
+              {" "}
+              المرسل إلى{" "}
+              <span dir="ltr" className="font-semibold text-[#33c5ff]">
+                {maskedPhone}
+              </span>
+            </>
+          ) : null}
+        </>
+      }
+    >
+      <form onSubmit={handleVerify} className="space-y-6">
+        <div className="flex justify-center" dir="ltr">
+          <InputOTP
+            maxLength={4}
+            value={code}
+            onChange={(v) => setCode(v.replace(/\D/g, ""))}
+            inputMode="numeric"
+            autoComplete="off"
+            autoFocus
+            aria-label="رمز التحقق"
+          >
+            <InputOTPGroup className="gap-2.5">
+              {[0, 1, 2, 3].map((index) => (
+                <InputOTPSlot
+                  key={index}
+                  index={index}
+                  className={cn(
+                    "size-14 rounded-2xl border-white/10 bg-[#12183b] text-xl font-bold text-white shadow-none",
+                    "data-[active=true]:border-[#00b7ff] data-[active=true]:ring-[#00b7ff]/30",
+                  )}
+                />
+              ))}
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
 
-        <CardContent>
-          <form onSubmit={handleVerify} className="space-y-5">
-            <div className="flex justify-center" dir="ltr">
-              <InputOTP
-                maxLength={4}
-                value={code}
-                onChange={(v) => setCode(v.replace(/\D/g, ""))}
-                inputMode="numeric"
-                autoComplete="off"
-                autoFocus
-                aria-label="رمز التحقق"
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
+        <Button
+          type="submit"
+          disabled={busy || code.length !== 4}
+          className="h-12 w-full gap-2 rounded-2xl bg-[#00b7ff] text-base font-bold text-[#06091a] shadow-[0_12px_40px_-12px_rgba(0,183,255,0.55)] transition hover:bg-[#33c5ff] hover:text-[#06091a] disabled:opacity-60"
+        >
+          {busy ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              جاري التحقق…
+            </>
+          ) : (
+            "تأكيد الرمز"
+          )}
+        </Button>
 
-            <Button
-              type="submit"
-              className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              disabled={isVerifying || code.length !== 4}
-            >
-              {isVerifyingPending ? "جاري التحقق..." : "تأكيد الرمز"}
-            </Button>
-
-            <div className="flex items-center justify-between gap-3">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleResend}
-                disabled={cooldown > 0 || isResendingOtp || !phone || !store}
-              >
-                {isResendingOtp
-                  ? "جاري الإرسال..."
-                  : cooldown > 0
-                    ? `إعادة الإرسال خلال ${cooldown}s`
-                    : "إعادة إرسال"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => navigate("/login")}
-              >
-                تعديل الرقم
-                <ArrowLeft className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleResend}
+            disabled={cooldown > 0 || isResendingOtp || !phone || !store}
+            className="h-11 rounded-2xl text-[#a4b1fa] hover:bg-white/5 hover:text-white"
+          >
+            {isResendingOtp
+              ? "جاري الإرسال…"
+              : cooldown > 0
+                ? `إعادة الإرسال خلال ${cooldown}ث`
+                : "إعادة إرسال الرمز"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate("/login")}
+            className="h-11 gap-2 rounded-2xl text-[#a4b1fa] hover:bg-white/5 hover:text-white"
+          >
+            <ArrowRight className="size-4" />
+            تعديل الرقم
+          </Button>
+        </div>
+      </form>
+    </AuthShell>
   );
 };
 
