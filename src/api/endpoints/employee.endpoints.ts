@@ -2,15 +2,44 @@ import axiosInstance from "@/utils/AxiosInstance";
 
 export type EmployeeRoleTemplateKey = "DATA" | "ORDERS";
 
-export type CreateEmployeePayload = {
+export type InviteEmployeePayload = {
   name: string;
-  phone: string;
-  email?: string;
+  email: string;
   roleTemplate: EmployeeRoleTemplateKey;
 };
 
+/** @deprecated Use InviteEmployeePayload — hire is email-invite only. */
+export type CreateEmployeePayload = InviteEmployeePayload;
+
 export type UpdateEmployeePayload = {
   roleTemplate?: EmployeeRoleTemplateKey;
+};
+
+export type EmployeeInvite = {
+  id: string;
+  email: string;
+  name: string;
+  roleTemplate: EmployeeRoleTemplateKey | string;
+  roleName?: string;
+  expiresAt: string;
+  createdAt?: string;
+  inviteUrl: string | null;
+  status: "pending";
+  emailed?: boolean;
+};
+
+export type EmployeeInvitePreview = {
+  token: string;
+  email: string;
+  name: string;
+  roleTemplate: string;
+  roleName: string;
+  expiresAt: string;
+  store: {
+    name: string | null;
+    domain: string | null;
+    logo: string | null;
+  };
 };
 
 export const employeeAPI = {
@@ -55,8 +84,70 @@ export const employeeAPI = {
     return data;
   },
 
-  create: async (employee: CreateEmployeePayload): Promise<any> => {
-    const { data } = await axiosInstance.post<any>("/employee", employee);
+  create: async (employee: InviteEmployeePayload): Promise<EmployeeInvite> => {
+    const { data } = await axiosInstance.post<EmployeeInvite>(
+      "/employee/invites",
+      employee,
+    );
+    return data;
+  },
+
+  invite: async (employee: InviteEmployeePayload): Promise<EmployeeInvite> => {
+    const { data } = await axiosInstance.post<EmployeeInvite>(
+      "/employee/invites",
+      employee,
+    );
+    return data;
+  },
+
+  fetchInvites: async (): Promise<EmployeeInvite[]> => {
+    const { data } = await axiosInstance.get<EmployeeInvite[]>(
+      "/employee/invites",
+    );
+    return data;
+  },
+
+  resendInvite: async (id: string): Promise<EmployeeInvite> => {
+    const { data } = await axiosInstance.post<EmployeeInvite>(
+      `/employee/invites/${id}/resend`,
+    );
+    return data;
+  },
+
+  revokeInvite: async (id: string): Promise<{ ok: boolean; id: string }> => {
+    const { data } = await axiosInstance.delete<{ ok: boolean; id: string }>(
+      `/employee/invites/${id}`,
+    );
+    return data;
+  },
+
+  previewInvite: async (token: string): Promise<EmployeeInvitePreview> => {
+    const { data } = await axiosInstance.get<EmployeeInvitePreview>(
+      `/employee/invites/by-token/${encodeURIComponent(token)}`,
+    );
+    return data;
+  },
+
+  requestInviteOtp: async (body: {
+    token: string;
+    phone: string;
+  }): Promise<{ message: string }> => {
+    const { data } = await axiosInstance.post<{ message: string }>(
+      "/employee/invites/request-otp",
+      body,
+    );
+    return data;
+  },
+
+  acceptInvite: async (body: {
+    token: string;
+    phone: string;
+    otp: string;
+  }): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/employee/invites/accept",
+      body,
+    );
     return data;
   },
 

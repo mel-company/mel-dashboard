@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   employeeAPI,
   type CreateEmployeePayload,
+  type InviteEmployeePayload,
   type UpdateEmployeePayload,
 } from "../endpoints/employee.endpoints";
 
@@ -13,6 +14,7 @@ export const employeeKeys = {
   detail: (id: string) => [...employeeKeys.details(), id] as const,
   stats: () => [...employeeKeys.all, "stats"] as const,
   roleTemplates: () => [...employeeKeys.all, "role-templates"] as const,
+  invites: () => [...employeeKeys.all, "invites"] as const,
 };
 
 export const useFetchEmployees = (params?: unknown) => {
@@ -45,16 +47,48 @@ export const useFetchEmployee = (id: string, enabled = true) => {
   });
 };
 
+export const useFetchEmployeeInvites = (enabled = true) => {
+  return useQuery({
+    queryKey: employeeKeys.invites(),
+    queryFn: () => employeeAPI.fetchInvites(),
+    enabled,
+  });
+};
+
 export const useCreateEmployee = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (employee: CreateEmployeePayload) =>
-      employeeAPI.create(employee),
+    mutationFn: (employee: CreateEmployeePayload | InviteEmployeePayload) =>
+      employeeAPI.invite(employee),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: employeeKeys.all });
       queryClient.invalidateQueries({ queryKey: ["employee"] });
       queryClient.invalidateQueries({ queryKey: ["employee/cursor"] });
+    },
+  });
+};
+
+export const useResendEmployeeInvite = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => employeeAPI.resendInvite(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: employeeKeys.invites() });
+      queryClient.invalidateQueries({ queryKey: employeeKeys.stats() });
+    },
+  });
+};
+
+export const useRevokeEmployeeInvite = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => employeeAPI.revokeInvite(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: employeeKeys.invites() });
+      queryClient.invalidateQueries({ queryKey: employeeKeys.stats() });
     },
   });
 };

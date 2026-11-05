@@ -6,6 +6,7 @@ import FloatingRail from "@/components/FloatingRail";
 import { cn } from "@/lib/utils";
 import SubscriptionBar from "@/components/plan/SubscriptionBar";
 import SubscriptionLifecycleGate from "@/components/plan/SubscriptionLifecycleGate";
+import ModuleAccessGate from "@/components/ModuleAccessGate";
 
 const Layout = () => {
   const location = useLocation();
@@ -102,7 +103,9 @@ const Layout = () => {
             )}
           >
             <SubscriptionLifecycleGate>
-              <Outlet />
+              <ModuleAccessGate>
+                <Outlet />
+              </ModuleAccessGate>
             </SubscriptionLifecycleGate>
           </div>
         </main>

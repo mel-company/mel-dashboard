@@ -200,29 +200,50 @@ const OTP = () => {
       }
     >
       <form onSubmit={handleVerify} className="space-y-6">
-        <div className="flex justify-center" dir="ltr">
+        <div className="flex justify-center py-1" dir="ltr">
           <InputOTP
             maxLength={4}
             value={code}
-            onChange={(v) => setCode(v.replace(/\D/g, ""))}
+            onChange={(v) =>
+              setCode(
+                v
+                  .replace(/[٠-٩]/g, (d) =>
+                    String(d.charCodeAt(0) - 0x0660),
+                  )
+                  .replace(/[۰-۹]/g, (d) =>
+                    String(d.charCodeAt(0) - 0x06f0),
+                  )
+                  .replace(/\D/g, "")
+                  .slice(0, 4),
+              )
+            }
             inputMode="numeric"
-            autoComplete="off"
+            autoComplete="one-time-code"
             autoFocus
             aria-label="رمز التحقق"
+            containerClassName="justify-center"
           >
-            <InputOTPGroup className="gap-2.5">
-              {[0, 1, 2, 3].map((index) => (
-                <InputOTPSlot
-                  key={index}
-                  index={index}
-                  className={cn(
-                    "size-14 rounded-2xl text-xl font-bold shadow-none",
-                    "border-slate-200 bg-slate-50 text-slate-900",
-                    "dark:border-white/10 dark:bg-[#12183b] dark:text-white",
-                    "data-[active=true]:border-[#00b7ff] data-[active=true]:ring-[#00b7ff]/30",
-                  )}
-                />
-              ))}
+            <InputOTPGroup className="gap-3 sm:gap-3.5">
+              {[0, 1, 2, 3].map((index) => {
+                const filled = Boolean(code[index]);
+                return (
+                  <InputOTPSlot
+                    key={index}
+                    index={index}
+                    className={cn(
+                      // Independent tiles — override the joined UI-kit strip.
+                      "!h-16 !w-14 !rounded-2xl !border-2 border-solid !shadow-none first:!rounded-2xl last:!rounded-2xl first:!border-l-2",
+                      "!text-2xl font-bold tabular-nums",
+                      filled
+                        ? "border-[#00b7ff]/45 bg-[#00b7ff]/10 text-slate-900 dark:border-[#00b7ff]/40 dark:bg-[#00b7ff]/12 dark:text-white"
+                        : "border-slate-200 bg-white text-slate-900 dark:border-white/12 dark:bg-[#12183b] dark:text-white",
+                      "data-[active=true]:!z-10 data-[active=true]:!border-[#00b7ff] data-[active=true]:!bg-[#00b7ff]/15 data-[active=true]:!ring-[3px] data-[active=true]:!ring-[#00b7ff]/30",
+                      "transition-[border-color,box-shadow,background-color,transform] duration-200",
+                      "sm:!h-[4.25rem] sm:!w-[3.75rem] sm:!text-[1.75rem]",
+                    )}
+                  />
+                );
+              })}
             </InputOTPGroup>
           </InputOTP>
         </div>

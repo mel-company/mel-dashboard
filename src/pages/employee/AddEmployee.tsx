@@ -9,14 +9,12 @@ import { Button } from "@/components/ui/button";
 import {
   SettingsField,
   SettingsInput,
-  SettingsPhoneInput,
 } from "@/new-pages/settings/components/SettingsField";
 import {
   useCreateEmployee,
   useFetchEmployeeRoleTemplates,
   useFetchEmployeeStats,
 } from "@/api/wrappers/employee.wrappers";
-import { sanitizePhoneNumber } from "@/utils/helpers";
 import { cn } from "@/lib/utils";
 import type { EmployeeRoleTemplateKey } from "@/api/endpoints/employee.endpoints";
 
@@ -36,17 +34,18 @@ const AddEmployee = () => {
   const { data: templates = [], isLoading: templatesLoading } =
     useFetchEmployeeRoleTemplates();
   const { data: stats } = useFetchEmployeeStats();
-  const { mutate: createEmployee, isPending } = useCreateEmployee();
+  const { mutate: inviteEmployee, isPending } = useCreateEmployee();
 
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [roleTemplate, setRoleTemplate] =
     useState<EmployeeRoleTemplateKey | null>(null);
 
   const seatsLabel = useMemo(() => {
     if (!stats) return null;
-    return `${stats.seatsUsed ?? 0} / ${stats.seatsMax ?? 1}`;
+    const pending = stats.pendingInvites ?? 0;
+    const used = (stats.seatsUsed ?? 0) + pending;
+    return `${used} / ${stats.seatsMax ?? 1}`;
   }, [stats]);
 
   if (!entitlementsLoading && isLocked("team_users")) {
@@ -57,8 +56,13 @@ const AddEmployee = () => {
     e.preventDefault();
 
     const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
     if (trimmedName.length < 2) {
       toast.error("أدخل اسم الموظف");
+      return;
+    }
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      toast.error("أدخل بريداً إلكترونياً صالحاً");
       return;
     }
     if (!roleTemplate) {
@@ -66,28 +70,23 @@ const AddEmployee = () => {
       return;
     }
 
-    let canonicalPhone: string;
-    try {
-      canonicalPhone = sanitizePhoneNumber(phone, "+964");
-    } catch {
-      toast.error("رقم الهاتف غير صالح");
-      return;
-    }
-
-    createEmployee(
+    inviteEmployee(
       {
         name: trimmedName,
-        phone: canonicalPhone,
-        ...(email.trim() ? { email: email.trim() } : {}),
+        email: trimmedEmail,
         roleTemplate,
       },
       {
-        onSuccess: () => {
-          toast.success("تمت إضافة الموظف بنجاح");
+        onSuccess: (data) => {
+          if (data?.emailed === false && data?.inviteUrl) {
+            toast.success("تم إنشاء الدعوة — انسخ الرابط إن لم يصل الإيميل");
+          } else {
+            toast.success("تم إرسال دعوة بالإيميل");
+          }
           navigate("/employees");
         },
         onError: (err) => {
-          toast.error(getErrorMessage(err, "فشلت إضافة الموظف"));
+          toast.error(getErrorMessage(err, "فشلت إرسال الدعوة"));
         },
       },
     );
@@ -98,10 +97,10 @@ const AddEmployee = () => {
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-1 text-right">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e4e7fc]">
-            إضافة موظف جديد
+            دعوة موظف جديد
           </h1>
           <p className="text-sm text-slate-500 dark:text-[#a4b1fa]">
-            عيّن مسؤول داتا أو مسؤول طلبات — يدخل بنفس رقم الهاتف عبر OTP
+            نرسل دعوة على الإيميل برابط دخول — يكمّل برقم هاتفه عبر OTP
           </p>
         </div>
         <Button
@@ -117,7 +116,7 @@ const AddEmployee = () => {
 
       {seatsLabel ? (
         <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-white/[0.04] dark:text-[#a4b1fa]">
-          المقاعد المستخدمة:{" "}
+          المقاعد المستخدمة (مع الدعوات المعلّقة):{" "}
           <span className="font-semibold text-slate-900 dark:text-[#e4e7fc]">
             {seatsLabel}
           </span>
@@ -138,15 +137,7 @@ const AddEmployee = () => {
           />
         </SettingsField>
 
-        <SettingsField label="رقم الهاتف" htmlFor="employee-phone">
-          <SettingsPhoneInput
-            id="employee-phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-        </SettingsField>
-
-        <SettingsField label="البريد (اختياري)" htmlFor="employee-email">
+        <SettingsField label="البريد الإلكتروني" htmlFor="employee-email">
           <SettingsInput
             id="employee-email"
             type="email"
@@ -156,6 +147,7 @@ const AddEmployee = () => {
             dir="ltr"
             className="text-left"
             autoComplete="email"
+            required
           />
         </SettingsField>
 
@@ -207,7 +199,7 @@ const AddEmployee = () => {
             disabled={isPending || templatesLoading}
           >
             {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            حفظ الموظف
+            إرسال الدعوة
           </Button>
           <Button
             type="button"

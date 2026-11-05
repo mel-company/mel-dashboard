@@ -93,7 +93,12 @@ export function establishAuthSession(
 
 export function redirectToLogin() {
   const path = window.location.pathname;
-  if (path === "/login" || path === "/bridge" || path.startsWith("/dev-login")) {
+  if (
+    path === "/login" ||
+    path === "/bridge" ||
+    path.startsWith("/dev-login") ||
+    path.startsWith("/invite/")
+  ) {
     return;
   }
   window.location.replace("/login");

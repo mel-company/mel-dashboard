@@ -20,6 +20,7 @@ import {
   type SidebarNavItem,
 } from "@/config/sidebar-navigation";
 import { usePhysicalStoreEnabled } from "@/hooks/use-physical-store";
+import { useModulePermissions } from "@/hooks/use-module-permissions";
 import { UserAvatar } from "@/components/UserAvatar";
 
 type AppSidebarProps = {
@@ -145,7 +146,8 @@ const AppSidebar = ({
   const storeLogoUrl = getImageUrl(storeDetails?.logo, storeDetails?.baseUrl);
   const { mutate: logoutMutation, isPending: isLoggingOut } = useLogout();
   const { isPhysicalStore } = usePhysicalStoreEnabled();
-  const sidebarSections = getSidebarSections(isPhysicalStore);
+  const { canViewPath } = useModulePermissions();
+  const sidebarSections = getSidebarSections(isPhysicalStore, canViewPath);
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 

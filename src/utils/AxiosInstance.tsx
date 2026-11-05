@@ -154,14 +154,16 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const original = error.config as RetriableConfig | undefined;
-    const onBridgePage = window.location.pathname === "/bridge";
+    const path = window.location.pathname;
+    const onPublicAuthPage =
+      path === "/bridge" || path.startsWith("/invite/");
     const status = error.response?.status;
 
     if (
       status !== 401 ||
       !original ||
       original._retry ||
-      onBridgePage ||
+      onPublicAuthPage ||
       isAuthBypassRequest(original)
     ) {
       return Promise.reject(error);

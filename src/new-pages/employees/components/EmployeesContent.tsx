@@ -89,7 +89,7 @@ const EmptyCard = ({ actions }: { actions: any }) => {
       description={
         hasSearch
           ? "جرّب البحث باسم أو رقم هاتف آخر"
-          : "أضف مسؤول داتا أو مسؤول طلبات ضمن مقاعد خطتك"
+          : "ادعُ مسؤول داتا أو مسؤول طلبات عبر الإيميل ضمن مقاعد خطتك"
       }
       icon={<User className="size-7 text-muted-foreground" />}
       primaryAction={

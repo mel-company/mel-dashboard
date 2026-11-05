@@ -26,11 +26,16 @@ function pageToNavItem(page: PageType): SidebarNavItem {
   };
 }
 
-export function getSidebarSections(isPhysicalStore = true): SidebarSection[] {
+export function getSidebarSections(
+  isPhysicalStore = true,
+  canViewPath?: (pathname: string) => boolean,
+): SidebarSection[] {
   const grouped: Record<string, SidebarNavItem[]> = {};
 
   for (const page of pages) {
     if (page.requiresPhysicalStore && !isPhysicalStore) continue;
+    const path = page.slug || "/";
+    if (canViewPath && !canViewPath(path)) continue;
 
     if (!grouped[page.group]) {
       grouped[page.group] = [];
@@ -38,10 +43,12 @@ export function getSidebarSections(isPhysicalStore = true): SidebarSection[] {
     grouped[page.group].push(pageToNavItem(page));
   }
 
-  return Object.entries(grouped).map(([title, items]) => ({
-    title,
-    items,
-  }));
+  return Object.entries(grouped)
+    .filter(([, items]) => items.length > 0)
+    .map(([title, items]) => ({
+      title,
+      items,
+    }));
 }
 
 /** @deprecated use getSidebarSections(isPhysicalStore) */
