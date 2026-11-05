@@ -4,7 +4,6 @@ import {
   ChevronDown,
   ChevronLeft,
   LogOut,
-  UserPlus,
 } from "lucide-react";
 
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -147,7 +146,7 @@ const AppSidebar = ({
   const storeLogoUrl = getImageUrl(storeDetails?.logo, storeDetails?.baseUrl);
   const { mutate: logoutMutation, isPending: isLoggingOut } = useLogout();
   const { isPhysicalStore } = usePhysicalStoreEnabled();
-  const { canViewPath, isOwner } = useModulePermissions();
+  const { canViewPath } = useModulePermissions();
   const sidebarSections = getSidebarSections(isPhysicalStore, canViewPath);
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -285,31 +284,6 @@ const AppSidebar = ({
           </div>
         ))}
 
-        {!isOwner ? (
-          <div className={collapsed ? "px-0 pt-1" : "pt-1"}>
-            {!collapsed ? (
-              <p className="mb-1.5 px-2 text-right text-[11px] font-medium tracking-wide text-slate-400 dark:text-slate-500">
-                الصلاحيات
-              </p>
-            ) : null}
-            <Link
-              to="/request-access"
-              onClick={onNavigate}
-              title="طلب انضمام"
-              className={cn(
-                "flex items-center gap-2.5 rounded-2xl border border-sky-200 bg-sky-50 text-sky-900 transition hover:bg-sky-100 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-100 dark:hover:bg-sky-950/70",
-                collapsed
-                  ? "justify-center px-0 py-2.5"
-                  : "px-3 py-2.5 text-sm font-semibold",
-                location.pathname === "/request-access" &&
-                  "ring-2 ring-sky-300/60",
-              )}
-            >
-              <UserPlus className="size-4 shrink-0" />
-              {!collapsed ? <span>طلب انضمام</span> : null}
-            </Link>
-          </div>
-        ) : null}
       </nav>
 
       {/* Footer profile */}

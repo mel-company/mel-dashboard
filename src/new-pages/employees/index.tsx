@@ -16,6 +16,7 @@ import {
 import PagePanel from "@/components/PagePanel";
 import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 import PendingInvitesCard from "./components/PendingInvitesCard";
+import JoinRequestsCard from "./components/JoinRequestsCard";
 import {
   useFetchStoreAccessRequests,
 } from "@/api/wrappers/access-request.wrappers";
@@ -81,6 +82,7 @@ const EmployeesPage = () => {
         </div>
       </TitleBar>
 
+      <JoinRequestsCard />
       <PendingInvitesCard />
 
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">

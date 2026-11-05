@@ -6,8 +6,8 @@ import { useModulePermissions } from "@/hooks/use-module-permissions";
 import { moduleForPath } from "@/lib/module-permissions";
 
 /**
- * Blocks employees from routes outside their RolePermission set and points
- * them to the sidebar «طلب انضمام» page.
+ * Blocks employees from routes outside their RolePermission set.
+ * Store join lives on /login — here they only request extra module access.
  */
 const ModuleAccessGate = ({ children }: { children: React.ReactNode }) => {
   const { pathname } = useLocation();
@@ -47,13 +47,13 @@ const ModuleAccessGate = ({ children }: { children: React.ReactNode }) => {
         هذه الوحدة غير مسندة لك
       </h1>
       <p className="text-sm leading-relaxed text-slate-500 dark:text-[#a4b1fa]">
-        صلاحياتك تغطي عملك المسند فقط. لفتح «{moduleName}» استخدم زر طلب
-        الانضمام من القائمة.
+        صلاحياتك تغطي عملك المسند فقط. لفتح «{moduleName}» اطلب صلاحية من
+        المالك.
       </p>
       <Button variant="brand" className="h-11 gap-2" asChild>
         <Link to="/request-access">
           <UserPlus className="size-4" />
-          طلب انضمام
+          طلب صلاحية
         </Link>
       </Button>
     </div>

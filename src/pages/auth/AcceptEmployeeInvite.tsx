@@ -1,16 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2, Mail, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  SettingsField,
-  SettingsInput,
-  SettingsPhoneInput,
-} from "@/new-pages/settings/components/SettingsField";
 import { employeeAPI } from "@/api/endpoints/employee.endpoints";
-import { sanitizePhoneNumber } from "@/utils/helpers";
 import { establishAuthSession } from "@/utils/auth-session";
 
 function getErrorMessage(err: unknown, fallback: string): string {
@@ -22,8 +16,7 @@ function getErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-type Step = "phone" | "otp";
-
+/** Email link → one tap into the dashboard. No phone / OTP. */
 const AcceptEmployeeInvite = () => {
   const { token = "" } = useParams<{ token: string }>();
   const navigate = useNavigate();
@@ -34,12 +27,7 @@ const AcceptEmployeeInvite = () => {
   const [preview, setPreview] = useState<Awaited<
     ReturnType<typeof employeeAPI.previewInvite>
   > | null>(null);
-
-  const [step, setStep] = useState<Step>("phone");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,53 +53,15 @@ const AcceptEmployeeInvite = () => {
     };
   }, [token]);
 
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const id = window.setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => window.clearTimeout(id);
-  }, [cooldown]);
-
   const storeTitle = useMemo(
     () => preview?.store?.name || preview?.store?.domain || "المتجر",
     [preview],
   );
 
-  const sendOtp = async () => {
-    let canonicalPhone: string;
-    try {
-      canonicalPhone = sanitizePhoneNumber(phone, "+964");
-    } catch {
-      toast.error("رقم الهاتف غير صالح");
-      return;
-    }
-
-    setBusy(true);
-    try {
-      await employeeAPI.requestInviteOtp({ token, phone: canonicalPhone });
-      setPhone(canonicalPhone);
-      setStep("otp");
-      setCooldown(30);
-      toast.success("تم إرسال رمز التحقق");
-    } catch (err) {
-      toast.error(getErrorMessage(err, "تعذر إرسال الرمز"));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const accept = async () => {
-    if (!/^\d{4,6}$/.test(otp.trim())) {
-      toast.error("أدخل رمز التحقق");
-      return;
-    }
-
     setBusy(true);
     try {
-      const data = await employeeAPI.acceptInvite({
-        token,
-        phone,
-        otp: otp.trim(),
-      });
+      const data = await employeeAPI.acceptInvite({ token });
       establishAuthSession(data, queryClient);
       toast.success("تم قبول الدعوة — أهلاً بك");
       window.location.assign("/");
@@ -172,82 +122,24 @@ const AcceptEmployeeInvite = () => {
           </div>
         </div>
 
-        {step === "phone" ? (
-          <div className="space-y-4">
-            <p className="text-sm leading-relaxed text-slate-600 dark:text-[#a4b1fa]">
-              أدخل رقم هاتفك لإكمال الدعوة. ستستخدمه لاحقاً لتسجيل الدخول عبر OTP.
-            </p>
-            <SettingsField label="رقم الهاتف" htmlFor="invite-phone">
-              <SettingsPhoneInput
-                id="invite-phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </SettingsField>
-            <Button
-              type="button"
-              variant="brand"
-              className="h-12 w-full"
-              disabled={busy}
-              onClick={() => void sendOtp()}
-            >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              إرسال رمز التحقق
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600 dark:text-[#a4b1fa]">
-              أدخل الرمز المرسل إلى{" "}
-              <span dir="ltr" className="font-medium">
-                {phone}
-              </span>
-            </p>
-            <SettingsField label="رمز التحقق" htmlFor="invite-otp">
-              <SettingsInput
-                id="invite-otp"
-                value={otp}
-                onChange={(e) =>
-                  setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                dir="ltr"
-                className="text-center tracking-[0.35em]"
-                placeholder="••••"
-              />
-            </SettingsField>
-            <Button
-              type="button"
-              variant="brand"
-              className="h-12 w-full"
-              disabled={busy}
-              onClick={() => void accept()}
-            >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              قبول الدعوة والدخول
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-10 w-full"
-              disabled={busy || cooldown > 0}
-              onClick={() => void sendOtp()}
-            >
-              {cooldown > 0 ? `إعادة الإرسال بعد ${cooldown}ث` : "إعادة إرسال الرمز"}
-            </Button>
-            <button
-              type="button"
-              className="w-full text-center text-xs text-slate-400 underline"
-              onClick={() => {
-                setStep("phone");
-                setOtp("");
-              }}
-            >
-              تغيير الرقم
-            </button>
-          </div>
-        )}
+        <p className="text-sm leading-relaxed text-slate-600 dark:text-[#a4b1fa]">
+          اضغط الزر للدخول مباشرة إلى لوحة التحكم — بدون رمز تحقق.
+        </p>
+
+        <Button
+          type="button"
+          variant="brand"
+          className="h-12 w-full gap-2"
+          disabled={busy}
+          onClick={() => void accept()}
+        >
+          {busy ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="size-4" />
+          )}
+          قبول الدعوة والدخول
+        </Button>
       </div>
     </div>
   );

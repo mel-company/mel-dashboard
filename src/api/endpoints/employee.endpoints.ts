@@ -1,6 +1,6 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
-export type EmployeeRoleTemplateKey = "DATA" | "ORDERS";
+export type EmployeeRoleTemplateKey = "DATA" | "ORDERS" | "ADMIN";
 
 export type InviteEmployeePayload = {
   name: string;
@@ -128,25 +128,47 @@ export const employeeAPI = {
     return data;
   },
 
-  requestInviteOtp: async (body: {
-    token: string;
-    phone: string;
-  }): Promise<{ message: string }> => {
-    const { data } = await axiosInstance.post<{ message: string }>(
-      "/employee/invites/request-otp",
+  acceptInvite: async (body: { token: string }): Promise<any> => {
+    const { data } = await axiosInstance.post<any>(
+      "/employee/invites/accept",
       body,
     );
     return data;
   },
 
-  acceptInvite: async (body: {
-    token: string;
-    phone: string;
-    otp: string;
-  }): Promise<any> => {
-    const { data } = await axiosInstance.post<any>(
-      "/employee/invites/accept",
+  createJoinRequest: async (body: {
+    name: string;
+    email: string;
+    message?: string;
+    storeDomain?: string;
+  }): Promise<{ ok: boolean; message: string }> => {
+    const { data } = await axiosInstance.post<{
+      ok: boolean;
+      message: string;
+    }>("/employee/join-requests", body);
+    return data;
+  },
+
+  fetchJoinRequests: async (): Promise<any[]> => {
+    const { data } = await axiosInstance.get<any[]>("/employee/join-requests");
+    return data;
+  },
+
+  approveJoinRequest: async (
+    id: string,
+    body: { roleTemplate: EmployeeRoleTemplateKey; note?: string },
+  ): Promise<any> => {
+    const { data } = await axiosInstance.post(
+      `/employee/join-requests/${id}/approve`,
       body,
+    );
+    return data;
+  },
+
+  rejectJoinRequest: async (id: string, note?: string): Promise<any> => {
+    const { data } = await axiosInstance.post(
+      `/employee/join-requests/${id}/reject`,
+      note ? { note } : {},
     );
     return data;
   },

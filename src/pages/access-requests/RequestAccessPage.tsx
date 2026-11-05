@@ -29,7 +29,7 @@ const statusLabel: Record<string, string> = {
 
 /**
  * Employee self-serve: pick a module and ask the owner to grant it.
- * Always reachable from the sidebar — not only via the lock screen.
+ * Store join itself is only on /login — not from the dashboard.
  */
 const RequestAccessPage = () => {
   const { isOwner, isLoading, permissions, canViewModule } =
@@ -64,7 +64,7 @@ const RequestAccessPage = () => {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!moduleName) {
-      toast.error("اختر الوحدة التي تريد الانضمام لها");
+      toast.error("اختر الوحدة التي تريد صلاحيتها");
       return;
     }
     createRequest.mutate(
@@ -74,7 +74,7 @@ const RequestAccessPage = () => {
       },
       {
         onSuccess: () => {
-          toast.success("أُرسل طلب الانضمام للمالك");
+          toast.success("أُرسل طلب الصلاحية للمالك");
           setMessage("");
           setModuleName("");
         },
@@ -88,7 +88,7 @@ const RequestAccessPage = () => {
     <PagePanel className="mx-auto max-w-xl space-y-6">
       <div className="text-right">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e4e7fc]">
-          طلب انضمام لوحدة
+          طلب صلاحية وحدة
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-[#a4b1fa]">
           اختر وحدة خارج صلاحياتك الحالية — يصل إشعار للمالك للموافقة أو الرفض
@@ -169,7 +169,7 @@ const RequestAccessPage = () => {
               ) : (
                 <Send className="size-4" />
               )}
-              إرسال طلب الانضمام
+              إرسال طلب الصلاحية
             </Button>
           </>
         )}

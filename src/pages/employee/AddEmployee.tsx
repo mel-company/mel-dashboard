@@ -29,8 +29,8 @@ function getErrorMessage(err: unknown, fallback: string): string {
 }
 
 /**
- * Invite-only hire: email is the identity for the invite link.
- * Phone is collected later when the invitee accepts.
+ * Invite-only hire: email is the identity for the magic invite link.
+ * Accepting the link signs the employee in — no phone / OTP.
  */
 const AddEmployee = () => {
   const navigate = useNavigate();

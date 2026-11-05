@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, Store } from "lucide-react";
+import { Loader2, ShieldCheck, Store, UserPlus } from "lucide-react";
 import { getTenantSubdomain } from "@/utils/tenant-subdomain";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLogin } from "@/api/wrappers/auth.wrappers";
+import { employeeAPI } from "@/api/endpoints/employee.endpoints";
 import { cn } from "@/lib/utils";
 import AuthShell from "./AuthShell";
 
@@ -51,6 +52,12 @@ const StoreLogin = () => {
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+  const [mode, setMode] = useState<"login" | "join">("login");
+  const [joinName, setJoinName] = useState("");
+  const [joinEmail, setJoinEmail] = useState("");
+  const [joinMessage, setJoinMessage] = useState("");
+  const [joinBusy, setJoinBusy] = useState(false);
+  const [joinSent, setJoinSent] = useState(false);
 
   const isLoggedIn = localStorage.getItem("lgd") === "true";
   const isProduction = import.meta.env.VITE_ENVIRONMENT === "production";
@@ -147,11 +154,137 @@ const StoreLogin = () => {
 
   const busy = isLoading || isLoginPending;
 
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = joinName.trim();
+    const email = joinEmail.trim().toLowerCase();
+    if (name.length < 2) {
+      toast.error("أدخل اسمك");
+      return;
+    }
+    if (!email.includes("@")) {
+      toast.error("أدخل بريداً صالحاً");
+      return;
+    }
+    const storeDomain =
+      subdomain || selectedStore?.domain?.trim()?.toLowerCase() || "";
+    if (!storeDomain) {
+      toast.error("تعذر تحديد المتجر");
+      return;
+    }
+
+    setJoinBusy(true);
+    try {
+      const res = await employeeAPI.createJoinRequest({
+        name,
+        email,
+        storeDomain,
+        ...(joinMessage.trim() ? { message: joinMessage.trim() } : {}),
+      });
+      setJoinSent(true);
+      toast.success(res.message || "تم إرسال طلب الانضمام");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "تعذر إرسال طلب الانضمام",
+      );
+    } finally {
+      setJoinBusy(false);
+    }
+  };
+
   return (
     <AuthShell
-      title="أهلاً بك"
-      description="أدخل رقم هاتفك وسنرسل رمز تحقق مكوّن من 4 أرقام للدخول إلى لوحة المتجر."
+      title={mode === "join" ? "طلب انضمام" : "أهلاً بك"}
+      description={
+        mode === "join"
+          ? "أرسل طلبك لمالك المتجر — بعد الموافقة يصلك إيميل بدعوة الدخول."
+          : "أدخل رقم هاتفك وسنرسل رمز تحقق مكوّن من 4 أرقام للدخول إلى لوحة المتجر."
+      }
     >
+      {mode === "join" ? (
+        joinSent ? (
+          <div className="space-y-4 text-center">
+            <p className="rounded-2xl bg-emerald-50 px-4 py-4 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+              تم إرسال طلبك. راقب إيميلك بعد موافقة المالك لرابط الدخول.
+            </p>
+            <Button
+              type="button"
+              variant="brand-soft"
+              className="h-11 w-full"
+              onClick={() => {
+                setMode("login");
+                setJoinSent(false);
+              }}
+            >
+              العودة لتسجيل الدخول
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={(e) => void handleJoin(e)} className="space-y-4">
+            <div className="space-y-2">
+              <label className="block text-right text-[13px] font-medium text-slate-500 dark:text-[#a4b1fa]">
+                الاسم
+              </label>
+              <Input
+                value={joinName}
+                onChange={(e) => setJoinName(e.target.value)}
+                placeholder="مثلاً: أحمد علي"
+                className={cn(fieldClass, "px-4")}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-right text-[13px] font-medium text-slate-500 dark:text-[#a4b1fa]">
+                البريد الإلكتروني
+              </label>
+              <Input
+                type="email"
+                value={joinEmail}
+                onChange={(e) => setJoinEmail(e.target.value)}
+                placeholder="name@example.com"
+                dir="ltr"
+                className={cn(fieldClass, "px-4 text-left")}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-right text-[13px] font-medium text-slate-500 dark:text-[#a4b1fa]">
+                ملاحظة (اختياري)
+              </label>
+              <textarea
+                value={joinMessage}
+                onChange={(e) => setJoinMessage(e.target.value)}
+                rows={3}
+                maxLength={280}
+                placeholder="لماذا تريد الانضمام؟"
+                className={cn(
+                  fieldClass,
+                  "h-auto min-h-[88px] w-full resize-none px-4 py-3 text-sm",
+                )}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={joinBusy}
+              className="h-12 w-full gap-2 rounded-2xl bg-[#00b7ff] text-base font-bold text-[#06091a] hover:bg-[#33c5ff]"
+            >
+              {joinBusy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <UserPlus className="size-4" />
+              )}
+              إرسال طلب الانضمام
+            </Button>
+            <button
+              type="button"
+              className="w-full text-center text-sm text-slate-500 underline dark:text-[#a4b1fa]"
+              onClick={() => setMode("login")}
+            >
+              لدي حساب — تسجيل الدخول
+            </button>
+          </form>
+        )
+      ) : (
       <form onSubmit={handleSubmit} className="space-y-5">
         {!isProduction ? (
           isLoadingStores ? (
@@ -242,7 +375,17 @@ const StoreLogin = () => {
             </>
           )}
         </Button>
+
+        <button
+          type="button"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:bg-transparent dark:text-[#e4e7fc] dark:hover:bg-white/5"
+          onClick={() => setMode("join")}
+        >
+          <UserPlus className="size-4 text-[#00b7ff]" />
+          طلب انضمام للمتجر
+        </button>
       </form>
+      )}
     </AuthShell>
   );
 };
