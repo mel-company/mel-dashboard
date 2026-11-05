@@ -27,6 +27,7 @@ export function useEmployeesPage() {
       ordersManagers: api?.ordersManagers ?? 0,
       seatsUsed: api?.seatsUsed ?? 0,
       seatsMax: api?.seatsMax ?? 1,
+      pendingInvites: api?.pendingInvites ?? 0,
     };
   }, [actions.stats, employees.length]);
 
