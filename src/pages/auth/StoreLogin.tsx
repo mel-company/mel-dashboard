@@ -182,10 +182,12 @@ const StoreLogin = () => {
         ...(joinMessage.trim() ? { message: joinMessage.trim() } : {}),
       });
       setJoinSent(true);
-      toast.success(res.message || "تم إرسال طلب الانضمام");
+      toast.success(
+        res.message || "تم إرسال الطلب — بانتظار موافقة المدير",
+      );
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "تعذر إرسال طلب الانضمام",
+        error?.response?.data?.message || "تعذر إرسال الطلب",
       );
     } finally {
       setJoinBusy(false);
@@ -194,10 +196,10 @@ const StoreLogin = () => {
 
   return (
     <AuthShell
-      title={mode === "join" ? "طلب انضمام" : "أهلاً بك"}
+      title={mode === "join" ? "طلب دخول بالإيميل" : "أهلاً بك"}
       description={
         mode === "join"
-          ? "أرسل طلبك لمالك المتجر — بعد الموافقة يصلك إيميل بدعوة الدخول."
+          ? "فقط إذا إيميلك مسجّل كموظف في هذا المتجر. الطلب لا يُقبل فوراً — يحتاج موافقة المالك أو المدير ثم يصلك رابط الدخول."
           : "أدخل رقم هاتفك وسنرسل رمز تحقق مكوّن من 4 أرقام للدخول إلى لوحة المتجر."
       }
     >
@@ -205,7 +207,8 @@ const StoreLogin = () => {
         joinSent ? (
           <div className="space-y-4 text-center">
             <p className="rounded-2xl bg-emerald-50 px-4 py-4 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
-              تم إرسال طلبك. راقب إيميلك بعد موافقة المالك لرابط الدخول.
+              تم إرسال طلبك. بعد موافقة المالك أو المدير يصلك رابط الدخول على
+              الإيميل.
             </p>
             <Button
               type="button"
@@ -273,7 +276,7 @@ const StoreLogin = () => {
               ) : (
                 <UserPlus className="size-4" />
               )}
-              إرسال طلب الانضمام
+              إرسال الطلب للمدير
             </Button>
             <button
               type="button"
@@ -382,7 +385,7 @@ const StoreLogin = () => {
           onClick={() => setMode("join")}
         >
           <UserPlus className="size-4 text-[#00b7ff]" />
-          طلب انضمام للمتجر
+          طلب دخول بالإيميل (موظف مسجّل)
         </button>
       </form>
       )}

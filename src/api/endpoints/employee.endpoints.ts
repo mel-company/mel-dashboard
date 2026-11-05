@@ -141,10 +141,17 @@ export const employeeAPI = {
     email: string;
     message?: string;
     storeDomain?: string;
-  }): Promise<{ ok: boolean; message: string }> => {
+  }): Promise<{
+    ok: boolean;
+    message: string;
+    alreadyMember?: boolean;
+    emailed?: boolean;
+  }> => {
     const { data } = await axiosInstance.post<{
       ok: boolean;
       message: string;
+      alreadyMember?: boolean;
+      emailed?: boolean;
     }>("/employee/join-requests", body);
     return data;
   },
@@ -156,11 +163,11 @@ export const employeeAPI = {
 
   approveJoinRequest: async (
     id: string,
-    body: { roleTemplate: EmployeeRoleTemplateKey; note?: string },
+    body?: { roleTemplate?: EmployeeRoleTemplateKey; note?: string },
   ): Promise<any> => {
     const { data } = await axiosInstance.post(
       `/employee/join-requests/${id}/approve`,
-      body,
+      body ?? {},
     );
     return data;
   },

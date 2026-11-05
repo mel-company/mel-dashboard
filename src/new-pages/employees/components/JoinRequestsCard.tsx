@@ -1,11 +1,8 @@
-import { useState } from "react";
 import { Loader2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { employeeAPI } from "@/api/endpoints/employee.endpoints";
-import type { EmployeeRoleTemplateKey } from "@/api/endpoints/employee.endpoints";
-import { cn } from "@/lib/utils";
 
 function getErrorMessage(err: unknown, fallback: string): string {
   const message = (
@@ -16,32 +13,17 @@ function getErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-const ROLES: { key: EmployeeRoleTemplateKey; label: string }[] = [
-  { key: "DATA", label: "مسؤول داتا" },
-  { key: "ORDERS", label: "مسؤول طلبات" },
-  { key: "ADMIN", label: "مدير (كامل)" },
-];
-
 const JoinRequestsCard = () => {
   const queryClient = useQueryClient();
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["join-requests"],
     queryFn: () => employeeAPI.fetchJoinRequests(),
   });
-  const [roleById, setRoleById] = useState<Record<string, EmployeeRoleTemplateKey>>(
-    {},
-  );
 
   const approve = useMutation({
-    mutationFn: ({
-      id,
-      roleTemplate,
-    }: {
-      id: string;
-      roleTemplate: EmployeeRoleTemplateKey;
-    }) => employeeAPI.approveJoinRequest(id, { roleTemplate }),
+    mutationFn: (id: string) => employeeAPI.approveJoinRequest(id, {}),
     onSuccess: () => {
-      toast.success("تمت الموافقة — أُرسلت دعوة بالإيميل");
+      toast.success("تمت الموافقة — أُرسل رابط الدخول بالإيميل");
       void queryClient.invalidateQueries({ queryKey: ["join-requests"] });
       void queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
@@ -66,12 +48,11 @@ const JoinRequestsCard = () => {
       <div className="mb-3 flex items-center gap-2 text-right">
         <UserPlus className="size-4 text-violet-700 dark:text-violet-300" />
         <h2 className="text-sm font-semibold text-violet-950 dark:text-violet-100">
-          طلبات انضمام من صفحة الدخول ({pending.length})
+          طلبات دخول بالإيميل ({pending.length})
         </h2>
       </div>
       <ul className="space-y-3">
         {pending.map((req: any) => {
-          const role = roleById[req.id] || "DATA";
           return (
             <li
               key={req.id}
@@ -90,39 +71,18 @@ const JoinRequestsCard = () => {
                   </p>
                 ) : null}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {ROLES.map((r) => (
-                  <button
-                    key={r.key}
-                    type="button"
-                    onClick={() =>
-                      setRoleById((prev) => ({ ...prev, [req.id]: r.key }))
-                    }
-                    className={cn(
-                      "rounded-full px-3 py-1 text-[11px] font-medium",
-                      role === r.key
-                        ? "bg-violet-600 text-white"
-                        : "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300",
-                    )}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
               <div className="mt-3 flex gap-2">
                 <Button
                   size="sm"
                   variant="brand"
                   className="h-9 rounded-xl"
                   disabled={approve.isPending || reject.isPending}
-                  onClick={() =>
-                    approve.mutate({ id: req.id, roleTemplate: role })
-                  }
+                  onClick={() => approve.mutate(req.id)}
                 >
                   {approve.isPending ? (
                     <Loader2 className="size-3.5 animate-spin" />
                   ) : null}
-                  موافقة + دعوة
+                  موافقة + رابط دخول
                 </Button>
                 <Button
                   size="sm"
