@@ -16,6 +16,7 @@ export const ALWAYS_ALLOWED_PATHS = new Set([
   "/",
   "/notifications",
   "/profile",
+  "/request-access",
 ]);
 
 /**

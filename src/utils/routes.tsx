@@ -49,6 +49,7 @@ import DevStoreLogin from "../pages/auth/DevStoreLogin";
 import DevOTP from "../pages/auth/DEVOTP";
 import AcceptEmployeeInvite from "../pages/auth/AcceptEmployeeInvite";
 import AccessRequestsPage from "../pages/access-requests/AccessRequestsPage";
+import RequestAccessPage from "../pages/access-requests/RequestAccessPage";
 import PrimeTestPage from "../pages/prime/PrimeTestPage";
 import { PlanLimitGate } from "../components/plan/PlanLimitNotice";
 
@@ -61,6 +62,7 @@ export interface RouteConfig {
 export const mainRoutes: RouteConfig[] = [
     { path: "/", element: <Home /> },
     { path: "/access-requests", element: <AccessRequestsPage /> },
+    { path: "/request-access", element: <RequestAccessPage /> },
     { path: "/stats", element: <Stats /> },
     { path: "/subscription", element: <Navigate to="/settings/store" replace /> },
     { path: "/plans", element: <Navigate to="/settings/store" replace /> },
