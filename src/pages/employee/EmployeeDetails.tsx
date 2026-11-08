@@ -38,6 +38,7 @@ function templateKeyFromRoleName(
 ): EmployeeRoleTemplateKey | null {
   if (roleName === "مسؤول الداتا") return "DATA";
   if (roleName === "مسؤول الطلبات") return "ORDERS";
+  if (roleName === "مدير المتجر") return "ADMIN";
   return null;
 }
 
