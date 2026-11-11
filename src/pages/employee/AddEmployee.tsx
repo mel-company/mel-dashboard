@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Copy, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
-import TeamUpgradeDialog from "@/components/plan/TeamUpgradeDialog";
+import { TeamUpgradePanel } from "@/components/plan/TeamUpgradeDialog";
 import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 import PagePanel from "@/components/PagePanel";
 import { Button } from "@/components/ui/button";
@@ -63,20 +63,8 @@ const AddEmployee = () => {
 
   if (!entitlementsLoading && teamLocked) {
     return (
-      <PagePanel className="relative min-h-[50vh]">
-        <div className="pointer-events-none flex min-h-[50vh] flex-col items-center justify-center gap-3 opacity-40 blur-[1px]">
-          <p className="text-lg font-bold text-slate-700 dark:text-[#e4e7fc]">
-            دعوة موظف
-          </p>
-          <p className="text-sm text-slate-500">متاح بعد ترقية الخطة</p>
-        </div>
-        <TeamUpgradeDialog
-          open
-          dismissible
-          onOpenChange={(open) => {
-            if (!open) navigate("/", { replace: true });
-          }}
-        />
+      <PagePanel>
+        <TeamUpgradePanel />
       </PagePanel>
     );
   }

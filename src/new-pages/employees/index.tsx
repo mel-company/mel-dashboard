@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -15,7 +14,7 @@ import {
   UserGroupIcon,
 } from "@hugeicons-pro/core-stroke-standard";
 import PagePanel from "@/components/PagePanel";
-import TeamUpgradeDialog from "@/components/plan/TeamUpgradeDialog";
+import { TeamUpgradePanel } from "@/components/plan/TeamUpgradeDialog";
 import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 import PendingInvitesCard from "./components/PendingInvitesCard";
 import JoinRequestsCard from "./components/JoinRequestsCard";
@@ -33,14 +32,6 @@ const EmployeesPage = () => {
     isLocked("team_users") || actions.stats?.teamEnabled === false;
   const canInvite = !teamLocked && actions.stats?.canInvite !== false;
 
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
-
-  useEffect(() => {
-    if (!entitlementsLoading && teamLocked) {
-      setUpgradeOpen(true);
-    }
-  }, [entitlementsLoading, teamLocked]);
-
   const listToolbar = (
     <PageTableHeader
       title="جميع الموظفين"
@@ -57,21 +48,8 @@ const EmployeesPage = () => {
 
   if (!entitlementsLoading && teamLocked) {
     return (
-      <PagePanel className="relative min-h-[50vh]">
-        <div className="pointer-events-none flex min-h-[50vh] flex-col items-center justify-center gap-3 opacity-40 blur-[1px]">
-          <p className="text-lg font-bold text-slate-700 dark:text-[#e4e7fc]">
-            الموظفين
-          </p>
-          <p className="text-sm text-slate-500">متاح بعد ترقية الخطة</p>
-        </div>
-        <TeamUpgradeDialog
-          open={upgradeOpen}
-          onOpenChange={(open) => {
-            setUpgradeOpen(open);
-            if (!open) navigate("/", { replace: true });
-          }}
-          dismissible
-        />
+      <PagePanel>
+        <TeamUpgradePanel />
       </PagePanel>
     );
   }
@@ -105,13 +83,7 @@ const EmployeesPage = () => {
                 ? undefined
                 : "الدعوة غير متاحة على خطتك الحالية — رقِّ الباقة"
             }
-            onClick={() => {
-              if (teamLocked || !canInvite) {
-                setUpgradeOpen(true);
-                return;
-              }
-              navigate("/employees/add");
-            }}
+            onClick={() => navigate("/employees/add")}
           >
             <span className="flex size-7 items-center justify-center rounded-full bg-white/25">
               <Plus className="size-4" strokeWidth={2.5} />
@@ -160,8 +132,6 @@ const EmployeesPage = () => {
         handleDelete={actions.handleDelete}
         employeeName={deleting?.user?.name}
       />
-
-      <TeamUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
     </PagePanel>
   );
 };

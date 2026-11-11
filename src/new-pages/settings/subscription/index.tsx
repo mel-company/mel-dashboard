@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -19,7 +20,7 @@ import type { BillingPeriod } from "@/api/endpoints/platform-payment.endpoint";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/format-currency";
 import { billingPeriodLabel } from "@/utils/subscription-quote";
-import { planHighlights } from "@/utils/plan-card-lines";
+import { planActiveFeatures } from "@/utils/plan-card-lines";
 import { cn } from "@/lib/utils";
 import PlansTableSection, {
   type ChosenPlan,
@@ -29,6 +30,7 @@ import PaymentHistorySection from "./components/PaymentHistorySection";
 import PlanCheckoutDialog from "./components/PlanCheckoutDialog";
 import SubscriptionDialog from "./components/SubscriptionDialog";
 import { formatDay } from "./components/table";
+import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 
 type Checkout = {
   type: "RENEWAL" | "CHANGE_PLAN";
@@ -56,13 +58,24 @@ const panelClass = "rounded-2xl bg-slate-50 p-5 dark:bg-slate-900";
  */
 const SubscriptionInfoSection = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: subscription, isLoading } = useFetchStoreSubscription();
-  const { data: plansData } = useFetchPlans();
+  const { data: plansData } = useFetchPlans({ limit: 50 });
+  const { upgradeTo, data: entitlements } = usePlanEntitlements();
   const cancel = useCancelSubscription();
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
   const [paymentsOpen, setPaymentsOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+
+  // «ترقية الخطة» → /settings/store?plans=1 opens الباقات with نمو.
+  useEffect(() => {
+    if (searchParams.get("plans") !== "1") return;
+    setPlansOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("plans");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   if (isLoading) {
     return (
@@ -79,9 +92,17 @@ const SubscriptionInfoSection = () => {
     ? plansData
     : (plansData?.data ?? []);
   const plan = subscription?.plan;
-  // The catalogue copy carries `card_lines` and `pricing`; a retired plan is
-  // not on sale, so fall back to the subscription's own row.
-  const catalogPlan = plans.find((p) => p.id === plan?.id) ?? plan;
+  // Match catalogue by id or code so بداية gets بداية caps — not a thin
+  // subscription row / wrong marketing card_lines.
+  const catalogPlan =
+    plans.find((p) => p.id === plan?.id) ||
+    plans.find(
+      (p) =>
+        plan?.code &&
+        String(p.code || "").toUpperCase() ===
+          String(plan.code || "").toUpperCase(),
+    ) ||
+    plan;
 
   const currentPlan = plan
     ? {
@@ -101,10 +122,11 @@ const SubscriptionInfoSection = () => {
         onOpenChange={setPlansOpen}
         title="الباقات"
         description="اختر باقة للتجديد أو التبديل."
-        className="sm:max-w-3xl"
+        className="sm:max-w-4xl"
       >
         <PlansTableSection
           currentPlanId={currentPlan?.id ?? null}
+          highlightPlanId={upgradeTo?.planId ?? null}
           onChoose={(chosen) => {
             setPlansOpen(false);
             setCheckout({
@@ -218,10 +240,10 @@ const SubscriptionInfoSection = () => {
     "MONTHLY") as BillingPeriod;
   const price = periodPrice(catalogPlan, period);
 
-  const features = planHighlights(catalogPlan);
-  const upgradeTo = subscription.upgradeAvailable
-    ? subscription.upgradeTo
-    : null;
+  const features = planActiveFeatures(catalogPlan, entitlements);
+  const nextUpgrade =
+    (subscription.upgradeAvailable ? subscription.upgradeTo : null) ||
+    upgradeTo;
 
   return (
     <SettingsCard title="معلومات الاشتراك">
@@ -352,7 +374,7 @@ const SubscriptionInfoSection = () => {
             ))}
           </ul>
 
-          {upgradeTo && (
+          {nextUpgrade && (
             <button
               type="button"
               onClick={() => setPlansOpen(true)}
@@ -364,7 +386,7 @@ const SubscriptionInfoSection = () => {
               </span>
               <span className="mt-1.5 block text-xs leading-5 text-slate-500">
                 <span className="[overflow-wrap:anywhere]">
-                  رقّي لباقة {upgradeTo.planName} للحصول على مزايا أكثر
+                  رقّي لباقة {nextUpgrade.planName} لتحصل على 3 موظفين ومزايا أكثر
                 </span>
               </span>
             </button>
