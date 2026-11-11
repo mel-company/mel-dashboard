@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -68,9 +68,12 @@ const SubscriptionInfoSection = () => {
   const [paymentsOpen, setPaymentsOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
 
-  // «ترقية الخطة» → /settings/store?plans=1 opens الباقات with نمو.
+  // «ترقية الخطة» → /settings/store?plans=1 opens الباقات with نمو (once).
+  const plansDeepLinkHandled = useRef(false);
   useEffect(() => {
+    if (plansDeepLinkHandled.current) return;
     if (searchParams.get("plans") !== "1") return;
+    plansDeepLinkHandled.current = true;
     setPlansOpen(true);
     const next = new URLSearchParams(searchParams);
     next.delete("plans");

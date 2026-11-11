@@ -135,7 +135,10 @@ const PaymentMethodLogo = ({
 };
 
 const StoreIntegrationsSection = () => {
-  const { goUpgrade } = usePlanEntitlements();
+  const { goUpgrade, data: entitlements } = usePlanEntitlements();
+  // Starter: merchant settles in cash only — online gateways need نمو.
+  const onlinePaymentNeedsUpgrade =
+    entitlements?.features?.online_payment === false;
   const { data: domainDetails } = useFindDomainDetails();
   const { data: storeDetails } = useFetchStoreDetails();
   const { data: currentSettings } = useFetchCurrentSettings();
@@ -393,6 +396,9 @@ const StoreIntegrationsSection = () => {
 
             {paymentMethods.map((method: PaymentMethodRow) => {
               const state = methodState(method.id);
+              const needsPlanUpgrade =
+                state.requiresUpgrade ||
+                (!state.available && onlinePaymentNeedsUpgrade);
 
               return (
                 <div
@@ -407,32 +413,39 @@ const StoreIntegrationsSection = () => {
                     />
                     <span
                       className="text-[13px] text-slate-900 dark:text-slate-100"
-                      title={state.unavailableReason ?? undefined}
+                      title={
+                        needsPlanUpgrade
+                          ? state.unavailableReason ||
+                            "الدفع الإلكتروني متاح بعد ترقية الخطة — التاجر على البداية يستلم نقداً فقط"
+                          : (state.unavailableReason ?? undefined)
+                      }
                     >
                       {method.name}
                     </span>
                   </div>
-                  {state.requiresUpgrade ? (
-                    // Online payment is a plan feature: the way on is an
-                    // upgrade, not a switch that cannot stay on.
+                  {needsPlanUpgrade ? (
+                    // Online payment is a plan feature: Starter = cash only.
                     <button
                       type="button"
                       onClick={() => goUpgrade()}
-                      title={state.unavailableReason ?? undefined}
+                      title={
+                        state.unavailableReason ||
+                        "رقِّ الخطة لتفعيل استلام الدفع الإلكتروني"
+                      }
                       className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1.5 text-xs font-bold text-white"
                     >
                       <Lock className="size-3.5" />
                       ترقية
                     </button>
                   ) : (
-                  <Switch
-                    checked={state.isEnabled}
-                    activeLabel="مفعل"
-                    /* «قريبا», not «معطل»: the merchant did not switch this off. */
-                    disabledLabel={state.available ? "معطل" : "قريبا"}
-                    onToggle={(v) => handleMethodToggle(method.id, v)}
-                    disabled={upsertMutation.isPending || !state.available}
-                  />
+                    <Switch
+                      checked={state.isEnabled}
+                      activeLabel="مفعل"
+                      /* «قريبا», not «معطل»: the merchant did not switch this off. */
+                      disabledLabel={state.available ? "معطل" : "قريبا"}
+                      onToggle={(v) => handleMethodToggle(method.id, v)}
+                      disabled={upsertMutation.isPending || !state.available}
+                    />
                   )}
                 </div>
               );
