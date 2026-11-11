@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Copy, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
-import PlanUpgradeGate from "@/components/PlanUpgradeGate";
+import TeamUpgradeDialog from "@/components/plan/TeamUpgradeDialog";
 import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 import PagePanel from "@/components/PagePanel";
 import { Button } from "@/components/ui/button";
@@ -34,11 +34,19 @@ function getErrorMessage(err: unknown, fallback: string): string {
  */
 const AddEmployee = () => {
   const navigate = useNavigate();
-  const { isLocked, isLoading: entitlementsLoading } = usePlanEntitlements();
+  const {
+    isLocked,
+    isLoading: entitlementsLoading,
+    handleUpgradeError,
+  } = usePlanEntitlements();
   const { data: templates = [], isLoading: templatesLoading } =
     useFetchEmployeeRoleTemplates();
   const { data: stats } = useFetchEmployeeStats();
   const { mutate: inviteEmployee, isPending } = useCreateEmployee();
+  const teamLocked =
+    isLocked("team_users") || stats?.teamEnabled === false;
+  const canInvite =
+    !teamLocked && stats?.canInvite !== false;
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -53,8 +61,24 @@ const AddEmployee = () => {
     return `${used} / ${stats.seatsMax ?? 1}`;
   }, [stats]);
 
-  if (!entitlementsLoading && isLocked("team_users")) {
-    return <PlanUpgradeGate feature="team_users" />;
+  if (!entitlementsLoading && teamLocked) {
+    return (
+      <PagePanel className="relative min-h-[50vh]">
+        <div className="pointer-events-none flex min-h-[50vh] flex-col items-center justify-center gap-3 opacity-40 blur-[1px]">
+          <p className="text-lg font-bold text-slate-700 dark:text-[#e4e7fc]">
+            دعوة موظف
+          </p>
+          <p className="text-sm text-slate-500">متاح بعد ترقية الخطة</p>
+        </div>
+        <TeamUpgradeDialog
+          open
+          dismissible
+          onOpenChange={(open) => {
+            if (!open) navigate("/", { replace: true });
+          }}
+        />
+      </PagePanel>
+    );
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -94,7 +118,10 @@ const AddEmployee = () => {
           navigate("/employees");
         },
         onError: (err) => {
-          toast.error(getErrorMessage(err, "فشل إرسال الدعوة"));
+          // Starter plan: API 403 PLAN_UPGRADE_REQUIRED — open upgrade, not a bare toast.
+          if (handleUpgradeError(err, getErrorMessage(err, "فشل إرسال الدعوة"))) {
+            return;
+          }
         },
       },
     );
@@ -248,7 +275,7 @@ const AddEmployee = () => {
             type="submit"
             variant="brand"
             className="h-12 min-w-[180px] gap-2"
-            disabled={isPending || templatesLoading}
+            disabled={isPending || templatesLoading || !canInvite}
           >
             {isPending ? (
               <Loader2 className="size-4 animate-spin" />

@@ -35,6 +35,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { PlusFeature } from "@/api/endpoints/plan.endpoints";
 import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
+import TeamUpgradeDialog from "@/components/plan/TeamUpgradeDialog";
 
 interface AppItem {
   label: string;
@@ -198,6 +199,7 @@ const AppsGrid = () => {
   });
   const [comingSoonDialogOpen, setComingSoonDialogOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<PlusFeature | null>(null);
+  const [teamUpgradeOpen, setTeamUpgradeOpen] = useState(false);
   const { getAllInstalledApps } = useApps();
   const { isPhysicalStore } = usePhysicalStoreEnabled();
   const {
@@ -445,6 +447,10 @@ const AppsGrid = () => {
                         app.planFeature &&
                         isPlanFeatureLocked(app.planFeature)
                       ) {
+                        if (app.planFeature === "team_users") {
+                          setTeamUpgradeOpen(true);
+                          return;
+                        }
                         setUpgradeFeature(app.planFeature);
                         return;
                       }
@@ -534,7 +540,12 @@ const AppsGrid = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Plan upgrade dialog (GO → PLUS) */}
+        <TeamUpgradeDialog
+          open={teamUpgradeOpen}
+          onOpenChange={setTeamUpgradeOpen}
+        />
+
+        {/* Plan upgrade dialog (other PLUS features) */}
         <Dialog
           open={Boolean(upgradeFeature)}
           onOpenChange={(open) => {
@@ -551,7 +562,7 @@ const AppsGrid = () => {
               <DialogTitle className="text-center text-xl">
                 ترقية إلى {upgradeTo?.planName || "نمو"}
               </DialogTitle>
-              <DialogDescription className="text-center text-base">
+              <DialogDescription className="text-center text-base leading-relaxed">
                 {(upgradeFeature && messageFor(upgradeFeature)) ||
                   `هذه الميزة متاحة في باقة ${upgradeTo?.planName || "نمو"} فقط.`}
               </DialogDescription>

@@ -21,6 +21,13 @@ export function useEmployeesPage() {
 
   const stats = useMemo(() => {
     const api = actions.stats;
+    /**
+     * Starter plan: `teamEnabled: false` and `canInvite: false`. The invite
+     * API also 403s with PLAN_UPGRADE_REQUIRED — the page gate must not rely
+     * on hiding a button alone.
+     */
+    const teamEnabled = api?.teamEnabled !== false;
+    const canInvite = api?.canInvite !== false && teamEnabled;
     return {
       totalEmployees: api?.totalEmployees ?? employees.length,
       dataManagers: api?.dataManagers ?? 0,
@@ -28,6 +35,8 @@ export function useEmployeesPage() {
       seatsUsed: api?.seatsUsed ?? 0,
       seatsMax: api?.seatsMax ?? 1,
       pendingInvites: api?.pendingInvites ?? 0,
+      teamEnabled,
+      canInvite,
     };
   }, [actions.stats, employees.length]);
 

@@ -11,7 +11,10 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, Check, Loader2, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useFetchDeliveryCompanies } from "@/api/wrappers/delivery-company.wrappers";
+import {
+  isOfferedDeliveryCompany,
+  useFetchDeliveryCompanies,
+} from "@/api/wrappers/delivery-company.wrappers";
 import { useUpdateDeliveryCompany } from "@/api/wrappers/settings.wrappers";
 import { useCourierAccounts } from "@/api/wrappers/shipping.wrappers";
 import type { CourierAccountSummary } from "@/api/types/shipping";
@@ -181,7 +184,8 @@ const CourierPicker = ({
   const { mutate: updateDeliveryCompany, isPending } =
     useUpdateDeliveryCompany();
 
-  const companies = deliveryCompanies ?? [];
+  // API + wrapper already keep الزعيم / برايم; re-check before submit.
+  const companies = (deliveryCompanies ?? []).filter(isOfferedDeliveryCompany);
 
   /**
    * The store's own company, when the list no longer carries it.
@@ -217,9 +221,11 @@ const CourierPicker = ({
     // not refuse here — that is the only way the location form can finish
     // the registration. Hard blockers still stop the choice.
     const picked = companies.find((c) => c.id === selectedDeliveryCompanyId);
-    const blocker = picked
-      ? blockerFor(picked, accountsData?.accounts)
-      : null;
+    if (!picked || !isOfferedDeliveryCompany(picked)) {
+      toast.error("غير متاحة حالياً. اختر الزعيم أو برايم.");
+      return;
+    }
+    const blocker = blockerFor(picked, accountsData?.accounts);
     if (blocker && !blocker.soft) {
       toast.error("لا يمكن اختيار هذه الشركة قبل اكتمال تسجيل متجرك لديها.");
       return;
@@ -253,7 +259,7 @@ const CourierPicker = ({
           <div className="space-y-0.5">
             <DialogTitle className="text-base">اختر شركة التوصيل</DialogTitle>
             <DialogDescription className="text-right text-xs">
-              الشركة التي ستحمل طرود متجرك
+              المتاح حالياً: الزعيم أو برايم
             </DialogDescription>
           </div>
         </div>

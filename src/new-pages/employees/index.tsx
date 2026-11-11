@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -14,20 +15,31 @@ import {
   UserGroupIcon,
 } from "@hugeicons-pro/core-stroke-standard";
 import PagePanel from "@/components/PagePanel";
+import TeamUpgradeDialog from "@/components/plan/TeamUpgradeDialog";
 import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 import PendingInvitesCard from "./components/PendingInvitesCard";
 import JoinRequestsCard from "./components/JoinRequestsCard";
-import {
-  useFetchStoreAccessRequests,
-} from "@/api/wrappers/access-request.wrappers";
+import { useFetchStoreAccessRequests } from "@/api/wrappers/access-request.wrappers";
 
 const EmployeesPage = () => {
   const navigate = useNavigate();
-  const { isLocked, goUpgrade } = usePlanEntitlements();
+  const { isLocked, isLoading: entitlementsLoading } = usePlanEntitlements();
   const actions = useEmployeesPage();
   const { data: accessRequests = [] } = useFetchStoreAccessRequests(true);
   const pendingAccess = accessRequests.filter((r) => r.status === "PENDING")
     .length;
+
+  const teamLocked =
+    isLocked("team_users") || actions.stats?.teamEnabled === false;
+  const canInvite = !teamLocked && actions.stats?.canInvite !== false;
+
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  useEffect(() => {
+    if (!entitlementsLoading && teamLocked) {
+      setUpgradeOpen(true);
+    }
+  }, [entitlementsLoading, teamLocked]);
 
   const listToolbar = (
     <PageTableHeader
@@ -42,6 +54,27 @@ const EmployeesPage = () => {
   const deleting = actions.employees.find(
     (e: any) => e.id === actions.deleteId,
   );
+
+  if (!entitlementsLoading && teamLocked) {
+    return (
+      <PagePanel className="relative min-h-[50vh]">
+        <div className="pointer-events-none flex min-h-[50vh] flex-col items-center justify-center gap-3 opacity-40 blur-[1px]">
+          <p className="text-lg font-bold text-slate-700 dark:text-[#e4e7fc]">
+            الموظفين
+          </p>
+          <p className="text-sm text-slate-500">متاح بعد ترقية الخطة</p>
+        </div>
+        <TeamUpgradeDialog
+          open={upgradeOpen}
+          onOpenChange={(open) => {
+            setUpgradeOpen(open);
+            if (!open) navigate("/", { replace: true });
+          }}
+          dismissible
+        />
+      </PagePanel>
+    );
+  }
 
   return (
     <PagePanel className="space-y-6">
@@ -65,10 +98,16 @@ const EmployeesPage = () => {
             </Button>
           )}
           <Button
-            className="h-11 shrink-0 gap-2.5 rounded-full bg-[#00b7ff] px-5 text-white shadow-sm hover:bg-[#00a3e6]"
+            className="h-11 shrink-0 gap-2.5 rounded-full bg-[#00b7ff] px-5 text-white shadow-sm hover:bg-[#00a3e6] disabled:opacity-60"
+            disabled={!canInvite}
+            title={
+              canInvite
+                ? undefined
+                : "الدعوة غير متاحة على خطتك الحالية — رقِّ الباقة"
+            }
             onClick={() => {
-              if (isLocked("team_users")) {
-                goUpgrade("team_users");
+              if (teamLocked || !canInvite) {
+                setUpgradeOpen(true);
                 return;
               }
               navigate("/employees/add");
@@ -121,6 +160,8 @@ const EmployeesPage = () => {
         handleDelete={actions.handleDelete}
         employeeName={deleting?.user?.name}
       />
+
+      <TeamUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
     </PagePanel>
   );
 };
