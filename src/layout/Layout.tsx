@@ -2,27 +2,50 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "@/components/AppSidebar";
 import MobileTopBar from "@/components/MobileTopBar";
-import FloatingRail from "@/components/FloatingRail";
+import FloatingRail, {
+  type TamimaEntryMode,
+} from "@/components/FloatingRail";
+import TamimaAssistant from "@/components/tamima/TamimaAssistant";
+import TamimaVoiceSession from "@/components/tamima/TamimaVoiceSession";
+import {
+  TamimaBackgroundRefreshProvider,
+  useTamimaBackgroundRefresh,
+} from "@/components/tamima/TamimaBackgroundRefresh";
+import TamimaUpgradeDialog from "@/components/plan/TamimaUpgradeDialog";
 import { cn } from "@/lib/utils";
 import SubscriptionBar from "@/components/plan/SubscriptionBar";
 import SubscriptionLifecycleGate from "@/components/plan/SubscriptionLifecycleGate";
 import ModuleAccessGate from "@/components/ModuleAccessGate";
+import { usePlanEntitlements } from "@/hooks/use-plan-entitlements";
 
-const Layout = () => {
+const LayoutInner = () => {
   const location = useLocation();
+  const { pageKey } = useTamimaBackgroundRefresh();
+  const {
+    isLocked,
+    data: entitlements,
+    isLoading: entitlementsLoading,
+  } = usePlanEntitlements();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [tamimaTextOpen, setTamimaTextOpen] = useState(false);
+  const [tamimaUpgradeOpen, setTamimaUpgradeOpen] = useState(false);
+  const [tamimaVoiceMode, setTamimaVoiceMode] = useState<
+    "closed" | "expanded" | "docked"
+  >("closed");
+
+  // Grow only (`has_tamima`). Starter → upgrade dialog.
+  const tamimaAllowed =
+    entitlements?.entitlements?.has_tamima === true && !isLocked("tamima");
 
   const isPosPage = location.pathname === "/pos";
   const isEditorPage = location.pathname === "/editor";
   const isFullscreenTool = isPosPage || isEditorPage;
   const showMobileChrome = !isFullscreenTool;
 
-  // Close drawer on route change
   useEffect(() => {
     setMobileSidebarOpen(false);
   }, [location.pathname]);
 
-  // Lock body scroll when drawer is open on mobile
   useEffect(() => {
     if (!mobileSidebarOpen) return;
     const prev = document.body.style.overflow;
@@ -32,9 +55,23 @@ const Layout = () => {
     };
   }, [mobileSidebarOpen]);
 
+  const openTamima = (mode: TamimaEntryMode) => {
+    if (entitlementsLoading) return;
+    if (!tamimaAllowed) {
+      setTamimaUpgradeOpen(true);
+      return;
+    }
+    if (mode === "voice") {
+      setTamimaTextOpen(false);
+      setTamimaVoiceMode("expanded");
+      return;
+    }
+    setTamimaVoiceMode((prev) => (prev === "expanded" ? "docked" : prev));
+    setTamimaTextOpen(true);
+  };
+
   return (
     <div className="relative flex h-dvh w-screen overflow-hidden bg-background">
-      {/* Mobile drawer backdrop */}
       <button
         type="button"
         className={cn(
@@ -47,7 +84,6 @@ const Layout = () => {
         onClick={() => setMobileSidebarOpen(false)}
       />
 
-      {/* Sidebar: drawer on mobile, static on desktop */}
       <AppSidebar
         className={cn(
           "fixed inset-y-0 right-0 z-50 transition-transform duration-300 ease-out lg:relative lg:z-10 lg:translate-x-0",
@@ -61,13 +97,6 @@ const Layout = () => {
       />
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/*
-          Soft brand glow. Figma (606:15593) carries one, at the top edge
-          beside the nav, and nowhere else: sampled along its canvas the page
-          is a flat #0a0e27 apart from a purple cast around x>1300, y<100.
-          The cyan companion that used to sit bottom-left washed roughly a
-          third of the width in #091834 and has no counterpart there.
-        */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden dark:block"
@@ -79,17 +108,49 @@ const Layout = () => {
           <MobileTopBar onMenuClick={() => setMobileSidebarOpen(true)} />
         )}
 
-        {/* Fixed above the scrolling page: three days or fewer left on the
-            subscription, or ended. Not over the editor's own frame. */}
         {!isEditorPage && <SubscriptionBar />}
 
-        {/* Figma's floating capsule on the far edge of every web frame. */}
-        {!isFullscreenTool && <FloatingRail />}
+        {!isFullscreenTool && (
+          <FloatingRail
+            onAssistantModeSelect={openTamima}
+            hideTamima={tamimaVoiceMode === "docked"}
+            assistantOpen={
+              tamimaTextOpen || tamimaVoiceMode === "expanded"
+            }
+          />
+        )}
+
+        <TamimaUpgradeDialog
+          open={tamimaUpgradeOpen}
+          onOpenChange={setTamimaUpgradeOpen}
+        />
+
+        {tamimaAllowed ? (
+          <>
+            <TamimaAssistant
+              open={tamimaTextOpen}
+              onOpenChange={(open) => {
+                setTamimaTextOpen(open);
+                if (open) {
+                  setTamimaVoiceMode((prev) =>
+                    prev === "expanded" ? "docked" : prev,
+                  );
+                }
+              }}
+            />
+            <TamimaVoiceSession
+              mode={tamimaVoiceMode}
+              onModeChange={setTamimaVoiceMode}
+            />
+          </>
+        ) : null}
 
         <main
           className={cn(
             "custom-scrollbar relative z-10 flex-1 overflow-x-hidden",
-            isEditorPage ? "flex min-h-0 flex-col overflow-hidden" : "overflow-y-auto",
+            isEditorPage
+              ? "flex min-h-0 flex-col overflow-hidden"
+              : "overflow-y-auto",
           )}
         >
           <div
@@ -104,7 +165,7 @@ const Layout = () => {
           >
             <SubscriptionLifecycleGate>
               <ModuleAccessGate>
-                <Outlet />
+                <Outlet key={`${location.pathname}:${pageKey}`} />
               </ModuleAccessGate>
             </SubscriptionLifecycleGate>
           </div>
@@ -113,5 +174,11 @@ const Layout = () => {
     </div>
   );
 };
+
+const Layout = () => (
+  <TamimaBackgroundRefreshProvider>
+    <LayoutInner />
+  </TamimaBackgroundRefreshProvider>
+);
 
 export default Layout;

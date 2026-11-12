@@ -17,6 +17,7 @@ import {
 } from "@hugeicons-pro/core-stroke-rounded";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { imageEditorStore } from "@/lib/image-edit/queue";
 import {
   NEUTRAL_ADJUSTMENTS,
@@ -25,19 +26,21 @@ import {
   type Adjustments,
 } from "@/lib/image-edit/render";
 import type { RemovalProgress } from "@/lib/image-edit/background-removal";
+import {
+  usePreviewTamimaPhotoEnvironment,
+  useTamimaPhotoEnvironments,
+} from "@/api/wrappers/tamima.wrappers";
+import {
+  isPlanUpgradeRequiredError,
+  usePlanEntitlements,
+} from "@/hooks/use-plan-entitlements";
+import { toast } from "sonner";
 
 /**
- * The image-editor modal: crop, zoom, rotate, flip, colour adjustments and
- * background removal, between picking an image and handing it to the form.
+ * Shared image studio: crop / colors / AI scene. One UI for first upload and
+ * later «تعديل» — opened via `withImageEditor` or `editImage`.
  *
- * Same tool as the store editor's (mel-editor `components/image-editor`),
- * dressed in the dashboard's tokens. Mounted once in `App`; inputs reach it
- * through `withImageEditor` (see `lib/image-edit/queue.ts`).
- *
- * Built on the Radix dialog primitive on purpose: most image inputs here live
- * inside a Radix dialog already, and a plain portal would count as an
- * "outside click" for it and close the form underneath. Radix stacks nested
- * dialogs, so this one sits on top and the form waits behind it.
+ * Mounted once in `App`. Uses Radix dialog so nested form dialogs stay open.
  */
 export const ImageEditorHost = () => {
   const request = useSyncExternalStore(
@@ -66,9 +69,9 @@ type AspectKey = "original" | "1:1" | "4:3" | "3:4" | "16:9";
 type Fill = "transparent" | "white";
 
 const TABS: ReadonlyArray<{ value: Tab; label: string; icon: typeof CropIcon }> = [
-  { value: "crop", label: "القص", icon: CropIcon },
+  { value: "crop", label: "ترتيب", icon: CropIcon },
   { value: "adjust", label: "الألوان", icon: SlidersHorizontalIcon },
-  { value: "background", label: "الخلفية", icon: MagicWand01Icon },
+  { value: "background", label: "مشهد AI", icon: MagicWand01Icon },
 ];
 
 const ASPECTS: ReadonlyArray<{ value: AspectKey; label: string }> = [
@@ -90,6 +93,26 @@ const FILLS: ReadonlyArray<{ value: Fill; label: string }> = [
   { value: "transparent", label: "شفافة" },
   { value: "white", label: "بيضاء" },
 ];
+
+const canvasToFile = (canvas: HTMLCanvasElement, name: string) =>
+  new Promise<File>((resolve, reject) =>
+    canvas.toBlob(
+      (blob) =>
+        blob
+          ? resolve(new File([blob], name.replace(/\.\w+$/, ".png"), { type: "image/png" }))
+          : reject(new Error("encode")),
+      "image/png",
+    ),
+  );
+
+const dataUrlToFile = async (dataUrl: string, name: string) => {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  const ext = blob.type.includes("jpeg") || blob.type.includes("jpg") ? "jpg" : "png";
+  return new File([blob], name.replace(/\.\w+$/, `.${ext}`), {
+    type: blob.type || "image/png",
+  });
+};
 
 const MIN_ZOOM = 1;
 /**
@@ -163,9 +186,21 @@ const ImageEditorModal = ({
   const [adjustments, setAdjustments] = useState<Adjustments>(NEUTRAL_ADJUSTMENTS);
   const [fill, setFill] = useState<Fill>("transparent");
 
+  const { isLocked, goUpgrade, data: entitlements } = usePlanEntitlements();
+  const tamimaAllowed =
+    entitlements?.entitlements?.has_tamima === true && !isLocked("tamima");
+  const photoEnvironmentsQuery = useTamimaPhotoEnvironments(true);
+  const previewEnvironment = usePreviewTamimaPhotoEnvironment();
+
   const [removing, setRemoving] = useState(false);
   const [removal, setRemoval] = useState<RemovalProgress | null>(null);
   const [removalError, setRemovalError] = useState<string | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiEnvId, setAiEnvId] = useState<string | null>(null);
+  const [selectedEnvId, setSelectedEnvId] = useState<string | null>(null);
+  const [sceneDescription, setSceneDescription] = useState("");
+  const [localCutoutOpen, setLocalCutoutOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -220,8 +255,73 @@ const ImageEditorModal = ({
     return sideways ? sourceSize.h / sourceSize.w : sourceSize.w / sourceSize.h;
   }, [aspect, sourceSize, rotation]);
 
-  const busy = removing || saving;
+  const busy = removing || saving || aiBusy;
   const minZoom = useCutout ? MIN_ZOOM_CUTOUT : MIN_ZOOM;
+
+  const applyAiEnvironment = async (
+    environmentId: string,
+    labelAr: string,
+    scene?: string,
+  ) => {
+    if (!original || aiBusy) return;
+    if (!tamimaAllowed) {
+      toast.message("بيئة الصورة بالذكاء الاصطناعي", {
+        description: "متاحة في باقة النمو مع تميمة",
+      });
+      goUpgrade("tamima");
+      return;
+    }
+    const trimmedScene = scene?.trim() ?? "";
+    if (environmentId === "custom" && !trimmedScene) {
+      setAiError("اكتب وصف المشهد أولاً");
+      return;
+    }
+    setAiBusy(true);
+    setAiError(null);
+    setAiEnvId(environmentId);
+    try {
+      const sourceFile =
+        useCutout && cutout
+          ? await canvasToFile(cutout, file.name)
+          : file;
+      const result = await previewEnvironment.mutateAsync({
+        environmentId,
+        image: sourceFile,
+        productTitle: file.name.replace(/\.\w+$/, ""),
+        sceneDescription: trimmedScene || undefined,
+      });
+      const nextFile = await dataUrlToFile(
+        result.dataUrl || `data:${result.mime};base64,${result.base64}`,
+        file.name,
+      );
+      const url = URL.createObjectURL(nextFile);
+      const img = await loadImage(url);
+      setOriginal(img);
+      setCutout(null);
+      setUseCutout(false);
+      setFill("transparent");
+      setFlipX(false);
+      setRotation(0);
+      setZoom(1);
+      setCrop({ x: 0, y: 0 });
+      setAdjustments(NEUTRAL_ADJUSTMENTS);
+      toast.success(`تم توليد المشهد: ${result.environmentLabelAr || labelAr}`);
+    } catch (err) {
+      if (isPlanUpgradeRequiredError(err)) {
+        goUpgrade("tamima");
+        setAiError("رقِّ إلى النمو لاستخدام بيئات الصورة بالذكاء الاصطناعي");
+      } else {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message || "تعذر توليد المشهد. حاول مرة أخرى.";
+        setAiError(message);
+        toast.error(message);
+      }
+    } finally {
+      setAiBusy(false);
+      setAiEnvId(null);
+    }
+  };
 
   useEffect(() => {
     if (useCutout) return;
@@ -299,6 +399,33 @@ const ImageEditorModal = ({
         ? "bg-white"
         : "bg-muted";
 
+  const skipAsIs = () => {
+    if (!busy) finish(file);
+  };
+
+  const pickPresetScene = (env: {
+    id: string;
+    labelAr: string;
+    descriptionAr: string;
+  }) => {
+    setSelectedEnvId(env.id);
+    setSceneDescription(env.descriptionAr);
+    setAiError(null);
+  };
+
+  const generateScene = () => {
+    const desc = sceneDescription.trim();
+    if (!desc && !selectedEnvId) {
+      setAiError("اكتب وصف المشهد أو اختر بيئة جاهزة");
+      return;
+    }
+    const environmentId = selectedEnvId || "custom";
+    const label =
+      photoEnvironmentsQuery.data?.find((e) => e.id === environmentId)
+        ?.labelAr || "مشهد مخصص";
+    void applyAiEnvironment(environmentId, label, desc || undefined);
+  };
+
   return (
     <DialogPrimitive.Root open onOpenChange={(open) => !open && cancel()}>
       <DialogPrimitive.Portal>
@@ -308,21 +435,20 @@ const ImageEditorModal = ({
           aria-describedby={undefined}
           onInteractOutside={(event) => busy && event.preventDefault()}
           onEscapeKeyDown={(event) => busy && event.preventDefault()}
-          className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-card text-foreground shadow-2xl outline-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:max-h-[min(720px,calc(100dvh-2rem))] sm:w-[calc(100%-2rem)] sm:max-w-[920px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:border-border"
+          className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-card text-foreground shadow-2xl outline-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:max-h-[min(860px,calc(100dvh-1.5rem))] sm:w-[calc(100%-1.5rem)] sm:max-w-[1080px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:border-border"
         >
-          {/* Header */}
           <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
             <div className="min-w-0">
               <DialogPrimitive.Title className="text-sm font-bold">
-                تعديل الصورة
+                استوديو الصورة
                 {position ? (
                   <span className="ms-2 text-xs font-medium text-muted-foreground">
                     {position.index} من {position.total}
                   </span>
                 ) : null}
               </DialogPrimitive.Title>
-              <p dir="auto" className="truncate text-[11px] text-muted-foreground">
-                {file.name}
+              <p className="text-[11px] text-muted-foreground">
+                رتّب، عدّل الألوان، أو وصف مشهد AI — نفس الاستوديو دائماً
               </p>
             </div>
             <button
@@ -336,10 +462,13 @@ const ImageEditorModal = ({
             </button>
           </div>
 
-          {/* Body: controls first, so on desktop they sit on the right. */}
           <div className="flex min-h-0 flex-1 flex-col-reverse sm:flex-row">
-            <div className="flex min-h-0 flex-col gap-4 overflow-y-auto border-t border-border p-4 sm:w-[300px] sm:shrink-0 sm:border-t-0 sm:border-l sm:p-5">
-              <div role="radiogroup" aria-label="أدوات التعديل" className="grid grid-cols-3 gap-1 rounded-xl bg-muted p-1">
+            <div className="flex min-h-0 flex-col gap-4 overflow-y-auto border-t border-border p-4 sm:w-[360px] sm:shrink-0 sm:border-t-0 sm:border-s sm:p-5">
+              <div
+                role="radiogroup"
+                aria-label="أدوات الاستوديو"
+                className="grid grid-cols-3 gap-1 rounded-xl bg-muted p-1"
+              >
                 {TABS.map((option) => (
                   <button
                     key={option.value}
@@ -348,7 +477,7 @@ const ImageEditorModal = ({
                     aria-checked={tab === option.value}
                     onClick={() => setTab(option.value)}
                     className={cn(
-                      "inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-all",
+                      "inline-flex cursor-pointer items-center justify-center gap-1 rounded-lg px-1.5 py-1.5 text-[11px] font-medium transition-all sm:gap-1.5 sm:text-xs",
                       tab === option.value
                         ? "bg-card text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground",
@@ -427,56 +556,172 @@ const ImageEditorModal = ({
 
               {tab === "background" ? (
                 <div className="flex flex-col gap-4">
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    تُزال الخلفية على جهازك مباشرة، ولا تُرسل الصورة لأي جهة. أول استخدام ينزّل الأداة
-                    (حوالي 45 ميغابايت) مرة واحدة فقط.
-                  </p>
-
-                  {useCutout ? (
-                    <>
-                      <ControlGroup title="لون الخلفية">
-                        <div className="grid grid-cols-2 gap-1.5">
-                          {FILLS.map((option) => (
+                  <ControlGroup title="صف المشهد">
+                    <p className="text-xs leading-5 text-muted-foreground">
+                      اكتب المشهد اللي تريده، أو اختَر جاهز يملأ الوصف وتعدّله.
+                      تميمة تضع منتجك داخل المشهد — مو لون بس.
+                    </p>
+                    {!tamimaAllowed ? (
+                      <Button
+                        variant="brand"
+                        className="h-10"
+                        onClick={() => goUpgrade("tamima")}
+                      >
+                        ترقية لتفعيل مشاهد AI
+                      </Button>
+                    ) : (
+                      <>
+                        <Textarea
+                          value={sceneDescription}
+                          onChange={(e) => {
+                            setSceneDescription(e.target.value);
+                            if (!e.target.value.trim()) setSelectedEnvId(null);
+                          }}
+                          disabled={aiBusy || !original}
+                          rows={4}
+                          maxLength={400}
+                          placeholder="مثال: مكتب خشب دافئ مع إضاءة ناعمة وكتب بالخلفية…"
+                          className="min-h-[96px] resize-none text-sm"
+                        />
+                        <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                          <span>
+                            {selectedEnvId
+                              ? "بيئة جاهزة + وصفك"
+                              : sceneDescription.trim()
+                                ? "مشهد مخصص"
+                                : "اختر جاهز أو اكتب وصفك"}
+                          </span>
+                          <span>{sceneDescription.length}/400</span>
+                        </div>
+                        <Button
+                          variant="brand"
+                          className="h-11 w-full gap-2"
+                          onClick={generateScene}
+                          disabled={
+                            aiBusy ||
+                            !original ||
+                            (!sceneDescription.trim() && !selectedEnvId)
+                          }
+                        >
+                          <HugeiconsIcon
+                            icon={aiBusy ? Loading03Icon : MagicWand01Icon}
+                            className={cn("size-4", aiBusy && "animate-spin")}
+                          />
+                          {aiBusy ? "تميمة تولّد المشهد…" : "توليد المشهد"}
+                        </Button>
+                        <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto">
+                          {(photoEnvironmentsQuery.data ?? []).map((env) => (
                             <ChoiceButton
-                              key={option.value}
-                              active={fill === option.value}
-                              onClick={() => setFill(option.value)}
+                              key={env.id}
+                              active={selectedEnvId === env.id}
+                              disabled={aiBusy || !original}
+                              onClick={() => pickPresetScene(env)}
                             >
-                              {option.label}
+                              {aiBusy && aiEnvId === env.id ? (
+                                <HugeiconsIcon
+                                  icon={Loading03Icon}
+                                  className="me-1 size-3.5 animate-spin"
+                                />
+                              ) : null}
+                              {env.labelAr}
                             </ChoiceButton>
                           ))}
                         </div>
-                      </ControlGroup>
-                      <Button variant="outline" className="rounded-full text-foreground" onClick={() => setUseCutout(false)}>
-                        استعادة الخلفية الأصلية
-                      </Button>
-                    </>
-                  ) : (
-                    <Button variant="brand" className="h-10" onClick={startRemoval} disabled={removing || !original}>
-                      <HugeiconsIcon
-                        icon={removing ? Loading03Icon : MagicWand01Icon}
-                        className={cn("size-4", removing && "animate-spin")}
-                      />
-                      {removing ? removalLabel(removal) : cutout ? "إزالة الخلفية مرة أخرى" : "إزالة الخلفية"}
-                    </Button>
-                  )}
+                      </>
+                    )}
+                    {aiError ? <ErrorNote text={aiError} /> : null}
+                  </ControlGroup>
 
-                  {removing && removal?.stage === "download" && removal.ratio !== null ? (
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary transition-[width]"
-                        style={{ width: `${Math.round(removal.ratio * 100)}%` }}
-                      />
-                    </div>
-                  ) : null}
-
-                  {removalError ? <ErrorNote text={removalError} /> : null}
+                  <div className="border-t border-border pt-3">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between text-start text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => setLocalCutoutOpen((o) => !o)}
+                    >
+                      <span>إزالة الخلفية محلياً (اختياري)</span>
+                      <span className="text-[10px] font-medium">
+                        {localCutoutOpen ? "إخفاء" : "إظهار"}
+                      </span>
+                    </button>
+                    {localCutoutOpen ? (
+                      <div className="mt-3 space-y-3">
+                        <p className="text-xs leading-5 text-muted-foreground">
+                          على جهازك قبل أو بعد الـ AI. أول استخدام ينزّل الأداة
+                          (~45MB).
+                        </p>
+                        {useCutout ? (
+                          <>
+                            <ControlGroup title="خلفية بعد الإزالة">
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {FILLS.map((option) => (
+                                  <ChoiceButton
+                                    key={option.value}
+                                    active={fill === option.value}
+                                    onClick={() => setFill(option.value)}
+                                  >
+                                    {option.label}
+                                  </ChoiceButton>
+                                ))}
+                              </div>
+                            </ControlGroup>
+                            <Button
+                              variant="outline"
+                              className="w-full rounded-full text-foreground"
+                              onClick={() => setUseCutout(false)}
+                            >
+                              استعادة الخلفية الأصلية
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            className="h-10 w-full"
+                            onClick={startRemoval}
+                            disabled={removing || !original || aiBusy}
+                          >
+                            <HugeiconsIcon
+                              icon={removing ? Loading03Icon : MagicWand01Icon}
+                              className={cn(
+                                "size-4",
+                                removing && "animate-spin",
+                              )}
+                            />
+                            {removing
+                              ? removalLabel(removal)
+                              : cutout
+                                ? "إزالة الخلفية مرة أخرى"
+                                : "إزالة الخلفية"}
+                          </Button>
+                        )}
+                        {removing &&
+                        removal?.stage === "download" &&
+                        removal.ratio !== null ? (
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full rounded-full bg-primary transition-[width]"
+                              style={{
+                                width: `${Math.round(removal.ratio * 100)}%`,
+                              }}
+                            />
+                          </div>
+                        ) : null}
+                        {removalError ? (
+                          <ErrorNote text={removalError} />
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
             </div>
 
             {/* The image */}
-            <div className={cn("relative h-[46dvh] shrink-0 sm:h-auto sm:min-h-[460px] sm:flex-1", stage)}>
+            <div
+              className={cn(
+                "relative h-[48dvh] shrink-0 sm:h-auto sm:min-h-[520px] sm:flex-1",
+                stage,
+              )}
+            >
               {displayUrl ? (
                 <Cropper
                   image={displayUrl}
@@ -514,6 +759,15 @@ const ImageEditorModal = ({
                 </div>
               )}
 
+              {aiBusy ? (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/35">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-card/95 px-3 py-1.5 text-xs font-medium text-foreground shadow-lg">
+                    <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
+                    تميمة تولّد المشهد…
+                  </span>
+                </div>
+              ) : null}
+
               {removing ? (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/30">
                   <span className="inline-flex items-center gap-2 rounded-full bg-card/95 px-3 py-1.5 text-xs font-medium text-foreground shadow-lg">
@@ -525,19 +779,39 @@ const ImageEditorModal = ({
             </div>
           </div>
 
-          {/* Footer */}
           <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5">
             {saveError ? <ErrorNote text={saveError} className="basis-full" /> : null}
-            <Button variant="link" size="sm" className="px-0" onClick={() => finish(file)} disabled={busy}>
-              رفع بدون تعديل
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={cancel}
+              disabled={busy}
+            >
+              إلغاء
             </Button>
-            <div className="ms-auto flex items-center gap-2">
-              <Button variant="ghost" onClick={cancel} disabled={busy}>
-                إلغاء
-              </Button>
-              <Button variant="brand" className="h-10 min-w-[120px] px-5" onClick={save} disabled={busy || !area}>
-                {saving ? <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" /> : null}
-                {saving ? "جارٍ الحفظ…" : "حفظ الصورة"}
+            <Button
+              variant="link"
+              size="sm"
+              className="px-0"
+              onClick={skipAsIs}
+              disabled={busy}
+            >
+              تخطي — كما هي
+            </Button>
+            <div className="ms-auto">
+              <Button
+                variant="brand"
+                className="h-10 min-w-[120px] rounded-full px-5"
+                onClick={save}
+                disabled={busy || !area}
+              >
+                {saving ? (
+                  <HugeiconsIcon
+                    icon={Loading03Icon}
+                    className="size-4 animate-spin"
+                  />
+                ) : null}
+                {saving ? "جارٍ الحفظ…" : "حفظ"}
               </Button>
             </div>
           </div>
@@ -626,17 +900,20 @@ const ChoiceButton = ({
   active,
   onClick,
   children,
+  disabled,
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
+  disabled?: boolean;
 }) => (
   <button
     type="button"
     aria-pressed={active}
+    disabled={disabled}
     onClick={onClick}
     className={cn(
-      "h-8 cursor-pointer rounded-lg border text-xs font-medium transition-colors",
+      "inline-flex h-8 cursor-pointer items-center rounded-lg border px-2.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
       active
         ? "border-primary/70 bg-primary/10 text-primary"
         : "border-border text-muted-foreground hover:text-foreground",

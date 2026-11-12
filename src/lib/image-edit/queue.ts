@@ -51,21 +51,14 @@ export const imageEditorStore = {
 };
 
 /**
- * Phones upload straight away (Ali, 2026-10-18): on a small touch screen the
- * modal is one step too many. Phone width, or a phone held sideways.
+ * Opens the shared image studio (crop / colors / AI scene).
+ * Skip returns the original file unchanged.
  */
-const PHONE_QUERY = "(max-width: 767px), (pointer: coarse) and (max-height: 500px)";
-
-const isPhone = () =>
-  typeof window !== "undefined" &&
-  typeof window.matchMedia === "function" &&
-  window.matchMedia(PHONE_QUERY).matches;
-
 export const editImage = (
   file: File,
   position: EditRequest["position"] = null,
 ): Promise<File | null> => {
-  if (!hostMounted || !isEditableImage(file) || isPhone()) return Promise.resolve(file);
+  if (!hostMounted || !isEditableImage(file)) return Promise.resolve(file);
   // A second pick while the modal is open replaces the first; the first
   // caller is told it was cancelled rather than left waiting forever.
   request?.resolve(null);

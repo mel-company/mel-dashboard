@@ -146,8 +146,14 @@ const AppSidebar = ({
   const storeLogoUrl = getImageUrl(storeDetails?.logo, storeDetails?.baseUrl);
   const { mutate: logoutMutation, isPending: isLoggingOut } = useLogout();
   const { isPhysicalStore } = usePhysicalStoreEnabled();
-  const { canViewPath } = useModulePermissions();
-  const sidebarSections = getSidebarSections(isPhysicalStore, canViewPath);
+  const { canViewPath, isLoading: permsLoading, isOwner } =
+    useModulePermissions();
+  // While /me loads, show the full rail — otherwise owners briefly (or forever
+  // if isOwner was missing) only saw home + notifications.
+  const sidebarSections = getSidebarSections(
+    isPhysicalStore,
+    permsLoading || isOwner ? undefined : canViewPath,
+  );
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -298,6 +304,16 @@ const AppSidebar = ({
           <div className="flex flex-col items-center gap-2">
             <button
               type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              title="تسجيل الخروج"
+              className="flex size-9 items-center justify-center rounded-xl text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30"
+              aria-label="تسجيل الخروج"
+            >
+              <LogOut className="size-4" />
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 navigate("/settings/store");
                 onNavigate?.();
@@ -308,19 +324,25 @@ const AppSidebar = ({
             >
               <UserAvatar seed={avatarSeed} className="size-10" />
             </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              title="تسجيل الخروج"
-              className="flex size-9 items-center justify-center rounded-xl text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30"
-              aria-label="تسجيل الخروج"
-            >
-              <LogOut className="size-4" />
-            </button>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="relative space-y-2">
+            {profileOpen ? (
+              <div className="absolute inset-x-0 bottom-full z-20 mb-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-white/[0.08] dark:bg-[#12183b]">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex w-full flex-row items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                >
+                  <LogOut className="size-4" />
+                  <span>
+                    {isLoggingOut ? "جاري الخروج..." : "تسجيل الخروج"}
+                  </span>
+                </button>
+              </div>
+            ) : null}
+
             <button
               type="button"
               onClick={() => setProfileOpen((v) => !v)}
@@ -343,18 +365,6 @@ const AppSidebar = ({
                 />
               </span>
             </button>
-
-            {profileOpen ? (
-              <button
-                type="button"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="flex w-full flex-row items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30"
-              >
-                <LogOut className="size-4" />
-                <span>{isLoggingOut ? "جاري الخروج..." : "تسجيل الخروج"}</span>
-              </button>
-            ) : null}
           </div>
         )}
       </div>

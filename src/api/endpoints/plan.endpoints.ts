@@ -1,13 +1,22 @@
 import axiosInstance from "@/utils/AxiosInstance";
 
-export type PlusFeature = "ai_editor" | "mobile_app" | "team_users";
+export type PlusFeature =
+  | "ai_editor"
+  | "tamima"
+  | "mobile_app"
+  | "team_users"
+  | "pos";
 
 export type PlanEntitlements = {
   max_users: number;
   ai_store_credits: number;
   ai_editor_credits: number;
+  /** Monthly Tamima turns on Grow; 0 on Starter. */
+  ai_tamima_credits: number;
   has_mobile_app: boolean;
   has_ai_editor: boolean;
+  /** Full Tamima + store analysis — Grow (PLUS) only. */
+  has_tamima: boolean;
 };
 
 export type LockedFeature = {
