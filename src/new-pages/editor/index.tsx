@@ -371,20 +371,6 @@ const EditorPage = () => {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-3 py-2">
-        <p className="text-sm font-medium text-foreground">محرر الموقع</p>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="gap-2"
-          onClick={openInNewTab}
-          disabled={isMintingTab}
-        >
-          <ExternalLink className="size-4" />
-          فتح في تبويب جديد
-        </Button>
-      </div>
-
       {iframeBlocked ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
           <p className="max-w-md text-sm text-muted-foreground">
@@ -418,7 +404,7 @@ const EditorPage = () => {
         </div>
       )}
 
-      {/* Over the toolbar too, so the ring stays exactly where the
+      {/* Over the whole frame, so the ring stays exactly where the
           pre-handoff splash drew it. */}
       {!iframeBlocked && (
         <EditorSplash
