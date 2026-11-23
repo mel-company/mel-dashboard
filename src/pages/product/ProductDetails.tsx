@@ -305,55 +305,55 @@ const ProductDetails = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <div>
+                <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="min-w-0">
                     <FieldLabel hint="ماذا يعني؟" hintTone="special">
                       السعر الافتراضي
                     </FieldLabel>
-                    <div className="relative rounded-2xl border border-slate-200/90 ps-11 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
+                    <div className="relative rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 ps-11 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
                       <span className="text-slate-800 dark:text-slate-100">
                         {typeof data.price === "number"
                           ? formatNumber(data.price)
                           : "—"}
                       </span>
-                      <span className="absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
                         د.ع
                       </span>
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <FieldLabel hint="اختياري" hintTone="optional">
                       تكلفة المنتج
                     </FieldLabel>
-                    <div className="relative rounded-2xl border border-slate-200/90 ps-11 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
+                    <div className="relative rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 ps-11 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
                       <span className="text-slate-800 dark:text-slate-100">
                         {typeof data.cost_to_produce === "number"
                           ? formatNumber(data.cost_to_produce)
                           : "—"}
                       </span>
-                      <span className="absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
                         د.ع
                       </span>
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <FieldLabel>المخزون</FieldLabel>
-                    <div className="relative rounded-2xl border border-slate-200/90 ps-12 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
+                    <div className="relative rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 ps-12 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
                       <span className="text-slate-800 dark:text-slate-100">
                         {typeof (data as { stock?: number }).stock === "number"
                           ? formatNumber((data as { stock: number }).stock)
                           : "—"}
                       </span>
-                      <span className="absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                      <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
                         قطعة
                       </span>
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <FieldLabel hint="اختياري" hintTone="optional">
                       تقييم المنتج
                     </FieldLabel>
-                    <div className="relative rounded-2xl border border-slate-200/90 ps-10 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
+                    <div className="relative rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 ps-10 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
                       <span className="text-slate-800 dark:text-slate-100">
                         {typeof data.rate === "number" ? data.rate : "—"}
                       </span>
