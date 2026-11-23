@@ -107,7 +107,7 @@ const AddProduct = () => {
   const [costToProduct, setCostToProduct] = useState("");
   // Shipping dimensions. Grams and whole centimetres — kept as strings so an
   // empty field stays empty rather than becoming a zero the courier prices on.
-  const [stock, setStock] = useState("");
+  const [stock, setStock] = useState("0");
   const [weightGrams, setWeightGrams] = useState("");
   const [lengthCm, setLengthCm] = useState("");
   const [widthCm, setWidthCm] = useState("");
@@ -417,7 +417,7 @@ const AddProduct = () => {
     formData.append("price", price);
     formData.append("enabled", "true");
     if (costToProduct) formData.append("cost_to_produce", costToProduct);
-    if (stock) formData.append("stock", stock);
+    formData.append("stock", stock.trim() ? stock.trim() : "0");
     if (weightGrams) formData.append("weightGrams", weightGrams);
     if (lengthCm) formData.append("lengthCm", lengthCm);
     if (widthCm) formData.append("widthCm", widthCm);
@@ -676,8 +676,8 @@ const AddProduct = () => {
                   </div>
 
                   <div className="min-w-0">
-                    <FieldLabel htmlFor="stock" hint="اختياري" hintTone="optional">
-                      الكمية
+                    <FieldLabel htmlFor="stock" hint="مطلوب" hintTone="special">
+                      المخزون
                     </FieldLabel>
                     <div className="relative">
                       <input

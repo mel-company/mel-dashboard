@@ -12,7 +12,7 @@ const ProductTableHeader = ({ sort }: { sort?: SortState }) => {
         <TableHead className={cn(thClass, "w-16")}>الصورة</TableHead>
         <SortableHead className={cn(thClass, "min-w-[220px]")} sortKey="name" sort={sort}>معلومات المنتج</SortableHead>
         <SortableHead className={cn(thClass, "min-w-[140px]")} sortKey="category" sort={sort}>الفئات</SortableHead>
-        <SortableHead className={cn(thClass, "w-24")} sortKey="quantity" sort={sort}>الكمية</SortableHead>
+        <SortableHead className={cn(thClass, "w-24")} sortKey="quantity" sort={sort}>المخزون</SortableHead>
         <SortableHead className={thClass} sortKey="price" sort={sort}>السعر</SortableHead>
         <SortableHead className={thClass} sortKey="cost" sort={sort}>تكلفة المنتج</SortableHead>
         <SortableHead className={cn(thClass, "w-20")} sortKey="rating" sort={sort}>التقييم</SortableHead>

@@ -305,7 +305,7 @@ const ProductDetails = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <div>
                     <FieldLabel hint="ماذا يعني؟" hintTone="special">
                       السعر الافتراضي
@@ -333,6 +333,19 @@ const ProductDetails = () => {
                       </span>
                       <span className="absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
                         د.ع
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <FieldLabel>المخزون</FieldLabel>
+                    <div className="relative rounded-2xl border border-slate-200/90 ps-12 bg-white px-3.5 py-2.5 text-sm dark:border-white/[0.08] dark:bg-[#12183b]">
+                      <span className="text-slate-800 dark:text-slate-100">
+                        {typeof (data as { stock?: number }).stock === "number"
+                          ? formatNumber((data as { stock: number }).stock)
+                          : "—"}
+                      </span>
+                      <span className="absolute start-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        قطعة
                       </span>
                     </div>
                   </div>
@@ -458,7 +471,7 @@ const ProductDetails = () => {
                         <tr className="bg-[#eef2f7] dark:bg-[#12183b]">
                           <SortHeader>KUS</SortHeader>
                           <SortHeader>QR</SortHeader>
-                          <SortHeader>الكمية</SortHeader>
+                          <SortHeader>المخزون</SortHeader>
                           <SortHeader>السعر</SortHeader>
                           <SortHeader>اللون</SortHeader>
                           <SortHeader>الحجم</SortHeader>
@@ -586,9 +599,9 @@ const ProductDetails = () => {
                         </span>
                       </div>
                       <div className="flex justify-between gap-2 text-sm">
-                        <span className="text-slate-400">الكمية</span>
+                        <span className="text-slate-400">المخزون</span>
                         <span className="font-semibold">
-                          {variant.stock ?? 0}
+                          {variant.stock ?? 0} قطعة
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-2">

@@ -300,7 +300,7 @@ const EditProduct = ({}: Props) => {
     );
     // Sent as "" when cleared, which the API reads as "unset this measurement"
     // rather than "it weighs nothing".
-    formData.append("stock", stock);
+    formData.append("stock", stock.trim() ? stock.trim() : "0");
     formData.append("weightGrams", weightGrams);
     formData.append("lengthCm", lengthCm);
     formData.append("widthCm", widthCm);
@@ -515,8 +515,8 @@ const EditProduct = ({}: Props) => {
                   </div>
 
                   <div className="min-w-0">
-                    <FieldLabel htmlFor="stock" hint="اختياري" hintTone="optional">
-                      الكمية
+                    <FieldLabel htmlFor="stock" hint="مطلوب" hintTone="special">
+                      المخزون
                     </FieldLabel>
                     <div className="relative">
                       <input
