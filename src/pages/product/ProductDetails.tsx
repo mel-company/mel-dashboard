@@ -72,22 +72,22 @@ function FieldLabel({
   hintTone?: "muted" | "optional" | "special";
 }) {
   return (
-    <div className="mb-1.5 flex items-center justify-between gap-2">
+    <div className="mb-1.5 flex min-h-[1.25rem] items-center justify-between gap-2">
       <p className="text-[13px] font-medium text-slate-500 dark:text-slate-300">
         {children}
       </p>
-      {hint ? (
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 text-[11px] font-medium",
-            hintTone === "optional" && "text-emerald-500",
-            hintTone === "special" && "text-amber-500",
-            hintTone === "muted" && "text-muted-foreground",
-          )}
-        >
-          {hint}
-        </span>
-      ) : null}
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 text-[11px] font-medium",
+          !hint && "invisible",
+          hintTone === "optional" && "text-emerald-500",
+          hintTone === "special" && "text-amber-500",
+          hintTone === "muted" && "text-muted-foreground",
+        )}
+        aria-hidden={!hint}
+      >
+        {hint ?? "اختياري"}
+      </span>
     </div>
   );
 }
